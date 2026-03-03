@@ -1,5 +1,5 @@
 {
-  "name": "friends",
+  "name": "defiance-engine",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite --open",
@@ -11,10 +11,14 @@
     "src/@types"
   ],
   "devDependencies": {
-    "typescript": "^5.3.3",
+    "@types/node": "^24.11.0",
+    "typescript": "~5.9.3",
     "vite": "^5.0.11"
   },
   "dependencies": {
-    "babylonjs": "^6.38.0"
+    "@babylonjs/gui": "^8.53.0",
+    "babylonjs": "^6.38.0",
+    "bitecs": "^0.4.0",
+    "tsyringe": "^4.10.0"
   }
 }
