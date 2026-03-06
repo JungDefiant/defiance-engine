@@ -1,0 +1,38 @@
+{
+    "id": "ab_brawl",
+    "name": "Brawl",
+    "description": "",
+    "castVfxURL": "",
+    "hitVfxURL": "",
+    "castSfxURL": "",
+    "hitSfxURL": "",
+    "trigger": "action",
+    "descriptors": [
+        "melee",
+        "impact",
+        "innate",
+        "attack"
+    ],
+    "target": "single_en",
+    "recovery": 20,
+    "cost": 0,
+    "effectData": [
+        {
+            "id": "damage",
+            "variables": [
+                16
+            ]
+        },
+        {
+            "id": "critical",
+            "variables": [
+                {
+                    "id": "damage",
+                    "variables": [
+                        16
+                    ]
+                }
+            ]
+        }
+    ]
+}

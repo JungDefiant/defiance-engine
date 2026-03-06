@@ -1,0 +1,11 @@
+{
+    "id": "dlg_test",
+    "nodes": [
+        {
+            "id": "ch1_0",
+            "lines": [
+                "Hello world"
+            ]
+        }
+    ]
+}

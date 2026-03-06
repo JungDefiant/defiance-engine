@@ -1,5 +1,6 @@
-import { Color3, Engine, FreeCamera, HemisphericLight, MeshBuilder, Scene, StandardMaterial, Texture, Vector3 } from 'babylonjs';
-import { addPrefab, createWorld, World } from 'bitecs';
+import { Color3, Engine, FreeCamera, HemisphericLight, Mesh, MeshBuilder, Scene, StandardMaterial, Texture, Vector3 } from 'babylonjs';
+import { addComponent, addPrefab, createWorld, World } from 'bitecs';
+import ExplorationManagerSystem from './systems/ExplorationManagerSystem';
 
 // This is the engine and the scene manager
 export class App {
@@ -8,12 +9,22 @@ export class App {
     private world: World;
 
     constructor() {
-        const canvas = document.getElementById("gameCanvas")! as any as HTMLCanvasElement;
+        const canvas = document.getElementById("gameCanvas");
+        if (!(canvas instanceof HTMLCanvasElement)) {
+            throw new Error("No canvas element found!");
+        }
+
         this.engine = new Engine(canvas);
+
         window.addEventListener('resize', () => {
             this.engine.resize();
         });
 
+        // Initialize systems
+
+        // Create main menu scene
+
+        // test code
         const { scene, world } = this.createScene(this.engine);
         this.scene = scene;
         this.world = world;

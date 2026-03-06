@@ -1,0 +1,64 @@
+[
+    {
+        "id": "aff_test",
+        "name": "Test",
+        "description": "",
+        "attributeData": [
+            {
+                "id": "life",
+                "value": 480
+            },
+            {
+                "id": "will",
+                "value": 200
+            },
+            {
+                "id": "speed",
+                "value": 10
+            },
+            {
+                "id": "defense",
+                "value": 10
+            },
+            {
+                "id": "critical",
+                "value": 10
+            },
+            {
+                "id": "regen",
+                "value": 10
+            }
+        ]
+    },
+    {
+        "id": "aff_might",
+        "name": "Might",
+        "description": "",
+        "attributeData": [
+            {
+                "id": "life",
+                "value": 640
+            },
+            {
+                "id": "will",
+                "value": 200
+            },
+            {
+                "id": "speed",
+                "value": 8
+            },
+            {
+                "id": "defense",
+                "value": 12
+            },
+            {
+                "id": "critical",
+                "value": 10
+            },
+            {
+                "id": "regen",
+                "value": 10
+            }
+        ]
+    }
+]

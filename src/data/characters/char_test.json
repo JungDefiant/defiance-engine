@@ -1,0 +1,13 @@
+{
+    "name": "CharName",
+    "backstory": "",
+    "spriteURL": "",
+    "affinityId": "aff_test",
+    "abilityIds": [
+        "ab_brawl"
+    ],
+    "itemIds": [],
+    "actionSlotIds": [
+        "ab_brawl"
+    ]
+}
