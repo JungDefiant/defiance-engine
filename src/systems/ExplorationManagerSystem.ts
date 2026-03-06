@@ -15,4 +15,20 @@ export default class ExplorationManagerSystem implements ISystem {
             // Component.value[entityId]    -->     how to access component data
         }
     }
+
+    public loadMap(mapId: string): void {
+        
+    }
+
+    public loadInteractables(): void {
+
+    }
+
+    public loadEvents(): void {
+
+    }
+
+    public checkEventTriggers(): void {
+
+    }
 }
