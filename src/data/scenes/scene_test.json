@@ -5,12 +5,12 @@
     "locations": [
         {
             "id": "loc_test1",
-            "envModelURL": "",
+            "modelURL": "defiance_envtest.glb",
             "interactables": [
                 {
                     "id": "itr_test1",
                     "dialogueNodeId": "dlg_test",
-                    "attachedModelId": "mdl_test"
+                    "attachedModelId": "computer"
                 }
             ],
             "events": [
