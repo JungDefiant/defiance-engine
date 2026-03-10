@@ -1,9 +1,7 @@
-import { Scene } from "@babylonjs/core";
-import { World } from "bitecs";
+import { Engine } from "@babylonjs/core";
 
 
 export default interface ISystem {
-    scene?: Scene;
-    world?: World;
+    start(engine: Engine): Promise<void>;
     update(): void;
 }    

@@ -1,8 +1,9 @@
 import "reflect-metadata";
-import { Color3, Engine, FreeCamera, HemisphericLight, MeshBuilder, Scene, StandardMaterial, Texture, Vector3 } from '@babylonjs/core';
-import { addPrefab, createWorld, World } from 'bitecs';
+import { container } from 'tsyringe';
+import { Engine } from '@babylonjs/core';
 import SceneManagerSystem from './systems/SceneManagerSystem';
-import { container, Lifecycle } from 'tsyringe';
+import DialogueManagerSystem from "./systems/DialogueManagerSystem";
+import UserInterfaceSystem from "./systems/UserInterfaceSystem";
 
 // This is the engine and the scene manager
 export class App {
@@ -17,15 +18,31 @@ export class App {
 
         // Create systems
         container.registerSingleton(SceneManagerSystem);
+        container.registerSingleton(UserInterfaceSystem);
+        container.registerSingleton(DialogueManagerSystem);
     }
 
     public async run() {
+        await this.startSystems();
+        const smSystem = container.resolve(SceneManagerSystem);
+        const uiSystem = container.resolve(UserInterfaceSystem);
+
+        this.engine.runRenderLoop(() => {
+            smSystem.activeScene?.render();
+            uiSystem.uiScene?.render();
+        });
+    }
+
+    private async startSystems() {
         const smSystem = container.resolve(SceneManagerSystem);
         await smSystem.start();
-        const scene = await smSystem.loadScene("test", this.engine);
-        this.engine.runRenderLoop(() => {
-            smSystem.scene?.render();
-        });
+        await smSystem.loadScene("test", this.engine);
+
+        const uiSystem = container.resolve(UserInterfaceSystem);
+        await uiSystem.start(this.engine);
+
+        const dmSystem = container.resolve(DialogueManagerSystem);
+        await dmSystem.start();
     }
 }
 

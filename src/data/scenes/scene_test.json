@@ -6,11 +6,33 @@
         {
             "id": "loc_test1",
             "modelURL": "defiance_envtest.glb",
+            "exploreViewPosition": [
+                0,
+                1.5,
+                0
+            ],
+            "combatViewPosition": [
+                0,
+                1.5,
+                5
+            ],
             "interactables": [
                 {
                     "id": "itr_test1",
+                    "name": "Terminal",
+                    "description": "A terminal with access to the MetroNet.",
                     "dialogueNodeId": "dlg_test",
-                    "attachedModelId": "computer"
+                    "attachedModelId": "computer",
+                    "viewPosition": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "guiPositionOffset": [
+                        0,
+                        0,
+                        0
+                    ]
                 }
             ],
             "events": [
