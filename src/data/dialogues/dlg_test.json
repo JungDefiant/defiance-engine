@@ -4,18 +4,8 @@
         {
             "id": "ch1_0",
             "lines": [
-                {
-                    "speaker": "",
-                    "speakerColor": "",
-                    "speakerPortraitSrc": "",
-                    "line": "Hello world"
-                },
-                {
-                    "speaker": "",
-                    "speakerColor": "",
-                    "speakerPortraitSrc": "",
-                    "line": "Hello world 2"
-                }
+                "Hello world",
+                "Test: Hello world 2"
             ]
         }
     ]

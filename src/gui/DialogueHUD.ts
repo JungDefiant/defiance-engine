@@ -25,12 +25,10 @@ export default class DialogueHUD implements IHUD {
 	private speakerPortraitUI: Nullable<Container> = null;
 
 	private readonly speakerPortraitName = "ui_speakerPortrait";
-	// private readonly textEntryScrollbarName = "ui_textEntryScrollbar";
-	// private readonly textEntryStackName = "ui_textEntryStack";
 	private readonly optionEntryStackName = "ui_optionsEntryStack";
 
 	public showHideHud(show: boolean): void {
-		this.rootContainer!.alpha = show ? 1 : 0;
+		this.rootContainer!.isVisible = show ? true : false;
 	}
 
 	public createHUD(fullscreen: AdvancedDynamicTexture): void {
@@ -61,8 +59,8 @@ export default class DialogueHUD implements IHUD {
 		this.addTextDialogueEntry(diagData, 2);
 		this.addTextDialogueEntry(diagData, 3);
 		this.addTextDialogueEntry(diagData, 4);
-		// this.addTextDialogueEntry(diagData, 4);
-		// this.addTextDialogueEntry(diagData, 4);
+		this.addTextDialogueEntry(diagData, 4);
+		this.addTextDialogueEntry(diagData, 4);
 		// this.addTextDialogueEntry(diagData, 4);
 		// this.addTextDialogueEntry(diagData, 4);
 		// this.addTextDialogueEntry(diagData, 4);
@@ -123,7 +121,7 @@ export default class DialogueHUD implements IHUD {
 		dialogueFeedUI.alpha = 0.45;
 		dialogueFeedUI.thickness = 0;
 		dialogueFeedUI.widthInPixels = 320;
-		dialogueFeedUI.heightInPixels = 547;
+		dialogueFeedUI.heightInPixels = 540;
 
 		const textEntryArea = new Container("ui_textEntryScroll");
 		textEntryArea.isPointerBlocker = true;
@@ -135,7 +133,7 @@ export default class DialogueHUD implements IHUD {
 		textEntryArea.alpha = 0.6;
 		dialogueFeedUI.addControl(textEntryArea);
 
-		const sizePerEntry = 73;
+		const sizePerEntry = 81;
 
 		this.textEntryStack = new StackPanel("ui_textEntryStack");
 		this.textEntryStack.isPointerBlocker = true;
@@ -170,7 +168,7 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryScrollbar.widthInPixels = 8;
 		this.textEntryScrollbar.onValueChangedObservable.add((value) => {
 			const textEntryStackSize =
-				this.textEntryStack!.children.length * sizePerEntry;
+				(this.textEntryStack!.children.length - 4) * sizePerEntry;
 			this.textEntryStack!.topInPixels = (value / 100) * textEntryStackSize;
 		});
 		this.textEntryScrollbar.value = 0;

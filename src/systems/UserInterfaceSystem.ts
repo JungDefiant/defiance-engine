@@ -1,25 +1,13 @@
-import { container, singleton } from "tsyringe";
+import { singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import {
-	ArcRotateCamera,
-	Camera,
-	Color3,
 	Engine,
 	Nullable,
 	Scene,
 	UniversalCamera,
 	Vector3,
 } from "@babylonjs/core";
-import {
-	AdvancedDynamicTexture,
-	Container,
-	Control,
-	Rectangle,
-	StackPanel,
-	TextBlock,
-	TextWrapping,
-} from "@babylonjs/gui";
-import SceneManagerSystem from "./SceneManagerSystem";
+import { AdvancedDynamicTexture } from "@babylonjs/gui";
 import PartyInfoHUD from "../gui/PartyInfoHUD";
 import ExploreHUD from "../gui/ExploreHUD";
 import DialogueHUD from "../gui/DialogueHUD";
@@ -28,7 +16,6 @@ import DialogueHUD from "../gui/DialogueHUD";
 export default class UserInterfaceSystem implements ISystem {
 	public uiScene: Nullable<Scene> = null;
 
-	private activeGameMode: GameMode = GameMode.MainMenu;
 	private fullscreenUI: Nullable<AdvancedDynamicTexture> = null;
 	private partyInfoHud: Nullable<PartyInfoHUD> = null;
 	private exploreHud: Nullable<ExploreHUD> = null;
@@ -36,11 +23,26 @@ export default class UserInterfaceSystem implements ISystem {
 
 	public async start(engine: Engine) {
 		this.createGUIScene(engine);
+		this.setGameMode(GameMode.Explore);
 	}
 
 	public update() {}
 
-	public setGameMode(newMode: GameMode) {}
+	public setGameMode(newMode: GameMode) {
+		this.partyInfoHud?.showHideHud(
+			newMode == GameMode.Combat || newMode == GameMode.Explore,
+		);
+
+		if (newMode == GameMode.MainMenu) {
+			//
+		} else if (newMode == GameMode.Explore) {
+			this.exploreHud?.showHideHud(newMode == GameMode.Explore);
+		} else if (newMode == GameMode.Dialogue) {
+			this.dialogueHud?.showHideHud(newMode == GameMode.Dialogue);
+		} else if (newMode == GameMode.Combat) {
+			//
+		}
+	}
 
 	public getPartyInfoHud(): PartyInfoHUD {
 		return this.partyInfoHud!;
@@ -71,9 +73,11 @@ export default class UserInterfaceSystem implements ISystem {
 
 		this.exploreHud = new ExploreHUD();
 		this.exploreHud.createHUD(this.fullscreenUI);
+		this.exploreHud.showHideHud(false);
 
 		this.dialogueHud = new DialogueHUD();
 		this.dialogueHud.createHUD(this.fullscreenUI);
+		this.dialogueHud.showHideHud(false);
 
 		// this.createDialogueHUD();
 		// this.createCombatHUD();

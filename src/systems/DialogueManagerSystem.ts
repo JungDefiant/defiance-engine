@@ -1,12 +1,16 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import { Nullable } from "@babylonjs/core";
-import UserInterfaceSystem from "./UserInterfaceSystem";
+import UserInterfaceSystem, { GameMode } from "./UserInterfaceSystem";
+import { LocationData } from "./SceneManagerSystem";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
 	private activeDialogue: Nullable<DialogueData> = null;
+	private activeDialogueNodeIndex: number = 0;
+	private activeDialogueLineIndex: number = 0;
 
+	private uiSystem: Nullable<UserInterfaceSystem> = null;
 	private dialogueData?: Map<string, DialogueData>;
 
 	public async start() {
@@ -17,19 +21,49 @@ export default class DialogueManagerSystem implements ISystem {
 			const data = (await allData[path]()) as DialogueData;
 			this.dialogueData.set(data.id, data);
 		}
+
+		this.uiSystem = container.resolve(UserInterfaceSystem);
 	}
 
 	public update() {}
 
-	public startDialogue(dlgId: string) {
-		const dialogue = this.dialogueData!.get(dlgId);
-		const uiSystem = container.resolve(UserInterfaceSystem);
-		const dialogueHud = uiSystem.getDialogueHud();
-
-		dialogueHud.addTextDialogueEntry(dialogue!.nodes[0]!.lines[0]!, 0);
+	public startDialogue(dlgId: string, nodeInd: number, locData: LocationData) {
+		this.activeDialogue = this.dialogueData!.get(dlgId)!;
+		this.activeDialogueNodeIndex = nodeInd;
+		this.runActiveDialogue();
 	}
 
-	public parseLine(lineIndex: number) {}
+	public runActiveDialogue() {
+		if (!this.uiSystem) {
+			return;
+		}
+
+		const dlgNodeData =
+			this.activeDialogue?.nodes[this.activeDialogueNodeIndex];
+		if (!dlgNodeData) {
+			return;
+		}
+
+		const parsedLineData = this.parseLines(dlgNodeData, 0);
+		this.uiSystem.setGameMode(GameMode.Dialogue);
+		this.uiSystem
+			.getDialogueHud()
+			.addTextDialogueEntry(parsedLineData, this.activeDialogueLineIndex);
+		// Add continue button if options aren't found in next line
+		this.activeDialogueLineIndex++;
+	}
+
+	public parseLines(
+		dialogueNode: DialogueNodeData,
+		lineIndex: number,
+	): DialogueLineData {
+		const newLine = dialogueNode.lines[lineIndex];
+		if (!newLine) {
+			return {} as DialogueLineData;
+		}
+
+		return { line: newLine } as DialogueLineData;
+	}
 
 	public displayText(text: string, speakerId?: string) {}
 
@@ -51,7 +85,7 @@ export interface DialogueData {
 
 export interface DialogueNodeData {
 	id: string;
-	lines: DialogueLineData[];
+	lines: string[];
 }
 
 export interface DialogueLineData {
