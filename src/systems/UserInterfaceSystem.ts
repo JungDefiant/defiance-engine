@@ -32,16 +32,8 @@ export default class UserInterfaceSystem implements ISystem {
 		this.partyInfoHud?.showHideHud(
 			newMode == GameMode.Combat || newMode == GameMode.Explore,
 		);
-
-		if (newMode == GameMode.MainMenu) {
-			//
-		} else if (newMode == GameMode.Explore) {
-			this.exploreHud?.showHideHud(newMode == GameMode.Explore);
-		} else if (newMode == GameMode.Dialogue) {
-			this.dialogueHud?.showHideHud(newMode == GameMode.Dialogue);
-		} else if (newMode == GameMode.Combat) {
-			//
-		}
+		this.exploreHud?.showHideHud(newMode == GameMode.Explore);
+		this.dialogueHud?.showHideHud(newMode == GameMode.Dialogue);
 	}
 
 	public getPartyInfoHud(): PartyInfoHUD {

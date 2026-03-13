@@ -1,4 +1,4 @@
-import { Nullable } from "@babylonjs/core";
+import { Color3, Nullable } from "@babylonjs/core";
 import {
 	Container,
 	AdvancedDynamicTexture,
@@ -11,9 +11,17 @@ import {
 	Grid,
 	TextWrapping,
 	ScrollBar,
+	Button,
 } from "@babylonjs/gui";
 import IHUD from "./IHUD";
-import { DialogueLineData } from "../systems/DialogueManagerSystem";
+import DialogueManagerSystem, {
+	CharacterData,
+	DialogueChoiceData,
+	DialogueData,
+	DialogueNodeData,
+} from "../systems/DialogueManagerSystem";
+import { container } from "tsyringe";
+import { Themes } from "./Themes";
 
 export default class DialogueHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -21,8 +29,8 @@ export default class DialogueHUD implements IHUD {
 	private dialogueFeedUI: Nullable<Container> = null;
 	private textEntryStack: Nullable<StackPanel> = null;
 	private textEntryScrollbar: Nullable<ScrollBar> = null;
-	private optionsEntryGrid: Nullable<Grid> = null;
-	private speakerPortraitUI: Nullable<Container> = null;
+	private optionsEntryStack: Nullable<StackPanel> = null;
+	private characterPortraitUI: Nullable<Container> = null;
 
 	private readonly speakerPortraitName = "ui_speakerPortrait";
 	private readonly optionEntryStackName = "ui_optionsEntryStack";
@@ -37,36 +45,15 @@ export default class DialogueHUD implements IHUD {
 		this.dialogueFeedUI = this.createDialogueFeed();
 		this.rootContainer.addControl(this.dialogueFeedUI);
 
-		this.speakerPortraitUI = this.createSpeakerPortrait();
-		this.rootContainer.addControl(this.speakerPortraitUI);
+		this.characterPortraitUI = this.createCharacterPortrait();
+		this.rootContainer.addControl(this.characterPortraitUI);
 
 		fullscreen.addControl(this.rootContainer);
-
-		// this.testDialogue();
 	}
 
-	private testDialogue() {
-		// Test
-		const diagData = {
-			speaker: "Some Guy",
-			speakerColor: "#FF0000",
-			speakerPortraitSrc: "https://placehold.co/180x200",
-			line: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ut velit placerat, convallis quam vel, varius elit. Fusce dapibus interdum felis, quis gravida ante malesuada id. Sed vel posuere quam.",
-		} as DialogueLineData;
-
-		this.addTextDialogueEntry(diagData, 0);
-		this.addTextDialogueEntry(diagData, 1);
-		this.addTextDialogueEntry(diagData, 2);
-		this.addTextDialogueEntry(diagData, 3);
-		this.addTextDialogueEntry(diagData, 4);
-		this.addTextDialogueEntry(diagData, 4);
-		this.addTextDialogueEntry(diagData, 4);
-		// this.addTextDialogueEntry(diagData, 4);
-		// this.addTextDialogueEntry(diagData, 4);
-		// this.addTextDialogueEntry(diagData, 4);
-		// this.addTextDialogueEntry(diagData, 4);
-		// this.addTextDialogueEntry(diagData, 4);
-		// this.addTextDialogueEntry(diagData, 4);
+	public clearEntryStacks(): void {
+		this.textEntryStack?.clearControls();
+		this.optionsEntryStack?.clearControls();
 	}
 
 	public showHideScrollbar(show: boolean): void {
@@ -74,42 +61,203 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryScrollbar!.isEnabled = show ? true : false;
 	}
 
-	public addTextDialogueEntry(entryData: DialogueLineData, index: number) {
-		const entryRoot = new StackPanel("ui_dialogueNode_" + index);
+	public addTextDialogueEntry(
+		dlgData: DialogueNodeData,
+		charData?: CharacterData,
+	): void {
+		if (!dlgData || !this.textEntryStack) {
+			return;
+		}
+
+		const entryRoot = new StackPanel("ui_dialogueNode_" + dlgData.id);
 		entryRoot.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		entryRoot.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		entryRoot.width = 1.0;
-		entryRoot.heightInPixels = 65;
+		entryRoot.adaptHeightToChildren = true;
 		entryRoot.isVertical = true;
 
-		if (entryData.speaker) {
-			this.speakerPortraitUI!.alpha = 1;
-			const speakerPortrait = this.speakerPortraitUI!.getChildByName(
-				this.speakerPortraitName,
-			) as Image;
-			speakerPortrait.source = "https://placehold.co/180x200";
-
+		if (charData) {
 			const speakerLabel = new TextBlock(
-				"ui_speaker_" + index,
-				entryData.speaker + "_" + index,
+				"ui_speaker_" + charData.name.trim().toLowerCase(),
+				charData.name,
 			);
-			speakerLabel.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-			speakerLabel.color = entryData.speakerColor;
-			speakerLabel.heightInPixels = 20;
+			speakerLabel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+			speakerLabel.fontWeight = "semibold";
+			speakerLabel.color = charData.color || Themes.typography.bodyText.color;
+			speakerLabel.fontFamily = Themes.typography.bodyText.fontFamily;
+			speakerLabel.fontSize = Themes.typography.bodyText.fontSize;
+			speakerLabel.resizeToFit = true;
 			entryRoot.addControl(speakerLabel);
-		} else {
-			this.speakerPortraitUI!.alpha = 0;
 		}
 
-		const lineUI = new TextBlock("ui_line_" + index, entryData.line);
+		const lineUI = new TextBlock("ui_line_" + dlgData.id, dlgData.text);
 		lineUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		lineUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		lineUI.color = "white";
+		lineUI.color = Themes.typography.bodyText.color;
+		lineUI.fontFamily = Themes.typography.bodyText.fontFamily;
+		lineUI.fontSize = Themes.typography.bodyText.fontSize;
 		lineUI.resizeToFit = true;
 		lineUI.textWrapping = TextWrapping.WordWrap;
 		entryRoot.addControl(lineUI);
 
-		this.textEntryStack!.addControl(entryRoot);
+		this.textEntryStack.addControl(entryRoot);
+	}
+
+	public addContinueEntry(currDlgId: number, nextDlgId: number): void {
+		if (!this.optionsEntryStack) {
+			return;
+		}
+
+		const dmSystem = container.resolve(DialogueManagerSystem);
+		if (!dmSystem) {
+			return;
+		}
+
+		this.optionsEntryStack.clearControls();
+
+		const buttonUI = Button.CreateSimpleButton(
+			"ui_line_" + currDlgId,
+			"Continue",
+		);
+		buttonUI.width = 1;
+		buttonUI.heightInPixels = 40;
+		buttonUI.color = "white";
+		buttonUI.background = Themes.textButtonDefault;
+		buttonUI.thickness = 0;
+
+		if (buttonUI.textBlock) {
+			buttonUI.textBlock.textHorizontalAlignment =
+				Control.HORIZONTAL_ALIGNMENT_LEFT;
+			buttonUI.textBlock.paddingLeftInPixels = 16;
+			buttonUI.textBlock.color = Themes.typography.header4.color;
+			buttonUI.textBlock.fontFamily = Themes.typography.header4.fontFamily;
+			buttonUI.textBlock.fontSize = Themes.typography.header4.fontSize;
+		}
+
+		buttonUI.onPointerEnterObservable.add(() => {
+			buttonUI.background = Themes.textButtonHighlight;
+		});
+		buttonUI.onPointerOutObservable.add(() => {
+			buttonUI.background = Themes.textButtonDefault;
+		});
+		buttonUI.onPointerClickObservable.addOnce(() => {
+			dmSystem.runLine(nextDlgId);
+		});
+
+		this.optionsEntryStack.addControl(buttonUI);
+	}
+
+	public addExitEntry(): void {
+		if (!this.optionsEntryStack) {
+			return;
+		}
+
+		const dmSystem = container.resolve(DialogueManagerSystem);
+		if (!dmSystem) {
+			return;
+		}
+
+		this.optionsEntryStack.clearControls();
+
+		const buttonUI = Button.CreateSimpleButton("ui_line_exit", "End Dialogue");
+		buttonUI.width = 1;
+		buttonUI.heightInPixels = 40;
+		buttonUI.color = "white";
+		buttonUI.background = Themes.textButtonDefault;
+		buttonUI.thickness = 0;
+
+		if (buttonUI.textBlock) {
+			buttonUI.textBlock.textHorizontalAlignment =
+				Control.HORIZONTAL_ALIGNMENT_LEFT;
+			buttonUI.textBlock.paddingLeftInPixels = 16;
+			buttonUI.textBlock.color = Themes.typography.header4.color;
+			buttonUI.textBlock.fontFamily = Themes.typography.header4.fontFamily;
+			buttonUI.textBlock.fontSize = Themes.typography.header4.fontSize;
+		}
+
+		buttonUI.onPointerEnterObservable.add(() => {
+			buttonUI.background = Themes.textButtonHighlight;
+		});
+		buttonUI.onPointerOutObservable.add(() => {
+			buttonUI.background = Themes.textButtonDefault;
+		});
+		buttonUI.onPointerClickObservable.addOnce(() => {
+			dmSystem.endDialogue();
+		});
+
+		this.optionsEntryStack.addControl(buttonUI);
+	}
+
+	public addChoiceEntries(choices: DialogueChoiceData[]): void {
+		if (!this.optionsEntryStack) {
+			return;
+		}
+
+		const dmSystem = container.resolve(DialogueManagerSystem);
+		if (!dmSystem) {
+			return;
+		}
+
+		this.optionsEntryStack.clearControls();
+
+		choices.forEach((choiceData, index) => {
+			if (!this.optionsEntryStack) {
+				return;
+			}
+
+			const numChoice = index + 1;
+			const buttonUI = Button.CreateSimpleButton(
+				"ui_choice_" + numChoice,
+				numChoice + ". " + choiceData.text,
+			);
+			buttonUI.width = 1;
+			buttonUI.heightInPixels = 40;
+			buttonUI.color = "white";
+			buttonUI.background = Themes.textButtonDefault;
+			buttonUI.thickness = 0;
+
+			if (buttonUI.textBlock) {
+				buttonUI.textBlock.textHorizontalAlignment =
+					Control.HORIZONTAL_ALIGNMENT_LEFT;
+				buttonUI.textBlock.paddingLeftInPixels = 16;
+				buttonUI.textBlock.color = Themes.typography.header4.color;
+				buttonUI.textBlock.fontFamily = Themes.typography.header4.fontFamily;
+				buttonUI.textBlock.fontSize = Themes.typography.header4.fontSize;
+			}
+
+			buttonUI.onPointerEnterObservable.add(() => {
+				buttonUI.background = Themes.textButtonHighlight;
+			});
+			buttonUI.onPointerOutObservable.add(() => {
+				buttonUI.background = Themes.textButtonDefault;
+			});
+			buttonUI.onPointerClickObservable.addOnce(() => {
+				this.addTextDialogueEntry({
+					id: index,
+					text: choiceData.text,
+				} as DialogueNodeData);
+				dmSystem.runLine(choiceData.target_id);
+			});
+
+			this.optionsEntryStack.addControl(buttonUI);
+		});
+	}
+
+	public setCharacterPortrait(charData?: CharacterData): void {
+		if (!charData) {
+			this.characterPortraitUI?.isVisible == false;
+			return;
+		}
+
+		const charPortrait = this.characterPortraitUI?.getChildByName(
+			"ui_charPortrait",
+		) as Image;
+		if (!charPortrait) {
+			this.characterPortraitUI?.isVisible == false;
+			return;
+		}
+
+		charPortrait.source = charData.spriteUri as string;
 	}
 
 	public createDialogueFeed(): Container {
@@ -117,11 +265,15 @@ export default class DialogueHUD implements IHUD {
 		dialogueFeedUI.isPointerBlocker = true;
 		dialogueFeedUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
 		dialogueFeedUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		dialogueFeedUI.background = "black";
-		dialogueFeedUI.alpha = 0.45;
+		dialogueFeedUI.background = Themes.dialogueBackground;
 		dialogueFeedUI.thickness = 0;
 		dialogueFeedUI.widthInPixels = 320;
 		dialogueFeedUI.heightInPixels = 540;
+
+		const dialogueFeedStack = new StackPanel("ui_dialogueFeedStack");
+		dialogueFeedStack.width = 1;
+		dialogueFeedStack.height = 1;
+		dialogueFeedUI.addControl(dialogueFeedStack);
 
 		const textEntryArea = new Container("ui_textEntryScroll");
 		textEntryArea.isPointerBlocker = true;
@@ -129,9 +281,8 @@ export default class DialogueHUD implements IHUD {
 		textEntryArea.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		textEntryArea.widthInPixels = 285;
 		textEntryArea.heightInPixels = 325;
-		textEntryArea.background = "black";
-		textEntryArea.alpha = 0.6;
-		dialogueFeedUI.addControl(textEntryArea);
+		textEntryArea.alpha = 1;
+		dialogueFeedStack.addControl(textEntryArea);
 
 		const sizePerEntry = 81;
 
@@ -140,7 +291,7 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryStack.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		this.textEntryStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.textEntryStack.width = 1;
-		this.textEntryStack.spacing = 16;
+		this.textEntryStack.spacing = 24;
 		this.textEntryStack.paddingLeft = 6;
 		this.textEntryStack.paddingRight = 6;
 		this.textEntryStack.paddingBottom = 6;
@@ -167,22 +318,30 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryScrollbar.isThumbClamped = true;
 		this.textEntryScrollbar.widthInPixels = 8;
 		this.textEntryScrollbar.onValueChangedObservable.add((value) => {
+			if (!this.textEntryStack) {
+				return;
+			}
+
 			const textEntryStackSize =
-				(this.textEntryStack!.children.length - 4) * sizePerEntry;
-			this.textEntryStack!.topInPixels = (value / 100) * textEntryStackSize;
+				(this.textEntryStack.children.length - 4) * sizePerEntry;
+			this.textEntryStack.topInPixels = (value / 100) * textEntryStackSize;
 		});
 		this.textEntryScrollbar.value = 0;
 		this.showHideScrollbar(false);
 		textEntryArea.addControl(this.textEntryScrollbar);
 
-		const optionsEntryStack = new StackPanel(this.optionEntryStackName);
-		optionsEntryStack.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
-		optionsEntryStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.optionsEntryStack = new StackPanel(this.optionEntryStackName);
+		this.optionsEntryStack.horizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_RIGHT;
+		this.optionsEntryStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.optionsEntryStack.widthInPixels = 285;
+		this.optionsEntryStack.adaptHeightToChildren = true;
+		dialogueFeedStack.addControl(this.optionsEntryStack);
 
 		return dialogueFeedUI;
 	}
 
-	public createSpeakerPortrait(): Container {
+	public createCharacterPortrait(): Container {
 		const portraitRoot = new Rectangle("ui_portraitRoot");
 		portraitRoot.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		portraitRoot.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
@@ -191,16 +350,14 @@ export default class DialogueHUD implements IHUD {
 		portraitRoot.leftInPixels = 336;
 		portraitRoot.topInPixels = 120;
 		portraitRoot.thickness = 3;
-		portraitRoot.color = "black";
+		portraitRoot.color = Themes.portraitBackground;
+		portraitRoot.isVisible = false;
 
-		const speakerPortrait = new Image(
-			this.speakerPortraitName,
-			"https://placehold.co/160x200",
-		);
+		const characterPortrait = new Image("ui_charPortrait");
 
-		speakerPortrait.widthInPixels = 160;
-		speakerPortrait.heightInPixels = 200;
-		portraitRoot.addControl(speakerPortrait);
+		characterPortrait.widthInPixels = 160;
+		characterPortrait.heightInPixels = 200;
+		portraitRoot.addControl(characterPortrait);
 
 		return portraitRoot;
 	}

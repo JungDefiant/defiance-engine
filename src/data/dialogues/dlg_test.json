@@ -1,12 +1,97 @@
 {
-    "id": "dlg_test",
-    "nodes": [
+    "characters": {
+        "a": {
+            "name": "a"
+        },
+        "b": {
+            "name": "b"
+        }
+    },
+    "dialogues": [
         {
-            "id": "ch1_0",
-            "lines": [
-                "Hello world",
-                "Test: Hello world 2"
-            ]
+            "id": 0,
+            "character": "",
+            "text": "Hello World",
+            "choices": [
+                {
+                    "text": "",
+                    "target_id": 1
+                }
+            ],
+            "is_start": true,
+            "is_end": false
+        },
+        {
+            "id": 1,
+            "character": "a",
+            "text": "Hello world",
+            "choices": [
+                {
+                    "text": "Continue",
+                    "target_id": 2
+                }
+            ],
+            "is_start": false,
+            "is_end": false
+        },
+        {
+            "id": 2,
+            "character": "b",
+            "text": "aaaaa",
+            "choices": [
+                {
+                    "text": "choice 1",
+                    "target_id": 3
+                },
+                {
+                    "text": "choice 2",
+                    "target_id": 4
+                }
+            ],
+            "is_start": false,
+            "is_end": false
+        },
+        {
+            "id": 3,
+            "character": "a",
+            "text": "bbbbbbbb",
+            "choices": [
+                {
+                    "text": "",
+                    "target_id": 5
+                }
+            ],
+            "is_start": false,
+            "is_end": false
+        },
+        {
+            "id": 4,
+            "character": "a",
+            "text": "cccccc",
+            "choices": [
+                {
+                    "text": "",
+                    "target_id": 6
+                }
+            ],
+            "is_start": false,
+            "is_end": false
+        },
+        {
+            "id": 5,
+            "character": "a",
+            "text": "bbbbbbbnnnnnnn",
+            "choices": [],
+            "is_start": false,
+            "is_end": true
+        },
+        {
+            "id": 6,
+            "character": "a",
+            "text": "jjjjjjjjjjj",
+            "choices": [],
+            "is_start": false,
+            "is_end": true
         }
     ]
 }

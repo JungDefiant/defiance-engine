@@ -28,6 +28,7 @@ export default class SceneManagerSystem implements ISystem {
 	public locationGUI: Nullable<AdvancedDynamicTexture> = null;
 
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
+	private currentLocationData: Nullable<LocationData> = null;
 	private sceneData: Map<string, SceneData> = new Map<string, SceneData>();
 
 	public async start() {
@@ -111,15 +112,23 @@ export default class SceneManagerSystem implements ISystem {
 			`./models/maps/${sceneData?.locations[locationIndex].modelURL}`,
 			this.activeScene!,
 		);
-		const locData = sceneData.locations[locationIndex];
+		this.currentLocationData = sceneData.locations[locationIndex];
 
 		this.locationGUI = AdvancedDynamicTexture.CreateFullscreenUI("ui_location");
 
-		locData.interactables.forEach(async (itr) => {
-			await this.loadLocationInteractable(itr, locData, locMeshes.meshes);
+		this.currentLocationData.interactables.forEach(async (itr) => {
+			if (!this.currentLocationData) {
+				return;
+			}
+
+			await this.loadLocationInteractable(
+				itr,
+				this.currentLocationData,
+				locMeshes.meshes,
+			);
 		});
 
-		locData.events.forEach(async (evt) => {
+		this.currentLocationData.events.forEach(async (evt) => {
 			await this.loadLocationEvent(evt, locMeshes.meshes);
 		});
 	}
@@ -155,16 +164,15 @@ export default class SceneManagerSystem implements ISystem {
 		});
 		button.onPointerClickObservable.add(() => {
 			// Loads and runs dialogue based on dialogueId in interactableData
-			this.setGameMode(GameMode.Dialogue);
+			if (!attachedMesh) {
+				return;
+			}
+
 			const dmSystem = container.resolve(DialogueManagerSystem);
-			dmSystem.startDialogue(interactableData.dialogueNodeId, 0, locationData);
-			const camera = this.activeScene!.activeCamera! as UniversalCamera;
-			const viewCoords = interactableData.viewPosition;
-			camera.position = attachedMesh!.position.add(
-				new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]),
-			);
-			// LATER: Implement offsetting camera target
-			camera.setTarget(attachedMesh!.position);
+			dmSystem.startDialogue(interactableData.dialogueNodeId, {
+				data: interactableData,
+				mesh: attachedMesh,
+			});
 		});
 		this.locationGUI!.addControl(button);
 		button.linkWithMesh(attachedMesh!);
@@ -203,6 +211,10 @@ export default class SceneManagerSystem implements ISystem {
 		} else if (newMode == GameMode.Combat) {
 			//
 		}
+	}
+
+	public getCurrentLocationData(): Nullable<LocationData> {
+		return this.currentLocationData;
 	}
 }
 

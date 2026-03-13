@@ -1,13 +1,20 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import { Nullable } from "@babylonjs/core";
+import {
+	AbstractMesh,
+	Nullable,
+	UniversalCamera,
+	Vector3,
+} from "@babylonjs/core";
 import UserInterfaceSystem, { GameMode } from "./UserInterfaceSystem";
-import { LocationData } from "./SceneManagerSystem";
+import SceneManagerSystem, {
+	InteractableData,
+	LocationData,
+} from "./SceneManagerSystem";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
 	private activeDialogue: Nullable<DialogueData> = null;
-	private activeDialogueNodeIndex: number = 0;
 	private activeDialogueLineIndex: number = 0;
 
 	private uiSystem: Nullable<UserInterfaceSystem> = null;
@@ -19,7 +26,8 @@ export default class DialogueManagerSystem implements ISystem {
 		this.dialogueData = new Map<string, DialogueData>();
 		for (const path in allData) {
 			const data = (await allData[path]()) as DialogueData;
-			this.dialogueData.set(data.id, data);
+			const dlgId = path.match(/dlg_[A-Za-z]+/)![0];
+			this.dialogueData.set(dlgId, data);
 		}
 
 		this.uiSystem = container.resolve(UserInterfaceSystem);
@@ -27,42 +35,93 @@ export default class DialogueManagerSystem implements ISystem {
 
 	public update() {}
 
-	public startDialogue(dlgId: string, nodeInd: number, locData: LocationData) {
+	public startDialogue(
+		dlgId: string,
+		itr: { data: InteractableData; mesh: AbstractMesh },
+	) {
+		const smSystem = container.resolve(SceneManagerSystem);
+		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
+		const camera = smSystem.activeScene?.activeCamera as UniversalCamera;
+
+		if (!smSystem || !camera || !dlgHud) {
+			return;
+		}
+
+		smSystem.setGameMode(GameMode.Dialogue);
+
+		dlgHud.clearEntryStacks();
+
+		const viewCoords = itr.data.viewPosition;
+		camera.position = itr.mesh.position.add(
+			new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]),
+		);
+		// LATER: Implement offsetting camera target
+		camera.setTarget(itr.mesh!.position);
+
 		this.activeDialogue = this.dialogueData!.get(dlgId)!;
-		this.activeDialogueNodeIndex = nodeInd;
-		this.runActiveDialogue();
+		this.runLine(0);
 	}
 
-	public runActiveDialogue() {
-		if (!this.uiSystem) {
+	public runLine(id: number) {
+		// 1. Get line and character info
+		// 2. Render line and character in GUI
+		// 3. Check for end of dialogue
+		//  3a. If EOD, render end prompt in GUI and return
+		// 4. Check if choices > 1; prompt sets next line index
+		//  4a. If choices > 1, render options in GUI
+		//  4b. If choices == 1, render continue prompt in GUI
+		//  4c. Else render end prompt in GUI and return
+		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
+		const dialogue = this.activeDialogue?.dialogues[id];
+
+		if (!dialogue || !dlgHud) {
 			return;
 		}
 
-		const dlgNodeData =
-			this.activeDialogue?.nodes[this.activeDialogueNodeIndex];
-		if (!dlgNodeData) {
+		let charData;
+		const characterName = dialogue.character;
+		if (characterName) {
+			charData = this.activeDialogue?.characters[characterName];
+			if (charData) {
+				// Set character portrait
+				dlgHud.setCharacterPortrait(charData);
+			}
+		}
+
+		if (dialogue.text) {
+			// Display text entry for dialogue
+			dlgHud.addTextDialogueEntry(dialogue, charData);
+		}
+
+		const choices = dialogue.choices;
+		if (!choices || dialogue.is_end || choices.length < 1) {
+			// Set end dialogue button
+			dlgHud.addExitEntry();
+		} else if (choices.length === 1) {
+			// Set continue button
+			dlgHud.addContinueEntry(dialogue.id, dialogue.choices[0].target_id);
+		} else if (choices.length > 1) {
+			// Set choices GUI
+			dlgHud.addChoiceEntries(choices);
+		}
+	}
+
+	public endDialogue() {
+		const smSystem = container.resolve(SceneManagerSystem);
+		const scene = smSystem.activeScene;
+		const camera = smSystem.activeScene?.activeCamera as UniversalCamera;
+		const locData = smSystem.getCurrentLocationData();
+
+		if (!smSystem || !scene || !camera || !locData) {
 			return;
 		}
 
-		const parsedLineData = this.parseLines(dlgNodeData, 0);
-		this.uiSystem.setGameMode(GameMode.Dialogue);
-		this.uiSystem
-			.getDialogueHud()
-			.addTextDialogueEntry(parsedLineData, this.activeDialogueLineIndex);
-		// Add continue button if options aren't found in next line
-		this.activeDialogueLineIndex++;
-	}
+		smSystem.setGameMode(GameMode.Explore);
 
-	public parseLines(
-		dialogueNode: DialogueNodeData,
-		lineIndex: number,
-	): DialogueLineData {
-		const newLine = dialogueNode.lines[lineIndex];
-		if (!newLine) {
-			return {} as DialogueLineData;
-		}
-
-		return { line: newLine } as DialogueLineData;
+		const viewCoords = locData.exploreViewPosition;
+		camera.position = new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]);
+		// LATER: Implement offsetting camera target
+		camera.setTarget(new Vector3(0, 0, -40));
 	}
 
 	public displayText(text: string, speakerId?: string) {}
@@ -78,19 +137,31 @@ export default class DialogueManagerSystem implements ISystem {
 	public triggerCombat(encounterId: string) {}
 }
 
+export interface DialogueCharacterData {
+	[index: string]: CharacterData;
+}
+
+export interface CharacterData {
+	name: string;
+	color?: string;
+	spriteUri?: string;
+}
+
 export interface DialogueData {
-	id: string;
-	nodes: DialogueNodeData[];
+	characters: DialogueCharacterData;
+	dialogues: DialogueNodeData[];
 }
 
 export interface DialogueNodeData {
-	id: string;
-	lines: string[];
+	id: number;
+	character: string;
+	text: string;
+	choices: DialogueChoiceData[];
+	is_start: boolean;
+	is_end: boolean;
 }
 
-export interface DialogueLineData {
-	speaker: string;
-	speakerColor: string;
-	speakerPortraitSrc: string;
-	line: string;
+export interface DialogueChoiceData {
+	text: string;
+	target_id: number;
 }
