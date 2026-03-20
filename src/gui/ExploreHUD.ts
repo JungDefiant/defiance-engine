@@ -19,16 +19,16 @@ export default class ExploreHUD implements IHUD {
 	private readonly descriptionUIName = "ui_highlightInfoUIDescription";
 
 	public showHideHud(show: boolean): void {
-		this.rootContainer!.isVisible = show ? true : false;
+		this.rootContainer!.isVisible = show;
 	}
 
-	public createHUD(fullScreenUI: AdvancedDynamicTexture) {
+	public createHudRoot(): Container {
 		this.rootContainer = new Container("ui_exploreHUD");
 
 		this.highlightInfoUI = this.createHighlightInfoUI();
 		this.rootContainer.addControl(this.highlightInfoUI);
 
-		fullScreenUI.addControl(this.rootContainer);
+		return this.rootContainer;
 	}
 
 	public hideHighlightInfoUI() {

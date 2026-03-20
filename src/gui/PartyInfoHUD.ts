@@ -17,13 +17,12 @@ export default class PartyInfoHUD implements IHUD {
 		this.rootContainer!.isVisible = show ? true : false;
 	}
 
-	public createHUD(fullscreen: AdvancedDynamicTexture) {
+	public createHudRoot(): Container {
 		this.rootContainer = new Container("ui_partyInfoHud");
 		this.rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		this.rootContainer.width = "800px";
 		this.rootContainer.height = "240px";
 		this.rootContainer.top = "400px";
-		fullscreen.addControl(this.rootContainer);
 
 		const background = new Rectangle("ui_partyInfoHudBg");
 		background.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
@@ -49,8 +48,9 @@ export default class PartyInfoHUD implements IHUD {
 			const entry = this.partyInfoEntries[i];
 			partyInfoEntryStack.addControl(entry);
 		}
-
 		this.rootContainer.addControl(partyInfoEntryStack);
+
+		return this.rootContainer;
 	}
 
 	private createPartyInfoEntry(index: number): Container {

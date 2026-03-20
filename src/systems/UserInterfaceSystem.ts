@@ -11,6 +11,8 @@ import { AdvancedDynamicTexture } from "@babylonjs/gui";
 import PartyInfoHUD from "../gui/PartyInfoHUD";
 import ExploreHUD from "../gui/ExploreHUD";
 import DialogueHUD from "../gui/DialogueHUD";
+import CombatHUD from "../gui/CombatHUD";
+import { GameMode } from "./SceneManagerSystem";
 
 @singleton()
 export default class UserInterfaceSystem implements ISystem {
@@ -20,10 +22,10 @@ export default class UserInterfaceSystem implements ISystem {
 	private partyInfoHud: Nullable<PartyInfoHUD> = null;
 	private exploreHud: Nullable<ExploreHUD> = null;
 	private dialogueHud: Nullable<DialogueHUD> = null;
+	private combatHud: Nullable<CombatHUD> = null;
 
 	public async start(engine: Engine) {
-		this.createGUIScene(engine);
-		this.setGameMode(GameMode.Explore);
+		this.uiScene = this.createGUIScene(engine);
 	}
 
 	public update() {}
@@ -34,6 +36,7 @@ export default class UserInterfaceSystem implements ISystem {
 		);
 		this.exploreHud?.showHideHud(newMode == GameMode.Explore);
 		this.dialogueHud?.showHideHud(newMode == GameMode.Dialogue);
+		this.combatHud?.showHideHud(newMode == GameMode.Combat);
 	}
 
 	public getPartyInfoHud(): PartyInfoHUD {
@@ -48,61 +51,41 @@ export default class UserInterfaceSystem implements ISystem {
 		return this.dialogueHud!;
 	}
 
-	public createGUIScene(engine: Engine) {
-		this.uiScene = new Scene(engine);
-		this.uiScene.autoClear = false;
+	public getCombatHud(): CombatHUD {
+		return this.combatHud!;
+	}
 
-		const camera = new UniversalCamera("cam_gui", Vector3.Zero(), this.uiScene);
+	public createGUIScene(engine: Engine) {
+		const uiScene = new Scene(engine);
+		uiScene.autoClear = false;
+
+		const camera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
 
 		this.fullscreenUI = AdvancedDynamicTexture.CreateFullscreenUI(
 			"ui_main",
 			true,
-			this.uiScene,
+			uiScene,
 		);
 
 		this.partyInfoHud = new PartyInfoHUD();
-		this.partyInfoHud.createHUD(this.fullscreenUI);
+		this.fullscreenUI.addControl(this.partyInfoHud.createHudRoot());
 
 		this.exploreHud = new ExploreHUD();
-		this.exploreHud.createHUD(this.fullscreenUI);
+		this.fullscreenUI.addControl(this.exploreHud.createHudRoot());
 		this.exploreHud.showHideHud(false);
 
 		this.dialogueHud = new DialogueHUD();
-		this.dialogueHud.createHUD(this.fullscreenUI);
+		this.fullscreenUI.addControl(this.dialogueHud.createHudRoot());
 		this.dialogueHud.showHideHud(false);
 
-		// this.createDialogueHUD();
-		// this.createCombatHUD();
+		this.combatHud = new CombatHUD();
+		this.fullscreenUI.addControl(this.dialogueHud.createHudRoot());
+		this.combatHud.showHideHud(false);
+
 		// this.createEndCombatScreen();
 		// this.createGameSettingsScreen();
+		return uiScene;
 	}
 
-	public createDialogueHUD() {}
-
-	public createCombatHUD() {}
-
-	public createEndCombatScreen() {}
-
-	public createGameSettingsScreen() {}
-
-	public displayPartyInfoHUD(show: boolean) {}
-
-	public displayExploreHUD(show: boolean) {}
-
-	public displayDialogueHUD(show: boolean) {}
-
-	public displayCombatHUD(show: boolean) {}
-
-	public displayEndCombatScreen(show: boolean) {}
-
-	public displayGameSettingsScreen(show: boolean) {}
-
-	public setPlayerInput(inputMode: GameMode) {}
-}
-
-export enum GameMode {
-	MainMenu,
-	Combat,
-	Explore,
-	Dialogue,
+	public createPlayerInput(inputMode: GameMode) {}
 }

@@ -15,9 +15,6 @@ import SceneManagerSystem, {
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
 	private activeDialogue: Nullable<DialogueData> = null;
-	private activeDialogueLineIndex: number = 0;
-
-	private uiSystem: Nullable<UserInterfaceSystem> = null;
 	private dialogueData?: Map<string, DialogueData>;
 
 	public async start() {
@@ -29,8 +26,6 @@ export default class DialogueManagerSystem implements ISystem {
 			const dlgId = path.match(/dlg_[A-Za-z]+/)![0];
 			this.dialogueData.set(dlgId, data);
 		}
-
-		this.uiSystem = container.resolve(UserInterfaceSystem);
 	}
 
 	public update() {}
@@ -63,14 +58,7 @@ export default class DialogueManagerSystem implements ISystem {
 	}
 
 	public runLine(id: number) {
-		// 1. Get line and character info
-		// 2. Render line and character in GUI
-		// 3. Check for end of dialogue
-		//  3a. If EOD, render end prompt in GUI and return
-		// 4. Check if choices > 1; prompt sets next line index
-		//  4a. If choices > 1, render options in GUI
-		//  4b. If choices == 1, render continue prompt in GUI
-		//  4c. Else render end prompt in GUI and return
+		// Get dialogue HUD
 		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
 		const dialogue = this.activeDialogue?.dialogues[id];
 
@@ -107,6 +95,7 @@ export default class DialogueManagerSystem implements ISystem {
 	}
 
 	public endDialogue() {
+		// Switch mode back to Explore
 		const smSystem = container.resolve(SceneManagerSystem);
 		const scene = smSystem.activeScene;
 		const camera = smSystem.activeScene?.activeCamera as UniversalCamera;

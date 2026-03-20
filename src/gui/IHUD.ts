@@ -1,8 +1,8 @@
 import { Nullable } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Container } from "@babylonjs/gui";
+import { Container } from "@babylonjs/gui";
 
 export default interface IHUD {
-  rootContainer: Nullable<Container>;
-  createHUD(fullscreen: AdvancedDynamicTexture): void;
-  showHideHud(show: boolean): void;
+	rootContainer: Nullable<Container>;
+	createHudRoot(): Container;
+	showHideHud(show: boolean): void;
 }

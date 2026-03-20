@@ -1,11 +1,12 @@
 import "reflect-metadata";
 import { container } from "tsyringe";
 import { Engine } from "@babylonjs/core";
-import SceneManagerSystem from "./systems/SceneManagerSystem";
+import SceneManagerSystem, { GameMode } from "./systems/SceneManagerSystem";
 import DialogueManagerSystem from "./systems/DialogueManagerSystem";
-import UserInterfaceSystem, { GameMode } from "./systems/UserInterfaceSystem";
+import UserInterfaceSystem from "./systems/UserInterfaceSystem";
+import CombatManagerSystem from "./systems/CombatManagerSystem";
 
-// This is the engine and the scene manager
+// This is the engine/game loop
 export class App {
 	private engine: Engine;
 
@@ -22,6 +23,7 @@ export class App {
 		container.registerSingleton(SceneManagerSystem);
 		container.registerSingleton(UserInterfaceSystem);
 		container.registerSingleton(DialogueManagerSystem);
+		container.registerSingleton(CombatManagerSystem);
 	}
 
 	public async run() {
@@ -36,13 +38,13 @@ export class App {
 	}
 
 	private async startSystems() {
+		const uiSystem = container.resolve(UserInterfaceSystem);
+		await uiSystem.start(this.engine);
+
 		const smSystem = container.resolve(SceneManagerSystem);
 		await smSystem.start();
 		await smSystem.loadScene("test", this.engine);
-		smSystem.setGameMode(GameMode.Explore);
-
-		const uiSystem = container.resolve(UserInterfaceSystem);
-		await uiSystem.start(this.engine);
+		smSystem.setGameMode(GameMode.Combat);
 
 		const dmSystem = container.resolve(DialogueManagerSystem);
 		await dmSystem.start();

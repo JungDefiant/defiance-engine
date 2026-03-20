@@ -1,14 +1,11 @@
-import { Color3, Nullable } from "@babylonjs/core";
+import { Nullable } from "@babylonjs/core";
 import {
 	Container,
-	AdvancedDynamicTexture,
 	Rectangle,
 	Control,
 	Image,
 	TextBlock,
 	StackPanel,
-	ScrollViewer,
-	Grid,
 	TextWrapping,
 	ScrollBar,
 	Button,
@@ -32,14 +29,13 @@ export default class DialogueHUD implements IHUD {
 	private optionsEntryStack: Nullable<StackPanel> = null;
 	private characterPortraitUI: Nullable<Container> = null;
 
-	private readonly speakerPortraitName = "ui_speakerPortrait";
 	private readonly optionEntryStackName = "ui_optionsEntryStack";
 
 	public showHideHud(show: boolean): void {
-		this.rootContainer!.isVisible = show ? true : false;
+		this.rootContainer!.isVisible = show;
 	}
 
-	public createHUD(fullscreen: AdvancedDynamicTexture): void {
+	public createHudRoot(): Container {
 		this.rootContainer = new Container("ui_dialogueHUD");
 
 		this.dialogueFeedUI = this.createDialogueFeed();
@@ -48,7 +44,7 @@ export default class DialogueHUD implements IHUD {
 		this.characterPortraitUI = this.createCharacterPortrait();
 		this.rootContainer.addControl(this.characterPortraitUI);
 
-		fullscreen.addControl(this.rootContainer);
+		return this.rootContainer;
 	}
 
 	public clearEntryStacks(): void {
@@ -260,7 +256,7 @@ export default class DialogueHUD implements IHUD {
 		charPortrait.source = charData.spriteUri as string;
 	}
 
-	public createDialogueFeed(): Container {
+	private createDialogueFeed(): Container {
 		const dialogueFeedUI = new Rectangle("ui_dialogueFeed");
 		dialogueFeedUI.isPointerBlocker = true;
 		dialogueFeedUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
@@ -341,7 +337,7 @@ export default class DialogueHUD implements IHUD {
 		return dialogueFeedUI;
 	}
 
-	public createCharacterPortrait(): Container {
+	private createCharacterPortrait(): Container {
 		const portraitRoot = new Rectangle("ui_portraitRoot");
 		portraitRoot.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		portraitRoot.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;

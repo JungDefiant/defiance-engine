@@ -18,7 +18,7 @@ import {
 import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
 import DialogueManagerSystem from "./DialogueManagerSystem";
-import UserInterfaceSystem, { GameMode } from "./UserInterfaceSystem";
+import UserInterfaceSystem from "./UserInterfaceSystem";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -197,19 +197,16 @@ export default class SceneManagerSystem implements ISystem {
 		uiSystem.setGameMode(this.activeGameMode);
 
 		if (newMode == GameMode.MainMenu) {
-			//
+			// X
 		} else if (newMode == GameMode.Explore) {
-			//
 			const camera = this.activeScene?.activeCamera;
 			camera?.attachControl(this.gameCanvas);
 			this.locationGUI!.rootContainer.isVisible = true;
-		} else if (newMode == GameMode.Dialogue) {
-			//
+			// X
+		} else if (newMode == GameMode.Dialogue || newMode == GameMode.Combat) {
 			const camera = this.activeScene?.activeCamera;
 			camera?.detachControl();
 			this.locationGUI!.rootContainer.isVisible = false;
-		} else if (newMode == GameMode.Combat) {
-			//
 		}
 	}
 
@@ -247,4 +244,11 @@ export interface InteractableData {
 interface EventData {
 	id: string;
 	flagTriggers: string[];
+}
+
+export enum GameMode {
+	MainMenu,
+	Combat,
+	Explore,
+	Dialogue,
 }
