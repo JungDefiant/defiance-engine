@@ -4,7 +4,12 @@ import { Engine } from "@babylonjs/core";
 import SceneManagerSystem, { GameMode } from "./systems/SceneManagerSystem";
 import DialogueManagerSystem from "./systems/DialogueManagerSystem";
 import UserInterfaceSystem from "./systems/UserInterfaceSystem";
-import CombatManagerSystem from "./systems/CombatManagerSystem";
+import CombatManagerSystem, {
+	ICombatManagerSystem,
+} from "./systems/CombatManagerSystem";
+import PartyStateSystem, {
+	IPartyStateSystem,
+} from "./systems/PartyStateSystem";
 
 // This is the engine/game loop
 export class App {
@@ -23,7 +28,8 @@ export class App {
 		container.registerSingleton(SceneManagerSystem);
 		container.registerSingleton(UserInterfaceSystem);
 		container.registerSingleton(DialogueManagerSystem);
-		container.registerSingleton(CombatManagerSystem);
+		container.registerSingleton<ICombatManagerSystem>(CombatManagerSystem);
+		container.registerSingleton<IPartyStateSystem>(PartyStateSystem);
 	}
 
 	public async run() {

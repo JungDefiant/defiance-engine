@@ -20,23 +20,33 @@ import "@babylonjs/loaders";
 import DialogueManagerSystem from "./DialogueManagerSystem";
 import UserInterfaceSystem from "./UserInterfaceSystem";
 
+export interface ISceneManagerSystem extends ISystem {
+	debug(debugOn: boolean): void;
+	getCampaignId(): string;
+	loadScene(sceneId: string, engine: Engine): void;
+}
+
 @singleton()
-export default class SceneManagerSystem implements ISystem {
+export default class SceneManagerSystem implements ISceneManagerSystem {
 	public activeScene: Nullable<Scene> = null;
 	public activeWorld: Nullable<World> = null;
 	public activeGameMode: GameMode = GameMode.MainMenu;
 	public locationGUI: Nullable<AdvancedDynamicTexture> = null;
 
+	private campaignId: string = "campaign_test";
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
 	private currentLocationData: Nullable<LocationData> = null;
 	private sceneData: Map<string, SceneData> = new Map<string, SceneData>();
 
 	public async start() {
 		// Import scene data files
-		const allData = await import.meta.glob("/src/data/scenes/*.json");
+		const allData = await import.meta.glob("/src/data/*/scenes/*.json");
 		for (const path in allData) {
-			const data = (await allData[path]()) as SceneData;
-			this.sceneData.set(data.id, data);
+			const campaignId = path.split("/")[3];
+			if (campaignId == this.campaignId) {
+				const data = (await allData[path]()) as SceneData;
+				this.sceneData.set(data.id, data);
+			}
 		}
 
 		this.gameCanvas = document.getElementById(
@@ -60,6 +70,10 @@ export default class SceneManagerSystem implements ISystem {
 		} else {
 			this.activeScene.debugLayer.hide();
 		}
+	}
+
+	public getCampaignId(): string {
+		return this.campaignId;
 	}
 
 	public async loadScene(sceneId: string, engine: Engine) {
@@ -105,6 +119,42 @@ export default class SceneManagerSystem implements ISystem {
 		light.intensity = 0.7;
 
 		await this.loadLocation(0, sceneData!);
+	}
+
+	public async loadLocationEvent(
+		eventData: EventData,
+		locationMeshes: AbstractMesh[],
+	) {}
+
+	public async loadCombatEncounter(
+		encounterId: string,
+		locationIndex: number,
+	) {}
+
+	public checkEventTriggers() {}
+
+	public setGameMode(newMode: GameMode) {
+		this.activeGameMode = newMode;
+
+		const uiSystem = container.resolve(UserInterfaceSystem);
+		uiSystem.setGameMode(this.activeGameMode);
+
+		if (newMode == GameMode.MainMenu) {
+			// X
+		} else if (newMode == GameMode.Explore) {
+			const camera = this.activeScene?.activeCamera;
+			camera?.attachControl(this.gameCanvas);
+			this.locationGUI!.rootContainer.isVisible = true;
+			// X
+		} else if (newMode == GameMode.Dialogue || newMode == GameMode.Combat) {
+			const camera = this.activeScene?.activeCamera;
+			camera?.detachControl();
+			this.locationGUI!.rootContainer.isVisible = false;
+		}
+	}
+
+	public getCurrentLocationData(): Nullable<LocationData> {
+		return this.currentLocationData;
 	}
 
 	private async loadLocation(locationIndex: number, sceneData: SceneData) {
@@ -176,42 +226,6 @@ export default class SceneManagerSystem implements ISystem {
 		});
 		this.locationGUI!.addControl(button);
 		button.linkWithMesh(attachedMesh!);
-	}
-
-	public async loadLocationEvent(
-		eventData: EventData,
-		locationMeshes: AbstractMesh[],
-	) {}
-
-	public async loadCombatEncounter(
-		encounterId: string,
-		locationIndex: number,
-	) {}
-
-	public checkEventTriggers() {}
-
-	public setGameMode(newMode: GameMode) {
-		this.activeGameMode = newMode;
-
-		const uiSystem = container.resolve(UserInterfaceSystem);
-		uiSystem.setGameMode(this.activeGameMode);
-
-		if (newMode == GameMode.MainMenu) {
-			// X
-		} else if (newMode == GameMode.Explore) {
-			const camera = this.activeScene?.activeCamera;
-			camera?.attachControl(this.gameCanvas);
-			this.locationGUI!.rootContainer.isVisible = true;
-			// X
-		} else if (newMode == GameMode.Dialogue || newMode == GameMode.Combat) {
-			const camera = this.activeScene?.activeCamera;
-			camera?.detachControl();
-			this.locationGUI!.rootContainer.isVisible = false;
-		}
-	}
-
-	public getCurrentLocationData(): Nullable<LocationData> {
-		return this.currentLocationData;
 	}
 }
 

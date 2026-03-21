@@ -79,7 +79,7 @@ export default class UserInterfaceSystem implements ISystem {
 		this.dialogueHud.showHideHud(false);
 
 		this.combatHud = new CombatHUD();
-		this.fullscreenUI.addControl(this.dialogueHud.createHudRoot());
+		this.fullscreenUI.addControl(this.combatHud.createHudRoot());
 		this.combatHud.showHideHud(false);
 
 		// this.createEndCombatScreen();

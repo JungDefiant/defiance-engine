@@ -44,5 +44,10 @@
                 }
             ]
         }
-    ]
+    ],
+    "encounters": {
+        "test": [
+            "en_sc_test"
+        ]
+    }
 }

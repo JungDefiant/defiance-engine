@@ -6,10 +6,10 @@ import {
 	UniversalCamera,
 	Vector3,
 } from "@babylonjs/core";
-import UserInterfaceSystem, { GameMode } from "./UserInterfaceSystem";
+import UserInterfaceSystem from "./UserInterfaceSystem";
 import SceneManagerSystem, {
+	GameMode,
 	InteractableData,
-	LocationData,
 } from "./SceneManagerSystem";
 
 @singleton()
