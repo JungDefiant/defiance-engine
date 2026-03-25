@@ -41,9 +41,6 @@ export default class DialogueHUD implements IHUD {
 		this.dialogueFeedUI = this.createDialogueFeed();
 		this.rootContainer.addControl(this.dialogueFeedUI);
 
-		this.characterPortraitUI = this.createCharacterPortrait();
-		this.rootContainer.addControl(this.characterPortraitUI);
-
 		return this.rootContainer;
 	}
 
@@ -78,10 +75,9 @@ export default class DialogueHUD implements IHUD {
 				charData.name,
 			);
 			speakerLabel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+			speakerLabel.style = Themes.typography.bodyText;
 			speakerLabel.fontWeight = "semibold";
-			speakerLabel.color = charData.color || Themes.typography.bodyText.color;
-			speakerLabel.fontFamily = Themes.typography.bodyText.fontFamily;
-			speakerLabel.fontSize = Themes.typography.bodyText.fontSize;
+			speakerLabel.color = charData.color || Themes.neutral2;
 			speakerLabel.resizeToFit = true;
 			entryRoot.addControl(speakerLabel);
 		}
@@ -89,9 +85,8 @@ export default class DialogueHUD implements IHUD {
 		const lineUI = new TextBlock("ui_line_" + dlgData.id, dlgData.text);
 		lineUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		lineUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		lineUI.color = Themes.typography.bodyText.color;
-		lineUI.fontFamily = Themes.typography.bodyText.fontFamily;
-		lineUI.fontSize = Themes.typography.bodyText.fontSize;
+		lineUI.color = Themes.neutral2;
+		lineUI.style = Themes.typography.bodyText;
 		lineUI.resizeToFit = true;
 		lineUI.textWrapping = TextWrapping.WordWrap;
 		entryRoot.addControl(lineUI);
@@ -117,24 +112,24 @@ export default class DialogueHUD implements IHUD {
 		);
 		buttonUI.width = 1;
 		buttonUI.heightInPixels = 40;
-		buttonUI.color = "white";
-		buttonUI.background = Themes.textButtonDefault;
+		buttonUI.color = Themes.neutral2;
+		buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
 		buttonUI.thickness = 0;
 
 		if (buttonUI.textBlock) {
 			buttonUI.textBlock.textHorizontalAlignment =
 				Control.HORIZONTAL_ALIGNMENT_LEFT;
 			buttonUI.textBlock.paddingLeftInPixels = 16;
-			buttonUI.textBlock.color = Themes.typography.header4.color;
-			buttonUI.textBlock.fontFamily = Themes.typography.header4.fontFamily;
-			buttonUI.textBlock.fontSize = Themes.typography.header4.fontSize;
+			buttonUI.textBlock.color = Themes.neutral2;
+			buttonUI.textBlock.fontFamily = Themes.typography.header3.fontFamily;
+			buttonUI.textBlock.fontSize = Themes.typography.header3.fontSize;
 		}
 
 		buttonUI.onPointerEnterObservable.add(() => {
-			buttonUI.background = Themes.textButtonHighlight;
+			buttonUI.background = Themes.primary3 + Themes.textButtonHighlightOpacity;
 		});
 		buttonUI.onPointerOutObservable.add(() => {
-			buttonUI.background = Themes.textButtonDefault;
+			buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
 		});
 		buttonUI.onPointerClickObservable.addOnce(() => {
 			dmSystem.runLine(nextDlgId);
@@ -158,24 +153,24 @@ export default class DialogueHUD implements IHUD {
 		const buttonUI = Button.CreateSimpleButton("ui_line_exit", "End Dialogue");
 		buttonUI.width = 1;
 		buttonUI.heightInPixels = 40;
-		buttonUI.color = "white";
-		buttonUI.background = Themes.textButtonDefault;
+		buttonUI.color = Themes.neutral2;
+		buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
 		buttonUI.thickness = 0;
 
 		if (buttonUI.textBlock) {
 			buttonUI.textBlock.textHorizontalAlignment =
 				Control.HORIZONTAL_ALIGNMENT_LEFT;
 			buttonUI.textBlock.paddingLeftInPixels = 16;
-			buttonUI.textBlock.color = Themes.typography.header4.color;
-			buttonUI.textBlock.fontFamily = Themes.typography.header4.fontFamily;
-			buttonUI.textBlock.fontSize = Themes.typography.header4.fontSize;
+			buttonUI.textBlock.color = Themes.neutral2;
+			buttonUI.textBlock.fontFamily = Themes.typography.header3.fontFamily;
+			buttonUI.textBlock.fontSize = Themes.typography.header3.fontSize;
 		}
 
 		buttonUI.onPointerEnterObservable.add(() => {
-			buttonUI.background = Themes.textButtonHighlight;
+			buttonUI.background = Themes.primary3 + Themes.textButtonHighlightOpacity;
 		});
 		buttonUI.onPointerOutObservable.add(() => {
-			buttonUI.background = Themes.textButtonDefault;
+			buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
 		});
 		buttonUI.onPointerClickObservable.addOnce(() => {
 			dmSystem.endDialogue();
@@ -208,24 +203,25 @@ export default class DialogueHUD implements IHUD {
 			);
 			buttonUI.width = 1;
 			buttonUI.heightInPixels = 40;
-			buttonUI.color = "white";
-			buttonUI.background = Themes.textButtonDefault;
+			buttonUI.color = Themes.neutral2;
+			buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
 			buttonUI.thickness = 0;
 
 			if (buttonUI.textBlock) {
 				buttonUI.textBlock.textHorizontalAlignment =
 					Control.HORIZONTAL_ALIGNMENT_LEFT;
 				buttonUI.textBlock.paddingLeftInPixels = 16;
-				buttonUI.textBlock.color = Themes.typography.header4.color;
-				buttonUI.textBlock.fontFamily = Themes.typography.header4.fontFamily;
-				buttonUI.textBlock.fontSize = Themes.typography.header4.fontSize;
+				buttonUI.textBlock.color = Themes.neutral2;
+				buttonUI.textBlock.fontFamily = Themes.typography.header3.fontFamily;
+				buttonUI.textBlock.fontSize = Themes.typography.header3.fontSize;
 			}
 
 			buttonUI.onPointerEnterObservable.add(() => {
-				buttonUI.background = Themes.textButtonHighlight;
+				buttonUI.background =
+					Themes.primary3 + Themes.textButtonHighlightOpacity;
 			});
 			buttonUI.onPointerOutObservable.add(() => {
-				buttonUI.background = Themes.textButtonDefault;
+				buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
 			});
 			buttonUI.onPointerClickObservable.addOnce(() => {
 				this.addTextDialogueEntry({
@@ -261,8 +257,10 @@ export default class DialogueHUD implements IHUD {
 		dialogueFeedUI.isPointerBlocker = true;
 		dialogueFeedUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
 		dialogueFeedUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		dialogueFeedUI.background = Themes.dialogueBackground;
-		dialogueFeedUI.thickness = 0;
+		dialogueFeedUI.background =
+			Themes.primary3 + Themes.dialogueBackgroundOpacity;
+		dialogueFeedUI.color = Themes.primary1;
+		dialogueFeedUI.thickness = 2;
 		dialogueFeedUI.widthInPixels = 320;
 		dialogueFeedUI.heightInPixels = 540;
 
@@ -335,26 +333,5 @@ export default class DialogueHUD implements IHUD {
 		dialogueFeedStack.addControl(this.optionsEntryStack);
 
 		return dialogueFeedUI;
-	}
-
-	private createCharacterPortrait(): Container {
-		const portraitRoot = new Rectangle("ui_portraitRoot");
-		portraitRoot.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		portraitRoot.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		portraitRoot.widthInPixels = 166;
-		portraitRoot.heightInPixels = 206;
-		portraitRoot.leftInPixels = 336;
-		portraitRoot.topInPixels = 120;
-		portraitRoot.thickness = 3;
-		portraitRoot.color = Themes.portraitBackground;
-		portraitRoot.isVisible = false;
-
-		const characterPortrait = new Image("ui_charPortrait");
-
-		characterPortrait.widthInPixels = 160;
-		characterPortrait.heightInPixels = 200;
-		portraitRoot.addControl(characterPortrait);
-
-		return portraitRoot;
 	}
 }

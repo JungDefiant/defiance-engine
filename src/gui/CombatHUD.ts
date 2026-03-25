@@ -10,6 +10,7 @@ import {
 	TextWrapping,
 } from "@babylonjs/gui";
 import IHUD from "./IHUD";
+import { Themes } from "./Themes";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -34,16 +35,17 @@ export default class CombatHUD implements IHUD {
 
 	private createActionBar(): Container {
 		const actionBarUI = new Rectangle("ui_actionBar");
-		actionBarUI.background = "gray";
-		actionBarUI.color = "black";
+		actionBarUI.color = Themes.primary1;
+		actionBarUI.background = Themes.primary3;
+		actionBarUI.thickness = 2;
 		actionBarUI.widthInPixels = 470;
 		actionBarUI.heightInPixels = 54;
-		actionBarUI.topInPixels = 274;
+		actionBarUI.topInPixels = 273;
 
 		const actionGrid = new Grid("ui_actionStack");
 		actionGrid.addColumnDefinition(270);
 		actionGrid.addColumnDefinition(145);
-		actionGrid.addRowDefinition(10);
+		actionGrid.addRowDefinition(16);
 		actionGrid.addRowDefinition(40);
 		actionGrid.width = 1;
 		actionGrid.height = 1;
@@ -51,20 +53,20 @@ export default class CombatHUD implements IHUD {
 		actionBarUI.addControl(actionGrid);
 
 		const abilitiesLabel = new TextBlock("ui_abilitiesLabel", "ABILITIES");
-		abilitiesLabel.fontSize = 10;
-		abilitiesLabel.fontWeight = "bold";
-		abilitiesLabel.widthInPixels = 60;
-		abilitiesLabel.heightInPixels = 12;
+		abilitiesLabel.color = Themes.neutral2;
+		abilitiesLabel.style = Themes.typography.header3;
+		abilitiesLabel.widthInPixels = 120;
+		abilitiesLabel.heightInPixels = 20;
 		abilitiesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		abilitiesLabel.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
 		actionGrid.addControl(abilitiesLabel, 0, 0);
 
 		const devicesLabel = new TextBlock("ui_devicesLabel", "DEVICES");
-		devicesLabel.fontSize = 10;
-		devicesLabel.fontWeight = "bold";
-		devicesLabel.widthInPixels = 48;
-		devicesLabel.heightInPixels = 12;
+		devicesLabel.color = Themes.neutral2;
+		devicesLabel.style = Themes.typography.header3;
+		devicesLabel.widthInPixels = 120;
+		devicesLabel.heightInPixels = 20;
 		devicesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		devicesLabel.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		actionGrid.addControl(devicesLabel, 0, 1);
@@ -98,13 +100,15 @@ export default class CombatHUD implements IHUD {
 
 	private createActionSlot(label: string) {
 		const actionSlotUI = new Rectangle("ui_actionSlot_" + label);
-		actionSlotUI.background = "white";
-		actionSlotUI.color = "black";
+		actionSlotUI.color = Themes.primary1;
+		actionSlotUI.background = Themes.primary3;
+		actionSlotUI.thickness = 2;
 		actionSlotUI.widthInPixels = 32;
 		actionSlotUI.heightInPixels = 32;
 
 		const actionSlotLabel = new TextBlock("ui_actionSlotLabel", "Ability");
-		actionSlotLabel.fontSize = 11;
+		actionSlotLabel.color = Themes.neutral2;
+		actionSlotLabel.style = Themes.typography.bodyText;
 		actionSlotLabel.widthInPixels = 12;
 		actionSlotLabel.heightInPixels = 12;
 		actionSlotLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;

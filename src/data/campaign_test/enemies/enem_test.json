@@ -2,7 +2,7 @@
   "id": "en_sc_test",
   "name": "EnName",
   "description": "",
-  "battlerSpriteURL": "",
+  "battlerSpriteURL": "spr_sentineltest.png",
   "attributes": {
     "life": 400,
     "will": 200,

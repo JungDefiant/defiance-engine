@@ -110,3 +110,27 @@ button:focus-visible {
         background-color: #f9f9f9;
     }
 }
+
+@font-face {
+    font-family: "ComicSans";
+    src: local("ComicSans-Regular"),
+        url('./assets/fonts/comic-sans.ttf')
+}
+
+@font-face {
+    font-family: "RobotoMono";
+    src: local("RobotoMono-Regular"),
+        url('./assets/fonts/roboto-mono-med.ttf')
+}
+
+@font-face {
+    font-family: "RobotoMono";
+    src: local("RobotoMono-Semibold"),
+        url('./assets/fonts/roboto-mono-semibold.ttf')
+}
+
+@font-face {
+    font-family: "VeryVeryPunkFont";
+    src: local("VeryVeryPunkFont"),
+        url('./assets/fonts/punk-font.otf')
+}

@@ -8,6 +8,7 @@ import {
 } from "@babylonjs/gui";
 import IHUD from "./IHUD";
 import { Nullable } from "@babylonjs/core";
+import { Themes } from "./Themes";
 
 export default class ExploreHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -55,8 +56,9 @@ export default class ExploreHUD implements IHUD {
 
 	private createHighlightInfoUI(): Container {
 		const highlightInfoUI = new Rectangle("ui_highlightInfoUI");
-		highlightInfoUI.background = "gray";
-		highlightInfoUI.color = "black";
+		highlightInfoUI.background = Themes.primary3;
+		highlightInfoUI.color = Themes.primary1;
+		highlightInfoUI.thickness = 2;
 		highlightInfoUI.widthInPixels = 320;
 		highlightInfoUI.heightInPixels = 50;
 		highlightInfoUI.topInPixels = 274;

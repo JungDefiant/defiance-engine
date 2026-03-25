@@ -1,12 +1,7 @@
 import { Nullable } from "@babylonjs/core";
-import {
-	AdvancedDynamicTexture,
-	Container,
-	Control,
-	Rectangle,
-	StackPanel,
-} from "@babylonjs/gui";
+import { Container, Control, Rectangle, StackPanel } from "@babylonjs/gui";
 import IHUD from "./IHUD";
+import { Themes } from "./Themes";
 
 export default class PartyInfoHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -26,8 +21,9 @@ export default class PartyInfoHUD implements IHUD {
 
 		const background = new Rectangle("ui_partyInfoHudBg");
 		background.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		background.background = "gray";
-		background.color = "black";
+		background.background = Themes.primary3;
+		background.color = Themes.primary1;
+		background.thickness = 2;
 		background.widthInPixels = 800;
 		background.heightInPixels = 110;
 		background.topInPixels = 38;
@@ -56,8 +52,9 @@ export default class PartyInfoHUD implements IHUD {
 	private createPartyInfoEntry(index: number): Container {
 		const partyInfoEntry = new Rectangle("ui_partyInfoEntry_" + index);
 		partyInfoEntry.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		partyInfoEntry.background = "gray";
-		partyInfoEntry.color = "black";
+		partyInfoEntry.background = Themes.primary3;
+		partyInfoEntry.color = Themes.primary1;
+		partyInfoEntry.thickness = 2;
 		partyInfoEntry.widthInPixels = 200;
 		partyInfoEntry.heightInPixels = 128;
 

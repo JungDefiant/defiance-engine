@@ -1,4 +1,4 @@
-import { container, singleton } from "tsyringe";
+import { container, inject, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import {
 	AbstractMesh,
@@ -36,7 +36,7 @@ export default class DialogueManagerSystem implements ISystem {
 	) {
 		const smSystem = container.resolve(SceneManagerSystem);
 		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
-		const camera = smSystem.activeScene?.activeCamera as UniversalCamera;
+		const camera = smSystem.getActiveScene()?.activeCamera as UniversalCamera;
 
 		if (!smSystem || !camera || !dlgHud) {
 			return;
@@ -97,9 +97,9 @@ export default class DialogueManagerSystem implements ISystem {
 	public endDialogue() {
 		// Switch mode back to Explore
 		const smSystem = container.resolve(SceneManagerSystem);
-		const scene = smSystem.activeScene;
-		const camera = smSystem.activeScene?.activeCamera as UniversalCamera;
-		const locData = smSystem.getCurrentLocationData();
+		const scene = smSystem.getActiveScene();
+		const camera = smSystem.getActiveScene()?.activeCamera as UniversalCamera;
+		const locData = smSystem.getActiveLocationData();
 
 		if (!smSystem || !scene || !camera || !locData) {
 			return;

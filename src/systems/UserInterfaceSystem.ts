@@ -13,9 +13,20 @@ import ExploreHUD from "../gui/ExploreHUD";
 import DialogueHUD from "../gui/DialogueHUD";
 import CombatHUD from "../gui/CombatHUD";
 import { GameMode } from "./SceneManagerSystem";
+import { CreateTypography as createTypography } from "../gui/Themes";
+
+export interface IUserInterfaceSystem extends ISystem {
+	setGameMode(newMode: GameMode): void;
+	getPartyInfoHud(): PartyInfoHUD;
+	getExploreHud(): ExploreHUD;
+	getDialogueHud(): DialogueHUD;
+	getCombatHud(): CombatHUD;
+	createGUIScene(engine: Engine): void;
+	createPlayerInput(inputMode: GameMode): void;
+}
 
 @singleton()
-export default class UserInterfaceSystem implements ISystem {
+export default class UserInterfaceSystem implements IUserInterfaceSystem {
 	public uiScene: Nullable<Scene> = null;
 
 	private fullscreenUI: Nullable<AdvancedDynamicTexture> = null;
@@ -66,6 +77,8 @@ export default class UserInterfaceSystem implements ISystem {
 			true,
 			uiScene,
 		);
+
+		createTypography(this.fullscreenUI);
 
 		this.partyInfoHud = new PartyInfoHUD();
 		this.fullscreenUI.addControl(this.partyInfoHud.createHudRoot());
