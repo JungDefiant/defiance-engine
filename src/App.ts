@@ -10,9 +10,9 @@ import UserInterfaceSystem from "./systems/UserInterfaceSystem";
 import CombatManagerSystem, {
 	ICombatManagerSystem,
 } from "./systems/CombatManagerSystem";
-import PartyStateSystem, {
-	IPartyStateSystem,
-} from "./systems/PartyStateSystem";
+import ActorStateSystem, {
+	IActorStateSystem,
+} from "./systems/ActorStateSystem";
 
 // This is the engine/game loop
 export class App {
@@ -40,9 +40,9 @@ export class App {
 			"CombatManagerSystem",
 			CombatManagerSystem,
 		);
-		container.registerSingleton<IPartyStateSystem>(
+		container.registerSingleton<IActorStateSystem>(
 			"PartyStateSystem",
-			PartyStateSystem,
+			ActorStateSystem,
 		);
 
 		await this.startSystems();

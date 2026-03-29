@@ -38,7 +38,7 @@ export default class DialogueManagerSystem implements ISystem {
 		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
 		const camera = smSystem.getActiveScene()?.activeCamera as UniversalCamera;
 
-		if (!smSystem || !camera || !dlgHud) {
+		if (!smSystem || !camera || !dlgHud || !this.dialogueData) {
 			return;
 		}
 
@@ -51,16 +51,20 @@ export default class DialogueManagerSystem implements ISystem {
 			new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]),
 		);
 		// LATER: Implement offsetting camera target
-		camera.setTarget(itr.mesh!.position);
+		camera.setTarget(itr.mesh.position);
 
-		this.activeDialogue = this.dialogueData!.get(dlgId)!;
+		this.activeDialogue = this.dialogueData.get(dlgId)!;
 		this.runLine(0);
 	}
 
 	public runLine(id: number) {
 		// Get dialogue HUD
+		if (!this.activeDialogue) {
+			return;
+		}
+
 		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
-		const dialogue = this.activeDialogue?.dialogues[id];
+		const dialogue = this.activeDialogue.dialogues[id];
 
 		if (!dialogue || !dlgHud) {
 			return;
@@ -69,7 +73,7 @@ export default class DialogueManagerSystem implements ISystem {
 		let charData;
 		const characterName = dialogue.character;
 		if (characterName) {
-			charData = this.activeDialogue?.characters[characterName];
+			charData = this.activeDialogue.characters[characterName];
 			if (charData) {
 				// Set character portrait
 				dlgHud.setCharacterPortrait(charData);

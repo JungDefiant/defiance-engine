@@ -19,7 +19,7 @@ import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
 import DialogueManagerSystem from "./DialogueManagerSystem";
 import UserInterfaceSystem from "./UserInterfaceSystem";
-import { EnemyData } from "./CombatManagerSystem";
+import { ActorData } from "./ActorStateSystem";
 
 export interface ISceneManagerSystem extends ISystem {
 	getCampaignId(): string;
@@ -111,13 +111,23 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			// X
 		} else if (newMode == GameMode.Explore) {
 			const camera = this.activeScene?.activeCamera;
-			camera?.attachControl(this.gameCanvas);
-			this.locationGUI!.rootContainer.isVisible = true;
+
+			if (!camera || !this.locationGUI) {
+				return;
+			}
+
+			camera.attachControl(this.gameCanvas);
+			this.locationGUI.rootContainer.isVisible = true;
 			// X
 		} else if (newMode == GameMode.Dialogue || newMode == GameMode.Combat) {
 			const camera = this.activeScene?.activeCamera;
-			camera?.detachControl();
-			this.locationGUI!.rootContainer.isVisible = false;
+
+			if (!camera || !this.locationGUI) {
+				return;
+			}
+
+			camera.detachControl();
+			this.locationGUI.rootContainer.isVisible = true;
 		}
 	}
 
@@ -209,6 +219,10 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			(x) => x.name == interactableData.attachedModelId,
 		);
 
+		if (!this.locationGUI || !attachedMesh) {
+			return;
+		}
+
 		const button = Button.CreateSimpleButton(interactableData.id, "?");
 		button.width = 0.1;
 		button.height = 0.1;
@@ -241,8 +255,8 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 				mesh: attachedMesh,
 			});
 		});
-		this.locationGUI!.addControl(button);
-		button.linkWithMesh(attachedMesh!);
+		this.locationGUI.addControl(button);
+		button.linkWithMesh(attachedMesh);
 	}
 }
 
@@ -274,7 +288,7 @@ export interface InteractableData {
 }
 
 export interface EncounterData {
-	[index: string]: EnemyData[];
+	[index: string]: string[];
 }
 
 interface EventData {

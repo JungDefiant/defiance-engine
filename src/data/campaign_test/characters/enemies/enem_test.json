@@ -1,8 +1,10 @@
 {
   "id": "en_sc_test",
-  "name": "EnName",
+  "name": "",
+  "backstory": "",
   "description": "",
-  "battlerSpriteURL": "spr_sentineltest.png",
+  "primaryColor": "",
+  "spriteUrl": "spr_sentineltest.png",
   "attributes": {
     "life": 400,
     "will": 200,
