@@ -28,7 +28,8 @@
                 "id": "regen",
                 "value": 10
             }
-        ]
+        ],
+        "powerId": ""
     },
     {
         "id": "aff_might",
@@ -59,6 +60,7 @@
                 "id": "regen",
                 "value": 10
             }
-        ]
+        ],
+        "powerId": ""
     }
 ]

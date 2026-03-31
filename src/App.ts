@@ -1,24 +1,25 @@
 import "reflect-metadata";
-import { container } from "tsyringe";
-import { Engine } from "@babylonjs/core";
-import SceneManagerSystem, {
-	GameMode,
-	ISceneManagerSystem,
-} from "./systems/SceneManagerSystem";
+import { container, inject } from "tsyringe";
+import { Engine, Nullable } from "@babylonjs/core";
+import SceneManagerSystem from "./systems/SceneManagerSystem";
 import DialogueManagerSystem from "./systems/DialogueManagerSystem";
 import UserInterfaceSystem from "./systems/UserInterfaceSystem";
-import CombatManagerSystem, {
-	ICombatManagerSystem,
-} from "./systems/CombatManagerSystem";
-import ActorStateSystem, {
-	IActorStateSystem,
-} from "./systems/ActorStateSystem";
+import CombatManagerSystem from "./systems/CombatManagerSystem";
+import GameContext, { GameMode } from "./GameContext";
+import { ActorFactory } from "./factories/ActorFactory";
 
 // This is the engine/game loop
 export class App {
 	private engine: Engine;
+	private readonly context: Nullable<GameContext> = null;
 
-	constructor() {
+	constructor(
+		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
+		@inject(UserInterfaceSystem) private uiSystem: UserInterfaceSystem,
+		@inject(DialogueManagerSystem) private dmSystem: DialogueManagerSystem,
+		@inject(CombatManagerSystem) private cmSystem: CombatManagerSystem,
+		@inject(ActorFactory) private actorFactory: ActorFactory,
+	) {
 		const canvas = document.getElementById(
 			"gameCanvas",
 		)! as any as HTMLCanvasElement;
@@ -29,51 +30,39 @@ export class App {
 	}
 
 	public async run() {
-		// Create systems
-		container.registerSingleton<ISceneManagerSystem>(
-			"SceneManagerSystem",
-			SceneManagerSystem,
-		);
-		container.registerSingleton("UserInterfaceSystem", UserInterfaceSystem);
-		container.registerSingleton("DialogueManagerSystem", DialogueManagerSystem);
-		container.registerSingleton<ICombatManagerSystem>(
-			"CombatManagerSystem",
-			CombatManagerSystem,
-		);
-		container.registerSingleton<IActorStateSystem>(
-			"PartyStateSystem",
-			ActorStateSystem,
-		);
-
 		await this.startSystems();
-		const smSystem = container.resolve(SceneManagerSystem);
-		const uiSystem = container.resolve(UserInterfaceSystem);
+
+		// TEST
+		await this.smSystem.createScene(this.engine, "scene_test", "campaign_test");
+		this.smSystem.setGameMode(GameMode.Combat);
+		this.cmSystem.startCombat("enc_test");
+
+		await this.startFactories();
+		const context = container.resolve(GameContext);
 
 		this.engine.runRenderLoop(() => {
-			smSystem.getActiveScene()?.render();
-			uiSystem.uiScene?.render();
+			context.scene.render();
+			this.uiSystem.uiScene?.render();
 		});
 	}
 
 	private async startSystems() {
-		const uiSystem = container.resolve(UserInterfaceSystem);
-		await uiSystem.start(this.engine);
+		await this.uiSystem.start(this.engine);
+		await this.smSystem.start();
+		await this.dmSystem.start();
+		await this.cmSystem.start();
+	}
 
-		const smSystem = container.resolve(SceneManagerSystem);
-		await smSystem.start();
-
-		const dmSystem = container.resolve(DialogueManagerSystem);
-		await dmSystem.start();
-
-		const cmSystem = container.resolve(CombatManagerSystem);
-		await cmSystem.start();
-
-		// TEST
-		await smSystem.loadScene("test", this.engine);
-		smSystem.setGameMode(GameMode.Combat);
-		cmSystem.startCombat("enc_test");
+	private async startFactories() {
+		await this.actorFactory.start();
 	}
 }
 
-const app = new App();
+const smSystem = container.resolve(SceneManagerSystem);
+const uiSystem = container.resolve(UserInterfaceSystem);
+const dmSystem = container.resolve(DialogueManagerSystem);
+const cmSystem = container.resolve(CombatManagerSystem);
+const actFactory = container.resolve(ActorFactory);
+
+const app = new App(smSystem, uiSystem, dmSystem, cmSystem, actFactory);
 app.run();

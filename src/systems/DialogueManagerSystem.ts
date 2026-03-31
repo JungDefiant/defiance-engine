@@ -1,4 +1,4 @@
-import { container, inject, singleton } from "tsyringe";
+import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import {
 	AbstractMesh,
@@ -7,10 +7,8 @@ import {
 	Vector3,
 } from "@babylonjs/core";
 import UserInterfaceSystem from "./UserInterfaceSystem";
-import SceneManagerSystem, {
-	GameMode,
-	InteractableData,
-} from "./SceneManagerSystem";
+import SceneManagerSystem from "./SceneManagerSystem";
+import GameContext, { GameMode, InteractableData } from "../GameContext";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
@@ -36,7 +34,8 @@ export default class DialogueManagerSystem implements ISystem {
 	) {
 		const smSystem = container.resolve(SceneManagerSystem);
 		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
-		const camera = smSystem.getActiveScene()?.activeCamera as UniversalCamera;
+		const camera = container.resolve(GameContext).scene
+			.activeCamera as UniversalCamera;
 
 		if (!smSystem || !camera || !dlgHud || !this.dialogueData) {
 			return;
@@ -101,11 +100,11 @@ export default class DialogueManagerSystem implements ISystem {
 	public endDialogue() {
 		// Switch mode back to Explore
 		const smSystem = container.resolve(SceneManagerSystem);
-		const scene = smSystem.getActiveScene();
-		const camera = smSystem.getActiveScene()?.activeCamera as UniversalCamera;
-		const locData = smSystem.getActiveLocationData();
+		const context = container.resolve(GameContext);
+		const camera = context.scene.activeCamera as UniversalCamera;
+		const locData = context.locationData;
 
-		if (!smSystem || !scene || !camera || !locData) {
+		if (!camera || !locData) {
 			return;
 		}
 

@@ -12,8 +12,8 @@ import PartyInfoHUD from "../gui/PartyInfoHUD";
 import ExploreHUD from "../gui/ExploreHUD";
 import DialogueHUD from "../gui/DialogueHUD";
 import CombatHUD from "../gui/CombatHUD";
-import { GameMode } from "./SceneManagerSystem";
 import { CreateTypography as createTypography } from "../gui/Themes";
+import { GameMode } from "../GameContext";
 
 export interface IUserInterfaceSystem extends ISystem {
 	setGameMode(newMode: GameMode): void;

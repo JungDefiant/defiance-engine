@@ -1,13 +1,11 @@
 import { Nullable } from "@babylonjs/core";
 import {
-	AdvancedDynamicTexture,
 	Container,
 	Control,
 	Grid,
 	Rectangle,
 	StackPanel,
 	TextBlock,
-	TextWrapping,
 } from "@babylonjs/gui";
 import IHUD from "./IHUD";
 import { Themes } from "./Themes";

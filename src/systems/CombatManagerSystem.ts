@@ -1,13 +1,11 @@
-import { container, singleton } from "tsyringe";
+import { container, inject, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import SceneManagerSystem, { GameMode } from "./SceneManagerSystem";
+import SceneManagerSystem from "./SceneManagerSystem";
 import UserInterfaceSystem from "./UserInterfaceSystem";
 import {
-	Mesh,
 	MeshBuilder,
 	Nullable,
 	PBRMaterial,
-	SpriteManager,
 	Texture,
 	UniversalCamera,
 	Vector3,
@@ -20,17 +18,18 @@ import {
 	StackPanel,
 } from "@babylonjs/gui";
 import { Themes } from "../gui/Themes";
-import ActorStateSystem, { ActorData } from "./ActorStateSystem";
+import GameContext, { GameMode } from "../GameContext";
+import { addComponent, getComponent, query } from "bitecs";
+import { ActorFactory } from "../factories/ActorFactory";
+import { ActorData } from "../components/ActorData";
 
 export interface ICombatManagerSystem extends ISystem {
-	startCombat(encId: string): void;
+	startCombat(encId: string): Promise<void>;
 }
 
 @singleton()
 export default class CombatManagerSystem implements ICombatManagerSystem {
 	private combatGUI: Nullable<AdvancedDynamicTexture> = null;
-	private playerBattlers: ActorData[] = [];
-	private enemyBattlers: ActorData[] = [];
 
 	private readonly enemyBattlerPositions: Vector3[] = [
 		new Vector3(0, 1, -1.25),
@@ -38,34 +37,37 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		new Vector3(-1, 1, -1.5),
 	];
 
-	public async start() {
-		const smSystem = container.resolve(SceneManagerSystem);
+	public constructor(
+		@inject(ActorFactory) private actFactory: ActorFactory,
+		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
+		@inject(UserInterfaceSystem) private uiSystem: UserInterfaceSystem,
+	) {}
 
-		if (!smSystem) {
-			return;
+	public async start() {}
+
+	public update(): void {
+		const context = container.resolve(GameContext);
+		for (const eid of query(context.world, [ActorData])) {
 		}
 	}
 
-	public update(): void {}
+	public async startCombat(encId: string): Promise<void> {
+		const context = container.resolve(GameContext);
+		const cbtHud = this.uiSystem.getCombatHud();
+		const locData = context.locationData;
+		const camera = context.scene.activeCamera as UniversalCamera;
 
-	public startCombat(encId: string): void {
-		const smSystem = container.resolve(SceneManagerSystem);
-		const asSystem = container.resolve(ActorStateSystem);
-		const cbtHud = container.resolve(UserInterfaceSystem).getCombatHud();
-		const locData = smSystem.getActiveLocationData();
-		const camera = smSystem.getActiveScene()?.activeCamera as UniversalCamera;
-
-		if (!smSystem || !asSystem || !camera || !cbtHud || !locData) {
+		if (!this.smSystem || !camera || !cbtHud || !locData) {
 			return;
 		}
 
-		smSystem.setGameMode(GameMode.Combat);
+		this.smSystem.setGameMode(GameMode.Combat);
 
 		const viewCoords = locData.combatViewPosition;
 		camera.position = new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]);
 		camera.setTarget(new Vector3(0, 0, -40));
 
-		const encData = smSystem.getActiveSceneData()?.encounters[encId];
+		const encData = context.sceneData.encounters[encId];
 
 		/*
 		To Do:
@@ -77,31 +79,26 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		*/
 
 		// Test
-		this.createEnemyBattler(
-			asSystem.getActorDataById("en_sc_test") as ActorData,
-			0,
-		);
-		this.createEnemyBattler(
-			asSystem.getActorDataById("en_sc_test") as ActorData,
-			1,
-		);
-		this.createEnemyBattler(
-			asSystem.getActorDataById("en_sc_test") as ActorData,
-			2,
-		);
+		this.createEnemyBattler("enem_test", 0);
+		this.createEnemyBattler("enem_test", 1);
+		this.createEnemyBattler("enem_test", 2);
 	}
 
-	private createEnemyBattler(enBattlerData: ActorData, index: number): void {
-		const smSystem = container.resolve(SceneManagerSystem);
+	private async createEnemyBattler(
+		fileName: string,
+		index: number,
+	): Promise<void> {
+		const context = container.resolve(GameContext);
+		const scene = context.scene;
+		const enEntity = await this.actFactory.createActorEntityFromFile(
+			`enemies/${fileName}`,
+			context.campaignId,
+		);
 
-		if (!smSystem) {
-			return;
-		}
+		const enActorData = context.ActorComponent[enEntity];
 
-		const scene = smSystem.getActiveScene();
-
-		const enBattlerSprite = MeshBuilder.CreatePlane(
-			`enBattlerSprite_${enBattlerData.id}_${index}`,
+		const enActorSprite = MeshBuilder.CreatePlane(
+			`enBattlerSprite_${enActorData.id}_${index}`,
 			{
 				width: 1,
 				height: 2,
@@ -109,38 +106,39 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 			scene,
 		);
 
-		const enBattlerSpriteMat = new PBRMaterial(
-			`mat_enBattlerSprite_${enBattlerData.id}_${index}`,
+		const enActorSpriteMat = new PBRMaterial(
+			`mat_enBattlerSprite_${enActorData.id}_${index}`,
 			scene,
 		);
-		enBattlerSprite.billboardMode = 7;
-		enBattlerSprite.position = this.enemyBattlerPositions[index];
+		enActorSprite.billboardMode = 7;
+		enActorSprite.position = this.enemyBattlerPositions[index];
 
-		enBattlerSpriteMat.albedoTexture = new Texture(
-			`./sprites/enemies/${enBattlerData.spriteUrl}`,
+		enActorSpriteMat.albedoTexture = new Texture(
+			`./sprites/enemies/${enActorData.spriteUrl}`,
 			scene,
 		);
-		enBattlerSpriteMat.metallic = 0;
-		enBattlerSpriteMat.roughness = 0;
-		enBattlerSpriteMat.alphaCutOff = 0.4;
-		enBattlerSpriteMat.transparencyMode = 1;
-		enBattlerSpriteMat.useAlphaFromAlbedoTexture = true;
+		enActorSpriteMat.metallic = 0;
+		enActorSpriteMat.roughness = 0;
+		enActorSpriteMat.alphaCutOff = 0.4;
+		enActorSpriteMat.transparencyMode = 1;
+		enActorSpriteMat.useAlphaFromAlbedoTexture = true;
 
-		enBattlerSprite.material = enBattlerSpriteMat;
+		enActorSprite.material = enActorSpriteMat;
+		addComponent(context.world, enEntity, enActorSprite);
 
 		if (!this.combatGUI) {
 			this.combatGUI = AdvancedDynamicTexture.CreateFullscreenUI("ui_combat");
 		}
 
 		const enBattlerUI = new StackPanel(
-			`ui_enBattlerUI_${enBattlerData.id}_${index}`,
+			`ui_enBattlerUI_${enActorData.id}_${index}`,
 		);
 		enBattlerUI.widthInPixels = 80;
 		enBattlerUI.heightInPixels = 80;
 		this.combatGUI.addControl(enBattlerUI);
 
 		const enBattlerStatusIconsUI = new Grid(
-			`ui_enBattlerStatusIcons_${enBattlerData.id}_${index}`,
+			`ui_enBattlerStatusIcons_${enActorData.id}_${index}`,
 		);
 		enBattlerStatusIconsUI.widthInPixels = 60;
 		enBattlerStatusIconsUI.heightInPixels = 60;
@@ -151,7 +149,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		enBattlerUI.addControl(enBattlerStatusIconsUI);
 
 		const enBattlerActBarUIBG = new Rectangle(
-			`ui_enBattlerActBarUIBG_${enBattlerData.id}_${index}`,
+			`ui_enBattlerActBarUIBG_${enActorData.id}_${index}`,
 		);
 		enBattlerActBarUIBG.widthInPixels = 80;
 		enBattlerActBarUIBG.heightInPixels = 8;
@@ -161,7 +159,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		enBattlerUI.addControl(enBattlerActBarUIBG);
 
 		const enBattlerActBarUIFill = new Rectangle(
-			`ui_enBattlerActBarUIFill_${enBattlerData.id}_${index}`,
+			`ui_enBattlerActBarUIFill_${enActorData.id}_${index}`,
 		);
 		enBattlerActBarUIFill.horizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -171,13 +169,10 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		enBattlerActBarUIFill.background = Themes.secondary2;
 		enBattlerActBarUIBG.addControl(enBattlerActBarUIFill);
 
-		enBattlerUI.linkWithMesh(enBattlerSprite);
+		enBattlerUI.linkWithMesh(enActorSprite);
 		enBattlerUI.linkOffsetY = 40;
-
-		this.enemyBattlers.push(enBattlerData);
+		addComponent(context.world, enEntity, enBattlerUI);
 	}
-
-	private updateBattlerRecovery() {}
 
 	private updateBattlerQueueActions() {}
 

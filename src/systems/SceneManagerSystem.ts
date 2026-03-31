@@ -1,4 +1,4 @@
-import { container, singleton } from "tsyringe";
+import { container, Lifecycle, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import { World, createWorld, query } from "bitecs";
 import {
@@ -19,17 +19,18 @@ import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
 import DialogueManagerSystem from "./DialogueManagerSystem";
 import UserInterfaceSystem from "./UserInterfaceSystem";
-import { ActorData } from "./ActorStateSystem";
+import GameContext, {
+	EventData,
+	GameMode,
+	InteractableData,
+	LocationData,
+	SceneData,
+} from "../GameContext";
 
 export interface ISceneManagerSystem extends ISystem {
-	getCampaignId(): string;
-	getActiveScene(): Scene;
-	getActiveSceneData(): SceneData;
-	getActiveLocationData(): Nullable<LocationData>;
-	getActiveLocationUI(): Nullable<AdvancedDynamicTexture>;
 	debug(debugOn: boolean): void;
 	setGameMode(GameMode: GameMode): void;
-	loadScene(sceneId: string, engine: Engine): void;
+	createScene(engine: Engine, fileName: string, campaignId: string): void;
 	loadLocationEvent(eventData: EventData, locationMeshes: AbstractMesh[]): void;
 	loadCombatEncounter(encounterId: string, locationIndex: number): void;
 	checkEventTriggers(): void;
@@ -67,26 +68,6 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		for (const entityId of query(this.activeWorld!, [])) {
 			// Component.value[entityId]    -->     how to access component data
 		}
-	}
-
-	public getCampaignId(): string {
-		return this.campaignId;
-	}
-
-	public getActiveScene(): Scene {
-		return this.activeScene as Scene;
-	}
-
-	public getActiveSceneData(): SceneData {
-		return this.sceneData.get(this.activeSceneId) as SceneData;
-	}
-
-	public getActiveLocationData(): Nullable<LocationData> {
-		return this.activeLocationData;
-	}
-
-	public getActiveLocationUI(): Nullable<AdvancedDynamicTexture> {
-		return this.locationGUI;
 	}
 
 	public debug(debugOn: boolean = true) {
@@ -131,25 +112,34 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		}
 	}
 
-	public async loadScene(sceneId: string, engine: Engine) {
-		const sceneData = this.sceneData?.get(sceneId);
-		this.activeSceneId = sceneId;
-		this.activeWorld = createWorld();
-		this.activeScene = new Scene(engine);
+	public async createScene(
+		engine: Engine,
+		fileName: string,
+		campaignId: string,
+	) {
+		const response = await fetch(`/data/${campaignId}/scenes/${fileName}.json`);
+		const sceneData = await response.json();
+		if (!sceneData) {
+			return;
+		}
+
+		const sceneId = fileName;
+		const world = createWorld();
+		const scene = new Scene(engine);
 
 		// Test
 		const expCamPos = sceneData?.locations[0].exploreViewPosition!;
 		const camera = new UniversalCamera(
 			"cam_explore",
 			new Vector3(expCamPos[0], expCamPos[1], expCamPos[2]),
-			this.activeScene,
+			scene,
 		);
 		camera.setFocalLength(30);
 		camera.setTarget(new Vector3(0, 0, -40));
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.attachControl(this.gameCanvas, false);
 
-		this.activeScene.onPointerObservable.add((eventData) => {
+		scene.onPointerObservable.add((eventData) => {
 			// This will block out vertical rotation
 			// For blocking out horizontal rotation, simply use y instead of x
 			camera.cameraRotation.x = 0;
@@ -160,21 +150,28 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			{ size: 100.0 },
 			this.activeScene,
 		);
-		const skyboxMaterial = new StandardMaterial("skyBox", this.activeScene);
+		const skyboxMaterial = new StandardMaterial("skyBox", scene);
 		skyboxMaterial.emissiveColor = new Color3(1, 1, 1);
 		skyboxMaterial.backFaceCulling = true;
 		skyboxMaterial.disableLighting = true;
 		skybox.material = skyboxMaterial;
 		skybox.infiniteDistance = true;
 
-		const light = new HemisphericLight(
-			"light",
-			new Vector3(1, 1, 1),
-			this.activeScene,
-		);
+		const light = new HemisphericLight("light", new Vector3(1, 1, 1), scene);
 		light.intensity = 1;
 
-		await this.loadLocation(0, sceneData!);
+		const locationLoaded = await this.loadLocation(0, scene, sceneData);
+
+		const context = new GameContext(
+			campaignId,
+			world,
+			scene,
+			sceneData,
+			locationLoaded.data,
+			locationLoaded.gui,
+		);
+
+		container.register(GameContext, { useValue: context });
 	}
 
 	public async loadLocationEvent(
@@ -189,26 +186,29 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 
 	public checkEventTriggers() {}
 
-	private async loadLocation(locationIndex: number, sceneData: SceneData) {
+	private async loadLocation(
+		locationIndex: number,
+		scene: Scene,
+		sceneData: SceneData,
+	): Promise<{ data: LocationData; gui: AdvancedDynamicTexture }> {
 		const locMeshes = await ImportMeshAsync(
 			`./models/maps/${sceneData?.locations[locationIndex].modelURL}`,
-			this.activeScene!,
+			scene,
 		);
-		this.activeLocationData = sceneData.locations[locationIndex];
+		const locationData = sceneData.locations[locationIndex];
 
-		this.locationGUI = AdvancedDynamicTexture.CreateFullscreenUI("ui_location");
+		const locationGUI =
+			AdvancedDynamicTexture.CreateFullscreenUI("ui_location");
 
-		this.activeLocationData.interactables.forEach(async (itr) => {
-			if (!this.activeLocationData) {
-				return;
-			}
-
+		locationData.interactables.forEach(async (itr) => {
 			await this.loadLocationInteractable(itr, locMeshes.meshes);
 		});
 
-		this.activeLocationData.events.forEach(async (evt) => {
+		locationData.events.forEach(async (evt) => {
 			await this.loadLocationEvent(evt, locMeshes.meshes);
 		});
+
+		return { data: locationData, gui: locationGUI };
 	}
 
 	private async loadLocationInteractable(
@@ -258,47 +258,4 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		this.locationGUI.addControl(button);
 		button.linkWithMesh(attachedMesh);
 	}
-}
-
-interface SceneData {
-	id: string;
-	difficultyLevel: number;
-	startLocationId: string;
-	locations: LocationData[];
-	encounters: EncounterData;
-}
-
-export interface LocationData {
-	id: string;
-	modelURL: string;
-	exploreViewPosition: number[];
-	combatViewPosition: number[];
-	interactables: InteractableData[];
-	events: EventData[];
-}
-
-export interface InteractableData {
-	id: string;
-	name: string;
-	description: string;
-	dialogueNodeId: string;
-	attachedModelId: string;
-	viewPosition: number[];
-	guiPositionOffset: number[];
-}
-
-export interface EncounterData {
-	[index: string]: string[];
-}
-
-interface EventData {
-	id: string;
-	flagTriggers: string[];
-}
-
-export enum GameMode {
-	MainMenu,
-	Combat,
-	Explore,
-	Dialogue,
 }
