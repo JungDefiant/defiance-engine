@@ -30,7 +30,12 @@ import GameContext, {
 export interface ISceneManagerSystem extends ISystem {
 	debug(debugOn: boolean): void;
 	setGameMode(GameMode: GameMode): void;
-	createScene(engine: Engine, fileName: string, campaignId: string): void;
+	createScene(
+		engine: Engine,
+		fileName: string,
+		campaignId: string,
+		gameMode: GameMode,
+	): void;
 	loadLocationEvent(eventData: EventData, locationMeshes: AbstractMesh[]): void;
 	loadCombatEncounter(encounterId: string, locationIndex: number): void;
 	checkEventTriggers(): void;
@@ -38,84 +43,69 @@ export interface ISceneManagerSystem extends ISystem {
 
 @singleton()
 export default class SceneManagerSystem implements ISceneManagerSystem {
-	private activeScene: Nullable<Scene> = null;
-	private campaignId: string = "campaign_test";
-	private activeSceneId: string = "";
-	private activeWorld: Nullable<World> = null;
-	private activeGameMode: GameMode = GameMode.MainMenu;
-	private activeLocationData: Nullable<LocationData> = null;
-	private locationGUI: Nullable<AdvancedDynamicTexture> = null;
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
-	private sceneData: Map<string, SceneData> = new Map<string, SceneData>();
 
 	public async start() {
-		// Import scene data files
-		const allData = await import.meta.glob("/src/data/*/scenes/*.json");
-		for (const path in allData) {
-			const campaignId = path.split("/")[3];
-			if (campaignId == this.campaignId) {
-				const data = (await allData[path]()) as SceneData;
-				this.sceneData.set(data.id, data);
-			}
-		}
-
 		this.gameCanvas = document.getElementById(
 			"gameCanvas",
 		)! as HTMLCanvasElement;
 	}
 
 	public update() {
-		for (const entityId of query(this.activeWorld!, [])) {
+		const context = container.resolve(GameContext);
+		for (const entityId of query(context.world, [])) {
 			// Component.value[entityId]    -->     how to access component data
 		}
 	}
 
 	public debug(debugOn: boolean = true) {
-		if (!this.activeScene) {
-			return;
-		}
+		const context = container.resolve(GameContext);
 
 		if (debugOn) {
-			this.activeScene.debugLayer.show({ overlay: true });
+			context.scene.debugLayer.show({ overlay: true });
 		} else {
-			this.activeScene.debugLayer.hide();
+			context.scene.debugLayer.hide();
 		}
 	}
 
 	public setGameMode(newMode: GameMode) {
-		this.activeGameMode = newMode;
+		const context = container.resolve(GameContext);
+		const newContext = { ...context, gameMode: newMode } as GameContext;
 
 		const uiSystem = container.resolve(UserInterfaceSystem);
-		uiSystem.setGameMode(this.activeGameMode);
+		uiSystem.setGameMode(newMode);
 
 		if (newMode == GameMode.MainMenu) {
 			// X
 		} else if (newMode == GameMode.Explore) {
-			const camera = this.activeScene?.activeCamera;
+			const camera = newContext.scene.activeCamera;
 
-			if (!camera || !this.locationGUI) {
+			if (!camera) {
 				return;
 			}
 
 			camera.attachControl(this.gameCanvas);
-			this.locationGUI.rootContainer.isVisible = true;
+			newContext.locationGUI.rootContainer.isVisible = true;
 			// X
 		} else if (newMode == GameMode.Dialogue || newMode == GameMode.Combat) {
-			const camera = this.activeScene?.activeCamera;
+			const camera = newContext.scene.activeCamera;
 
-			if (!camera || !this.locationGUI) {
+			if (!camera) {
 				return;
 			}
 
 			camera.detachControl();
-			this.locationGUI.rootContainer.isVisible = true;
+			newContext.locationGUI.rootContainer.isVisible = true;
 		}
+
+		container.register(GameContext, { useValue: newContext });
 	}
 
 	public async createScene(
 		engine: Engine,
 		fileName: string,
 		campaignId: string,
+		gameMode: GameMode,
 	) {
 		const response = await fetch(`/data/${campaignId}/scenes/${fileName}.json`);
 		const sceneData = await response.json();
@@ -123,11 +113,9 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			return;
 		}
 
-		const sceneId = fileName;
 		const world = createWorld();
 		const scene = new Scene(engine);
 
-		// Test
 		const expCamPos = sceneData?.locations[0].exploreViewPosition!;
 		const camera = new UniversalCamera(
 			"cam_explore",
@@ -145,11 +133,7 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			camera.cameraRotation.x = 0;
 		});
 
-		const skybox = MeshBuilder.CreateBox(
-			"skybox",
-			{ size: 100.0 },
-			this.activeScene,
-		);
+		const skybox = MeshBuilder.CreateBox("skybox", { size: 100.0 }, scene);
 		const skyboxMaterial = new StandardMaterial("skyBox", scene);
 		skyboxMaterial.emissiveColor = new Color3(1, 1, 1);
 		skyboxMaterial.backFaceCulling = true;
@@ -162,16 +146,20 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 
 		const locationLoaded = await this.loadLocation(0, scene, sceneData);
 
-		const context = new GameContext(
+		const combatGUI = AdvancedDynamicTexture.CreateFullscreenUI("ui_combat");
+
+		const newContext = new GameContext(
 			campaignId,
+			gameMode,
 			world,
 			scene,
 			sceneData,
 			locationLoaded.data,
 			locationLoaded.gui,
+			combatGUI,
 		);
 
-		container.register(GameContext, { useValue: context });
+		container.register(GameContext, { useValue: newContext });
 	}
 
 	public async loadLocationEvent(
@@ -201,7 +189,7 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			AdvancedDynamicTexture.CreateFullscreenUI("ui_location");
 
 		locationData.interactables.forEach(async (itr) => {
-			await this.loadLocationInteractable(itr, locMeshes.meshes);
+			await this.loadLocationInteractable(itr, locMeshes.meshes, locationGUI);
 		});
 
 		locationData.events.forEach(async (evt) => {
@@ -214,12 +202,13 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 	private async loadLocationInteractable(
 		interactableData: InteractableData,
 		locationMeshes: AbstractMesh[],
+		locationGUI: AdvancedDynamicTexture,
 	) {
 		const attachedMesh = locationMeshes.find(
 			(x) => x.name == interactableData.attachedModelId,
 		);
 
-		if (!this.locationGUI || !attachedMesh) {
+		if (!attachedMesh) {
 			return;
 		}
 
@@ -255,7 +244,7 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 				mesh: attachedMesh,
 			});
 		});
-		this.locationGUI.addControl(button);
+		locationGUI.addControl(button);
 		button.linkWithMesh(attachedMesh);
 	}
 }

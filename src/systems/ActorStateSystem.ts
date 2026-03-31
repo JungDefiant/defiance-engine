@@ -1,4 +1,4 @@
-import { inject, singleton } from "tsyringe";
+import { container, inject, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import GameContext from "../GameContext";
 import { query } from "bitecs";
@@ -8,12 +8,13 @@ export interface IActorStateSystem extends ISystem {}
 
 @singleton()
 export default class ActorStateSystem implements IActorStateSystem {
-	public constructor(@inject(GameContext) private context: GameContext) {}
+	public constructor() {}
 
 	public async start() {}
 
 	public update(): void {
-		for (const eid of query(this.context.world, [ActorData])) {
+		const context = container.resolve(GameContext);
+		for (const eid of query(context.world, [ActorData])) {
 		}
 	}
 }
