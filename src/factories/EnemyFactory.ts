@@ -56,7 +56,11 @@ export class EnemyFactory implements IFactory {
 			this.enSpritePositions[this.currEnemyIndex],
 		);
 		this.currEnemyIndex++;
-		addComponent(context.world, newEntity, newEnemySprite);
+		addComponent(
+			context.world,
+			newEntity,
+			set(context.EnemySprite, newEnemySprite),
+		);
 
 		// const newActorComp = CreateActorComponent(rawData);
 		// addComponent(
@@ -65,7 +69,11 @@ export class EnemyFactory implements IFactory {
 		// 	set(context.ActorComponent, newActorComp),
 		// );
 		const newEnemyGUI = new EnemyGUI(newEntity, context, newEnemySprite);
-		addComponent(context.world, newEntity, newEnemyGUI);
+		addComponent(
+			context.world,
+			newEntity,
+			set(context.EnemyGUIComponent, newEnemyGUI),
+		);
 
 		return newEntity;
 	}

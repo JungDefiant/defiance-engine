@@ -26,8 +26,16 @@ export default class ExploreHUD implements IHUD {
 	public createHudRoot(): Container {
 		this.rootContainer = new Container("ui_exploreHUD");
 
+		const backgroundUI = new Rectangle("ui_exploreBgUI");
+		backgroundUI.width = 1;
+		backgroundUI.heightInPixels = 50;
+		backgroundUI.background = Themes.primary3;
+		backgroundUI.thickness = 0;
+		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.rootContainer.addControl(backgroundUI);
+
 		this.highlightInfoUI = this.createHighlightInfoUI();
-		this.rootContainer.addControl(this.highlightInfoUI);
+		backgroundUI.addControl(this.highlightInfoUI);
 
 		return this.rootContainer;
 	}
@@ -61,7 +69,7 @@ export default class ExploreHUD implements IHUD {
 		highlightInfoUI.thickness = 2;
 		highlightInfoUI.widthInPixels = 320;
 		highlightInfoUI.heightInPixels = 50;
-		highlightInfoUI.topInPixels = 274;
+		highlightInfoUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
 		const highlightHeader = new TextBlock(this.headerUIName, "Header");
 		highlightHeader.fontSize = 14;

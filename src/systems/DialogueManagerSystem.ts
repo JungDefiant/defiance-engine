@@ -5,6 +5,7 @@ import {
 	Nullable,
 	UniversalCamera,
 	Vector3,
+	Viewport,
 } from "@babylonjs/core";
 import UserInterfaceSystem from "./UserInterfaceSystem";
 import SceneManagerSystem from "./SceneManagerSystem";
@@ -16,7 +17,7 @@ export default class DialogueManagerSystem implements ISystem {
 
 	public async start() {}
 
-	public update() {}
+	public update(deltaTime: number) {}
 
 	public async startDialogue(
 		dlgId: string,
@@ -46,6 +47,7 @@ export default class DialogueManagerSystem implements ISystem {
 		);
 		// LATER: Implement offsetting camera target
 		camera.setTarget(itr.mesh.position);
+		camera.viewport = new Viewport(0, 0, 1, 1);
 
 		this.activeDialogue = dlgData;
 		this.runLine(0);
@@ -99,14 +101,11 @@ export default class DialogueManagerSystem implements ISystem {
 		const camera = context.scene.activeCamera as UniversalCamera;
 		const locData = context.locationData;
 
-		if (!camera || !locData) {
-			return;
-		}
-
 		smSystem.setGameMode(GameMode.Explore);
 
 		const viewCoords = locData.exploreViewPosition;
 		camera.position = new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]);
+		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		// LATER: Implement offsetting camera target
 		camera.setTarget(new Vector3(0, 0, -40));
 	}

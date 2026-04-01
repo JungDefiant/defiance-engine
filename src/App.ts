@@ -8,6 +8,7 @@ import CombatManagerSystem from "./systems/CombatManagerSystem";
 import GameContext, { GameMode } from "./GameContext";
 import { PlayerFactory } from "./factories/PlayerFactory";
 import { EnemyFactory } from "./factories/EnemyFactory";
+import ActorStateSystem from "./systems/ActorStateSystem";
 
 // This is the engine/game loop
 export class App {
@@ -19,6 +20,7 @@ export class App {
 		@inject(UserInterfaceSystem) private uiSystem: UserInterfaceSystem,
 		@inject(DialogueManagerSystem) private dmSystem: DialogueManagerSystem,
 		@inject(CombatManagerSystem) private cmSystem: CombatManagerSystem,
+		@inject(ActorStateSystem) private asSystem: ActorStateSystem,
 		@inject(PlayerFactory) private playerFactory: PlayerFactory,
 		@inject(EnemyFactory) private enemyFactory: EnemyFactory,
 	) {
@@ -56,7 +58,10 @@ export class App {
 
 		this.engine.runRenderLoop(() => {
 			context.scene.render();
+			const deltaTime = context.scene.deltaTime / 1000;
+			this.updateSystems(deltaTime);
 			context.uiScene.render();
+			this.uiSystem.update(deltaTime);
 		});
 	}
 
@@ -65,6 +70,13 @@ export class App {
 		await this.smSystem.start();
 		await this.dmSystem.start();
 		await this.cmSystem.start();
+	}
+
+	private updateSystems(deltaTime: number) {
+		this.smSystem.update(deltaTime);
+		this.asSystem.update(deltaTime);
+		this.cmSystem.update(deltaTime);
+		this.dmSystem.update(deltaTime);
 	}
 
 	private async startFactories() {
@@ -77,6 +89,7 @@ const smSystem = container.resolve(SceneManagerSystem);
 const uiSystem = container.resolve(UserInterfaceSystem);
 const dmSystem = container.resolve(DialogueManagerSystem);
 const cmSystem = container.resolve(CombatManagerSystem);
+const asSystem = container.resolve(ActorStateSystem);
 const plyrFactory = container.resolve(PlayerFactory);
 const enFactory = container.resolve(EnemyFactory);
 
@@ -85,6 +98,7 @@ const app = new App(
 	uiSystem,
 	dmSystem,
 	cmSystem,
+	asSystem,
 	plyrFactory,
 	enFactory,
 );

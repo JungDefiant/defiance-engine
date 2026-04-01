@@ -26,7 +26,7 @@ import GameContext, {
 	LocationData,
 	SceneData,
 } from "../GameContext";
-import { CreateTypography } from "../gui/Themes";
+import { CreateTypography, Themes } from "../gui/Themes";
 import PartyInfoHUD from "../gui/PartyInfoHUD";
 import CombatHUD from "../gui/CombatHUD";
 import DialogueHUD from "../gui/DialogueHUD";
@@ -56,7 +56,7 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		)! as HTMLCanvasElement;
 	}
 
-	public update() {
+	public update(deltaTime: number) {
 		const context = container.resolve(GameContext);
 		for (const entityId of query(context.world, [])) {
 			// Component.value[entityId]    -->     how to access component data
@@ -154,7 +154,7 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 
 		const skybox = MeshBuilder.CreateBox("skybox", { size: 100.0 }, scene);
 		const skyboxMaterial = new StandardMaterial("skyBox", scene);
-		skyboxMaterial.emissiveColor = new Color3(1, 1, 1);
+		skyboxMaterial.emissiveColor = Color3.FromHexString(Themes.primary3);
 		skyboxMaterial.backFaceCulling = true;
 		skyboxMaterial.disableLighting = true;
 		skybox.material = skyboxMaterial;

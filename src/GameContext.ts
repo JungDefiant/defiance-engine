@@ -1,6 +1,6 @@
 import { Mesh, Scene } from "@babylonjs/core";
 import { AdvancedDynamicTexture } from "@babylonjs/gui";
-import { EntityId, observe, onSet, World } from "bitecs";
+import { EntityId, observe, onGet, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
 import { ActorData } from "./components/ActorData";
 import { EnemyGUI } from "./components/EnemyGUI";
@@ -71,6 +71,10 @@ export default class GameContext {
 			},
 		);
 
+		observe(this.world, onGet(this.ActorDataComponent), (eid: EntityId) => {
+			return this.ActorDataComponent[eid];
+		});
+
 		observe(
 			this.world,
 			onSet(this.PlayerGUIComponent),
@@ -78,6 +82,10 @@ export default class GameContext {
 				this.PlayerGUIComponent[eid] = params;
 			},
 		);
+
+		observe(this.world, onGet(this.PlayerGUIComponent), (eid: EntityId) => {
+			return this.PlayerGUIComponent[eid];
+		});
 
 		observe(
 			this.world,
@@ -87,6 +95,10 @@ export default class GameContext {
 			},
 		);
 
+		observe(this.world, onGet(this.EnemyGUIComponent), (eid: EntityId) => {
+			return this.EnemyGUIComponent[eid];
+		});
+
 		observe(
 			this.world,
 			onSet(this.EnemySprite),
@@ -94,6 +106,10 @@ export default class GameContext {
 				this.EnemySprite[eid] = params;
 			},
 		);
+
+		observe(this.world, onGet(this.EnemySprite), (eid: EntityId) => {
+			return this.EnemySprite[eid];
+		});
 	}
 }
 

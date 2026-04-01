@@ -29,6 +29,8 @@ export interface ICombatManagerSystem extends ISystem {
 
 @singleton()
 export default class CombatManagerSystem implements ICombatManagerSystem {
+	private gamePaused = true;
+
 	public constructor(
 		@inject(EnemyFactory) private enFactory: EnemyFactory,
 		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
@@ -37,9 +39,13 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 
 	public async start() {}
 
-	public update(): void {
+	public update(deltaTime: number): void {
+		if (this.gamePaused) {
+			return;
+		}
+
 		const context = container.resolve(GameContext);
-		for (const eid of query(context.world, [ActorData])) {
+		for (const eid of query(context.world, [context.ActorDataComponent])) {
 		}
 	}
 
@@ -76,9 +82,16 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 			"enemies/enem_test",
 			context.campaignId,
 		);
+
+		this.gamePaused = false;
 	}
 
-	private updateBattlerQueueActions() {}
+	private updateBattlerQueueAction(actorData: ActorData, actionId: string) {}
 
-	private updateBattlerExecuteAction() {}
+	private updateBattlerExecuteAction(actorData: ActorData) {
+		const rcvyAttr = actorData.attributes["recovery"];
+		if (rcvyAttr.currentValue >= rcvyAttr.maximumValue) {
+			const actionToExecute = actorData.queuedAction;
+		}
+	}
 }

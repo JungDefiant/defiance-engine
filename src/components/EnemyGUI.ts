@@ -37,7 +37,7 @@ export class EnemyGUI implements ActorGUI {
 			`ui_enBattlerActBarUIBG_${enActorData.id}_${eid}`,
 		);
 		this.actBarBGUI.widthInPixels = 100;
-		this.actBarBGUI.heightInPixels = 10;
+		this.actBarBGUI.heightInPixels = 12;
 		this.actBarBGUI.thickness = 1.2;
 		this.actBarBGUI.color = Themes.primary1;
 		this.actBarBGUI.background = Themes.primary3;
@@ -58,7 +58,10 @@ export class EnemyGUI implements ActorGUI {
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {
-		this.actBarFillUI.width = currValue / maxValue;
+		this.actBarFillUI.width = Math.max(
+			0,
+			Math.min(1, currValue / maxValue || 0),
+		);
 	}
 
 	public addStatusIcon(id: string, iconSrc: string): void {

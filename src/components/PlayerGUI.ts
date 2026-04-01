@@ -55,7 +55,7 @@ export class PlayerGUI implements ActorGUI {
 		portraitUI.clipContent = true;
 		portraitUI.width = 1.25;
 		portraitUI.height = 2.5;
-		portraitUI.top = 300;
+		portraitUI.top = 285;
 		portraitUI.highlightColor = "";
 		portraitUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.rootContainer.addControl(portraitUI);
@@ -82,6 +82,7 @@ export class PlayerGUI implements ActorGUI {
 		barStackPanel.isVertical = true;
 		barStackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		barStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		barStackPanel.paddingTopInPixels = -4;
 		rootStackPanel.addControl(barStackPanel);
 
 		this.statusIconsUI = new Grid(`ui_playerStatusIcons_${eid}`);
@@ -112,7 +113,7 @@ export class PlayerGUI implements ActorGUI {
 
 		this.charNameBgUI = new Rectangle(`ui_${name}StatBarBgUI_${eid}`);
 		this.charNameBgUI.width = 1;
-		this.charNameBgUI.heightInPixels = 18;
+		this.charNameBgUI.heightInPixels = 20;
 		this.charNameBgUI.thickness = 1;
 		this.charNameBgUI.color = Themes.primary1;
 		this.charNameBgUI.background = Themes.primary3;
@@ -126,7 +127,7 @@ export class PlayerGUI implements ActorGUI {
 		this.charNameUI.height = 1;
 		this.charNameUI.style = Themes.typography.header3;
 		this.charNameUI.color = Themes.neutral2;
-		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		this.charNameBgUI.addControl(this.charNameUI);
 
 		// ACT BAR
@@ -239,7 +240,28 @@ export class PlayerGUI implements ActorGUI {
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {
-		this.actBarFillUI.width = currValue / maxValue;
+		this.actBarFillUI.width = Math.max(
+			0,
+			Math.min(1, currValue / maxValue || 0),
+		);
+	}
+
+	public setLifeBarFill(currValue: number, maxValue: number): void {
+		this.lifeBarFillUI.width = Math.max(
+			0,
+			Math.min(1, currValue / maxValue || 0),
+		);
+	}
+
+	public setWillBarFill(currValue: number, maxValue: number): void {
+		this.willBarFillUI.width = Math.max(
+			0,
+			Math.min(1, currValue / maxValue || 0),
+		);
+	}
+
+	public setQueuedAction(iconSrc: string): void {
+		this.queueActionUI.source = iconSrc;
 	}
 
 	public addStatusIcon(id: string, iconSrc: string): void {
@@ -309,12 +331,14 @@ export class PlayerGUI implements ActorGUI {
 			`ui_${name}StatLabelBgUI_${eid}`,
 			name.toUpperCase(),
 		);
-		statLabelUi.widthInPixels = 40;
+		statLabelUi.widthInPixels = 44;
 		statLabelUi.heightInPixels = 18;
 		statLabelUi.style = style;
 		statLabelUi.color = color;
 		statLabelUi.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		statLabelUi.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		statLabelUi.paddingTopInPixels = 1;
+		statLabelUi.paddingLeftInPixels = 2;
 		return statLabelUi;
 	}
 

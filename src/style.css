@@ -5,8 +5,8 @@
     font-weight: 400;
 
     color-scheme: light dark;
-    color: rgba(0, 0, 0, 1);
-    background-color: #242424;
+    color: #2A2828;
+    background-color: #2A2828;
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -30,7 +30,7 @@ body {
     height: 100%;
     overflow: hidden;
     aspect-ratio: 16/9 auto;
-    background-color: #242424;
+    background-color: #2A2828;
 }
 
 #gameCanvas {

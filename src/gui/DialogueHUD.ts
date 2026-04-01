@@ -38,6 +38,14 @@ export default class DialogueHUD implements IHUD {
 	public createHudRoot(): Container {
 		this.rootContainer = new Container("ui_dialogueHUD");
 
+		const backgroundUI = new Rectangle("ui_exploreBgUI");
+		backgroundUI.width = 1;
+		backgroundUI.heightInPixels = 50;
+		backgroundUI.background = Themes.primary3;
+		backgroundUI.thickness = 0;
+		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.rootContainer.addControl(backgroundUI);
+
 		this.dialogueFeedUI = this.createDialogueFeed();
 		this.rootContainer.addControl(this.dialogueFeedUI);
 
@@ -258,7 +266,7 @@ export default class DialogueHUD implements IHUD {
 		dialogueFeedUI.color = Themes.primary1;
 		dialogueFeedUI.thickness = 2;
 		dialogueFeedUI.widthInPixels = 320;
-		dialogueFeedUI.heightInPixels = 540;
+		dialogueFeedUI.heightInPixels = 550;
 
 		const dialogueFeedStack = new StackPanel("ui_dialogueFeedStack");
 		dialogueFeedStack.width = 1;
@@ -307,6 +315,8 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryScrollbar.isVertical = true;
 		this.textEntryScrollbar.isThumbClamped = true;
 		this.textEntryScrollbar.widthInPixels = 8;
+		this.textEntryScrollbar.paddingTopInPixels = 8;
+		this.textEntryScrollbar.paddingBottomInPixels = 8;
 		this.textEntryScrollbar.onValueChangedObservable.add((value) => {
 			if (!this.textEntryStack) {
 				return;
@@ -317,6 +327,8 @@ export default class DialogueHUD implements IHUD {
 			this.textEntryStack.topInPixels = (value / 100) * textEntryStackSize;
 		});
 		this.textEntryScrollbar.value = 0;
+		this.textEntryScrollbar.background = Themes.primary3;
+		this.textEntryScrollbar.color = Themes.neutral1;
 		this.showHideScrollbar(false);
 		textEntryArea.addControl(this.textEntryScrollbar);
 

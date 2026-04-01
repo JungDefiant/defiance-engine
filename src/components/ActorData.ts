@@ -5,10 +5,12 @@ export class ActorData {
 	description: string = "";
 	spriteUrl: string = "";
 	attributes: AttributeSet = {};
-	abilityData: ActionData[] = [];
+	abilityData: AbilityData[] = [];
 	affinityData?: AffinityData;
-	itemData?: ActionData[];
+	itemData?: AbilityData[];
 	tactics?: TacticsData[];
+	queuedAction?: AbilityData;
+	currentStatuses: EffectData[] = [];
 
 	public constructor(initData: any) {
 		this.id = initData.id;
@@ -19,21 +21,38 @@ export class ActorData {
 		this.attributes = {
 			life: {
 				baseValue: initData.attributes.life,
+				maximumValue: initData.attributes.life,
+				currentValue: initData.attributes.life,
 			} as ActorAttribute,
 			will: {
-				baseValue: initData.attributes.life,
+				baseValue: initData.attributes.will,
+				maximumValue: initData.attributes.will,
+				currentValue: initData.attributes.will,
 			} as ActorAttribute,
 			speed: {
-				baseValue: initData.attributes.life,
+				baseValue: initData.attributes.speed,
+				maximumValue: initData.attributes.speed,
+				currentValue: initData.attributes.speed,
 			} as ActorAttribute,
 			defense: {
-				baseValue: initData.attributes.life,
+				baseValue: initData.attributes.defense,
+				maximumValue: initData.attributes.defense,
+				currentValue: initData.attributes.defense,
 			} as ActorAttribute,
 			critical: {
-				baseValue: initData.attributes.life,
+				baseValue: initData.attributes.critical,
+				maximumValue: initData.attributes.critical,
+				currentValue: initData.attributes.critical,
 			} as ActorAttribute,
 			regen: {
-				baseValue: initData.attributes.life,
+				baseValue: initData.attributes.regen,
+				maximumValue: initData.attributes.regen,
+				currentValue: initData.attributes.regen,
+			} as ActorAttribute,
+			recovery: {
+				baseValue: 0,
+				maximumValue: 0,
+				currentValue: 0,
 			} as ActorAttribute,
 		};
 		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
@@ -53,33 +72,38 @@ export interface AttributeSet {
 
 export interface ActorAttribute {
 	baseValue: number;
-	currentValue?: number;
-	maximumValue?: number;
+	currentValue: number;
+	maximumValue: number;
 }
 
 export interface AffinityData {
 	baseAttributes: ActorAttribute[];
 }
 
-export interface ActionData {
+export interface AbilityData {
 	id: string;
 	name: string;
 	description: string;
-	castVfxURL: string;
-	hitVfxURL: string;
-	castSfxURL: string;
-	hitSfxURL: string;
-	trigger: ActionTrigger;
-	descriptors: ActionDescriptor[];
-	target: ActionTarget;
-	recovery: number;
-	cost: number;
+	trigger: AbilityTrigger;
+	descriptors: AbilityDescriptor[];
+	target: AbilityTarget;
 	effectData: EffectData[];
+	recovery?: number;
+	cost?: number;
+	itemId?: string;
+	isConsumable?: boolean;
+	iconURL?: string;
+	castVfxURL?: string;
+	hitVfxURL?: string;
+	castSfxURL?: string;
+	hitSfxURL?: string;
 }
 
 export interface EffectData {
 	id: string;
-	variables: number[];
+	variables: {
+		[index: string]: string | number;
+	};
 }
 
 export interface TacticsData {
@@ -87,18 +111,21 @@ export interface TacticsData {
 	actionId: string;
 }
 
-export enum ActionTrigger {
+export enum AbilityTrigger {
 	action,
+	toggle,
+	passive,
 }
 
-export enum ActionDescriptor {
+export enum AbilityDescriptor {
 	melee,
 	impact,
 	innate,
 	attack,
 }
 
-export enum ActionTarget {
+export enum AbilityTarget {
+	special,
 	singleEnemy,
 	groupEnemy,
 	singleAlly,

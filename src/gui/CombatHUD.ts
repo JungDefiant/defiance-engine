@@ -9,11 +9,15 @@ import {
 } from "@babylonjs/gui";
 import IHUD from "./IHUD";
 import { Themes } from "./Themes";
+import { AbilityData } from "../components/ActorData";
+import { ActionSlot } from "./components/ActionSlot";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
 
 	private actionBarUI: Nullable<Container> = null;
+	private abilitySlots: ActionSlot[] = [];
+	private deviceSlots: ActionSlot[] = [];
 
 	private readonly actionAbilityStackName = "ui_actionAbilityStack";
 	private readonly actionDeviceStackName = "ui_actionDeviceStack";
@@ -25,10 +29,38 @@ export default class CombatHUD implements IHUD {
 	public createHudRoot(): Container {
 		this.rootContainer = new Container("ui_combatHUD");
 
+		const backgroundUI = new Rectangle("ui_exploreBgUI");
+		backgroundUI.width = 1;
+		backgroundUI.heightInPixels = 50;
+		backgroundUI.background = Themes.primary3;
+		backgroundUI.thickness = 0;
+		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.rootContainer.addControl(backgroundUI);
+
 		this.actionBarUI = this.createActionBar();
-		this.rootContainer.addControl(this.actionBarUI);
+		backgroundUI.addControl(this.actionBarUI);
 
 		return this.rootContainer;
+	}
+
+	public setActionBar(abilities: AbilityData[], devices: AbilityData[]): void {
+		for (let i = 0; i < abilities.length; i++) {
+			const abilitySlot = this.abilitySlots[i];
+			if (!abilitySlot || !abilities[i].iconURL) {
+				return;
+			}
+
+			abilitySlot.setActionSlotIcon(abilities[i].iconURL as string);
+		}
+
+		for (let i = 0; i < devices.length; i++) {
+			const deviceSlot = this.deviceSlots[i];
+			if (!deviceSlot || !devices[i].iconURL) {
+				return;
+			}
+
+			deviceSlot.setActionSlotIcon(devices[i].iconURL as string);
+		}
 	}
 
 	private createActionBar(): Container {
@@ -77,8 +109,9 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionAbilityStack, 1, 0);
 
 		for (let i = 0; i < 8; i++) {
-			const actionSlot = this.createActionSlot(i.toString());
-			actionAbilityStack.addControl(actionSlot);
+			const actionSlot = new ActionSlot(i.toString(), "");
+			actionAbilityStack.addControl(actionSlot.rootContainer);
+			this.abilitySlots.push(actionSlot);
 		}
 
 		const actionDeviceStack = new StackPanel(this.actionDeviceStackName);
@@ -89,30 +122,11 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionDeviceStack, 1, 1);
 
 		for (let i = 0; i < 4; i++) {
-			const actionSlot = this.createActionSlot(i.toString());
-			actionDeviceStack.addControl(actionSlot);
+			const actionSlot = new ActionSlot(i.toString(), "");
+			actionDeviceStack.addControl(actionSlot.rootContainer);
+			this.deviceSlots.push(actionSlot);
 		}
 
 		return actionBarUI;
-	}
-
-	private createActionSlot(label: string) {
-		const actionSlotUI = new Rectangle("ui_actionSlot_" + label);
-		actionSlotUI.color = Themes.primary1;
-		actionSlotUI.background = Themes.primary3;
-		actionSlotUI.thickness = 2;
-		actionSlotUI.widthInPixels = 32;
-		actionSlotUI.heightInPixels = 32;
-
-		const actionSlotLabel = new TextBlock("ui_actionSlotLabel", "Ability");
-		actionSlotLabel.color = Themes.neutral2;
-		actionSlotLabel.style = Themes.typography.bodyText;
-		actionSlotLabel.widthInPixels = 12;
-		actionSlotLabel.heightInPixels = 12;
-		actionSlotLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-		actionSlotLabel.textHorizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
-
-		return actionSlotUI;
 	}
 }
