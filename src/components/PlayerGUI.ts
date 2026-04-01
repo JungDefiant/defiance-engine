@@ -328,7 +328,7 @@ export class PlayerGUI implements ActorGUI {
 	): Rectangle {
 		const bgUi = new Rectangle(`ui_${name}BarBgUI_${eid}`);
 		bgUi.widthInPixels = 145;
-		bgUi.heightInPixels = 10;
+		bgUi.heightInPixels = 12;
 		bgUi.thickness = 1.2;
 		bgUi.color = color;
 		bgUi.background = background;
