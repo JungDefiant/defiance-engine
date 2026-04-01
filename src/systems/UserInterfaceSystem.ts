@@ -35,9 +35,7 @@ export default class UserInterfaceSystem implements IUserInterfaceSystem {
 	private dialogueHud: Nullable<DialogueHUD> = null;
 	private combatHud: Nullable<CombatHUD> = null;
 
-	public async start(engine: Engine) {
-		this.uiScene = this.createGUIScene(engine);
-	}
+	public async start(engine: Engine) {}
 
 	public update() {}
 
@@ -66,7 +64,7 @@ export default class UserInterfaceSystem implements IUserInterfaceSystem {
 		return this.combatHud!;
 	}
 
-	public createGUIScene(engine: Engine) {
+	public createGUIScene(engine: Engine): Scene {
 		const uiScene = new Scene(engine);
 		uiScene.autoClear = false;
 
@@ -77,8 +75,6 @@ export default class UserInterfaceSystem implements IUserInterfaceSystem {
 			true,
 			uiScene,
 		);
-
-		createTypography(this.fullscreenUI);
 
 		this.partyInfoHud = new PartyInfoHUD();
 		this.fullscreenUI.addControl(this.partyInfoHud.createHudRoot());

@@ -1,10 +1,10 @@
 {
     "id": "",
-    "name": "",
+    "name": "Test",
     "backstory": "",
     "description": "",
     "primaryColor": "",
-    "spriteUrl": "",
+    "spriteUrl": "spr_sentineltest.png",
     "attributes": {
         "life": 400,
         "will": 200,

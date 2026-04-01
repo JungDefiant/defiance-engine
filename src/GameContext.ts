@@ -1,8 +1,10 @@
 import { Mesh, Scene } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Container } from "@babylonjs/gui";
+import { AdvancedDynamicTexture } from "@babylonjs/gui";
 import { EntityId, observe, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
 import { ActorData } from "./components/ActorData";
+import { EnemyGUI } from "./components/EnemyGUI";
+import { PlayerGUI } from "./components/PlayerGUI";
 
 @singleton()
 export default class GameContext {
@@ -15,9 +17,9 @@ export default class GameContext {
 	public readonly locationGUI: AdvancedDynamicTexture;
 	public readonly combatGUI: AdvancedDynamicTexture;
 
-	public readonly ActorComponent: ActorData[] = [];
-	public readonly PartyGUIComponent: Container[] = [];
-	public readonly EnemyGUIComponent: Container[] = [];
+	public readonly ActorDataComponent: ActorData[] = [];
+	public readonly PlayerGUIComponent: PlayerGUI[] = [];
+	public readonly EnemyGUIComponent: EnemyGUI[] = [];
 	public readonly EnemySprite: Mesh[] = [];
 
 	public constructor(
@@ -41,17 +43,25 @@ export default class GameContext {
 
 		observe(
 			this.world,
-			onSet(this.ActorComponent),
+			onSet(this.ActorDataComponent),
 			(eid: EntityId, params: ActorData) => {
-				this.ActorComponent[eid] = params;
+				this.ActorDataComponent[eid] = params;
 			},
 		);
 
 		observe(
 			this.world,
-			onSet(this.PartyGUIComponent),
-			(eid: EntityId, params: Container) => {
-				this.PartyGUIComponent[eid] = params;
+			onSet(this.PlayerGUIComponent),
+			(eid: EntityId, params: PlayerGUI) => {
+				this.PlayerGUIComponent[eid] = params;
+			},
+		);
+
+		observe(
+			this.world,
+			onSet(this.EnemyGUIComponent),
+			(eid: EntityId, params: EnemyGUI) => {
+				this.EnemyGUIComponent[eid] = params;
 			},
 		);
 
@@ -60,14 +70,6 @@ export default class GameContext {
 			onSet(this.EnemySprite),
 			(eid: EntityId, params: Mesh) => {
 				this.EnemySprite[eid] = params;
-			},
-		);
-
-		observe(
-			this.world,
-			onSet(this.EnemyGUIComponent),
-			(eid: EntityId, params: Container) => {
-				this.EnemyGUIComponent[eid] = params;
 			},
 		);
 	}

@@ -9,6 +9,42 @@ export class ActorData {
 	affinityData?: AffinityData;
 	itemData?: ActionData[];
 	tactics?: TacticsData[];
+
+	public constructor(initData: any) {
+		this.id = initData.id;
+		this.name = initData.name;
+		this.backstory = initData.backstory;
+		this.description = initData.description;
+		this.spriteUrl = initData.spriteUrl;
+		this.attributes = {
+			life: {
+				baseValue: initData.attributes.life,
+			} as ActorAttribute,
+			will: {
+				baseValue: initData.attributes.life,
+			} as ActorAttribute,
+			speed: {
+				baseValue: initData.attributes.life,
+			} as ActorAttribute,
+			defense: {
+				baseValue: initData.attributes.life,
+			} as ActorAttribute,
+			critical: {
+				baseValue: initData.attributes.life,
+			} as ActorAttribute,
+			regen: {
+				baseValue: initData.attributes.life,
+			} as ActorAttribute,
+		};
+		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
+		// newActorData.abilityData = initData.abilityIds.map((el: string) => {
+		// 	return this.actionData.get(el);
+		// });
+		// newActorData.itemData = initData.itemIds.map((el: string) => {
+		// 	return this.actionData.get(el);
+		// });
+		this.tactics = initData.tactics;
+	}
 }
 
 export interface AttributeSet {

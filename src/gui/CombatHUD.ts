@@ -38,7 +38,7 @@ export default class CombatHUD implements IHUD {
 		actionBarUI.thickness = 2;
 		actionBarUI.widthInPixels = 470;
 		actionBarUI.heightInPixels = 54;
-		actionBarUI.topInPixels = 273;
+		actionBarUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
 		const actionGrid = new Grid("ui_actionStack");
 		actionGrid.addColumnDefinition(270);

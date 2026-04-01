@@ -1,15 +1,16 @@
 import { container, singleton } from "tsyringe";
 import { IFactory } from "./IFactory";
-import { addComponent, addEntity, EntityId, observe, onSet, set } from "bitecs";
+import { addComponent, addEntity, EntityId, set } from "bitecs";
 import GameContext from "../GameContext";
 import { ActorData } from "../components/ActorData";
-import { Container } from "@babylonjs/gui";
 import {
-	CreateActorComponent,
-	CreateEnemyGUI,
-	CreateEnemySprite,
-} from "./FactoryFunctions";
-import { Mesh, Vector3 } from "@babylonjs/core";
+	Mesh,
+	MeshBuilder,
+	PBRMaterial,
+	Texture,
+	Vector3,
+} from "@babylonjs/core";
+import { EnemyGUI } from "../components/EnemyGUI";
 
 @singleton()
 export class EnemyFactory implements IFactory {
@@ -42,19 +43,20 @@ export class EnemyFactory implements IFactory {
 		const context = container.resolve(GameContext);
 		const newEntity = addEntity(context.world);
 
-		const newActorComp = CreateActorComponent(rawData);
+		const newActorComp = new ActorData(rawData);
 		addComponent(
 			context.world,
 			newEntity,
-			set(context.ActorComponent, newActorComp),
+			set(context.ActorDataComponent, newActorComp),
 		);
 
-		const newEnemySprite = CreateEnemySprite(
+		const newEnemySprite = this.createEnemySprite(
 			newEntity,
 			context,
 			this.enSpritePositions[this.currEnemyIndex],
 		);
 		this.currEnemyIndex++;
+		addComponent(context.world, newEntity, newEnemySprite);
 
 		// const newActorComp = CreateActorComponent(rawData);
 		// addComponent(
@@ -62,9 +64,46 @@ export class EnemyFactory implements IFactory {
 		// 	newEntity,
 		// 	set(context.ActorComponent, newActorComp),
 		// );
-		const newEnemyGUI = CreateEnemyGUI(newEntity, context, newEnemySprite);
-		addComponent(context.world, newEntity, newEnemySprite);
+		const newEnemyGUI = new EnemyGUI(newEntity, context, newEnemySprite);
+		addComponent(context.world, newEntity, newEnemyGUI);
 
 		return newEntity;
+	}
+
+	private createEnemySprite(
+		eid: EntityId,
+		context: GameContext,
+		position: Vector3,
+	): Mesh {
+		const actorData = context.ActorDataComponent[eid];
+
+		const enActorSprite = MeshBuilder.CreatePlane(
+			`enBattlerSprite_${actorData.id}_${eid}`,
+			{
+				width: 1,
+				height: 2,
+			},
+			context.scene,
+		);
+
+		const enActorSpriteMat = new PBRMaterial(
+			`mat_enBattlerSprite_${actorData.id}_${eid}`,
+			context.scene,
+		);
+		enActorSprite.billboardMode = 7;
+		enActorSprite.position = position;
+
+		enActorSpriteMat.albedoTexture = new Texture(
+			`./sprites/enemies/${actorData.spriteUrl}`,
+			context.scene,
+		);
+		enActorSpriteMat.metallic = 0;
+		enActorSpriteMat.roughness = 0;
+		enActorSpriteMat.alphaCutOff = 0.4;
+		enActorSpriteMat.transparencyMode = 1;
+		enActorSpriteMat.useAlphaFromAlbedoTexture = true;
+
+		enActorSprite.material = enActorSpriteMat;
+		return enActorSprite;
 	}
 }

@@ -26,6 +26,7 @@ import GameContext, {
 	LocationData,
 	SceneData,
 } from "../GameContext";
+import { PlayerFactory } from "../factories/PlayerFactory";
 
 export interface ISceneManagerSystem extends ISystem {
 	debug(debugOn: boolean): void;
@@ -145,7 +146,6 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		light.intensity = 1;
 
 		const locationLoaded = await this.loadLocation(0, scene, sceneData);
-
 		const combatGUI = AdvancedDynamicTexture.CreateFullscreenUI("ui_combat");
 
 		const newContext = new GameContext(

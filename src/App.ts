@@ -1,13 +1,14 @@
 import "reflect-metadata";
 import { container, inject } from "tsyringe";
-import { Engine, Nullable, Scene } from "@babylonjs/core";
+import { Engine, Nullable } from "@babylonjs/core";
 import SceneManagerSystem from "./systems/SceneManagerSystem";
 import DialogueManagerSystem from "./systems/DialogueManagerSystem";
 import UserInterfaceSystem from "./systems/UserInterfaceSystem";
 import CombatManagerSystem from "./systems/CombatManagerSystem";
 import GameContext, { GameMode } from "./GameContext";
 import { PlayerFactory } from "./factories/PlayerFactory";
-import { createWorld } from "bitecs";
+import { EnemyFactory } from "./factories/EnemyFactory";
+import { CreateTypography } from "./gui/Themes";
 
 // This is the engine/game loop
 export class App {
@@ -19,7 +20,8 @@ export class App {
 		@inject(UserInterfaceSystem) private uiSystem: UserInterfaceSystem,
 		@inject(DialogueManagerSystem) private dmSystem: DialogueManagerSystem,
 		@inject(CombatManagerSystem) private cmSystem: CombatManagerSystem,
-		@inject(PlayerFactory) private actorFactory: PlayerFactory,
+		@inject(PlayerFactory) private playerFactory: PlayerFactory,
+		@inject(EnemyFactory) private enemyFactory: EnemyFactory,
 	) {
 		const canvas = document.getElementById(
 			"gameCanvas",
@@ -32,6 +34,7 @@ export class App {
 
 	public async run() {
 		await this.startSystems();
+		await this.startFactories();
 
 		// TEST
 		await this.smSystem.createScene(
@@ -40,15 +43,19 @@ export class App {
 			"campaign_test",
 			GameMode.Combat,
 		);
-		this.smSystem.setGameMode(GameMode.Combat);
-		this.cmSystem.startCombat("enc_test");
-
-		await this.startFactories();
 		const context = container.resolve(GameContext);
+		CreateTypography(context.combatGUI);
+		const plyrFactory = container.resolve(PlayerFactory);
+		await plyrFactory.createEntityFromFile("char_test", context.campaignId);
+		console.log(context.PlayerGUIComponent);
+
+		const uiScene = await this.uiSystem.createGUIScene(this.engine);
+		this.cmSystem.startCombat("enc_test");
+		//
 
 		this.engine.runRenderLoop(() => {
 			context.scene.render();
-			this.uiSystem.uiScene?.render();
+			uiScene.render();
 		});
 	}
 
@@ -60,7 +67,8 @@ export class App {
 	}
 
 	private async startFactories() {
-		await this.actorFactory.start();
+		await this.playerFactory.start();
+		await this.enemyFactory.start();
 	}
 }
 
@@ -68,7 +76,15 @@ const smSystem = container.resolve(SceneManagerSystem);
 const uiSystem = container.resolve(UserInterfaceSystem);
 const dmSystem = container.resolve(DialogueManagerSystem);
 const cmSystem = container.resolve(CombatManagerSystem);
-const actFactory = container.resolve(PlayerFactory);
+const plyrFactory = container.resolve(PlayerFactory);
+const enFactory = container.resolve(EnemyFactory);
 
-const app = new App(smSystem, uiSystem, dmSystem, cmSystem, actFactory);
+const app = new App(
+	smSystem,
+	uiSystem,
+	dmSystem,
+	cmSystem,
+	plyrFactory,
+	enFactory,
+);
 app.run();
