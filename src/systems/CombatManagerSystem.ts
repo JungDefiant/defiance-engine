@@ -45,13 +45,9 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 
 	public async startCombat(encId: string): Promise<void> {
 		const context = container.resolve(GameContext);
-		const cbtHud = this.uiSystem.getCombatHud();
+		const cbtHud = context.combatHud;
 		const locData = context.locationData;
 		const camera = context.scene.activeCamera as UniversalCamera;
-
-		if (!this.smSystem || !camera || !cbtHud || !locData) {
-			return;
-		}
 
 		this.smSystem.setGameMode(GameMode.Combat);
 
@@ -68,7 +64,6 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		- Execute actions - pauses combat to process action
 		*/
 
-		// Test
 		await this.enFactory.createEntityFromFile(
 			"enemies/enem_test",
 			context.campaignId,

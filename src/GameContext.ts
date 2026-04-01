@@ -5,6 +5,10 @@ import { singleton } from "tsyringe";
 import { ActorData } from "./components/ActorData";
 import { EnemyGUI } from "./components/EnemyGUI";
 import { PlayerGUI } from "./components/PlayerGUI";
+import PartyInfoHUD from "./gui/PartyInfoHUD";
+import ExploreHUD from "./gui/ExploreHUD";
+import DialogueHUD from "./gui/DialogueHUD";
+import CombatHUD from "./gui/CombatHUD";
 
 @singleton()
 export default class GameContext {
@@ -13,9 +17,15 @@ export default class GameContext {
 	public readonly world: World;
 	public readonly scene: Scene;
 	public readonly sceneData: SceneData;
+	public readonly uiScene: Scene;
 	public readonly locationData: LocationData;
-	public readonly locationGUI: AdvancedDynamicTexture;
-	public readonly combatGUI: AdvancedDynamicTexture;
+	public readonly mainUI: AdvancedDynamicTexture;
+	public readonly insceneLocationGUI: AdvancedDynamicTexture;
+	public readonly insceneCombatGUI: AdvancedDynamicTexture;
+	public readonly partyInfoHud: PartyInfoHUD;
+	public readonly exploreHud: ExploreHUD;
+	public readonly dialogueHud: DialogueHUD;
+	public readonly combatHud: CombatHUD;
 
 	public readonly ActorDataComponent: ActorData[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
@@ -27,19 +37,31 @@ export default class GameContext {
 		gameMode: GameMode,
 		world: World,
 		scene: Scene,
+		uiScene: Scene,
 		sceneData: SceneData,
 		locationData: LocationData,
+		mainUI: AdvancedDynamicTexture,
 		locationGUI: AdvancedDynamicTexture,
 		combatGUI: AdvancedDynamicTexture,
+		partyInfoHud: PartyInfoHUD,
+		exploreHud: ExploreHUD,
+		dialogueHud: DialogueHUD,
+		combatHud: CombatHUD,
 	) {
 		this.campaignId = campaignId;
 		this.gameMode = gameMode;
 		this.world = world;
 		this.scene = scene;
+		this.uiScene = uiScene;
 		this.sceneData = sceneData;
 		this.locationData = locationData;
-		this.locationGUI = locationGUI;
-		this.combatGUI = combatGUI;
+		this.mainUI = mainUI;
+		this.insceneLocationGUI = locationGUI;
+		this.insceneCombatGUI = combatGUI;
+		this.partyInfoHud = partyInfoHud;
+		this.exploreHud = exploreHud;
+		this.dialogueHud = dialogueHud;
+		this.combatHud = combatHud;
 
 		observe(
 			this.world,

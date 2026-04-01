@@ -10,8 +10,6 @@ import {
 } from "@babylonjs/gui";
 import { Themes } from "../gui/Themes";
 import { EntityId } from "bitecs";
-import { ActorData } from "./ActorData";
-import { Rotate2dBlock } from "@babylonjs/core";
 
 export interface ActorGUI {
 	setActBarFill(currValue: number, maxValue: number): void;
@@ -83,7 +81,7 @@ export class PlayerGUI implements ActorGUI {
 		barStackPanel.width = 1;
 		barStackPanel.isVertical = true;
 		barStackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		iconStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		barStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		rootStackPanel.addControl(barStackPanel);
 
 		this.statusIconsUI = new Grid(`ui_playerStatusIcons_${eid}`);

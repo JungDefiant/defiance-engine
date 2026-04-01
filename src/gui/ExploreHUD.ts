@@ -66,6 +66,8 @@ export default class ExploreHUD implements IHUD {
 		const highlightHeader = new TextBlock(this.headerUIName, "Header");
 		highlightHeader.fontSize = 14;
 		highlightHeader.topInPixels = -10;
+		highlightHeader.color = Themes.neutral2;
+		highlightHeader.style = Themes.typography.header3;
 		highlightInfoUI.addControl(highlightHeader);
 
 		const highlightDescription = new TextBlock(
@@ -79,6 +81,8 @@ export default class ExploreHUD implements IHUD {
 			highlightDescription.paddingRightInPixels = 8;
 		highlightDescription.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		highlightDescription.textWrapping = TextWrapping.WordWrap;
+		highlightDescription.color = Themes.neutral2;
+		highlightDescription.style = Themes.typography.bodyText;
 		highlightInfoUI.addControl(highlightDescription);
 
 		highlightInfoUI.alpha = 0;

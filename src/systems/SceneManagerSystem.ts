@@ -1,6 +1,6 @@
-import { container, Lifecycle, singleton } from "tsyringe";
+import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import { World, createWorld, query } from "bitecs";
+import { createWorld, query } from "bitecs";
 import {
 	Engine,
 	HemisphericLight,
@@ -26,7 +26,11 @@ import GameContext, {
 	LocationData,
 	SceneData,
 } from "../GameContext";
-import { PlayerFactory } from "../factories/PlayerFactory";
+import { CreateTypography } from "../gui/Themes";
+import PartyInfoHUD from "../gui/PartyInfoHUD";
+import CombatHUD from "../gui/CombatHUD";
+import DialogueHUD from "../gui/DialogueHUD";
+import ExploreHUD from "../gui/ExploreHUD";
 
 export interface ISceneManagerSystem extends ISystem {
 	debug(debugOn: boolean): void;
@@ -71,7 +75,6 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 
 	public setGameMode(newMode: GameMode) {
 		const context = container.resolve(GameContext);
-		const newContext = { ...context, gameMode: newMode } as GameContext;
 
 		const uiSystem = container.resolve(UserInterfaceSystem);
 		uiSystem.setGameMode(newMode);
@@ -79,26 +82,39 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		if (newMode == GameMode.MainMenu) {
 			// X
 		} else if (newMode == GameMode.Explore) {
-			const camera = newContext.scene.activeCamera;
+			const camera = context.scene.activeCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.attachControl(this.gameCanvas);
-			newContext.locationGUI.rootContainer.isVisible = true;
+			context.insceneLocationGUI.rootContainer.isVisible = true;
+			context.insceneCombatGUI.rootContainer.isVisible = false;
 			// X
-		} else if (newMode == GameMode.Dialogue || newMode == GameMode.Combat) {
-			const camera = newContext.scene.activeCamera;
+		} else if (newMode == GameMode.Dialogue) {
+			const camera = context.scene.activeCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.detachControl();
-			newContext.locationGUI.rootContainer.isVisible = true;
+			context.insceneLocationGUI.rootContainer.isVisible = false;
+			context.insceneCombatGUI.rootContainer.isVisible = false;
+		} else if (newMode == GameMode.Combat) {
+			const camera = context.scene.activeCamera;
+
+			if (!camera) {
+				return;
+			}
+
+			camera.detachControl();
+			context.insceneLocationGUI.rootContainer.isVisible = false;
+			context.insceneCombatGUI.rootContainer.isVisible = true;
 		}
 
+		const newContext = { ...context, gameMode: newMode } as GameContext;
 		container.register(GameContext, { useValue: newContext });
 	}
 
@@ -116,6 +132,8 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 
 		const world = createWorld();
 		const scene = new Scene(engine);
+		const uiScene = new Scene(engine);
+		uiScene.autoClear = false;
 
 		const expCamPos = sceneData?.locations[0].exploreViewPosition!;
 		const camera = new UniversalCamera(
@@ -145,18 +163,52 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		const light = new HemisphericLight("light", new Vector3(1, 1, 1), scene);
 		light.intensity = 1;
 
+		const mainUI = AdvancedDynamicTexture.CreateFullscreenUI(
+			"ui_main",
+			true,
+			uiScene,
+		);
 		const locationLoaded = await this.loadLocation(0, scene, sceneData);
-		const combatGUI = AdvancedDynamicTexture.CreateFullscreenUI("ui_combat");
+		const combatGUI = AdvancedDynamicTexture.CreateFullscreenUI(
+			"ui_combat",
+			true,
+			scene,
+		);
+
+		const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
+
+		CreateTypography(mainUI);
+
+		const partyInfoHud = new PartyInfoHUD();
+		mainUI.addControl(partyInfoHud.createHudRoot());
+
+		const exploreHud = new ExploreHUD();
+		mainUI.addControl(exploreHud.createHudRoot());
+		exploreHud.showHideHud(false);
+
+		const dialogueHud = new DialogueHUD();
+		mainUI.addControl(dialogueHud.createHudRoot());
+		dialogueHud.showHideHud(false);
+
+		const combatHud = new CombatHUD();
+		mainUI.addControl(combatHud.createHudRoot());
+		combatHud.showHideHud(false);
 
 		const newContext = new GameContext(
 			campaignId,
 			gameMode,
 			world,
 			scene,
+			uiScene,
 			sceneData,
 			locationLoaded.data,
+			mainUI,
 			locationLoaded.gui,
 			combatGUI,
+			partyInfoHud,
+			exploreHud,
+			dialogueHud,
+			combatHud,
 		);
 
 		container.register(GameContext, { useValue: newContext });
@@ -185,8 +237,11 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		);
 		const locationData = sceneData.locations[locationIndex];
 
-		const locationGUI =
-			AdvancedDynamicTexture.CreateFullscreenUI("ui_location");
+		const locationGUI = AdvancedDynamicTexture.CreateFullscreenUI(
+			"ui_location",
+			true,
+			scene,
+		);
 
 		locationData.interactables.forEach(async (itr) => {
 			await this.loadLocationInteractable(itr, locMeshes.meshes, locationGUI);
@@ -220,17 +275,15 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		button.textBlock!.color = "Black";
 		button.thickness = 2;
 		button.onPointerEnterObservable.add(() => {
-			const uiSystem = container.resolve(UserInterfaceSystem);
-			uiSystem
-				.getExploreHud()
-				.updateHighlightInfoUI(
-					interactableData.name,
-					interactableData.description,
-				);
+			const context = container.resolve(GameContext);
+			context.exploreHud.updateHighlightInfoUI(
+				interactableData.name,
+				interactableData.description,
+			);
 		});
 		button.onPointerOutObservable.add(() => {
-			const uiSystem = container.resolve(UserInterfaceSystem);
-			uiSystem.getExploreHud().hideHighlightInfoUI();
+			const context = container.resolve(GameContext);
+			context.exploreHud.hideHighlightInfoUI();
 		});
 		button.onPointerClickObservable.add(() => {
 			// Loads and runs dialogue based on dialogueId in interactableData

@@ -10,7 +10,7 @@ import { query } from "bitecs";
 export default class PartyInfoHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
 
-	private partyInfoEntries: Nullable<PlayerGUI[]> = null;
+	private partyInfoEntryStack: Nullable<StackPanel> = null;
 
 	public showHideHud(show: boolean): void {
 		this.rootContainer!.isVisible = show ? true : false;
@@ -32,25 +32,26 @@ export default class PartyInfoHUD implements IHUD {
 		background.heightInPixels = 110;
 		this.rootContainer.addControl(background);
 
-		const partyInfoEntryStack = new StackPanel("ui_partyInfoEntryStack");
-		partyInfoEntryStack.isVertical = false;
-		partyInfoEntryStack.spacing = 16;
+		return this.rootContainer;
+	}
+
+	public setPartyInfoEntryStack() {
+		if (!this.rootContainer) {
+			return;
+		}
 
 		const context = container.resolve(GameContext);
-
-		console.log(context.PlayerGUIComponent);
-		console.log(context.PlayerGUIComponent.length);
+		this.partyInfoEntryStack = new StackPanel("ui_partyInfoEntryStack");
+		this.partyInfoEntryStack.isVertical = false;
+		this.partyInfoEntryStack.spacing = 16;
 
 		for (const entry of context.PlayerGUIComponent) {
 			if (!entry) {
 				continue;
 			}
-			partyInfoEntryStack.addControl(entry.getRootContainer());
-			console.log(entry);
+			this.partyInfoEntryStack.addControl(entry.getRootContainer());
 		}
 
-		this.rootContainer.addControl(partyInfoEntryStack);
-
-		return this.rootContainer;
+		this.rootContainer.addControl(this.partyInfoEntryStack);
 	}
 }

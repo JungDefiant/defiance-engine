@@ -8,7 +8,6 @@ import CombatManagerSystem from "./systems/CombatManagerSystem";
 import GameContext, { GameMode } from "./GameContext";
 import { PlayerFactory } from "./factories/PlayerFactory";
 import { EnemyFactory } from "./factories/EnemyFactory";
-import { CreateTypography } from "./gui/Themes";
 
 // This is the engine/game loop
 export class App {
@@ -33,8 +32,8 @@ export class App {
 	}
 
 	public async run() {
-		await this.startSystems();
 		await this.startFactories();
+		await this.startSystems();
 
 		// TEST
 		await this.smSystem.createScene(
@@ -44,18 +43,20 @@ export class App {
 			GameMode.Combat,
 		);
 		const context = container.resolve(GameContext);
-		CreateTypography(context.combatGUI);
+
+		// TEST
 		const plyrFactory = container.resolve(PlayerFactory);
 		await plyrFactory.createEntityFromFile("char_test", context.campaignId);
-		console.log(context.PlayerGUIComponent);
+		context.partyInfoHud.setPartyInfoEntryStack();
 
-		const uiScene = await this.uiSystem.createGUIScene(this.engine);
+		// this.smSystem.setGameMode(GameMode.Explore);
+		this.smSystem.setGameMode(GameMode.Combat);
 		this.cmSystem.startCombat("enc_test");
 		//
 
 		this.engine.runRenderLoop(() => {
 			context.scene.render();
-			uiScene.render();
+			context.uiScene.render();
 		});
 	}
 

@@ -13,33 +13,28 @@ import GameContext, { GameMode, InteractableData } from "../GameContext";
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
 	private activeDialogue: Nullable<DialogueData> = null;
-	private dialogueData?: Map<string, DialogueData>;
 
-	public async start() {
-		// Import dialogue files
-		const allData = await import.meta.glob("/src/data/dialogues/*.json");
-		this.dialogueData = new Map<string, DialogueData>();
-		for (const path in allData) {
-			const data = (await allData[path]()) as DialogueData;
-			const dlgId = path.match(/dlg_[A-Za-z]+/)![0];
-			this.dialogueData.set(dlgId, data);
-		}
-	}
+	public async start() {}
 
 	public update() {}
 
-	public startDialogue(
+	public async startDialogue(
 		dlgId: string,
 		itr: { data: InteractableData; mesh: AbstractMesh },
-	) {
-		const smSystem = container.resolve(SceneManagerSystem);
-		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
-		const camera = container.resolve(GameContext).scene
-			.activeCamera as UniversalCamera;
-
-		if (!smSystem || !camera || !dlgHud || !this.dialogueData) {
+	): Promise<void> {
+		const context = container.resolve(GameContext);
+		const response = await fetch(
+			`/data/${context.campaignId}/dialogues/${dlgId}.json`,
+		);
+		const dlgData = (await response.json()) as DialogueData;
+		if (!dlgData) {
 			return;
 		}
+
+		const smSystem = container.resolve(SceneManagerSystem);
+		const dlgHud = container.resolve(GameContext).dialogueHud;
+		const camera = container.resolve(GameContext).scene
+			.activeCamera as UniversalCamera;
 
 		smSystem.setGameMode(GameMode.Dialogue);
 
@@ -52,7 +47,7 @@ export default class DialogueManagerSystem implements ISystem {
 		// LATER: Implement offsetting camera target
 		camera.setTarget(itr.mesh.position);
 
-		this.activeDialogue = this.dialogueData.get(dlgId)!;
+		this.activeDialogue = dlgData;
 		this.runLine(0);
 	}
 
@@ -62,7 +57,7 @@ export default class DialogueManagerSystem implements ISystem {
 			return;
 		}
 
-		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
+		const dlgHud = container.resolve(GameContext).dialogueHud;
 		const dialogue = this.activeDialogue.dialogues[id];
 
 		if (!dialogue || !dlgHud) {

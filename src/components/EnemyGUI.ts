@@ -20,7 +20,7 @@ export class EnemyGUI implements ActorGUI {
 		);
 		this.rootContainer.widthInPixels = 100;
 		this.rootContainer.heightInPixels = 80;
-		context.combatGUI.addControl(this.rootContainer);
+		context.insceneCombatGUI.addControl(this.rootContainer);
 
 		this.statusIconsUI = new Grid(
 			`ui_enBattlerStatusIcons_${enActorData.id}_${eid}`,
@@ -54,7 +54,7 @@ export class EnemyGUI implements ActorGUI {
 		this.actBarBGUI.addControl(this.actBarFillUI);
 
 		this.rootContainer.linkWithMesh(sprite);
-		this.rootContainer.linkOffsetY = -170;
+		this.rootContainer.linkOffsetY = 30;
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {
