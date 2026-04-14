@@ -127,6 +127,7 @@ export class PlayerGUI implements ActorGUI {
 		this.charNameUI.height = 1;
 		this.charNameUI.style = Themes.typography.header3;
 		this.charNameUI.color = Themes.neutral2;
+		this.charNameUI.topInPixels = -1;
 		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		this.charNameBgUI.addControl(this.charNameUI);
 
@@ -338,7 +339,7 @@ export class PlayerGUI implements ActorGUI {
 		statLabelUi.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		statLabelUi.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		statLabelUi.paddingTopInPixels = 1;
-		statLabelUi.paddingLeftInPixels = 2;
+		statLabelUi.paddingLeftInPixels = 4;
 		return statLabelUi;
 	}
 

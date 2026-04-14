@@ -1,3 +1,6 @@
+import { container } from "tsyringe";
+import GameContext from "../GameContext";
+
 export class ActorData {
 	id: string = "";
 	name: string = "";
@@ -10,6 +13,7 @@ export class ActorData {
 	itemData?: AbilityData[];
 	tactics?: TacticsData[];
 	queuedAction?: AbilityData;
+	currentTargetEIDs: number[] = [];
 	currentStatuses: EffectData[] = [];
 
 	public constructor(initData: any) {
@@ -55,10 +59,17 @@ export class ActorData {
 				currentValue: 0,
 			} as ActorAttribute,
 		};
+
+		const context = container.resolve(GameContext);
 		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
-		// newActorData.abilityData = initData.abilityIds.map((el: string) => {
-		// 	return this.actionData.get(el);
-		// });
+
+		this.abilityData = initData.abilityIds.map(async (el: string) => {
+			const response = await fetch(
+				`/data/${context.campaignId}/abilities/${el}.json`,
+			);
+			const abData = (await response.json()) as AbilityData;
+			return abData;
+		});
 		// newActorData.itemData = initData.itemIds.map((el: string) => {
 		// 	return this.actionData.get(el);
 		// });
@@ -99,10 +110,12 @@ export interface AbilityData {
 	hitSfxURL?: string;
 }
 
+export type EffectVar = string | number;
+
 export interface EffectData {
 	id: string;
 	variables: {
-		[index: string]: string | number;
+		[index: string]: EffectVar;
 	};
 }
 

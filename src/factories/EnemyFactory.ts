@@ -33,7 +33,7 @@ export class EnemyFactory implements IFactory {
 		}
 
 		const response = await fetch(
-			`/data/${campaignId}/characters/${fileName}.json`,
+			`/data/${campaignId}/enemies/${fileName}.json`,
 		);
 		const rawData = await response.json();
 		if (!rawData) {

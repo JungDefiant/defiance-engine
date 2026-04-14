@@ -13,6 +13,8 @@ import CombatHUD from "./gui/CombatHUD";
 @singleton()
 export default class GameContext {
 	public readonly campaignId: string;
+	public readonly selectedPlayerEID: number;
+	public readonly playerEIDs: number[];
 	public readonly gameMode: GameMode;
 	public readonly world: World;
 	public readonly scene: Scene;
@@ -34,6 +36,8 @@ export default class GameContext {
 
 	public constructor(
 		campaignId: string,
+		selectedPlayerEID: number,
+		playerEIDs: number[],
 		gameMode: GameMode,
 		world: World,
 		scene: Scene,
@@ -49,6 +53,8 @@ export default class GameContext {
 		combatHud: CombatHUD,
 	) {
 		this.campaignId = campaignId;
+		this.selectedPlayerEID = selectedPlayerEID;
+		this.playerEIDs = playerEIDs;
 		this.gameMode = gameMode;
 		this.world = world;
 		this.scene = scene;

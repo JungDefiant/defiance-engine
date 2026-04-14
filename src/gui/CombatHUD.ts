@@ -9,8 +9,13 @@ import {
 } from "@babylonjs/gui";
 import IHUD from "./IHUD";
 import { Themes } from "./Themes";
-import { AbilityData } from "../components/ActorData";
+import { AbilityData, ActorData } from "../components/ActorData";
 import { ActionSlot } from "./components/ActionSlot";
+import { container } from "tsyringe";
+import CombatManagerSystem from "../systems/CombatManagerSystem";
+import ActorStateSystem from "../systems/ActorStateSystem";
+import GameContext from "../GameContext";
+import { EntityId } from "bitecs";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -43,23 +48,41 @@ export default class CombatHUD implements IHUD {
 		return this.rootContainer;
 	}
 
-	public setActionBar(abilities: AbilityData[], devices: AbilityData[]): void {
-		for (let i = 0; i < abilities.length; i++) {
-			const abilitySlot = this.abilitySlots[i];
-			if (!abilitySlot || !abilities[i].iconURL) {
-				return;
-			}
+	public async setActionBar(eid: EntityId): Promise<void> {
+		const cmSystem = container.resolve(CombatManagerSystem);
+		const context = container.resolve(GameContext);
+		const actorData = context.ActorDataComponent[eid];
 
-			abilitySlot.setActionSlotIcon(abilities[i].iconURL as string);
+		if (!actorData) {
+			return;
 		}
 
-		for (let i = 0; i < devices.length; i++) {
-			const deviceSlot = this.deviceSlots[i];
-			if (!deviceSlot || !devices[i].iconURL) {
+		for (let i = 0; i < actorData.abilityData.length; i++) {
+			const abData = await actorData.abilityData[i];
+			const abilitySlot = this.abilitySlots[i];
+			if (!abilitySlot || !abData) {
 				return;
 			}
 
-			deviceSlot.setActionSlotIcon(devices[i].iconURL as string);
+			abilitySlot.setActionSlotIcon(abData.iconURL as string);
+			abilitySlot.setOnClickEvent(() => cmSystem.queueAction(context, eid, i));
+		}
+
+		if (!actorData.itemData) {
+			return;
+		}
+
+		for (let i = 0; i < actorData.itemData.length; i++) {
+			const devData = await actorData.itemData[i];
+			const deviceSlot = this.deviceSlots[i];
+			if (!deviceSlot || !devData) {
+				return;
+			}
+
+			deviceSlot.setActionSlotIcon(devData.iconURL as string);
+			deviceSlot.setOnClickEvent(() =>
+				cmSystem.queueAction(context, eid, i, false),
+			);
 		}
 	}
 
@@ -86,7 +109,8 @@ export default class CombatHUD implements IHUD {
 		abilitiesLabel.color = Themes.neutral2;
 		abilitiesLabel.style = Themes.typography.header3;
 		abilitiesLabel.widthInPixels = 120;
-		abilitiesLabel.heightInPixels = 20;
+		abilitiesLabel.heightInPixels = 18;
+		abilitiesLabel.topInPixels = 1;
 		abilitiesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		abilitiesLabel.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
@@ -96,7 +120,8 @@ export default class CombatHUD implements IHUD {
 		devicesLabel.color = Themes.neutral2;
 		devicesLabel.style = Themes.typography.header3;
 		devicesLabel.widthInPixels = 120;
-		devicesLabel.heightInPixels = 20;
+		devicesLabel.heightInPixels = 18;
+		devicesLabel.topInPixels = 1;
 		devicesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		devicesLabel.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		actionGrid.addControl(devicesLabel, 0, 1);
@@ -109,7 +134,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionAbilityStack, 1, 0);
 
 		for (let i = 0; i < 8; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "");
+			const actionSlot = new ActionSlot(i.toString(), "", () => {});
 			actionAbilityStack.addControl(actionSlot.rootContainer);
 			this.abilitySlots.push(actionSlot);
 		}
@@ -122,7 +147,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionDeviceStack, 1, 1);
 
 		for (let i = 0; i < 4; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "");
+			const actionSlot = new ActionSlot(i.toString(), "", () => {});
 			actionDeviceStack.addControl(actionSlot.rootContainer);
 			this.deviceSlots.push(actionSlot);
 		}

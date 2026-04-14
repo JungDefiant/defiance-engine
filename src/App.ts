@@ -1,19 +1,18 @@
 import "reflect-metadata";
 import { container, inject } from "tsyringe";
-import { Engine, Nullable } from "@babylonjs/core";
+import { Engine } from "@babylonjs/core";
 import SceneManagerSystem from "./systems/SceneManagerSystem";
 import DialogueManagerSystem from "./systems/DialogueManagerSystem";
 import UserInterfaceSystem from "./systems/UserInterfaceSystem";
 import CombatManagerSystem from "./systems/CombatManagerSystem";
+import ActorStateSystem from "./systems/ActorStateSystem";
 import GameContext, { GameMode } from "./GameContext";
 import { PlayerFactory } from "./factories/PlayerFactory";
 import { EnemyFactory } from "./factories/EnemyFactory";
-import ActorStateSystem from "./systems/ActorStateSystem";
 
 // This is the engine/game loop
 export class App {
 	private engine: Engine;
-	private readonly context: Nullable<GameContext> = null;
 
 	constructor(
 		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
@@ -48,8 +47,19 @@ export class App {
 
 		// TEST
 		const plyrFactory = container.resolve(PlayerFactory);
-		await plyrFactory.createEntityFromFile("char_test", context.campaignId);
+		const plyerEID = await plyrFactory.createEntityFromFile(
+			"sdm_test",
+			context.campaignId,
+		);
 		context.partyInfoHud.setPartyInfoEntryStack();
+
+		container.register(GameContext, {
+			useValue: {
+				...context,
+				selectedPlayerEID: plyerEID,
+				playerEIDs: [plyerEID],
+			},
+		});
 
 		// this.smSystem.setGameMode(GameMode.Explore);
 		this.smSystem.setGameMode(GameMode.Combat);
@@ -84,22 +94,3 @@ export class App {
 		await this.enemyFactory.start();
 	}
 }
-
-const smSystem = container.resolve(SceneManagerSystem);
-const uiSystem = container.resolve(UserInterfaceSystem);
-const dmSystem = container.resolve(DialogueManagerSystem);
-const cmSystem = container.resolve(CombatManagerSystem);
-const asSystem = container.resolve(ActorStateSystem);
-const plyrFactory = container.resolve(PlayerFactory);
-const enFactory = container.resolve(EnemyFactory);
-
-const app = new App(
-	smSystem,
-	uiSystem,
-	dmSystem,
-	cmSystem,
-	asSystem,
-	plyrFactory,
-	enFactory,
-);
-app.run();

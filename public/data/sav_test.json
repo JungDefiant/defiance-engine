@@ -1,0 +1,37 @@
+{
+  "campaignId": "",
+  "sceneId": "",
+  "locationId": "",
+  "flagIds": [],
+  "currentParty": [
+    {
+      "id": "",
+      "name": "Test",
+      "backstory": "",
+      "description": "",
+      "primaryColor": "",
+      "spriteUrl": "spr_sentineltest.png",
+      "attributes": {
+        "life": 400,
+        "will": 200,
+        "speed": 10,
+        "defense": 10,
+        "critical": 1,
+        "regen": 10
+      },
+      "affinityId": "",
+      "abilityIds": [
+        "ab_brawl"
+      ],
+      "itemIds": [
+        ""
+      ],
+      "tactics": [
+        {
+          "trigger": "",
+          "action": ""
+        }
+      ]
+    }
+  ]
+}

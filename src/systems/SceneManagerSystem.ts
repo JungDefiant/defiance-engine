@@ -1,6 +1,6 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import { createWorld, query } from "bitecs";
+import { createWorld, EntityId, query } from "bitecs";
 import {
 	Engine,
 	HemisphericLight,
@@ -194,8 +194,12 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		mainUI.addControl(combatHud.createHudRoot());
 		combatHud.showHideHud(false);
 
+		const playerEids = await this.loadPlayerData();
+
 		const newContext = new GameContext(
 			campaignId,
+			playerEids[0],
+			playerEids,
 			gameMode,
 			world,
 			scene,
@@ -299,5 +303,9 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		});
 		locationGUI.addControl(button);
 		button.linkWithMesh(attachedMesh);
+	}
+
+	private async loadPlayerData(): Promise<EntityId[]> {
+		return [];
 	}
 }

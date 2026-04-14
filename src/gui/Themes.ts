@@ -3,24 +3,24 @@ import { AdvancedDynamicTexture, Style } from "@babylonjs/gui";
 export function CreateTypography(adt: AdvancedDynamicTexture) {
 	const captionStyle = adt.createStyle();
 	captionStyle.fontFamily = "ComicSans";
-	captionStyle.fontSize = 12;
+	captionStyle.fontSize = 11;
 	Themes.typography.caption = captionStyle;
 
 	const bodyTextStyle = adt.createStyle();
 	bodyTextStyle.fontFamily = "ComicSans";
-	bodyTextStyle.fontSize = 14;
+	bodyTextStyle.fontSize = 12;
 	Themes.typography.bodyText = bodyTextStyle;
 
 	const header3Style = adt.createStyle();
 	header3Style.fontFamily = "RobotoMono";
 	header3Style.fontWeight = "normal";
-	header3Style.fontSize = 16;
+	header3Style.fontSize = 14;
 	Themes.typography.header3 = header3Style;
 
 	const header2Style = adt.createStyle();
 	header2Style.fontFamily = "RobotoMono";
 	header2Style.fontWeight = "semibold";
-	header2Style.fontSize = 20;
+	header2Style.fontSize = 16;
 	Themes.typography.header2 = header2Style;
 
 	const header1Style = adt.createStyle();

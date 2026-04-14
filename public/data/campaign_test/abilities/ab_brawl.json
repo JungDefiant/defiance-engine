@@ -14,7 +14,7 @@
         "attack"
     ],
     "target": "single_en",
-    "recovery": 20,
+    "recovery": 4,
     "cost": 0,
     "effectData": [
         {
