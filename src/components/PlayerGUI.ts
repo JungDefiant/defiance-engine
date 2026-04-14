@@ -25,8 +25,10 @@ export class PlayerGUI implements ActorGUI {
 	private actBarFillUI: Rectangle;
 	private lifeBarBgUI: Rectangle;
 	private lifeBarFillUI: Rectangle;
+	private lifeBarValueUI: TextBlock;
 	private willBarBgUI: Rectangle;
 	private willBarFillUI: Rectangle;
+	private willBarValueUI: TextBlock;
 	private queueActionBgUI: Rectangle;
 	private queueActionUI: Image;
 	private statusIconsUI: Grid;
@@ -159,12 +161,7 @@ export class PlayerGUI implements ActorGUI {
 		);
 		actStackUI.addControl(this.actBarBgUI);
 
-		this.actBarFillUI = this.createBarFillUI(
-			eid,
-			"act",
-			Themes.secondary2,
-			Themes.secondary2,
-		);
+		this.actBarFillUI = this.createBarFillUI(eid, "act", Themes.secondary2);
 		this.actBarBgUI.addControl(this.actBarFillUI);
 
 		// LIFE BAR
@@ -195,13 +192,16 @@ export class PlayerGUI implements ActorGUI {
 		);
 		lifeStackUI.addControl(this.lifeBarBgUI);
 
-		this.lifeBarFillUI = this.createBarFillUI(
-			eid,
-			"life",
-			Themes.secondary3,
-			Themes.secondary3,
-		);
+		this.lifeBarFillUI = this.createBarFillUI(eid, "life", Themes.secondary3);
 		this.lifeBarBgUI.addControl(this.lifeBarFillUI);
+
+		this.lifeBarValueUI = this.createBarValueUI(
+			eid,
+			"lifeLabel",
+			Themes.primary1,
+			Themes.typography.caption,
+		);
+		this.lifeBarBgUI.addControl(this.lifeBarValueUI);
 
 		// WILL BAR
 		const willBgUI = this.createStatBgUI(
@@ -231,13 +231,16 @@ export class PlayerGUI implements ActorGUI {
 		);
 		willStackUI.addControl(this.willBarBgUI);
 
-		this.willBarFillUI = this.createBarFillUI(
-			eid,
-			"will",
-			Themes.secondary1,
-			Themes.secondary1,
-		);
+		this.willBarFillUI = this.createBarFillUI(eid, "will", Themes.secondary1);
 		this.willBarBgUI.addControl(this.willBarFillUI);
+
+		this.willBarValueUI = this.createBarValueUI(
+			eid,
+			"willLabel",
+			Themes.primary1,
+			Themes.typography.caption,
+		);
+		this.willBarBgUI.addControl(this.willBarValueUI);
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {
@@ -252,6 +255,7 @@ export class PlayerGUI implements ActorGUI {
 			0,
 			Math.min(1, currValue / maxValue || 0),
 		);
+		this.lifeBarValueUI.text = `${currValue} / ${maxValue}`;
 	}
 
 	public setWillBarFill(currValue: number, maxValue: number): void {
@@ -259,6 +263,7 @@ export class PlayerGUI implements ActorGUI {
 			0,
 			Math.min(1, currValue / maxValue || 0),
 		);
+		this.willBarValueUI.text = `${currValue} / ${maxValue}`;
 	}
 
 	public setQueuedAction(iconSrc: string): void {
@@ -358,18 +363,30 @@ export class PlayerGUI implements ActorGUI {
 		return bgUi;
 	}
 
-	private createBarFillUI(
-		eid: EntityId,
-		name: string,
-		color: string,
-		background: string,
-	) {
+	private createBarFillUI(eid: EntityId, name: string, color: string) {
 		const barFillUI = new Rectangle(`ui_${name}BarUIFill_${eid}`);
 		barFillUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		barFillUI.width = 0.1;
 		barFillUI.height = 1;
 		barFillUI.color = color;
-		barFillUI.background = background;
+		barFillUI.background = color;
 		return barFillUI;
+	}
+
+	private createBarValueUI(
+		eid: EntityId,
+		name: string,
+		color: string,
+		style: Style,
+	) {
+		const barValueUI = new TextBlock(`ui_${name}BarUIValue_${eid}`);
+		barValueUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+		barValueUI.width = 1;
+		barValueUI.height = 2;
+		barValueUI.topInPixels = 2;
+		barValueUI.color = color;
+		barValueUI.style = style;
+		return barValueUI;
 	}
 }

@@ -14,6 +14,7 @@ import {
 	UniversalCamera,
 	Nullable,
 	Viewport,
+	Texture,
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
@@ -167,12 +168,14 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			"ui_main",
 			true,
 			uiScene,
+			Texture.NEAREST_SAMPLINGMODE,
 		);
 		const locationLoaded = await this.loadLocation(0, scene, sceneData);
 		const combatGUI = AdvancedDynamicTexture.CreateFullscreenUI(
 			"ui_combat",
 			true,
 			scene,
+			Texture.NEAREST_SAMPLINGMODE,
 		);
 
 		const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
@@ -194,7 +197,7 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		mainUI.addControl(combatHud.createHudRoot());
 		combatHud.showHideHud(false);
 
-		const playerEids = await this.loadPlayerData();
+		const playerEids = [0];
 
 		const newContext = new GameContext(
 			campaignId,
@@ -276,7 +279,9 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		button.height = 0.1;
 		button.color = "Blue";
 		button.background = "Blue";
-		button.textBlock!.color = "Black";
+		if (button.textBlock) {
+			button.textBlock.color = "Black";
+		}
 		button.thickness = 2;
 		button.onPointerEnterObservable.add(() => {
 			const context = container.resolve(GameContext);
@@ -303,9 +308,5 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		});
 		locationGUI.addControl(button);
 		button.linkWithMesh(attachedMesh);
-	}
-
-	private async loadPlayerData(): Promise<EntityId[]> {
-		return [];
 	}
 }

@@ -8,11 +8,11 @@ export class ActorData {
 	description: string = "";
 	spriteUrl: string = "";
 	attributes: AttributeSet = {};
-	abilityData: AbilityData[] = [];
+	abilityData: ActionData[] = [];
 	affinityData?: AffinityData;
-	itemData?: AbilityData[];
+	itemData?: ActionData[];
 	tactics?: TacticsData[];
-	queuedAction?: AbilityData;
+	queuedAction?: ActionData;
 	currentTargetEIDs: number[] = [];
 	currentStatuses: EffectData[] = [];
 
@@ -67,7 +67,7 @@ export class ActorData {
 			const response = await fetch(
 				`/data/${context.campaignId}/abilities/${el}.json`,
 			);
-			const abData = (await response.json()) as AbilityData;
+			const abData = (await response.json()) as ActionData;
 			return abData;
 		});
 		// newActorData.itemData = initData.itemIds.map((el: string) => {
@@ -91,7 +91,7 @@ export interface AffinityData {
 	baseAttributes: ActorAttribute[];
 }
 
-export interface AbilityData {
+export interface ActionData {
 	id: string;
 	name: string;
 	description: string;

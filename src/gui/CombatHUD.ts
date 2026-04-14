@@ -9,7 +9,7 @@ import {
 } from "@babylonjs/gui";
 import IHUD from "./IHUD";
 import { Themes } from "./Themes";
-import { AbilityData, ActorData } from "../components/ActorData";
+import { ActionData, ActorData } from "../components/ActorData";
 import { ActionSlot } from "./components/ActionSlot";
 import { container } from "tsyringe";
 import CombatManagerSystem from "../systems/CombatManagerSystem";

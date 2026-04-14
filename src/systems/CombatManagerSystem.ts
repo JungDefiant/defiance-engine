@@ -6,7 +6,7 @@ import { UniversalCamera, Vector3 } from "@babylonjs/core";
 import GameContext, { GameMode } from "../GameContext";
 import { EntityId, query } from "bitecs";
 import {
-	AbilityData,
+	ActionData,
 	AbilityDescriptor,
 	ActorData,
 	EffectData,
@@ -99,11 +99,18 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 	): void {
 		const actorData = context.ActorDataComponent[eid];
 		actorData.queuedAction = isItem
-			? actorData.itemData && (actorData.itemData[actionInd] as AbilityData)
+			? actorData.itemData && (actorData.itemData[actionInd] as ActionData)
 			: actorData.abilityData[actionInd];
 	}
 
-	private targetPlayerAction(context: GameContext, eid: EntityId): void {}
+	private targetPlayerAction(
+		context: GameContext,
+		actionData: ActionData,
+	): void {
+		for (const eid of query(context.world, [context.EnemyGUIComponent])) {
+			const enemyGUI = context.EnemyGUIComponent[eid];
+		}
+	}
 
 	private executeQueuedAction(
 		context: GameContext,

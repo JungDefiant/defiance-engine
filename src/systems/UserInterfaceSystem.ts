@@ -76,5 +76,9 @@ export default class UserInterfaceSystem implements IUserInterfaceSystem {
 			actorData.attributes["recovery"].currentValue,
 			actorData.attributes["recovery"].maximumValue,
 		);
+		gui.setLifeBarFill(
+			actorData.attributes["life"].currentValue,
+			actorData.attributes["life"].maximumValue,
+		);
 	}
 }
