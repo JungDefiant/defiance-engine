@@ -26,6 +26,9 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 	private gamePaused = true;
 	private currentPlayerEID = -1;
 
+	private readonly START_RECOVERY = 3;
+	private readonly START_RECOVERY_RANGE = 2;
+
 	public constructor(
 		@inject(EnemyFactory) private enFactory: EnemyFactory,
 		@inject(delay(() => SceneManagerSystem))
@@ -88,6 +91,14 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 
 		await context.combatHud.setActionBar(context.selectedPlayerEID);
 
+		for (const eid of query(context.world, [context.ActorDataComponent])) {
+			const actorData = context.ActorDataComponent[eid];
+			const rcvyAttr = actorData.attributes["recovery"];
+			rcvyAttr.maximumValue =
+				this.START_RECOVERY + Math.random() * this.START_RECOVERY_RANGE;
+			rcvyAttr.currentValue = 0;
+		}
+
 		this.gamePaused = false;
 	}
 
@@ -112,17 +123,17 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		}
 	}
 
-	private executeQueuedAction(
+	private async executeQueuedAction(
 		context: GameContext,
 		actorData: ActorData,
-	): void {
-		const actionToExecute = actorData.queuedAction;
+	): Promise<void> {
+		const actionToExecute = await actorData.queuedAction;
 		if (!actionToExecute) {
 			this.gamePaused = false;
 			return;
 		}
 
-		const actionEffects = actionToExecute?.effectData;
+		const actionEffects = actionToExecute.effectData;
 		const actionTargetIds = actorData.currentTargetEIDs;
 		actionTargetIds.forEach((eid) => {
 			const targetData = context.ActorDataComponent[eid];

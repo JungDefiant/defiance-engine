@@ -14,12 +14,12 @@ export class ActionSlot {
 		this.rootContainer.thickness = 2;
 		this.rootContainer.widthInPixels = 32;
 		this.rootContainer.heightInPixels = 32;
+		this.rootContainer.onPointerClickObservable.add(() => onClickEvent());
 
 		this.actionIcon = new Image("ui_actionSlotIcon");
 		this.actionIcon.source = iconSrc;
 		this.actionIcon.width = 1;
 		this.actionIcon.height = 1;
-		this.actionIcon.onPointerClickObservable.add(() => onClickEvent());
 		this.rootContainer.addControl(this.actionIcon);
 
 		this.actionLabel = new TextBlock("ui_actionSlotLabel", "Q");
@@ -32,6 +32,7 @@ export class ActionSlot {
 		this.actionLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		this.actionLabel.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_LEFT;
+		this.actionLabel.isPointerBlocker = false;
 		this.rootContainer.addControl(this.actionLabel);
 	}
 
@@ -44,7 +45,7 @@ export class ActionSlot {
 	}
 
 	public setOnClickEvent(evt: Function) {
-		this.actionIcon.onPointerClickObservable.clear();
-		this.actionIcon.onPointerClickObservable.add(() => evt());
+		this.rootContainer.onPointerClickObservable.clear();
+		this.rootContainer.onPointerClickObservable.add(() => evt());
 	}
 }

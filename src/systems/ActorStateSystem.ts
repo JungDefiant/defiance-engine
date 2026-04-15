@@ -38,7 +38,7 @@ export default class ActorStateSystem implements IActorStateSystem {
 		const rcvyAttr = actorData.attributes["recovery"];
 
 		if (rcvyAttr.currentValue < rcvyAttr.maximumValue) {
-			const amount = deltaTime / (10 / spdAttr.currentValue);
+			const amount = deltaTime * (10 / spdAttr.currentValue);
 			const newRcvyAttrVal = rcvyAttr.currentValue + amount;
 			rcvyAttr.currentValue = Math.min(newRcvyAttrVal, rcvyAttr.maximumValue);
 		}

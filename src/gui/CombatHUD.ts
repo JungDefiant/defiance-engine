@@ -57,32 +57,44 @@ export default class CombatHUD implements IHUD {
 			return;
 		}
 
-		for (let i = 0; i < actorData.abilityData.length; i++) {
+		for (let i = 0; i < this.abilitySlots.length; i++) {
 			const abData = await actorData.abilityData[i];
 			const abilitySlot = this.abilitySlots[i];
-			if (!abilitySlot || !abData) {
-				return;
+			if (!abilitySlot) {
+				continue;
 			}
 
-			abilitySlot.setActionSlotIcon(abData.iconURL as string);
-			abilitySlot.setOnClickEvent(() => cmSystem.queueAction(context, eid, i));
+			if (abData) {
+				abilitySlot.setActionSlotIcon(abData.iconURL as string);
+				abilitySlot.setOnClickEvent(() =>
+					cmSystem.queueAction(context, eid, i),
+				);
+			} else {
+				abilitySlot.setActionSlotIcon("");
+				abilitySlot.setOnClickEvent(() => {});
+				abilitySlot.setActionLabelText("");
+			}
 		}
 
 		if (!actorData.itemData) {
 			return;
 		}
 
-		for (let i = 0; i < actorData.itemData.length; i++) {
+		for (let i = 0; i < this.deviceSlots.length; i++) {
 			const devData = await actorData.itemData[i];
 			const deviceSlot = this.deviceSlots[i];
-			if (!deviceSlot || !devData) {
-				return;
+			if (!deviceSlot) {
+				continue;
 			}
 
-			deviceSlot.setActionSlotIcon(devData.iconURL as string);
-			deviceSlot.setOnClickEvent(() =>
-				cmSystem.queueAction(context, eid, i, false),
-			);
+			if (devData) {
+				deviceSlot.setActionSlotIcon(devData.iconURL as string);
+				deviceSlot.setOnClickEvent(() => cmSystem.queueAction(context, eid, i));
+			} else {
+				deviceSlot.setActionSlotIcon("");
+				deviceSlot.setOnClickEvent(() => {});
+				deviceSlot.setActionLabelText("");
+			}
 		}
 	}
 

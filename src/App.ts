@@ -48,7 +48,7 @@ export class App {
 		// TEST
 		const plyrFactory = container.resolve(PlayerFactory);
 		const plyerEID = await plyrFactory.createEntityFromFile(
-			"sdm_test",
+			"cmd_test",
 			context.campaignId,
 		);
 		context.partyInfoHud.setPartyInfoEntryStack();
@@ -76,8 +76,9 @@ export class App {
 	}
 
 	private async startSystems() {
-		await this.uiSystem.start(this.engine);
 		await this.smSystem.start();
+		await this.uiSystem.start(this.engine);
+		await this.asSystem.start();
 		await this.dmSystem.start();
 		await this.cmSystem.start();
 	}
@@ -85,8 +86,8 @@ export class App {
 	private updateSystems(deltaTime: number) {
 		this.smSystem.update(deltaTime);
 		this.asSystem.update(deltaTime);
-		this.cmSystem.update(deltaTime);
 		this.dmSystem.update(deltaTime);
+		this.cmSystem.update(deltaTime);
 	}
 
 	private async startFactories() {

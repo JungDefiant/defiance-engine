@@ -129,7 +129,7 @@ export class PlayerGUI implements ActorGUI {
 		this.charNameUI.height = 1;
 		this.charNameUI.style = Themes.typography.header3;
 		this.charNameUI.color = Themes.neutral2;
-		this.charNameUI.topInPixels = -1;
+		this.charNameUI.topInPixels = 0;
 		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		this.charNameBgUI.addControl(this.charNameUI);
 
@@ -198,10 +198,10 @@ export class PlayerGUI implements ActorGUI {
 		this.lifeBarValueUI = this.createBarValueUI(
 			eid,
 			"lifeLabel",
-			Themes.primary1,
+			Themes.neutral2,
 			Themes.typography.caption,
 		);
-		this.lifeBarBgUI.addControl(this.lifeBarValueUI);
+		lifeStackUI.addControl(this.lifeBarValueUI);
 
 		// WILL BAR
 		const willBgUI = this.createStatBgUI(
@@ -237,10 +237,10 @@ export class PlayerGUI implements ActorGUI {
 		this.willBarValueUI = this.createBarValueUI(
 			eid,
 			"willLabel",
-			Themes.primary1,
+			Themes.neutral2,
 			Themes.typography.caption,
 		);
-		this.willBarBgUI.addControl(this.willBarValueUI);
+		willStackUI.addControl(this.willBarValueUI);
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {
@@ -255,7 +255,7 @@ export class PlayerGUI implements ActorGUI {
 			0,
 			Math.min(1, currValue / maxValue || 0),
 		);
-		this.lifeBarValueUI.text = `${currValue} / ${maxValue}`;
+		this.lifeBarValueUI.text = `${currValue}`;
 	}
 
 	public setWillBarFill(currValue: number, maxValue: number): void {
@@ -263,7 +263,7 @@ export class PlayerGUI implements ActorGUI {
 			0,
 			Math.min(1, currValue / maxValue || 0),
 		);
-		this.willBarValueUI.text = `${currValue} / ${maxValue}`;
+		this.willBarValueUI.text = `${currValue}`;
 	}
 
 	public setQueuedAction(iconSrc: string): void {
@@ -343,7 +343,7 @@ export class PlayerGUI implements ActorGUI {
 		statLabelUi.color = color;
 		statLabelUi.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		statLabelUi.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		statLabelUi.paddingTopInPixels = 1;
+		statLabelUi.paddingTopInPixels = 3;
 		statLabelUi.paddingLeftInPixels = 4;
 		return statLabelUi;
 	}
@@ -355,7 +355,7 @@ export class PlayerGUI implements ActorGUI {
 		background: string,
 	): Rectangle {
 		const bgUi = new Rectangle(`ui_${name}BarBgUI_${eid}`);
-		bgUi.widthInPixels = 145;
+		bgUi.widthInPixels = 110;
 		bgUi.heightInPixels = 12;
 		bgUi.thickness = 1.2;
 		bgUi.color = color;
@@ -380,10 +380,11 @@ export class PlayerGUI implements ActorGUI {
 		style: Style,
 	) {
 		const barValueUI = new TextBlock(`ui_${name}BarUIValue_${eid}`);
+		barValueUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-		barValueUI.width = 1;
-		barValueUI.height = 2;
+		barValueUI.widthInPixels = 25;
+		barValueUI.heightInPixels = 12;
 		barValueUI.topInPixels = 2;
 		barValueUI.color = color;
 		barValueUI.style = style;

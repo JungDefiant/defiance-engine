@@ -8,6 +8,8 @@ import ActorStateSystem from "./systems/ActorStateSystem";
 import { PlayerFactory } from "./factories/PlayerFactory";
 import { EnemyFactory } from "./factories/EnemyFactory";
 import { App } from "./App";
+import { Themes } from "./gui/Themes";
+
 
 const smSystem = container.resolve(SceneManagerSystem);
 const uiSystem = container.resolve(UserInterfaceSystem);

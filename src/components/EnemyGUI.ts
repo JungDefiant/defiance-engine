@@ -77,7 +77,7 @@ export class EnemyGUI implements ActorGUI {
 		this.lifeBarValueUI = this.createBarValueUI(
 			eid,
 			"lifeLabel",
-			Themes.primary1,
+			Themes.neutral2,
 			Themes.typography.caption,
 		);
 		this.lifeBarBGUI.addControl(this.lifeBarValueUI);
@@ -96,7 +96,7 @@ export class EnemyGUI implements ActorGUI {
 	public setLifeBarFill(currValue: number, maxValue: number): void {
 		this.lifeBarFillUI.width = Math.max(
 			0,
-			Math.min(1, currValue / maxValue || 0),
+			Math.min(1, currValue / maxValue || 0) * 0.65,
 		);
 
 		const perc = Math.round((currValue / maxValue) * 100 || 0);
@@ -170,11 +170,12 @@ export class EnemyGUI implements ActorGUI {
 		style: Style,
 	) {
 		const barValueUI = new TextBlock(`ui_${name}BarUIValue_${eid}`);
+		barValueUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
 		barValueUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-		barValueUI.width = 1;
-		barValueUI.height = 2;
-		barValueUI.topInPixels = 1;
+		barValueUI.widthInPixels = 30;
+		barValueUI.heightInPixels = 14;
+		barValueUI.topInPixels = 2;
 		barValueUI.color = color;
 		barValueUI.style = style;
 		return barValueUI;
