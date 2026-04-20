@@ -25,6 +25,7 @@ export class PlayerFactory implements IFactory {
 		const newEntity = addEntity(context.world);
 
 		const newActorComp = new ActorData(rawData);
+		newActorComp.isPlayer = true;
 		addComponent(
 			context.world,
 			newEntity,

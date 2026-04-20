@@ -7,7 +7,8 @@ import GameContext, { GameMode } from "../GameContext";
 import { EntityId, query } from "bitecs";
 import {
 	ActionData,
-	AbilityDescriptor,
+	ActionDescriptor,
+	ActionTarget,
 	ActorData,
 	EffectData,
 	EffectVar,
@@ -18,7 +19,11 @@ import { clamp } from "../Utils";
 export interface ICombatManagerSystem extends ISystem {
 	getSelectedPlayerEID(): EntityId;
 	startCombat(encId: string): Promise<void>;
-	queueAction(context: GameContext, eid: EntityId, abilityId: number): void;
+	startQueueAction(
+		context: GameContext,
+		eid: EntityId,
+		abilityId: number,
+	): void;
 }
 
 @singleton()
@@ -102,25 +107,57 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		this.gamePaused = false;
 	}
 
-	public queueAction(
+	public async startQueueAction(
 		context: GameContext,
 		eid: EntityId,
 		actionInd: number,
 		isItem?: boolean,
-	): void {
+	): Promise<void> {
+		console.log("Q ACTION");
 		const actorData = context.ActorDataComponent[eid];
-		actorData.queuedAction = isItem
-			? actorData.itemData && (actorData.itemData[actionInd] as ActionData)
-			: actorData.abilityData[actionInd];
+		const actionData = (await (isItem
+			? actorData.itemData && actorData.itemData[actionInd]
+			: actorData.abilityData[actionInd])) as ActionData;
+
+		if (actorData.isPlayer) {
+			this.setPlayerActionTargeting(context, eid, actionData);
+		} else {
+		}
 	}
 
-	private targetPlayerAction(
+	private async setPlayerActionTargeting(
+		context: GameContext,
+		sourceEid: EntityId,
+		actionData: ActionData,
+	): Promise<void> {
+		console.log(actionData);
+		switch (actionData.target) {
+			case ActionTarget.singleEnemy:
+				for (const eid of query(context.world, [context.EnemyGUIComponent])) {
+					const enemyGUI = context.EnemyGUIComponent[eid];
+					enemyGUI.setVisibleTargetingUI(true);
+					enemyGUI.setTargetingCallback(() => {
+						this.finishQueueAction(context, actionData, sourceEid, [eid]);
+						context.EnemyGUIComponent.forEach((gui) =>
+							gui.setVisibleTargetingUI(false),
+						);
+					});
+				}
+				return;
+			default:
+				return;
+		}
+	}
+
+	private finishQueueAction(
 		context: GameContext,
 		actionData: ActionData,
+		sourceEid: EntityId,
+		targetEids: EntityId[],
 	): void {
-		for (const eid of query(context.world, [context.EnemyGUIComponent])) {
-			const enemyGUI = context.EnemyGUIComponent[eid];
-		}
+		const actorData = context.ActorDataComponent[sourceEid];
+		actorData.queuedAction = actionData;
+		actorData.currentTargetEIDs = targetEids;
 	}
 
 	private async executeQueuedAction(
@@ -172,7 +209,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 	}
 
 	private applyDamageEffect(
-		descriptors: AbilityDescriptor[],
+		descriptors: ActionDescriptor[],
 		effVars: { [index: string]: EffectVar },
 		source: ActorData,
 		target: ActorData,
@@ -192,7 +229,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 	}
 
 	private applyHealEffect(
-		descriptors: AbilityDescriptor[],
+		descriptors: ActionDescriptor[],
 		effVars: { [index: string]: EffectVar },
 		source: ActorData,
 		target: ActorData,

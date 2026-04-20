@@ -12,6 +12,7 @@ export class ActorData {
 	affinityData?: AffinityData;
 	itemData?: ActionData[];
 	tactics?: TacticsData[];
+	isPlayer: boolean = false;
 	queuedAction?: ActionData;
 	currentTargetEIDs: number[] = [];
 	currentStatuses: EffectData[] = [];
@@ -68,6 +69,7 @@ export class ActorData {
 				`/data/${context.campaignId}/abilities/${el}.json`,
 			);
 			const abData = (await response.json()) as ActionData;
+
 			return abData;
 		});
 		// newActorData.itemData = initData.itemIds.map((el: string) => {
@@ -95,9 +97,9 @@ export interface ActionData {
 	id: string;
 	name: string;
 	description: string;
-	trigger: AbilityTrigger;
-	descriptors: AbilityDescriptor[];
-	target: AbilityTarget;
+	trigger: ActionTrigger;
+	descriptors: ActionDescriptor[];
+	target: ActionTarget;
 	effectData: EffectData[];
 	recovery?: number;
 	cost?: number;
@@ -124,26 +126,26 @@ export interface TacticsData {
 	actionId: string;
 }
 
-export enum AbilityTrigger {
+export enum ActionTrigger {
 	action,
 	toggle,
 	passive,
 }
 
-export enum AbilityDescriptor {
+export enum ActionDescriptor {
 	melee,
 	impact,
 	innate,
 	attack,
 }
 
-export enum AbilityTarget {
+export enum ActionTarget {
 	special,
-	singleEnemy,
-	groupEnemy,
-	singleAlly,
-	groupAlly,
-	self,
+	singleEnemy = "single_en",
+	groupEnemy = "group_en",
+	singleAlly = "single_al",
+	groupAlly = "group_en",
+	self = "self",
 }
 
 export enum TacticsCondition {

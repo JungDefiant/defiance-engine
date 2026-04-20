@@ -67,7 +67,7 @@ export default class CombatHUD implements IHUD {
 			if (abData) {
 				abilitySlot.setActionSlotIcon(abData.iconURL as string);
 				abilitySlot.setOnClickEvent(() =>
-					cmSystem.queueAction(context, eid, i),
+					cmSystem.startQueueAction(context, eid, i),
 				);
 			} else {
 				abilitySlot.setActionSlotIcon("");
@@ -89,7 +89,9 @@ export default class CombatHUD implements IHUD {
 
 			if (devData) {
 				deviceSlot.setActionSlotIcon(devData.iconURL as string);
-				deviceSlot.setOnClickEvent(() => cmSystem.queueAction(context, eid, i));
+				deviceSlot.setOnClickEvent(() =>
+					cmSystem.startQueueAction(context, eid, i),
+				);
 			} else {
 				deviceSlot.setActionSlotIcon("");
 				deviceSlot.setOnClickEvent(() => {});

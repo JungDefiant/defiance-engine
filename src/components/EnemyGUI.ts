@@ -15,6 +15,7 @@ import { ActorGUI } from "./PlayerGUI";
 
 export class EnemyGUI implements ActorGUI {
 	private rootContainer: StackPanel;
+	private targetingUI: Image;
 	private actBarBGUI: Rectangle;
 	private actBarFillUI: Rectangle;
 	private lifeBarBGUI: Rectangle;
@@ -29,17 +30,35 @@ export class EnemyGUI implements ActorGUI {
 		this.rootContainer = new StackPanel(
 			`ui_enBattlerUI_${enActorData.id}_${eid}`,
 		);
-		this.rootContainer.widthInPixels = 100;
-		this.rootContainer.heightInPixels = 100;
+		this.rootContainer.widthInPixels = 120;
+		this.rootContainer.heightInPixels = 240;
 		context.insceneCombatGUI.addControl(this.rootContainer);
 
-		this.statusIconsUI = new Grid(
-			`ui_enBattlerStatusIcons_${enActorData.id}_${eid}`,
+		this.targetingUI = new Image(
+			`ui_enBattlerTargetings_${eid}`,
+			"sprites/particles/magic_03.png",
 		);
-		this.statusIconsUI.widthInPixels = 60;
-		this.statusIconsUI.heightInPixels = 60;
-		for (let i = 0; i < 4; i++) {
+		this.targetingUI.widthInPixels = 96;
+		this.targetingUI.heightInPixels = 96;
+		this.targetingUI.shadowOffsetX = 1;
+		this.targetingUI.shadowOffsetY = 1;
+		this.targetingUI.onPointerEnterObservable.add(() => {
+			this.targetingUI.shadowColor = "red";
+		});
+		this.targetingUI.onPointerOutObservable.add(() => {
+			this.targetingUI.shadowColor = "#00000000";
+		});
+		this.targetingUI.onPointerClickObservable.add(() => {});
+		this.targetingUI.isVisible = false;
+		this.rootContainer.addControl(this.targetingUI);
+
+		this.statusIconsUI = new Grid(`ui_enBattlerStatusIcons_${eid}`);
+		this.statusIconsUI.widthInPixels = 120;
+		this.statusIconsUI.heightInPixels = 24;
+		for (let i = 0; i < 2; i++) {
 			this.statusIconsUI.addRowDefinition(12, true);
+		}
+		for (let i = 0; i < 8; i++) {
 			this.statusIconsUI.addColumnDefinition(12, true);
 		}
 		this.rootContainer.addControl(this.statusIconsUI);
@@ -132,6 +151,14 @@ export class EnemyGUI implements ActorGUI {
 			this.statusIconsUI.removeControl(this.statusIcons.get(id) as Rectangle);
 			this.statusIcons.delete(id);
 		}
+	}
+
+	public setTargetingCallback(newCallback: Function): void {
+		this.targetingUI.onPointerClickObservable.addOnce(() => newCallback());
+	}
+
+	public setVisibleTargetingUI(isVisible: boolean): void {
+		this.targetingUI.isVisible = isVisible;
 	}
 
 	private createBarBgUI(
