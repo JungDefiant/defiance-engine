@@ -1,6 +1,6 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import { World, createWorld, query } from "bitecs";
+import { createWorld, EntityId, query } from "bitecs";
 import {
 	Engine,
 	HemisphericLight,
@@ -14,168 +14,211 @@ import {
 	UniversalCamera,
 	Nullable,
 	Viewport,
+	Texture,
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
 import DialogueManagerSystem from "./DialogueManagerSystem";
 import UserInterfaceSystem from "./UserInterfaceSystem";
+import GameContext, {
+	EventData,
+	GameMode,
+	InteractableData,
+	LocationData,
+	SceneData,
+} from "../GameContext";
+import { CreateTypography, Themes } from "../gui/Themes";
+import PartyInfoHUD from "../gui/PartyInfoHUD";
+import CombatHUD from "../gui/CombatHUD";
+import DialogueHUD from "../gui/DialogueHUD";
+import ExploreHUD from "../gui/ExploreHUD";
+
+export interface ISceneManagerSystem extends ISystem {
+	debug(debugOn: boolean): void;
+	setGameMode(GameMode: GameMode): void;
+	createScene(
+		engine: Engine,
+		fileName: string,
+		campaignId: string,
+		gameMode: GameMode,
+	): void;
+	loadLocationEvent(eventData: EventData, locationMeshes: AbstractMesh[]): void;
+	loadCombatEncounter(encounterId: string, locationIndex: number): void;
+	checkEventTriggers(): void;
+}
 
 @singleton()
-export default class SceneManagerSystem implements ISystem {
-	public activeScene: Nullable<Scene> = null;
-	public activeWorld: Nullable<World> = null;
-	public activeGameMode: GameMode = GameMode.MainMenu;
-	public locationGUI: Nullable<AdvancedDynamicTexture> = null;
-
+export default class SceneManagerSystem implements ISceneManagerSystem {
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
-	private currentLocationData: Nullable<LocationData> = null;
-	private sceneData: Map<string, SceneData> = new Map<string, SceneData>();
 
 	public async start() {
-		// Import scene data files
-		const allData = await import.meta.glob("/src/data/scenes/*.json");
-		for (const path in allData) {
-			const data = (await allData[path]()) as SceneData;
-			this.sceneData.set(data.id, data);
-		}
-
 		this.gameCanvas = document.getElementById(
 			"gameCanvas",
 		)! as HTMLCanvasElement;
 	}
 
-	public update() {
-		for (const entityId of query(this.activeWorld!, [])) {
+	public update(deltaTime: number) {
+		const context = container.resolve(GameContext);
+		for (const entityId of query(context.world, [])) {
 			// Component.value[entityId]    -->     how to access component data
 		}
 	}
 
 	public debug(debugOn: boolean = true) {
-		if (!this.activeScene) {
-			return;
-		}
+		const context = container.resolve(GameContext);
 
 		if (debugOn) {
-			this.activeScene.debugLayer.show({ overlay: true });
+			context.scene.debugLayer.show({ overlay: true });
 		} else {
-			this.activeScene.debugLayer.hide();
+			context.scene.debugLayer.hide();
 		}
 	}
 
-	public async loadScene(sceneId: string, engine: Engine) {
-		const sceneData = this.sceneData?.get(sceneId);
-		this.activeWorld = createWorld();
-		this.activeScene = new Scene(engine);
+	public setGameMode(newMode: GameMode) {
+		const context = container.resolve(GameContext);
 
-		// Test
+		const uiSystem = container.resolve(UserInterfaceSystem);
+		uiSystem.setGameMode(newMode);
+
+		if (newMode == GameMode.MainMenu) {
+			// X
+		} else if (newMode == GameMode.Explore) {
+			const camera = context.scene.activeCamera;
+
+			if (!camera) {
+				return;
+			}
+
+			camera.attachControl(this.gameCanvas);
+			context.insceneLocationGUI.rootContainer.isVisible = true;
+			context.insceneCombatGUI.rootContainer.isVisible = false;
+			// X
+		} else if (newMode == GameMode.Dialogue) {
+			const camera = context.scene.activeCamera;
+
+			if (!camera) {
+				return;
+			}
+
+			camera.detachControl();
+			context.insceneLocationGUI.rootContainer.isVisible = false;
+			context.insceneCombatGUI.rootContainer.isVisible = false;
+		} else if (newMode == GameMode.Combat) {
+			const camera = context.scene.activeCamera;
+
+			if (!camera) {
+				return;
+			}
+
+			camera.detachControl();
+			context.insceneLocationGUI.rootContainer.isVisible = false;
+			context.insceneCombatGUI.rootContainer.isVisible = true;
+		}
+
+		const newContext = { ...context, gameMode: newMode } as GameContext;
+		container.register(GameContext, { useValue: newContext });
+	}
+
+	public async createScene(
+		engine: Engine,
+		fileName: string,
+		campaignId: string,
+		gameMode: GameMode,
+	) {
+		const response = await fetch(`/data/${campaignId}/scenes/${fileName}.json`);
+		const sceneData = await response.json();
+		if (!sceneData) {
+			return;
+		}
+
+		const world = createWorld();
+		const scene = new Scene(engine);
+		const uiScene = new Scene(engine);
+		uiScene.autoClear = false;
+
 		const expCamPos = sceneData?.locations[0].exploreViewPosition!;
 		const camera = new UniversalCamera(
 			"cam_explore",
 			new Vector3(expCamPos[0], expCamPos[1], expCamPos[2]),
-			this.activeScene,
+			scene,
 		);
 		camera.setFocalLength(30);
 		camera.setTarget(new Vector3(0, 0, -40));
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.attachControl(this.gameCanvas, false);
 
-		this.activeScene.onPointerObservable.add((eventData) => {
+		scene.onPointerObservable.add((eventData) => {
 			// This will block out vertical rotation
 			// For blocking out horizontal rotation, simply use y instead of x
 			camera.cameraRotation.x = 0;
 		});
 
-		const skybox = MeshBuilder.CreateBox(
-			"skybox",
-			{ size: 100.0 },
-			this.activeScene,
-		);
-		const skyboxMaterial = new StandardMaterial("skyBox", this.activeScene);
-		skyboxMaterial.emissiveColor = new Color3(0.8, 0.8, 0.8);
+		const skybox = MeshBuilder.CreateBox("skybox", { size: 100.0 }, scene);
+		const skyboxMaterial = new StandardMaterial("skyBox", scene);
+		skyboxMaterial.emissiveColor = Color3.FromHexString(Themes.primary3);
 		skyboxMaterial.backFaceCulling = true;
 		skyboxMaterial.disableLighting = true;
 		skybox.material = skyboxMaterial;
 		skybox.infiniteDistance = true;
 
-		const light = new HemisphericLight(
-			"light",
-			new Vector3(1, 1, 0),
-			this.activeScene,
+		const light = new HemisphericLight("light", new Vector3(1, 1, 1), scene);
+		light.intensity = 1;
+
+		const mainUI = AdvancedDynamicTexture.CreateFullscreenUI(
+			"ui_main",
+			true,
+			uiScene,
+			Texture.NEAREST_SAMPLINGMODE,
 		);
-		light.intensity = 0.7;
-
-		await this.loadLocation(0, sceneData!);
-	}
-
-	private async loadLocation(locationIndex: number, sceneData: SceneData) {
-		const locMeshes = await ImportMeshAsync(
-			`./models/maps/${sceneData?.locations[locationIndex].modelURL}`,
-			this.activeScene!,
-		);
-		this.currentLocationData = sceneData.locations[locationIndex];
-
-		this.locationGUI = AdvancedDynamicTexture.CreateFullscreenUI("ui_location");
-
-		this.currentLocationData.interactables.forEach(async (itr) => {
-			if (!this.currentLocationData) {
-				return;
-			}
-
-			await this.loadLocationInteractable(
-				itr,
-				this.currentLocationData,
-				locMeshes.meshes,
-			);
-		});
-
-		this.currentLocationData.events.forEach(async (evt) => {
-			await this.loadLocationEvent(evt, locMeshes.meshes);
-		});
-	}
-
-	private async loadLocationInteractable(
-		interactableData: InteractableData,
-		locationData: LocationData,
-		locationMeshes: AbstractMesh[],
-	) {
-		const attachedMesh = locationMeshes.find(
-			(x) => x.name == interactableData.attachedModelId,
+		const locationLoaded = await this.loadLocation(0, scene, sceneData);
+		const combatGUI = AdvancedDynamicTexture.CreateFullscreenUI(
+			"ui_combat",
+			true,
+			scene,
+			Texture.NEAREST_SAMPLINGMODE,
 		);
 
-		const button = Button.CreateSimpleButton(interactableData.id, "?");
-		button.width = 0.1;
-		button.height = 0.1;
-		button.color = "Blue";
-		button.background = "Blue";
-		button.textBlock!.color = "Black";
-		button.thickness = 2;
-		button.onPointerEnterObservable.add(() => {
-			const uiSystem = container.resolve(UserInterfaceSystem);
-			uiSystem
-				.getExploreHud()
-				.updateHighlightInfoUI(
-					interactableData.name,
-					interactableData.description,
-				);
-		});
-		button.onPointerOutObservable.add(() => {
-			const uiSystem = container.resolve(UserInterfaceSystem);
-			uiSystem.getExploreHud().hideHighlightInfoUI();
-		});
-		button.onPointerClickObservable.add(() => {
-			// Loads and runs dialogue based on dialogueId in interactableData
-			if (!attachedMesh) {
-				return;
-			}
+		const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
 
-			const dmSystem = container.resolve(DialogueManagerSystem);
-			dmSystem.startDialogue(interactableData.dialogueNodeId, {
-				data: interactableData,
-				mesh: attachedMesh,
-			});
-		});
-		this.locationGUI!.addControl(button);
-		button.linkWithMesh(attachedMesh!);
+		CreateTypography(mainUI);
+
+		const partyInfoHud = new PartyInfoHUD();
+		mainUI.addControl(partyInfoHud.createHudRoot());
+
+		const exploreHud = new ExploreHUD();
+		mainUI.addControl(exploreHud.createHudRoot());
+		exploreHud.showHideHud(false);
+
+		const dialogueHud = new DialogueHUD();
+		mainUI.addControl(dialogueHud.createHudRoot());
+		dialogueHud.showHideHud(false);
+
+		const combatHud = new CombatHUD();
+		mainUI.addControl(combatHud.createHudRoot());
+		combatHud.showHideHud(false);
+
+		const playerEids = [0];
+
+		const newContext = new GameContext(
+			campaignId,
+			playerEids[0],
+			playerEids,
+			gameMode,
+			world,
+			scene,
+			uiScene,
+			sceneData,
+			locationLoaded.data,
+			mainUI,
+			locationLoaded.gui,
+			combatGUI,
+			partyInfoHud,
+			exploreHud,
+			dialogueHud,
+			combatHud,
+		);
+
+		container.register(GameContext, { useValue: newContext });
 	}
 
 	public async loadLocationEvent(
@@ -190,65 +233,80 @@ export default class SceneManagerSystem implements ISystem {
 
 	public checkEventTriggers() {}
 
-	public setGameMode(newMode: GameMode) {
-		this.activeGameMode = newMode;
+	private async loadLocation(
+		locationIndex: number,
+		scene: Scene,
+		sceneData: SceneData,
+	): Promise<{ data: LocationData; gui: AdvancedDynamicTexture }> {
+		const locMeshes = await ImportMeshAsync(
+			`./models/maps/${sceneData?.locations[locationIndex].modelURL}`,
+			scene,
+		);
+		const locationData = sceneData.locations[locationIndex];
 
-		const uiSystem = container.resolve(UserInterfaceSystem);
-		uiSystem.setGameMode(this.activeGameMode);
+		const locationGUI = AdvancedDynamicTexture.CreateFullscreenUI(
+			"ui_location",
+			true,
+			scene,
+		);
 
-		if (newMode == GameMode.MainMenu) {
-			// X
-		} else if (newMode == GameMode.Explore) {
-			const camera = this.activeScene?.activeCamera;
-			camera?.attachControl(this.gameCanvas);
-			this.locationGUI!.rootContainer.isVisible = true;
-			// X
-		} else if (newMode == GameMode.Dialogue || newMode == GameMode.Combat) {
-			const camera = this.activeScene?.activeCamera;
-			camera?.detachControl();
-			this.locationGUI!.rootContainer.isVisible = false;
+		locationData.interactables.forEach(async (itr) => {
+			await this.loadLocationInteractable(itr, locMeshes.meshes, locationGUI);
+		});
+
+		locationData.events.forEach(async (evt) => {
+			await this.loadLocationEvent(evt, locMeshes.meshes);
+		});
+
+		return { data: locationData, gui: locationGUI };
+	}
+
+	private async loadLocationInteractable(
+		interactableData: InteractableData,
+		locationMeshes: AbstractMesh[],
+		locationGUI: AdvancedDynamicTexture,
+	) {
+		const attachedMesh = locationMeshes.find(
+			(x) => x.name == interactableData.attachedModelId,
+		);
+
+		if (!attachedMesh) {
+			return;
 		}
+
+		const button = Button.CreateSimpleButton(interactableData.id, "?");
+		button.width = 0.1;
+		button.height = 0.1;
+		button.color = "Blue";
+		button.background = "Blue";
+		if (button.textBlock) {
+			button.textBlock.color = "Black";
+		}
+		button.thickness = 2;
+		button.onPointerEnterObservable.add(() => {
+			const context = container.resolve(GameContext);
+			context.exploreHud.updateHighlightInfoUI(
+				interactableData.name,
+				interactableData.description,
+			);
+		});
+		button.onPointerOutObservable.add(() => {
+			const context = container.resolve(GameContext);
+			context.exploreHud.hideHighlightInfoUI();
+		});
+		button.onPointerClickObservable.add(() => {
+			// Loads and runs dialogue based on dialogueId in interactableData
+			if (!attachedMesh) {
+				return;
+			}
+
+			const dmSystem = container.resolve(DialogueManagerSystem);
+			dmSystem.startDialogue(interactableData.dialogueNodeId, {
+				data: interactableData,
+				mesh: attachedMesh,
+			});
+		});
+		locationGUI.addControl(button);
+		button.linkWithMesh(attachedMesh);
 	}
-
-	public getCurrentLocationData(): Nullable<LocationData> {
-		return this.currentLocationData;
-	}
-}
-
-interface SceneData {
-	id: string;
-	difficultyLevel: number;
-	startLocationId: string;
-	locations: LocationData[];
-}
-
-export interface LocationData {
-	id: string;
-	modelURL: string;
-	exploreViewPosition: number[];
-	combatViewPosition: number[];
-	interactables: InteractableData[];
-	events: EventData[];
-}
-
-export interface InteractableData {
-	id: string;
-	name: string;
-	description: string;
-	dialogueNodeId: string;
-	attachedModelId: string;
-	viewPosition: number[];
-	guiPositionOffset: number[];
-}
-
-interface EventData {
-	id: string;
-	flagTriggers: string[];
-}
-
-export enum GameMode {
-	MainMenu,
-	Combat,
-	Explore,
-	Dialogue,
 }

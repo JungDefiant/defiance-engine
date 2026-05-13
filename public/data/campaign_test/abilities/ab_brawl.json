@@ -14,25 +14,20 @@
         "attack"
     ],
     "target": "single_en",
-    "recovery": 20,
+    "recovery": 4,
     "cost": 0,
     "effectData": [
         {
             "id": "damage",
-            "variables": [
-                16
-            ]
+            "variables": {
+                "damage": 16
+            }
         },
         {
             "id": "critical",
-            "variables": [
-                {
-                    "id": "damage",
-                    "variables": [
-                        16
-                    ]
-                }
-            ]
+            "variables": {
+                "multiplier": 1.5
+            }
         }
     ]
 }

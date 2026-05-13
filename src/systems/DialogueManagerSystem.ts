@@ -5,42 +5,37 @@ import {
 	Nullable,
 	UniversalCamera,
 	Vector3,
+	Viewport,
 } from "@babylonjs/core";
-import UserInterfaceSystem, { GameMode } from "./UserInterfaceSystem";
-import SceneManagerSystem, {
-	InteractableData,
-	LocationData,
-} from "./SceneManagerSystem";
+import UserInterfaceSystem from "./UserInterfaceSystem";
+import SceneManagerSystem from "./SceneManagerSystem";
+import GameContext, { GameMode, InteractableData } from "../GameContext";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
 	private activeDialogue: Nullable<DialogueData> = null;
-	private dialogueData?: Map<string, DialogueData>;
 
-	public async start() {
-		// Import dialogue files
-		const allData = await import.meta.glob("/src/data/dialogues/*.json");
-		this.dialogueData = new Map<string, DialogueData>();
-		for (const path in allData) {
-			const data = (await allData[path]()) as DialogueData;
-			const dlgId = path.match(/dlg_[A-Za-z]+/)![0];
-			this.dialogueData.set(dlgId, data);
-		}
-	}
+	public async start() {}
 
-	public update() {}
+	public update(deltaTime: number) {}
 
-	public startDialogue(
+	public async startDialogue(
 		dlgId: string,
 		itr: { data: InteractableData; mesh: AbstractMesh },
-	) {
-		const smSystem = container.resolve(SceneManagerSystem);
-		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
-		const camera = smSystem.activeScene?.activeCamera as UniversalCamera;
-
-		if (!smSystem || !camera || !dlgHud) {
+	): Promise<void> {
+		const context = container.resolve(GameContext);
+		const response = await fetch(
+			`/data/${context.campaignId}/dialogues/${dlgId}.json`,
+		);
+		const dlgData = (await response.json()) as DialogueData;
+		if (!dlgData) {
 			return;
 		}
+
+		const smSystem = container.resolve(SceneManagerSystem);
+		const dlgHud = container.resolve(GameContext).dialogueHud;
+		const camera = container.resolve(GameContext).scene
+			.activeCamera as UniversalCamera;
 
 		smSystem.setGameMode(GameMode.Dialogue);
 
@@ -51,16 +46,21 @@ export default class DialogueManagerSystem implements ISystem {
 			new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]),
 		);
 		// LATER: Implement offsetting camera target
-		camera.setTarget(itr.mesh!.position);
+		camera.setTarget(itr.mesh.position);
+		camera.viewport = new Viewport(0, 0, 1, 1);
 
-		this.activeDialogue = this.dialogueData!.get(dlgId)!;
+		this.activeDialogue = dlgData;
 		this.runLine(0);
 	}
 
 	public runLine(id: number) {
 		// Get dialogue HUD
-		const dlgHud = container.resolve(UserInterfaceSystem).getDialogueHud();
-		const dialogue = this.activeDialogue?.dialogues[id];
+		if (!this.activeDialogue) {
+			return;
+		}
+
+		const dlgHud = container.resolve(GameContext).dialogueHud;
+		const dialogue = this.activeDialogue.dialogues[id];
 
 		if (!dialogue || !dlgHud) {
 			return;
@@ -69,7 +69,7 @@ export default class DialogueManagerSystem implements ISystem {
 		let charData;
 		const characterName = dialogue.character;
 		if (characterName) {
-			charData = this.activeDialogue?.characters[characterName];
+			charData = this.activeDialogue.characters[characterName];
 			if (charData) {
 				// Set character portrait
 				dlgHud.setCharacterPortrait(charData);
@@ -97,18 +97,15 @@ export default class DialogueManagerSystem implements ISystem {
 	public endDialogue() {
 		// Switch mode back to Explore
 		const smSystem = container.resolve(SceneManagerSystem);
-		const scene = smSystem.activeScene;
-		const camera = smSystem.activeScene?.activeCamera as UniversalCamera;
-		const locData = smSystem.getCurrentLocationData();
-
-		if (!smSystem || !scene || !camera || !locData) {
-			return;
-		}
+		const context = container.resolve(GameContext);
+		const camera = context.scene.activeCamera as UniversalCamera;
+		const locData = context.locationData;
 
 		smSystem.setGameMode(GameMode.Explore);
 
 		const viewCoords = locData.exploreViewPosition;
 		camera.position = new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]);
+		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		// LATER: Implement offsetting camera target
 		camera.setTarget(new Vector3(0, 0, -40));
 	}

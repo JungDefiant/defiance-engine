@@ -13,8 +13,8 @@
             ],
             "combatViewPosition": [
                 0,
-                1.5,
-                5
+                1.1,
+                2.25
             ],
             "interactables": [
                 {
@@ -44,5 +44,10 @@
                 }
             ]
         }
-    ]
+    ],
+    "encounters": {
+        "enc_test": [
+            "en_sc_test"
+        ]
+    }
 }

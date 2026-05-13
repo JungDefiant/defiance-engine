@@ -1,0 +1,56 @@
+{
+    "dialogues": [
+        {
+            "id": "0_start",
+            "nodes": [
+                {
+                    "id": "0_start_0",
+                    "text": ">> setvar PROLOGUE_CREDITS 2146 << >> movelook (0,0,0) (0,0,0) << >> screenfx fade_in <<",
+                    "choices": [
+                        "0_start_1"
+                    ]
+                },
+                {
+                    "id": "0_start_1",
+                    "text": "You wake up to the sound of heavy rattling. The entire apartment shakes to a steady rhythm. Magnetic wails against steel.",
+                    "choices": [
+                        "0_start_2"
+                    ]
+                },
+                {
+                    "id": "0_start_2",
+                    "text": "The morning train. Shaking your walls like the worst alarm clock ever. It's probably time to get up. Not like you can go back to sleep.",
+                    "choices": [
+                        "0_start_3"
+                    ]
+                },
+                {
+                    "id": "0_start_3",
+                    "text": ">> movelook (0,0,0) (0,0,0) << Home sweet home. A cheap ass room in the lower Mids. That's what scrapboy commission gets you these days.",
+                    "choices": [
+                        "0_start_4"
+                    ]
+                },
+                {
+                    "id": "0_start_4",
+                    "text": "You'd find a better job, but you'd rather have one really shitty job than three shitty jobs. Also, sometimes you strike gold and get a decent haul that you can ride for a month. It's like gambling with trash. ",
+                    "choices": [
+                        "0_start_5"
+                    ]
+                },
+                {
+                    "id": "0_start_4",
+                    "text": "Still, it's a struggle to make rent every month, but you make do.",
+                    "choices": [
+                        "0_start_5"
+                    ]
+                },
+                {
+                    "id": "0_start_5",
+                    "text": "Luckily, it's your day off today. Time to burn the hours away before you know... another 50 hour week of mining trash.",
+                    "choices": []
+                }
+            ]
+        }
+    ]
+}

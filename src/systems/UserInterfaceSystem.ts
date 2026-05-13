@@ -1,91 +1,84 @@
-import { singleton } from "tsyringe";
+import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import {
-	Engine,
-	Nullable,
-	Scene,
-	UniversalCamera,
-	Vector3,
-} from "@babylonjs/core";
-import { AdvancedDynamicTexture } from "@babylonjs/gui";
-import PartyInfoHUD from "../gui/PartyInfoHUD";
-import ExploreHUD from "../gui/ExploreHUD";
-import DialogueHUD from "../gui/DialogueHUD";
-import CombatHUD from "../gui/CombatHUD";
-import { GameMode } from "./SceneManagerSystem";
+import { Engine, Nullable, Scene } from "@babylonjs/core";
+import GameContext, { GameMode } from "../GameContext";
+import { query } from "bitecs";
+import { PlayerGUI } from "../components/PlayerGUI";
+import { ActorData } from "../components/ActorData";
+import { EnemyGUI } from "../components/EnemyGUI";
+
+export interface IUserInterfaceSystem extends ISystem {
+	setGameMode(newMode: GameMode): void;
+	createPlayerInput(inputMode: GameMode): void;
+}
 
 @singleton()
-export default class UserInterfaceSystem implements ISystem {
-	public uiScene: Nullable<Scene> = null;
+export default class UserInterfaceSystem implements IUserInterfaceSystem {
+	public async start(engine: Engine) {}
 
-	private fullscreenUI: Nullable<AdvancedDynamicTexture> = null;
-	private partyInfoHud: Nullable<PartyInfoHUD> = null;
-	private exploreHud: Nullable<ExploreHUD> = null;
-	private dialogueHud: Nullable<DialogueHUD> = null;
-	private combatHud: Nullable<CombatHUD> = null;
+	public update(deltaTime: number) {
+		const context = container.resolve(GameContext);
 
-	public async start(engine: Engine) {
-		this.uiScene = this.createGUIScene(engine);
+		for (const eid of query(context.world, [
+			context.ActorDataComponent,
+			context.PlayerGUIComponent,
+		])) {
+			const actorData = context.ActorDataComponent[eid];
+			const playerGUI = context.PlayerGUIComponent[eid];
+			this.updatePlayerGUI(actorData, playerGUI);
+		}
+
+		for (const eid of query(context.world, [
+			context.ActorDataComponent,
+			context.EnemyGUIComponent,
+		])) {
+			const actorData = context.ActorDataComponent[eid];
+			const enemyGUI = context.EnemyGUIComponent[eid];
+			this.updateEnemyGUI(actorData, enemyGUI);
+		}
 	}
-
-	public update() {}
 
 	public setGameMode(newMode: GameMode) {
-		this.partyInfoHud?.showHideHud(
+		const context = container.resolve(GameContext);
+		context.partyInfoHud.showHideHud(
 			newMode == GameMode.Combat || newMode == GameMode.Explore,
 		);
-		this.exploreHud?.showHideHud(newMode == GameMode.Explore);
-		this.dialogueHud?.showHideHud(newMode == GameMode.Dialogue);
-		this.combatHud?.showHideHud(newMode == GameMode.Combat);
-	}
-
-	public getPartyInfoHud(): PartyInfoHUD {
-		return this.partyInfoHud!;
-	}
-
-	public getExploreHud(): ExploreHUD {
-		return this.exploreHud!;
-	}
-
-	public getDialogueHud(): DialogueHUD {
-		return this.dialogueHud!;
-	}
-
-	public getCombatHud(): CombatHUD {
-		return this.combatHud!;
-	}
-
-	public createGUIScene(engine: Engine) {
-		const uiScene = new Scene(engine);
-		uiScene.autoClear = false;
-
-		const camera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
-
-		this.fullscreenUI = AdvancedDynamicTexture.CreateFullscreenUI(
-			"ui_main",
-			true,
-			uiScene,
-		);
-
-		this.partyInfoHud = new PartyInfoHUD();
-		this.fullscreenUI.addControl(this.partyInfoHud.createHudRoot());
-
-		this.exploreHud = new ExploreHUD();
-		this.fullscreenUI.addControl(this.exploreHud.createHudRoot());
-		this.exploreHud.showHideHud(false);
-
-		this.dialogueHud = new DialogueHUD();
-		this.fullscreenUI.addControl(this.dialogueHud.createHudRoot());
-		this.dialogueHud.showHideHud(false);
-
-		this.combatHud = new CombatHUD();
-		this.fullscreenUI.addControl(this.dialogueHud.createHudRoot());
-		this.combatHud.showHideHud(false);
-
-		// this.createEndCombatScreen();
-		// this.createGameSettingsScreen();
-		return uiScene;
+		context.exploreHud.showHideHud(newMode == GameMode.Explore);
+		context.dialogueHud.showHideHud(newMode == GameMode.Dialogue);
+		context.combatHud.showHideHud(newMode == GameMode.Combat);
 	}
 
 	public createPlayerInput(inputMode: GameMode) {}
+
+	private updatePlayerGUI(actorData: ActorData, gui: PlayerGUI) {
+		gui.setQueuedAction(
+			actorData.queuedAction ? (actorData.queuedAction.iconURL as string) : "",
+		);
+
+		gui.setActBarFill(
+			actorData.attributes["recovery"].currentValue,
+			actorData.attributes["recovery"].maximumValue,
+		);
+
+		gui.setLifeBarFill(
+			actorData.attributes["life"].currentValue,
+			actorData.attributes["life"].maximumValue,
+		);
+
+		gui.setWillBarFill(
+			actorData.attributes["will"].currentValue,
+			actorData.attributes["will"].maximumValue,
+		);
+	}
+
+	private updateEnemyGUI(actorData: ActorData, gui: EnemyGUI) {
+		gui.setActBarFill(
+			actorData.attributes["recovery"].currentValue,
+			actorData.attributes["recovery"].maximumValue,
+		);
+		gui.setLifeBarFill(
+			actorData.attributes["life"].currentValue,
+			actorData.attributes["life"].maximumValue,
+		);
+	}
 }

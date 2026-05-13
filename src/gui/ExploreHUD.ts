@@ -8,6 +8,7 @@ import {
 } from "@babylonjs/gui";
 import IHUD from "./IHUD";
 import { Nullable } from "@babylonjs/core";
+import { Themes } from "./Themes";
 
 export default class ExploreHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -25,8 +26,16 @@ export default class ExploreHUD implements IHUD {
 	public createHudRoot(): Container {
 		this.rootContainer = new Container("ui_exploreHUD");
 
+		const backgroundUI = new Rectangle("ui_exploreBgUI");
+		backgroundUI.width = 1;
+		backgroundUI.heightInPixels = 50;
+		backgroundUI.background = Themes.primary3;
+		backgroundUI.thickness = 0;
+		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.rootContainer.addControl(backgroundUI);
+
 		this.highlightInfoUI = this.createHighlightInfoUI();
-		this.rootContainer.addControl(this.highlightInfoUI);
+		backgroundUI.addControl(this.highlightInfoUI);
 
 		return this.rootContainer;
 	}
@@ -55,15 +64,18 @@ export default class ExploreHUD implements IHUD {
 
 	private createHighlightInfoUI(): Container {
 		const highlightInfoUI = new Rectangle("ui_highlightInfoUI");
-		highlightInfoUI.background = "gray";
-		highlightInfoUI.color = "black";
+		highlightInfoUI.background = Themes.primary3;
+		highlightInfoUI.color = Themes.primary1;
+		highlightInfoUI.thickness = 2;
 		highlightInfoUI.widthInPixels = 320;
 		highlightInfoUI.heightInPixels = 50;
-		highlightInfoUI.topInPixels = 274;
+		highlightInfoUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
 		const highlightHeader = new TextBlock(this.headerUIName, "Header");
 		highlightHeader.fontSize = 14;
 		highlightHeader.topInPixels = -10;
+		highlightHeader.color = Themes.neutral2;
+		highlightHeader.style = Themes.typography.header3;
 		highlightInfoUI.addControl(highlightHeader);
 
 		const highlightDescription = new TextBlock(
@@ -77,6 +89,8 @@ export default class ExploreHUD implements IHUD {
 			highlightDescription.paddingRightInPixels = 8;
 		highlightDescription.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		highlightDescription.textWrapping = TextWrapping.WordWrap;
+		highlightDescription.color = Themes.neutral2;
+		highlightDescription.style = Themes.typography.bodyText;
 		highlightInfoUI.addControl(highlightDescription);
 
 		highlightInfoUI.alpha = 0;

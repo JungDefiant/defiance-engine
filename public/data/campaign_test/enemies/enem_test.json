@@ -1,0 +1,32 @@
+{
+  "id": "en_sc_test",
+  "name": "",
+  "backstory": "",
+  "description": "",
+  "primaryColor": "",
+  "spriteUrl": "spr_sentineltest.png",
+  "attributes": {
+    "life": 400,
+    "will": 200,
+    "speed": 10,
+    "defense": 10,
+    "critical": 1,
+    "regen": 10
+  },
+  "abilityIds": [
+    "ab_brawl"
+  ],
+  "itemIds": [
+    "it_grenadefrag"
+  ],
+  "tactics": [
+    {
+      "trigger": "onChance50",
+      "action": "it_grenadefrag"
+    },
+    {
+      "trigger": "vsHighestLife",
+      "action": "ab_brawl"
+    }
+  ]
+}
