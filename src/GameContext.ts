@@ -1,5 +1,5 @@
-import { Mesh, Scene } from "@babylonjs/core";
-import { AdvancedDynamicTexture } from "@babylonjs/gui";
+import { Mesh, Scene, SolidParticleSystem } from "@babylonjs/core";
+import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
 import { EntityId, observe, onGet, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
 import { ActorData } from "./components/ActorData";
@@ -33,6 +33,8 @@ export default class GameContext {
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
 	public readonly EnemyGUIComponent: EnemyGUI[] = [];
 	public readonly EnemySprite: Mesh[] = [];
+	public readonly FloatingText: TextBlock[] = [];
+	public readonly SpecialFX: SolidParticleSystem[] = [];
 
 	public constructor(
 		campaignId: string,

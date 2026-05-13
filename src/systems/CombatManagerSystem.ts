@@ -15,6 +15,12 @@ import {
 } from "../components/ActorData";
 import { EnemyFactory } from "../factories/EnemyFactory";
 import { clamp } from "../Utils";
+import RenderQueueSystem, {
+	RenderQueueEntry,
+	RenderQueueType,
+	RenderQueueVarsSpecialFX,
+} from "./RenderQueueSystem";
+import { Themes } from "../gui/Themes";
 
 export interface ICombatManagerSystem extends ISystem {
 	getSelectedPlayerEID(): EntityId;
@@ -38,8 +44,8 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		@inject(EnemyFactory) private enFactory: EnemyFactory,
 		@inject(delay(() => SceneManagerSystem))
 		private smSystem: SceneManagerSystem,
-		@inject(delay(() => UserInterfaceSystem))
-		private uiSystem: UserInterfaceSystem,
+		@inject(delay(() => RenderQueueSystem))
+		private rqeSystem: RenderQueueSystem,
 	) {}
 
 	public getSelectedPlayerEID(): EntityId {
@@ -62,7 +68,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 				rcvyAttr.currentValue === rcvyAttr.maximumValue
 			) {
 				this.gamePaused = true;
-				this.executeQueuedAction(context, actorData);
+				this.executeQueuedAction(context, eid, actorData);
 
 				// TEMP
 				this.gamePaused = false;
@@ -162,6 +168,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 
 	private async executeQueuedAction(
 		context: GameContext,
+		sourceEid: EntityId,
 		actorData: ActorData,
 	): Promise<void> {
 		const actionToExecute = await actorData.queuedAction;
@@ -172,25 +179,31 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 
 		const actionEffects = actionToExecute.effectData;
 		const actionTargetIds = actorData.currentTargetEIDs;
+
+		this.addActionRQEs(sourceEid, actionTargetIds, actionToExecute);
+
 		actionTargetIds.forEach((eid) => {
 			const targetData = context.ActorDataComponent[eid];
+			let ftText;
 			actionEffects.forEach((eff) => {
 				switch (eff.id) {
 					case "damage":
-						this.applyDamageEffect(
+						ftText = this.applyDamageEffect(
 							actionToExecute.descriptors,
 							eff.variables,
 							actorData,
 							targetData,
 						);
+						this.addFloatingTextRQE(eid, ftText, Themes.secondary1);
 						break;
 					case "healing":
-						this.applyHealEffect(
+						ftText = this.applyHealEffect(
 							actionToExecute.descriptors,
 							eff.variables,
 							actorData,
 							targetData,
 						);
+						this.addFloatingTextRQE(eid, ftText, Themes.secondary3);
 						break;
 					default:
 						return;
@@ -208,12 +221,58 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		*/
 	}
 
+	private addActionRQEs(
+		sourceEid: EntityId,
+		targetEids: EntityId[],
+		actionData: ActionData,
+	) {
+		const castRQE = new RenderQueueEntry(
+			RenderQueueType.SpecialFX,
+			{
+				targets: [sourceEid],
+				vfxUrl: actionData.castVfxURL as string,
+				audioUrl: actionData.castSfxURL as string,
+			} as RenderQueueVarsSpecialFX,
+			true,
+			0.5,
+		);
+
+		const hitRQE = new RenderQueueEntry(
+			RenderQueueType.SpecialFX,
+			{
+				targets: targetEids,
+				vfxUrl: actionData.hitVfxURL as string,
+				audioUrl: actionData.hitSfxURL as string,
+			} as RenderQueueVarsSpecialFX,
+			true,
+			0.5,
+		);
+
+		this.rqeSystem.addRenderQueueEntry(castRQE);
+		this.rqeSystem.addRenderQueueEntry(hitRQE);
+	}
+
+	private addFloatingTextRQE(targetEid: number, text: string, color: string) {
+		const ftRQE = new RenderQueueEntry(
+			RenderQueueType.FloatingText,
+			{
+				targets: [targetEid],
+				text,
+				color,
+			},
+			false,
+			0.5,
+		);
+
+		this.rqeSystem.addRenderQueueEntry(ftRQE);
+	}
+
 	private applyDamageEffect(
 		descriptors: ActionDescriptor[],
 		effVars: { [index: string]: EffectVar },
 		source: ActorData,
 		target: ActorData,
-	) {
+	): string {
 		const targetLifeAttr = target.attributes["life"];
 		const targetDefenseAttr = target.attributes["defense"];
 		const damage = effVars["damage"] as number;
@@ -226,6 +285,8 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 			0,
 			targetLifeAttr.maximumValue,
 		);
+
+		return totalDamage.toString();
 	}
 
 	private applyHealEffect(
@@ -233,7 +294,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		effVars: { [index: string]: EffectVar },
 		source: ActorData,
 		target: ActorData,
-	) {
+	): string {
 		const targetLifeAttr = target.attributes["life"];
 		const healing = effVars["healing"] as number;
 		targetLifeAttr.currentValue = clamp(
@@ -241,5 +302,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 			0,
 			targetLifeAttr.maximumValue,
 		);
+
+		return healing.toString();
 	}
 }

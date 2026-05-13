@@ -1,25 +1,25 @@
 {
     "dialogues": [
         {
-            "id": "0_test",
+            "id": "0_start",
             "nodes": [
                 {
                     "id": "0_start_0",
-                    "text": "test",
+                    "text": ">> setvar PROLOGUE_CREDITS 2146 << >> movelook (0,0,0) (0,0,0) << >> screenfx fade_in <<",
                     "choices": [
                         "0_start_1"
                     ]
                 },
                 {
                     "id": "0_start_1",
-                    "text": "test 2",
+                    "text": "You wake up to the sound of heavy rattling. The entire apartment shakes to a steady rhythm. Magnetic wails against steel.",
                     "choices": [
                         "0_start_2"
                     ]
                 },
                 {
                     "id": "0_start_2",
-                    "text": "test 3",
+                    "text": "The morning train. Shaking your walls like the worst alarm clock ever. It's probably time to get up. Not like you can go back to sleep.",
                     "choices": [
                         "0_start_3"
                     ]

@@ -140,12 +140,11 @@ export enum ActionDescriptor {
 }
 
 export enum ActionTarget {
-	special,
+	self = "self",
 	singleEnemy = "single_en",
 	groupEnemy = "group_en",
 	singleAlly = "single_al",
 	groupAlly = "group_en",
-	self = "self",
 }
 
 export enum TacticsCondition {

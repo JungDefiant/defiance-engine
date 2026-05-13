@@ -1,0 +1,94 @@
+-----
+NODE: ch0_start
+---
+// Look at ceiling from bed
+>> setvar PROLOGUE_CREDITS 2146
+>> movecam (0,0,0) (0,0,0)
+>> screenfx fade_in
+
+You wake up to the sound of heavy rattling. The entire apartment shakes to a steady rhythm. Magnetic wails against steel.
+
+The morning train. Shaking your walls like the worst alarm clock ever. It's probably time to get up. Not like you can go back to sleep.
+
+// Move to default position in apartment location
+>> movecam (0,0,0) (0,0,0)
+
+Home sweet home. A cheap ass room in the lower Mids. That's what scrapboy commission gets you these days.
+
+You'd find a better job, but you'd rather have one really shitty job than three shitty jobs. 
+
+Sometimes you strike gold and get a decent haul that you can ride for a month. It's like gambling with trash. 
+
+Still, it's a struggle to make rent every month, but you make do.
+
+Luckily, it's your day off today. Time to burn the hours away before you know... another 50 hour week of mining trash.
+-----
+NODE: ch0_netpad
+---
+// Looks at netpad
+>> movecam (0,0,0) (0,0,0)
+A Netpad; there's one in every home. It's your, well, whole entertainment system. Well not *yours*, you don't technically "own" it, but you use it all the time.
+
+A ratty plastic card sits next to it. You scan the card and a readout pops up along the top of the Netpad's interface reading "Credits: {PROLOGUE_CREDITS}".
+
+Not many credits left, but you could watch a stream or play a game for a couple hours.
+
+You could also watch the main channel, which is free, but it's pretty much either the most depressing shit ever or self-congratulatory slop.
+
+What do you want to do with Netpad? You have {PROLOGUE_CREDITS} remaining.
+- Watch a stream [ch0_stream]
+- Play a game [ch0_playgame]
+- Watch main channel [ch0_mainchannel]
+- Put down Netpad
+-----
+NODE: ch0_stream
+---
+The screen of your Netpad blares with a cacophony of colors and noise. A chat window is anchored to the right side of the screen, dizzyingly overwhelmed with rows of emojis.
+
+A swole man with cartoonish neon-bright clothing shouts into the camera. Displayed behind the man is a gaudy roulette table. Above his head is a row of numbers prefixed with the credits symbol.
+
+"AHHH YEAH, RIDE THE WAVE! WE'RE WINNING THE BIG BUCKS BABYYYYY!"
+
+He presses a button on his Netpad and the roulette begins to spin while flashing a dance of colorful lights. A ball enters the overstimulating vortex and spins along the edge of the wheel.
+
+"MAKE OR BREAK! RIIIDE THE WAAAVE!"
+
+The ball lands on Red 8.
+
+"OH FUCK!"
+
+The credits race down to 0.
+
+"FUCK, SO DYSTOPIAN!!! I LOST IT ALL! FUCK!"
+
+The streamer slams the table and gets up from his seat repeating "Fuck" over and over again. The chat is filled with laughing emojis, red arrows pointing down, and messages reading "SO DYSTOPIAN!"
+
+The stream cuts to a picture of a cartoon version of the streamer smiling with massive letters reading "WIN BIG, RIDE THE WAVE" behind him. You can still hear him yelling "Fuck".
+
+>> adjustvar PROLOGUE_CREDITS -400
+
+After throwing him some credits out of pity, you decide to do something else. Your Netpad updates your credits to read {PROLOGUE_CREDITS}.
+-----
+NODE: ch0_mainchannel
+---
+White light flashes from your Netpad before revealing a dramatic shot of an armorclad Sentinel officer carrying a rifle and walking slowly towards the camera. A gruff voice chimes in.
+
+"Honor."
+
+There's another flash accompanied by banging drums. Then, the camera cuts to an angled view of several Sentinel Corps members in a row, each giving a stalwart salute while in formal dress.
+
+"Loyalty."
+
+The camera cuts to a patrol of Sentinel officers followed by floating drones and a mech. They're giving out orders and the camera zooms in on an officer giving hand signals.
+
+"Courage."
+
+The ad lands on a black screen with the Sentinel Corps in bold, blocky letters in the center.
+
+"Do you have what it takes to protect Neo Cascadia from enemies outside and in? Join the Sentinel Corps."
+
+The screen cuts to a news story about a gang of macho men with big guns claiming territory in the Undercity of the Mercury Sector. A stern-faced Sentinel commander is giving a press release.
+
+"We have quarantined the Blood Hunters gang in Levels 13 to 18 of Mercury Sector. Within a matter of days, we will claim total victory against these monstrous criminals!"
+
+You figure that's enough of the main channel for now and close it down.
