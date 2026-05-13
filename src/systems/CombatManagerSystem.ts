@@ -1,7 +1,6 @@
 import { container, delay, inject, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import SceneManagerSystem from "./SceneManagerSystem";
-import UserInterfaceSystem from "./UserInterfaceSystem";
 import { UniversalCamera, Vector3 } from "@babylonjs/core";
 import GameContext, { GameMode } from "../GameContext";
 import { EntityId, query } from "bitecs";
@@ -10,7 +9,6 @@ import {
 	ActionDescriptor,
 	ActionTarget,
 	ActorData,
-	EffectData,
 	EffectVar,
 } from "../components/ActorData";
 import { EnemyFactory } from "../factories/EnemyFactory";
@@ -23,7 +21,6 @@ import RenderQueueSystem, {
 import { Themes } from "../gui/Themes";
 
 export interface ICombatManagerSystem extends ISystem {
-	getSelectedPlayerEID(): EntityId;
 	startCombat(encId: string): Promise<void>;
 	startQueueAction(
 		context: GameContext,
@@ -34,8 +31,7 @@ export interface ICombatManagerSystem extends ISystem {
 
 @singleton()
 export default class CombatManagerSystem implements ICombatManagerSystem {
-	private gamePaused = true;
-	private currentPlayerEID = -1;
+	private pauseCombat = true;
 
 	private readonly START_RECOVERY = 3;
 	private readonly START_RECOVERY_RANGE = 2;
@@ -48,37 +44,45 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		private rqeSystem: RenderQueueSystem,
 	) {}
 
-	public getSelectedPlayerEID(): EntityId {
-		return this.currentPlayerEID;
+	public getPauseCombat(): boolean {
+		return this.pauseCombat;
 	}
 
 	public async start() {}
 
 	public update(deltaTime: number): void {
-		if (this.gamePaused) {
-			return;
+		if (this.pauseCombat) {
+			if (this.rqeSystem.getIsStarted()) {
+				return;
+			} else {
+				this.pauseCombat = false;
+			}
 		}
 
 		const context = container.resolve(GameContext);
 		for (const eid of query(context.world, [context.ActorDataComponent])) {
 			const actorData = context.ActorDataComponent[eid];
 			const rcvyAttr = actorData.attributes["recovery"];
+
+			if (!actorData.queuedAction && eid !== context.selectedPlayerEID) {
+				/* TEST */
+				const randomActionInd = Math.random() * actorData.abilityData.length;
+				this.startQueueAction(context, eid, 0);
+				/* TEST */
+			}
+
 			if (
 				actorData.queuedAction &&
 				rcvyAttr.currentValue === rcvyAttr.maximumValue
 			) {
-				this.gamePaused = true;
+				this.pauseCombat = true;
 				this.executeQueuedAction(context, eid, actorData);
-
-				// TEMP
-				this.gamePaused = false;
 			}
 		}
 	}
 
 	public async startCombat(encId: string): Promise<void> {
 		const context = container.resolve(GameContext);
-		const cbtHud = context.combatHud;
 		const locData = context.locationData;
 		const camera = context.scene.activeCamera as UniversalCamera;
 
@@ -93,12 +97,13 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		/*
 		To Do:
 		- Queue battler actions based on tactics (overridden by player input)
-		- Execute actions - pauses combat to process action
 		*/
 
+		/* TEST */
 		await this.enFactory.createEntityFromFile("enem_test", context.campaignId);
 		await this.enFactory.createEntityFromFile("enem_test", context.campaignId);
 		await this.enFactory.createEntityFromFile("enem_test", context.campaignId);
+		/* TEST */
 
 		await context.combatHud.setActionBar(context.selectedPlayerEID);
 
@@ -110,7 +115,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 			rcvyAttr.currentValue = 0;
 		}
 
-		this.gamePaused = false;
+		this.pauseCombat = false;
 	}
 
 	public async startQueueAction(
@@ -119,24 +124,23 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 		actionInd: number,
 		isItem?: boolean,
 	): Promise<void> {
-		console.log("Q ACTION");
 		const actorData = context.ActorDataComponent[eid];
 		const actionData = (await (isItem
 			? actorData.itemData && actorData.itemData[actionInd]
 			: actorData.abilityData[actionInd])) as ActionData;
 
-		if (actorData.isPlayer) {
+		if (eid === context.selectedPlayerEID) {
 			this.setPlayerActionTargeting(context, eid, actionData);
 		} else {
+			this.setNPCActionTargeting(context, eid, actionData);
 		}
 	}
 
-	private async setPlayerActionTargeting(
+	private setPlayerActionTargeting(
 		context: GameContext,
 		sourceEid: EntityId,
 		actionData: ActionData,
-	): Promise<void> {
-		console.log(actionData);
+	): void {
 		switch (actionData.target) {
 			case ActionTarget.singleEnemy:
 				for (const eid of query(context.world, [context.EnemyGUIComponent])) {
@@ -149,6 +153,24 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 						);
 					});
 				}
+				return;
+			default:
+				return;
+		}
+	}
+
+	private async setNPCActionTargeting(
+		context: GameContext,
+		sourceEid: EntityId,
+		actionData: ActionData,
+	) {
+		switch (actionData.target) {
+			case ActionTarget.singleEnemy:
+				/* TEST */
+				this.finishQueueAction(context, actionData, sourceEid, [
+					context.selectedPlayerEID,
+				]);
+				/* TEST */
 				return;
 			default:
 				return;
@@ -173,14 +195,14 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 	): Promise<void> {
 		const actionToExecute = await actorData.queuedAction;
 		if (!actionToExecute) {
-			this.gamePaused = false;
+			this.pauseCombat = false;
 			return;
 		}
 
 		const actionEffects = actionToExecute.effectData;
 		const actionTargetIds = actorData.currentTargetEIDs;
 
-		this.addActionRQEs(sourceEid, actionTargetIds, actionToExecute);
+		// this.addActionRQEs(sourceEid, actionTargetIds, actionToExecute);
 
 		actionTargetIds.forEach((eid) => {
 			const targetData = context.ActorDataComponent[eid];
@@ -194,7 +216,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 							actorData,
 							targetData,
 						);
-						this.addFloatingTextRQE(eid, ftText, Themes.secondary1);
+						this.addFloatingTextRQE(eid, ftText, Themes.secondary3);
 						break;
 					case "healing":
 						ftText = this.applyHealEffect(
@@ -203,13 +225,15 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 							actorData,
 							targetData,
 						);
-						this.addFloatingTextRQE(eid, ftText, Themes.secondary3);
+						this.addFloatingTextRQE(eid, ftText, Themes.secondary1);
 						break;
 					default:
 						return;
 				}
 			});
 		});
+
+		this.rqeSystem.startRenderQueue();
 
 		const rcvyAttr = actorData.attributes["recovery"];
 		rcvyAttr.maximumValue = actionToExecute.recovery || 0.5;
@@ -260,8 +284,8 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 				text,
 				color,
 			},
-			false,
-			0.5,
+			true,
+			1,
 		);
 
 		this.rqeSystem.addRenderQueueEntry(ftRQE);
@@ -279,7 +303,7 @@ export default class CombatManagerSystem implements ICombatManagerSystem {
 
 		const damageMult = 10 / targetDefenseAttr.currentValue;
 
-		const totalDamage = damage * damageMult;
+		const totalDamage = Math.floor(damage * damageMult);
 		targetLifeAttr.currentValue = clamp(
 			targetLifeAttr.currentValue - totalDamage,
 			0,

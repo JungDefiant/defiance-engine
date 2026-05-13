@@ -9,6 +9,7 @@ import ActorStateSystem from "./systems/ActorStateSystem";
 import GameContext, { GameMode } from "./GameContext";
 import { PlayerFactory } from "./factories/PlayerFactory";
 import { EnemyFactory } from "./factories/EnemyFactory";
+import RenderQueueSystem from "./systems/RenderQueueSystem";
 
 // This is the engine/game loop
 export class App {
@@ -17,6 +18,7 @@ export class App {
 	constructor(
 		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
 		@inject(UserInterfaceSystem) private uiSystem: UserInterfaceSystem,
+		@inject(RenderQueueSystem) private rqeSystem: RenderQueueSystem,
 		@inject(DialogueManagerSystem) private dmSystem: DialogueManagerSystem,
 		@inject(CombatManagerSystem) private cmSystem: CombatManagerSystem,
 		@inject(ActorStateSystem) private asSystem: ActorStateSystem,
@@ -36,7 +38,7 @@ export class App {
 		await this.startFactories();
 		await this.startSystems();
 
-		// TEST
+		/* TEST */
 		await this.smSystem.createScene(
 			this.engine,
 			"scene_test",
@@ -45,7 +47,6 @@ export class App {
 		);
 		const context = container.resolve(GameContext);
 
-		// TEST
 		const plyrFactory = container.resolve(PlayerFactory);
 		const plyerEID = await plyrFactory.createEntityFromFile(
 			"cmd_test",
@@ -63,8 +64,8 @@ export class App {
 
 		// this.smSystem.setGameMode(GameMode.Explore);
 		this.smSystem.setGameMode(GameMode.Combat);
-		this.cmSystem.startCombat("enc_test");
-		//
+		await this.cmSystem.startCombat("enc_test");
+		/* TEST */
 
 		this.engine.runRenderLoop(() => {
 			context.scene.render();
@@ -81,6 +82,7 @@ export class App {
 		await this.asSystem.start();
 		await this.dmSystem.start();
 		await this.cmSystem.start();
+		await this.rqeSystem.start();
 	}
 
 	private updateSystems(deltaTime: number) {
@@ -88,6 +90,7 @@ export class App {
 		this.asSystem.update(deltaTime);
 		this.dmSystem.update(deltaTime);
 		this.cmSystem.update(deltaTime);
+		this.rqeSystem.update(deltaTime);
 	}
 
 	private async startFactories() {

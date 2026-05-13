@@ -118,6 +118,18 @@ export default class GameContext {
 		observe(this.world, onGet(this.EnemySprite), (eid: EntityId) => {
 			return this.EnemySprite[eid];
 		});
+
+		observe(
+			this.world,
+			onSet(this.FloatingText),
+			(eid: EntityId, params: TextBlock) => {
+				this.FloatingText[eid] = params;
+			},
+		);
+
+		observe(this.world, onGet(this.FloatingText), (eid: EntityId) => {
+			return this.FloatingText[eid];
+		});
 	}
 }
 

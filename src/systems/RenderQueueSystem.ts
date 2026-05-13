@@ -1,11 +1,10 @@
-import { container, delay, inject, singleton } from "tsyringe";
+import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import { Engine, SolidParticleSystem } from "@babylonjs/core";
+import { SolidParticleSystem } from "@babylonjs/core";
 import { Queue } from "queue-typescript";
-import UserInterfaceSystem from "./UserInterfaceSystem";
 import GameContext from "../GameContext";
 import { TextBlock } from "@babylonjs/gui";
-import { addComponent, addEntity, query, set } from "bitecs";
+import { addComponent, addEntity, removeEntity, set } from "bitecs";
 
 export interface IRenderQueueSystem extends ISystem {
 	startRenderQueue(): void;
@@ -19,12 +18,9 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 	private renderQueueStates: RenderQueueState[] = [];
 	private isStarted: boolean = false;
 
-	public constructor(
-		@inject(delay(() => UserInterfaceSystem))
-		private uiSystem: UserInterfaceSystem,
-	) {}
+	public constructor() {}
 
-	public async start(engine: Engine): Promise<void> {}
+	public async start(): Promise<void> {}
 
 	public update(deltaTime: number): void {
 		if (!this.isStarted) {
@@ -48,6 +44,10 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 		this.processRenderQueueStates(deltaTime);
 	}
 
+	public getIsStarted(): boolean {
+		return this.isStarted;
+	}
+
 	public startRenderQueue(): void {
 		if (!this.isStarted) {
 			this.isStarted = true;
@@ -55,7 +55,7 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 	}
 
 	public addRenderQueueEntry(rqe: RenderQueueEntry): void {
-		if (!this.isStarted) {
+		if (this.isStarted) {
 			console.warn("Cannot add new RQE while render queue is started.");
 			return;
 		}
@@ -77,6 +77,7 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 				if (state.timeAccumulated >= state.rqe.duration) {
 					state.timeAccumulated = state.rqe.duration;
 					isActive = false;
+					this.clearRenderQueueState(state);
 				}
 
 				return isActive;
@@ -105,18 +106,29 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 				}
 
 				for (const eid of ftTargetEids) {
-					const targetSprite = context.EnemySprite[eid];
+					const ftEntity = addEntity(context.world);
+					rqeState.entityIds.push(ftEntity);
+
 					const floatingTextUI = new TextBlock(
-						`ui_floatingText_${eid}`,
+						`ui_floatingText_${ftEntity}`,
 						ftText,
 					);
 					floatingTextUI.widthInPixels = 96;
 					floatingTextUI.heightInPixels = 96;
 					floatingTextUI.color = ftColor;
-					floatingTextUI.linkWithMesh(targetSprite);
-					floatingTextUI.linkOffsetY = 40;
+					floatingTextUI.alpha = 1;
+					floatingTextUI.linkOffsetYInPixels = 0;
+					floatingTextUI._customData = { targetEid: eid };
 
-					const ftEntity = addEntity(context.world);
+					if (context.playerEIDs.includes(eid)) {
+						const playerGUI = context.PlayerGUIComponent[eid];
+						playerGUI.getRootContainer().addControl(floatingTextUI);
+					} else {
+						const targetSprite = context.EnemySprite[eid];
+						context.insceneCombatGUI.addControl(floatingTextUI);
+						floatingTextUI.linkWithMesh(targetSprite);
+					}
+
 					addComponent(
 						context.world,
 						ftEntity,
@@ -124,6 +136,7 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 					);
 				}
 
+				rqeState.init = true;
 				return;
 			case RenderQueueType.SpecialFX:
 				const sxAudioUrl = rqeState.rqe.vars["audioUrl"] as string;
@@ -141,6 +154,7 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 					addComponent(context.world, sxEntity, set(context.SpecialFX, sps));
 				}
 
+				rqeState.init = true;
 				return;
 			case RenderQueueType.WaitUntilDone:
 				return;
@@ -158,16 +172,51 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 
 				return;
 			case RenderQueueType.FloatingText:
-				for (const eid of query(context.world, context.FloatingText)) {
+				for (const eid of rqeState.entityIds) {
 					const ft = context.FloatingText[eid];
-					ft.linkOffsetY = (ft.linkOffsetX as number) + 0.01 * deltaTime;
-					ft.alpha = ft.alpha - 0.01 * deltaTime;
+
+					ft.alpha = Math.max(ft.alpha - 1 * deltaTime, 0);
+
+					let targetEid = ft._customData["targetEid"] as number;
+
+					if (targetEid && context.playerEIDs.includes(targetEid)) {
+						ft.topInPixels = ft.topInPixels - 20 * deltaTime;
+					} else {
+						ft.linkOffsetYInPixels = ft.linkOffsetYInPixels - 20 * deltaTime;
+					}
 				}
 				return;
 			case RenderQueueType.SpecialFX:
-				for (const eid of query(context.world, context.SpecialFX)) {
+				for (const eid of rqeState.entityIds) {
 					const sx = context.SpecialFX[eid];
 					sx.setParticles();
+				}
+				return;
+			case RenderQueueType.WaitUntilDone:
+				return;
+		}
+	}
+
+	private clearRenderQueueState(rqeState: RenderQueueState): void {
+		const context = container.resolve(GameContext);
+		switch (rqeState.rqe.type) {
+			case RenderQueueType.MessageDisplay:
+				// text
+
+				return;
+			case RenderQueueType.FloatingText:
+				for (const eid of rqeState.entityIds) {
+					const ft = context.FloatingText[eid];
+					context.insceneCombatGUI.removeControl(ft);
+					ft.dispose();
+					removeEntity(context.world, eid);
+				}
+				return;
+			case RenderQueueType.SpecialFX:
+				for (const eid of rqeState.entityIds) {
+					const sx = context.SpecialFX[eid];
+					sx.dispose();
+					removeEntity(context.world, eid);
 				}
 				return;
 			case RenderQueueType.WaitUntilDone:
@@ -179,6 +228,7 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 class RenderQueueState {
 	public readonly rqe: RenderQueueEntry;
 	public timeAccumulated: number;
+	public entityIds: number[] = [];
 	public init: boolean = false;
 
 	public constructor(rqe: RenderQueueEntry) {

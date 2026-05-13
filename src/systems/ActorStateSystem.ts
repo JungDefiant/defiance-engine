@@ -1,8 +1,9 @@
-import { container, inject, singleton } from "tsyringe";
+import { container, delay, inject, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import GameContext from "../GameContext";
 import { query } from "bitecs";
 import { ActorData } from "../components/ActorData";
+import CombatManagerSystem from "./CombatManagerSystem";
 
 export interface IActorStateSystem extends ISystem {}
 
@@ -13,11 +14,18 @@ export default class ActorStateSystem implements IActorStateSystem {
 
 	private readonly regnTicks: number = 5;
 
-	public constructor() {}
+	public constructor(
+		@inject(delay(() => CombatManagerSystem))
+		private cmSystem: CombatManagerSystem,
+	) {}
 
 	public async start() {}
 
 	public update(deltaTime: number): void {
+		if (this.cmSystem.getPauseCombat()) {
+			return;
+		}
+
 		const context = container.resolve(GameContext);
 		this.rcvyTickAccumulator += deltaTime;
 		this.regnTickAccumulator += deltaTime;

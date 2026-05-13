@@ -8,20 +8,21 @@ import ActorStateSystem from "./systems/ActorStateSystem";
 import { PlayerFactory } from "./factories/PlayerFactory";
 import { EnemyFactory } from "./factories/EnemyFactory";
 import { App } from "./App";
-import { Themes } from "./gui/Themes";
-
+import RenderQueueSystem from "./systems/RenderQueueSystem";
 
 const smSystem = container.resolve(SceneManagerSystem);
 const uiSystem = container.resolve(UserInterfaceSystem);
 const dmSystem = container.resolve(DialogueManagerSystem);
 const cmSystem = container.resolve(CombatManagerSystem);
 const asSystem = container.resolve(ActorStateSystem);
+const rqeSystem = container.resolve(RenderQueueSystem);
 const plyrFactory = container.resolve(PlayerFactory);
 const enFactory = container.resolve(EnemyFactory);
 
 const app = new App(
 	smSystem,
 	uiSystem,
+	rqeSystem,
 	dmSystem,
 	cmSystem,
 	asSystem,
