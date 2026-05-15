@@ -6,13 +6,8 @@ import GameContext from "../GameContext";
 import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, removeEntity, set } from "bitecs";
 
-export interface IRenderQueueSystem extends ISystem {
-	startRenderQueue(): void;
-	addRenderQueueEntry(rqe: RenderQueueEntry): void;
-}
-
 @singleton()
-export default class RenderQueueSystem implements IRenderQueueSystem {
+export default class RenderQueueSystem implements ISystem {
 	private currentRenderQueue: Queue<RenderQueueEntry> =
 		new Queue<RenderQueueEntry>();
 	private renderQueueStates: RenderQueueState[] = [];

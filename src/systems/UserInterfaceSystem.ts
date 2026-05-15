@@ -7,13 +7,8 @@ import { PlayerGUI } from "../components/PlayerGUI";
 import { ActorData } from "../components/ActorData";
 import { EnemyGUI } from "../components/EnemyGUI";
 
-export interface IUserInterfaceSystem extends ISystem {
-	setGameMode(newMode: GameMode): void;
-	createPlayerInput(inputMode: GameMode): void;
-}
-
 @singleton()
-export default class UserInterfaceSystem implements IUserInterfaceSystem {
+export default class UserInterfaceSystem implements ISystem {
 	public async start(engine: Engine) {}
 
 	public update(deltaTime: number) {

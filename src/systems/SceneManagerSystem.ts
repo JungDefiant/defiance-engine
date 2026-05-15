@@ -33,22 +33,8 @@ import CombatHUD from "../gui/CombatHUD";
 import DialogueHUD from "../gui/DialogueHUD";
 import ExploreHUD from "../gui/ExploreHUD";
 
-export interface ISceneManagerSystem extends ISystem {
-	debug(debugOn: boolean): void;
-	setGameMode(GameMode: GameMode): void;
-	createScene(
-		engine: Engine,
-		fileName: string,
-		campaignId: string,
-		gameMode: GameMode,
-	): void;
-	loadLocationEvent(eventData: EventData, locationMeshes: AbstractMesh[]): void;
-	loadCombatEncounter(encounterId: string, locationIndex: number): void;
-	checkEventTriggers(): void;
-}
-
 @singleton()
-export default class SceneManagerSystem implements ISceneManagerSystem {
+export default class SceneManagerSystem implements ISystem {
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
 
 	public async start() {

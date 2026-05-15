@@ -5,10 +5,8 @@ import { query } from "bitecs";
 import { ActorData } from "../components/ActorData";
 import CombatManagerSystem from "./CombatManagerSystem";
 
-export interface IActorStateSystem extends ISystem {}
-
 @singleton()
-export default class ActorStateSystem implements IActorStateSystem {
+export default class ActorStateSystem implements ISystem {
 	private rcvyTickAccumulator: number = 0;
 	private regnTickAccumulator: number = 0;
 

@@ -20,17 +20,8 @@ import RenderQueueSystem, {
 } from "./RenderQueueSystem";
 import { Themes } from "../gui/Themes";
 
-export interface ICombatManagerSystem extends ISystem {
-	startCombat(encId: string): Promise<void>;
-	startQueueAction(
-		context: GameContext,
-		eid: EntityId,
-		abilityId: number,
-	): void;
-}
-
 @singleton()
-export default class CombatManagerSystem implements ICombatManagerSystem {
+export default class CombatManagerSystem implements ISystem {
 	private pauseCombat = true;
 
 	private readonly START_RECOVERY = 3;
