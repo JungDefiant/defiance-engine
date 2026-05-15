@@ -1,16 +1,16 @@
 import "reflect-metadata";
 import { container, inject } from "tsyringe";
 import { Engine } from "@babylonjs/core";
-import SceneManagerSystem from "./systems/SceneManagerSystem";
-import DialogueManagerSystem from "./systems/DialogueManagerSystem";
-import UserInterfaceSystem from "./systems/UserInterfaceSystem";
-import CombatManagerSystem from "./systems/CombatManagerSystem";
-import ActorStateSystem from "./systems/ActorStateSystem";
-import GameContext, { GameMode } from "./GameContext";
-import { PlayerFactory } from "./factories/PlayerFactory";
-import { EnemyFactory } from "./factories/EnemyFactory";
-import RenderQueueSystem from "./systems/RenderQueueSystem";
-import { DELTATIME_MS } from "./Constants";
+import SceneManagerSystem from "src/systems/SceneManagerSystem";
+import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
+import CombatManagerSystem from "src/systems/CombatManagerSystem";
+import ActorStateSystem from "src/systems/ActorStateSystem";
+import GameContext, { GameMode } from "src/GameContext";
+import { PlayerFactory } from "src/factories/PlayerFactory";
+import { EnemyFactory } from "src/factories/EnemyFactory";
+import RenderQueueSystem from "src/systems/RenderQueueSystem";
+import { DELTATIME_MS } from "src/Constants";
 
 // This is the engine/game loop
 export class App {
