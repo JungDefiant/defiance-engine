@@ -10,6 +10,7 @@ import GameContext, { GameMode } from "./GameContext";
 import { PlayerFactory } from "./factories/PlayerFactory";
 import { EnemyFactory } from "./factories/EnemyFactory";
 import RenderQueueSystem from "./systems/RenderQueueSystem";
+import { DELTATIME_MS } from "./Constants";
 
 // This is the engine/game loop
 export class App {
@@ -69,7 +70,7 @@ export class App {
 
 		this.engine.runRenderLoop(() => {
 			context.scene.render();
-			const deltaTime = context.scene.deltaTime / 1000;
+			const deltaTime = context.scene.deltaTime / DELTATIME_MS;
 			this.updateSystems(deltaTime);
 			context.uiScene.render();
 			this.uiSystem.update(deltaTime);

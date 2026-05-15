@@ -1,8 +1,8 @@
 import { container, singleton } from "tsyringe";
-import { IFactory } from "./IFactory";
+import { IFactory } from "src/factories/IFactory";
 import { addComponent, addEntity, EntityId, set } from "bitecs";
-import GameContext from "../GameContext";
-import { ActorData } from "../components/ActorData";
+import GameContext from "src/GameContext";
+import { ActorData } from "src/components/ActorData";
 import {
 	Mesh,
 	MeshBuilder,
@@ -10,7 +10,7 @@ import {
 	Texture,
 	Vector3,
 } from "@babylonjs/core";
-import { EnemyGUI } from "../components/EnemyGUI";
+import { EnemyGUI } from "src/components/EnemyGUI";
 
 @singleton()
 export class EnemyFactory implements IFactory {

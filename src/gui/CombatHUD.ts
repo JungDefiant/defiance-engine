@@ -7,14 +7,12 @@ import {
 	StackPanel,
 	TextBlock,
 } from "@babylonjs/gui";
-import IHUD from "./IHUD";
-import { Themes } from "./Themes";
-import { ActionData, ActorData } from "../components/ActorData";
-import { ActionSlot } from "./components/ActionSlot";
+import IHUD from "src/gui/IHUD";
+import { Themes } from "src/gui/Themes";
+import { ActionSlot } from "src/gui/components/ActionSlot";
 import { container } from "tsyringe";
-import CombatManagerSystem from "../systems/CombatManagerSystem";
-import ActorStateSystem from "../systems/ActorStateSystem";
-import GameContext from "../GameContext";
+import CombatManagerSystem from "src/systems/CombatManagerSystem";
+import GameContext from "src/GameContext";
 import { EntityId } from "bitecs";
 
 export default class CombatHUD implements IHUD {

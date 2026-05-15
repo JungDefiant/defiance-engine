@@ -2,13 +2,13 @@ import { Mesh, Scene, SolidParticleSystem } from "@babylonjs/core";
 import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
 import { EntityId, observe, onGet, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
-import { ActorData } from "./components/ActorData";
-import { EnemyGUI } from "./components/EnemyGUI";
-import { PlayerGUI } from "./components/PlayerGUI";
-import PartyInfoHUD from "./gui/PartyInfoHUD";
-import ExploreHUD from "./gui/ExploreHUD";
-import DialogueHUD from "./gui/DialogueHUD";
-import CombatHUD from "./gui/CombatHUD";
+import { ActorData } from "src/components/ActorData";
+import { EnemyGUI } from "src/components/EnemyGUI";
+import { PlayerGUI } from "src/components/PlayerGUI";
+import PartyInfoHUD from "src/gui/PartyInfoHUD";
+import ExploreHUD from "src/gui/ExploreHUD";
+import DialogueHUD from "src/gui/DialogueHUD";
+import CombatHUD from "src/gui/CombatHUD";
 
 @singleton()
 export default class GameContext {

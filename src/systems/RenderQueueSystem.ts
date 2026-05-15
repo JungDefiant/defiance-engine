@@ -1,8 +1,8 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
+import ISystem from "src/systems/ISystem";
 import { SolidParticleSystem } from "@babylonjs/core";
 import { Queue } from "queue-typescript";
-import GameContext from "../GameContext";
+import GameContext from "src/GameContext";
 import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, removeEntity, set } from "bitecs";
 

@@ -1,9 +1,9 @@
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { container, singleton } from "tsyringe";
-import GameContext from "../GameContext";
-import { IFactory } from "./IFactory";
-import { ActorData } from "../components/ActorData";
-import { PlayerGUI } from "../components/PlayerGUI";
+import GameContext from "src/GameContext";
+import { IFactory } from "src/factories/IFactory";
+import { ActorData } from "src/components/ActorData";
+import { PlayerGUI } from "src/components/PlayerGUI";
 
 @singleton()
 export class PlayerFactory implements IFactory {

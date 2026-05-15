@@ -1,5 +1,5 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
+import ISystem from "src/systems/ISystem";
 import {
 	AbstractMesh,
 	Nullable,
@@ -7,9 +7,9 @@ import {
 	Vector3,
 	Viewport,
 } from "@babylonjs/core";
-import UserInterfaceSystem from "./UserInterfaceSystem";
-import SceneManagerSystem from "./SceneManagerSystem";
-import GameContext, { GameMode, InteractableData } from "../GameContext";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
+import SceneManagerSystem from "src/systems/SceneManagerSystem";
+import GameContext, { GameMode, InteractableData } from "src/GameContext";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {

@@ -1,8 +1,8 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
+import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
-import { ActorData } from "../components/ActorData";
-import GameContext from "../GameContext";
+import { ActorData } from "src/components/ActorData";
+import GameContext from "src/GameContext";
 
 @singleton()
 export default class SessionDataSystem implements ISystem {

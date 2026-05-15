@@ -1,11 +1,11 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
-import { Engine, Nullable, Scene } from "@babylonjs/core";
-import GameContext, { GameMode } from "../GameContext";
+import ISystem from "src/systems/ISystem";
+import { Engine } from "@babylonjs/core";
+import GameContext, { GameMode } from "src/GameContext";
 import { query } from "bitecs";
-import { PlayerGUI } from "../components/PlayerGUI";
-import { ActorData } from "../components/ActorData";
-import { EnemyGUI } from "../components/EnemyGUI";
+import { PlayerGUI } from "src/components/PlayerGUI";
+import { ActorData } from "src/components/ActorData";
+import { EnemyGUI } from "src/components/EnemyGUI";
 
 @singleton()
 export default class UserInterfaceSystem implements ISystem {
@@ -51,29 +51,29 @@ export default class UserInterfaceSystem implements ISystem {
 		);
 
 		gui.setActBarFill(
-			actorData.attributes["recovery"].currentValue,
-			actorData.attributes["recovery"].maximumValue,
+			actorData.attributes.recovery.currentValue,
+			actorData.attributes.recovery.maximumValue,
 		);
 
 		gui.setLifeBarFill(
-			actorData.attributes["life"].currentValue,
-			actorData.attributes["life"].maximumValue,
+			actorData.attributes.life.currentValue,
+			actorData.attributes.life.maximumValue,
 		);
 
 		gui.setWillBarFill(
-			actorData.attributes["will"].currentValue,
-			actorData.attributes["will"].maximumValue,
+			actorData.attributes.will.currentValue,
+			actorData.attributes.will.maximumValue,
 		);
 	}
 
 	private updateEnemyGUI(actorData: ActorData, gui: EnemyGUI) {
 		gui.setActBarFill(
-			actorData.attributes["recovery"].currentValue,
-			actorData.attributes["recovery"].maximumValue,
+			actorData.attributes.recovery.currentValue,
+			actorData.attributes.recovery.maximumValue,
 		);
 		gui.setLifeBarFill(
-			actorData.attributes["life"].currentValue,
-			actorData.attributes["life"].maximumValue,
+			actorData.attributes.life.currentValue,
+			actorData.attributes.life.maximumValue,
 		);
 	}
 }

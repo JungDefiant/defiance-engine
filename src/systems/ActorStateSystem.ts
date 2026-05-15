@@ -40,8 +40,8 @@ export default class ActorStateSystem implements ISystem {
 	}
 
 	private tickRecovery(deltaTime: number, actorData: ActorData) {
-		const spdAttr = actorData.attributes["speed"];
-		const rcvyAttr = actorData.attributes["recovery"];
+		const spdAttr = actorData.attributes.speed;
+		const rcvyAttr = actorData.attributes.recovery;
 
 		if (rcvyAttr.currentValue < rcvyAttr.maximumValue) {
 			const amount = deltaTime * (10 / spdAttr.currentValue);
@@ -51,8 +51,8 @@ export default class ActorStateSystem implements ISystem {
 	}
 
 	private tickRegen(actorData: ActorData) {
-		const regnAttr = actorData.attributes["regen"];
-		const lifeAttr = actorData.attributes["life"];
+		const regnAttr = actorData.attributes.regen;
+		const lifeAttr = actorData.attributes.life;
 
 		if (lifeAttr.currentValue < lifeAttr.maximumValue) {
 			const amount =

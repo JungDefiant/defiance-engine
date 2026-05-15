@@ -1,5 +1,5 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
+import ISystem from "src/systems/ISystem";
 import { createWorld, EntityId, query } from "bitecs";
 import {
 	Engine,
@@ -18,20 +18,21 @@ import {
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
-import DialogueManagerSystem from "./DialogueManagerSystem";
-import UserInterfaceSystem from "./UserInterfaceSystem";
+import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import GameContext, {
 	EventData,
 	GameMode,
 	InteractableData,
 	LocationData,
 	SceneData,
-} from "../GameContext";
-import { CreateTypography, Themes } from "../gui/Themes";
-import PartyInfoHUD from "../gui/PartyInfoHUD";
-import CombatHUD from "../gui/CombatHUD";
-import DialogueHUD from "../gui/DialogueHUD";
-import ExploreHUD from "../gui/ExploreHUD";
+} from "src/GameContext";
+import { CreateTypography, Themes } from "src/gui/Themes";
+import PartyInfoHUD from "src/gui/PartyInfoHUD";
+import CombatHUD from "src/gui/CombatHUD";
+import DialogueHUD from "src/gui/DialogueHUD";
+import ExploreHUD from "src/gui/ExploreHUD";
+import { DEFAULT_CAM_TARGET } from "src/Constants";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -129,7 +130,7 @@ export default class SceneManagerSystem implements ISystem {
 			scene,
 		);
 		camera.setFocalLength(30);
-		camera.setTarget(new Vector3(0, 0, -40));
+		camera.setTarget(DEFAULT_CAM_TARGET);
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.attachControl(this.gameCanvas, false);
 

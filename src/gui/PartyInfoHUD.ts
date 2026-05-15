@@ -1,11 +1,9 @@
 import { Nullable } from "@babylonjs/core";
 import { Container, Control, Rectangle, StackPanel } from "@babylonjs/gui";
-import IHUD from "./IHUD";
-import { Themes } from "./Themes";
-import { PlayerGUI } from "../components/PlayerGUI";
+import IHUD from "src/gui/IHUD";
+import { Themes } from "src/gui/Themes";
 import { container } from "tsyringe";
-import GameContext from "../GameContext";
-import { query } from "bitecs";
+import GameContext from "src/GameContext";
 
 export default class PartyInfoHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;

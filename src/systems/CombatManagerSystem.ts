@@ -1,8 +1,8 @@
 import { container, delay, inject, singleton } from "tsyringe";
-import ISystem from "./ISystem";
-import SceneManagerSystem from "./SceneManagerSystem";
+import ISystem from "src/systems/ISystem";
+import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import { UniversalCamera, Vector3 } from "@babylonjs/core";
-import GameContext, { GameMode } from "../GameContext";
+import GameContext, { GameMode } from "src/GameContext";
 import { EntityId, query } from "bitecs";
 import {
 	ActionData,
@@ -10,15 +10,16 @@ import {
 	ActionTarget,
 	ActorData,
 	EffectVar,
-} from "../components/ActorData";
-import { EnemyFactory } from "../factories/EnemyFactory";
-import { clamp } from "../Utils";
+} from "src/components/ActorData";
+import { EnemyFactory } from "src/factories/EnemyFactory";
+import { clamp } from "src/Utils";
 import RenderQueueSystem, {
 	RenderQueueEntry,
 	RenderQueueType,
 	RenderQueueVarsSpecialFX,
 } from "./RenderQueueSystem";
-import { Themes } from "../gui/Themes";
+import { Themes } from "src/gui/Themes";
+import { DEFAULT_CAM_TARGET as DEFAULT_CAM_TARGET } from "src/Constants";
 
 @singleton()
 export default class CombatManagerSystem implements ISystem {
@@ -26,6 +27,7 @@ export default class CombatManagerSystem implements ISystem {
 
 	private readonly START_RECOVERY = 3;
 	private readonly START_RECOVERY_RANGE = 2;
+	private readonly BASE_DEFENSE = 10;
 
 	public constructor(
 		@inject(EnemyFactory) private enFactory: EnemyFactory,
@@ -53,7 +55,7 @@ export default class CombatManagerSystem implements ISystem {
 		const context = container.resolve(GameContext);
 		for (const eid of query(context.world, [context.ActorDataComponent])) {
 			const actorData = context.ActorDataComponent[eid];
-			const rcvyAttr = actorData.attributes["recovery"];
+			const rcvyAttr = actorData.attributes.recovery;
 
 			if (!actorData.queuedAction && eid !== context.selectedPlayerEID) {
 				/* TEST */
@@ -81,7 +83,7 @@ export default class CombatManagerSystem implements ISystem {
 
 		const viewCoords = locData.combatViewPosition;
 		camera.position = new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]);
-		camera.setTarget(new Vector3(0, 0, -40));
+		camera.setTarget(DEFAULT_CAM_TARGET);
 
 		const encData = context.sceneData.encounters[encId];
 
@@ -100,7 +102,7 @@ export default class CombatManagerSystem implements ISystem {
 
 		for (const eid of query(context.world, [context.ActorDataComponent])) {
 			const actorData = context.ActorDataComponent[eid];
-			const rcvyAttr = actorData.attributes["recovery"];
+			const rcvyAttr = actorData.attributes.recovery;
 			rcvyAttr.maximumValue =
 				this.START_RECOVERY + Math.random() * this.START_RECOVERY_RANGE;
 			rcvyAttr.currentValue = 0;
@@ -226,7 +228,7 @@ export default class CombatManagerSystem implements ISystem {
 
 		this.rqeSystem.startRenderQueue();
 
-		const rcvyAttr = actorData.attributes["recovery"];
+		const rcvyAttr = actorData.attributes.recovery;
 		rcvyAttr.maximumValue = actionToExecute.recovery || 0.5;
 		rcvyAttr.currentValue = 0;
 
@@ -288,11 +290,11 @@ export default class CombatManagerSystem implements ISystem {
 		source: ActorData,
 		target: ActorData,
 	): string {
-		const targetLifeAttr = target.attributes["life"];
-		const targetDefenseAttr = target.attributes["defense"];
+		const targetLifeAttr = target.attributes.life;
+		const targetDefenseAttr = target.attributes.defense;
 		const damage = effVars["damage"] as number;
 
-		const damageMult = 10 / targetDefenseAttr.currentValue;
+		const damageMult = this.BASE_DEFENSE / targetDefenseAttr.currentValue;
 
 		const totalDamage = Math.floor(damage * damageMult);
 		targetLifeAttr.currentValue = clamp(
@@ -310,7 +312,7 @@ export default class CombatManagerSystem implements ISystem {
 		source: ActorData,
 		target: ActorData,
 	): string {
-		const targetLifeAttr = target.attributes["life"];
+		const targetLifeAttr = target.attributes.life;
 		const healing = effVars["healing"] as number;
 		targetLifeAttr.currentValue = clamp(
 			targetLifeAttr.currentValue + healing,
