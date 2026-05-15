@@ -12,23 +12,27 @@ import CombatHUD from "src/gui/CombatHUD";
 
 @singleton()
 export default class GameContext {
+	// Player data
 	public readonly campaignId: string;
 	public readonly selectedPlayerEID: number;
 	public readonly playerEIDs: number[];
+	// Scene & game data
 	public readonly gameMode: GameMode;
 	public readonly world: World;
 	public readonly scene: Scene;
 	public readonly sceneData: SceneData;
 	public readonly uiScene: Scene;
 	public readonly locationData: LocationData;
+	// GUIs
 	public readonly mainUI: AdvancedDynamicTexture;
 	public readonly insceneLocationGUI: AdvancedDynamicTexture;
 	public readonly insceneCombatGUI: AdvancedDynamicTexture;
+	// HUDs
 	public readonly partyInfoHud: PartyInfoHUD;
 	public readonly exploreHud: ExploreHUD;
 	public readonly dialogueHud: DialogueHUD;
 	public readonly combatHud: CombatHUD;
-
+	// Components
 	public readonly ActorDataComponent: ActorData[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
 	public readonly EnemyGUIComponent: EnemyGUI[] = [];
