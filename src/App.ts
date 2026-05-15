@@ -48,8 +48,7 @@ export class App {
 		);
 		const context = container.resolve(GameContext);
 
-		const plyrFactory = container.resolve(PlayerFactory);
-		const plyerEID = await plyrFactory.createEntityFromFile(
+		const plyerEID = await this.playerFactory.createEntityFromFile(
 			"cmd_test",
 			context.campaignId,
 		);
