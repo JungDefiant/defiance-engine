@@ -154,7 +154,7 @@ export default class CombatManagerSystem implements ISystem {
 			? actorData.itemData && actorData.itemData[actionInd]
 			: actorData.powerData[actionInd])) as AbilityData;
 
-		if (actionData.trigger !== ActionTrigger.onActionExecute) {
+		if (actionData.trigger != ActionTrigger.onActionExecute) {
 			return;
 		}
 
@@ -237,8 +237,8 @@ export default class CombatManagerSystem implements ISystem {
 		actionTargetIds.forEach((eid) => {
 			const targetData = gameState.ActorDataComponent[eid];
 			this.processAbilityEffects(
-				targetData,
 				actorData,
+				targetData,
 				actionEffects,
 				actionToExecute.descriptors,
 			);
@@ -257,8 +257,8 @@ export default class CombatManagerSystem implements ISystem {
 	}
 
 	private processAbilityEffects(
-		targetData: ActorData,
 		sourceData: ActorData,
+		targetData: ActorData,
 		actionEffects: EffectData[],
 		descriptors: ActionDescriptor[],
 		context?: { [index: string]: EffectVar },
@@ -351,8 +351,8 @@ export default class CombatManagerSystem implements ISystem {
 		);
 		triggeredSkills.forEach((skill) => {
 			this.processAbilityEffects(
-				targetData,
 				sourceData,
+				targetData,
 				skill.effectData,
 				skill.descriptors,
 				context,
@@ -409,6 +409,7 @@ export default class CombatManagerSystem implements ISystem {
 		);
 
 		if (targetLifeAttr.currentValue === 0) {
+			console.log(target);
 			this.defeatActor(target);
 		}
 
@@ -453,7 +454,8 @@ export default class CombatManagerSystem implements ISystem {
 
 		if (gameState.playerEIDs.includes(actor.entityId)) {
 			for (let i = 0; i < gameState.playerEIDs.length; i++) {
-				let playerData = gameState.ActorDataComponent[i];
+				let eid = gameState.playerEIDs[i];
+				let playerData = gameState.ActorDataComponent[eid];
 				if (!playerData.isDefeated) {
 					return;
 				}
@@ -464,7 +466,8 @@ export default class CombatManagerSystem implements ISystem {
 			// Game over
 		} else {
 			for (let i = 0; i < gameState.enemyEIDs.length; i++) {
-				let enemyData = gameState.ActorDataComponent[i];
+				let eid = gameState.enemyEIDs[i];
+				let enemyData = gameState.ActorDataComponent[eid];
 				if (!enemyData.isDefeated) {
 					return;
 				}

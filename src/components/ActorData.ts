@@ -134,17 +134,17 @@ export interface TacticsData {
 }
 
 export enum ActionTrigger {
-	onActionExecute,
-	onActorEffectTaken,
-	onActorEffectInflicted,
-	onActorDefeated,
+	onActionExecute = "onActionExecute",
+	onActorEffectTaken = "onActorEffectTaken",
+	onActorEffectInflicted = "onActorEffectInflicted",
+	onActorDefeated = "onActorDefeated",
 }
 
 export enum ActionDescriptor {
-	melee,
-	impact,
-	innate,
-	attack,
+	melee = "melee",
+	impact = "impact",
+	innate = "innate",
+	attack = "attack",
 }
 
 export enum ActionTarget {
