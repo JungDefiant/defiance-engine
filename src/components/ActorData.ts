@@ -1,23 +1,28 @@
 import { container } from "tsyringe";
-import GameContext from "../GameContext";
+import GameState from "../GameState";
+import { EntityId } from "bitecs";
 
 export class ActorData {
+	entityId: EntityId;
 	id: string = "";
 	name: string = "";
 	backstory: string = "";
 	description: string = "";
 	spriteUrl: string = "";
 	attributes: AttributeSet = {};
-	abilityData: ActionData[] = [];
+	powerData: AbilityData[] = [];
+	skillData: AbilityData[] = [];
 	affinityData?: AffinityData;
-	itemData?: ActionData[];
+	itemData?: AbilityData[];
 	tactics?: TacticsData[];
-	isPlayer: boolean = false;
-	queuedAction?: ActionData;
+	queuedAction?: AbilityData;
 	currentTargetEIDs: number[] = [];
 	currentStatuses: EffectData[] = [];
+	isPlayer: boolean = false;
+	isDefeated: boolean = false;
 
-	public constructor(initData: any) {
+	public constructor(entityId: number, initData: any) {
+		this.entityId = entityId;
 		this.id = initData.id;
 		this.name = initData.name;
 		this.backstory = initData.backstory;
@@ -61,14 +66,14 @@ export class ActorData {
 			} as ActorAttribute,
 		};
 
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
 
-		this.abilityData = initData.abilityIds.map(async (el: string) => {
+		this.powerData = initData.abilityIds.map(async (el: string) => {
 			const response = await fetch(
 				`/data/${context.campaignId}/abilities/${el}.json`,
 			);
-			const abData = (await response.json()) as ActionData;
+			const abData = (await response.json()) as AbilityData;
 
 			return abData;
 		});
@@ -93,7 +98,7 @@ export interface AffinityData {
 	baseAttributes: ActorAttribute[];
 }
 
-export interface ActionData {
+export interface AbilityData {
 	id: string;
 	name: string;
 	description: string;
@@ -103,8 +108,10 @@ export interface ActionData {
 	effectData: EffectData[];
 	recovery?: number;
 	cost?: number;
+	rechargeTime: number;
 	itemId?: string;
 	isConsumable?: boolean;
+	isToggle?: boolean;
 	iconURL?: string;
 	castVfxURL?: string;
 	hitVfxURL?: string;
@@ -127,9 +134,10 @@ export interface TacticsData {
 }
 
 export enum ActionTrigger {
-	action,
-	toggle,
-	passive,
+	onActionExecute,
+	onActorEffectTaken,
+	onActorEffectInflicted,
+	onActorDefeated,
 }
 
 export enum ActionDescriptor {

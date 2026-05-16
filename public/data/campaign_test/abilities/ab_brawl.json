@@ -6,7 +6,7 @@
     "hitVfxURL": "",
     "castSfxURL": "",
     "hitSfxURL": "",
-    "trigger": "action",
+    "trigger": "onActionExecute",
     "descriptors": [
         "melee",
         "impact",

@@ -1,6 +1,6 @@
 import { Nullable } from "@babylonjs/core";
 import { Container } from "@babylonjs/gui";
-import GameContext from "../GameContext";
+import GameState from "../GameState";
 
 export default interface IHUD {
 	rootContainer: Nullable<Container>;

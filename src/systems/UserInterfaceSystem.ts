@@ -1,7 +1,7 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
-import GameContext, { GameMode } from "src/GameContext";
+import GameState, { GameMode } from "src/GameState";
 import { query } from "bitecs";
 import { PlayerGUI } from "src/components/PlayerGUI";
 import { ActorData } from "src/components/ActorData";
@@ -12,7 +12,7 @@ export default class UserInterfaceSystem implements ISystem {
 	public async start(engine: Engine) {}
 
 	public update(deltaTime: number) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 
 		for (const eid of query(context.world, [
 			context.ActorDataComponent,
@@ -34,7 +34,7 @@ export default class UserInterfaceSystem implements ISystem {
 	}
 
 	public setGameMode(newMode: GameMode) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		context.partyInfoHud.showHideHud(
 			newMode == GameMode.Combat || newMode == GameMode.Explore,
 		);

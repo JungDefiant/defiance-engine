@@ -12,7 +12,7 @@ import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/components/ActionSlot";
 import { container } from "tsyringe";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
-import GameContext from "src/GameContext";
+import GameState from "src/GameState";
 import { EntityId } from "bitecs";
 
 export default class CombatHUD implements IHUD {
@@ -48,7 +48,7 @@ export default class CombatHUD implements IHUD {
 
 	public async setActionBar(eid: EntityId): Promise<void> {
 		const cmSystem = container.resolve(CombatManagerSystem);
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		const actorData = context.ActorDataComponent[eid];
 
 		if (!actorData) {
@@ -56,7 +56,7 @@ export default class CombatHUD implements IHUD {
 		}
 
 		for (let i = 0; i < this.abilitySlots.length; i++) {
-			const abData = await actorData.abilityData[i];
+			const abData = await actorData.powerData[i];
 			const abilitySlot = this.abilitySlots[i];
 			if (!abilitySlot) {
 				continue;

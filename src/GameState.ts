@@ -1,4 +1,4 @@
-import { Mesh, Scene, SolidParticleSystem } from "@babylonjs/core";
+import { Mesh, Observable, Scene, SolidParticleSystem } from "@babylonjs/core";
 import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
 import { EntityId, observe, onGet, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
@@ -11,11 +11,12 @@ import DialogueHUD from "src/gui/DialogueHUD";
 import CombatHUD from "src/gui/CombatHUD";
 
 @singleton()
-export default class GameContext {
+export default class GameState {
 	// Player data
 	public readonly campaignId: string;
 	public readonly selectedPlayerEID: number;
 	public readonly playerEIDs: number[];
+	public readonly enemyEIDs: number[] = [];
 	// Scene & game data
 	public readonly gameMode: GameMode;
 	public readonly world: World;
@@ -23,6 +24,7 @@ export default class GameContext {
 	public readonly sceneData: SceneData;
 	public readonly uiScene: Scene;
 	public readonly locationData: LocationData;
+	public actionPaused: boolean = false;
 	// GUIs
 	public readonly mainUI: AdvancedDynamicTexture;
 	public readonly insceneLocationGUI: AdvancedDynamicTexture;

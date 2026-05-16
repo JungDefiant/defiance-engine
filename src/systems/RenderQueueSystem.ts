@@ -2,7 +2,7 @@ import { container, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
 import { SolidParticleSystem } from "@babylonjs/core";
 import { Queue } from "queue-typescript";
-import GameContext from "src/GameContext";
+import GameState from "src/GameState";
 import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, removeEntity, set } from "bitecs";
 
@@ -86,7 +86,7 @@ export default class RenderQueueSystem implements ISystem {
 	}
 
 	private initRenderQueueEntry(rqeState: RenderQueueState): void {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
 				// text
@@ -160,7 +160,7 @@ export default class RenderQueueSystem implements ISystem {
 		rqeState: RenderQueueState,
 		deltaTime: number,
 	): void {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
 				// text
@@ -193,7 +193,7 @@ export default class RenderQueueSystem implements ISystem {
 	}
 
 	private clearRenderQueueState(rqeState: RenderQueueState): void {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
 				// text

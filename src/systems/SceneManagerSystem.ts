@@ -20,13 +20,13 @@ import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
-import GameContext, {
+import GameState, {
 	EventData,
 	GameMode,
 	InteractableData,
 	LocationData,
 	SceneData,
-} from "src/GameContext";
+} from "src/GameState";
 import { CreateTypography, Themes } from "src/gui/Themes";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import CombatHUD from "src/gui/CombatHUD";
@@ -45,14 +45,14 @@ export default class SceneManagerSystem implements ISystem {
 	}
 
 	public update(deltaTime: number) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		for (const entityId of query(context.world, [])) {
 			// Component.value[entityId]    -->     how to access component data
 		}
 	}
 
 	public debug(debugOn: boolean = true) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 
 		if (debugOn) {
 			context.scene.debugLayer.show({ overlay: true });
@@ -62,7 +62,7 @@ export default class SceneManagerSystem implements ISystem {
 	}
 
 	public setGameMode(newMode: GameMode) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 
 		const uiSystem = container.resolve(UserInterfaceSystem);
 		uiSystem.setGameMode(newMode);
@@ -102,8 +102,8 @@ export default class SceneManagerSystem implements ISystem {
 			context.insceneCombatGUI.rootContainer.isVisible = true;
 		}
 
-		const newContext = { ...context, gameMode: newMode } as GameContext;
-		container.register(GameContext, { useValue: newContext });
+		const newContext = { ...context, gameMode: newMode } as GameState;
+		container.register(GameState, { useValue: newContext });
 	}
 
 	public async createScene(
@@ -186,7 +186,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const playerEids = [0];
 
-		const newContext = new GameContext(
+		const newContext = new GameState(
 			campaignId,
 			playerEids[0],
 			playerEids,
@@ -205,7 +205,7 @@ export default class SceneManagerSystem implements ISystem {
 			combatHud,
 		);
 
-		container.register(GameContext, { useValue: newContext });
+		container.register(GameState, { useValue: newContext });
 	}
 
 	public async loadLocationEvent(
@@ -271,14 +271,14 @@ export default class SceneManagerSystem implements ISystem {
 		}
 		button.thickness = 2;
 		button.onPointerEnterObservable.add(() => {
-			const context = container.resolve(GameContext);
+			const context = container.resolve(GameState);
 			context.exploreHud.updateHighlightInfoUI(
 				interactableData.name,
 				interactableData.description,
 			);
 		});
 		button.onPointerOutObservable.add(() => {
-			const context = container.resolve(GameContext);
+			const context = container.resolve(GameState);
 			context.exploreHud.hideHighlightInfoUI();
 		});
 		button.onPointerClickObservable.add(() => {

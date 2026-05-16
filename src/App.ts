@@ -6,7 +6,7 @@ import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import ActorStateSystem from "src/systems/ActorStateSystem";
-import GameContext, { GameMode } from "src/GameContext";
+import GameState, { GameMode } from "src/GameState";
 import { PlayerFactory } from "src/factories/PlayerFactory";
 import { EnemyFactory } from "src/factories/EnemyFactory";
 import RenderQueueSystem from "src/systems/RenderQueueSystem";
@@ -46,7 +46,7 @@ export class App {
 			"campaign_test",
 			GameMode.Combat,
 		);
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 
 		const plyerEID = await this.playerFactory.createEntityFromFile(
 			"cmd_test",
@@ -54,7 +54,7 @@ export class App {
 		);
 		context.partyInfoHud.setPartyInfoEntryStack();
 
-		container.register(GameContext, {
+		container.register(GameState, {
 			useValue: {
 				...context,
 				selectedPlayerEID: plyerEID,

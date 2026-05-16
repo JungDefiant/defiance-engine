@@ -1,6 +1,6 @@
 import { container, delay, inject, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import GameContext from "../GameContext";
+import GameState from "../GameState";
 import { query } from "bitecs";
 import { ActorData } from "../components/ActorData";
 import CombatManagerSystem from "./CombatManagerSystem";
@@ -20,16 +20,24 @@ export default class ActorStateSystem implements ISystem {
 	public async start() {}
 
 	public update(deltaTime: number): void {
-		if (this.cmSystem.getPauseCombat()) {
+		const gameState = container.resolve(GameState);
+
+		if (gameState.actionPaused) {
 			return;
 		}
 
-		const context = container.resolve(GameContext);
+		this.processRecoveryRegen(gameState, deltaTime);
+	}
+
+	private processRecoveryRegen(gameState: GameState, deltaTime: number) {
 		this.rcvyTickAccumulator += deltaTime;
 		this.regnTickAccumulator += deltaTime;
 
-		for (const eid of query(context.world, [context.ActorDataComponent])) {
-			const actorData = context.ActorDataComponent[eid];
+		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
+			const actorData = gameState.ActorDataComponent[eid];
+			if (actorData.isDefeated) {
+				return;
+			}
 			this.tickRecovery(deltaTime, actorData);
 			this.tickRegen(actorData);
 		}

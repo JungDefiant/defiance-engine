@@ -1,7 +1,7 @@
 import { container, singleton } from "tsyringe";
 import { IFactory } from "src/factories/IFactory";
 import { addComponent, addEntity, EntityId, set } from "bitecs";
-import GameContext from "src/GameContext";
+import GameState from "src/GameState";
 import { ActorData } from "src/components/ActorData";
 import {
 	Mesh,
@@ -40,10 +40,10 @@ export class EnemyFactory implements IFactory {
 			return -1;
 		}
 
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		const newEntity = addEntity(context.world);
 
-		const newActorComp = new ActorData(rawData);
+		const newActorComp = new ActorData(newEntity, rawData);
 		addComponent(
 			context.world,
 			newEntity,
@@ -80,7 +80,7 @@ export class EnemyFactory implements IFactory {
 
 	private createEnemySprite(
 		eid: EntityId,
-		context: GameContext,
+		context: GameState,
 		position: Vector3,
 	): Mesh {
 		const actorData = context.ActorDataComponent[eid];
