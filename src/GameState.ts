@@ -1,6 +1,6 @@
 import { Mesh, Observable, Scene, SolidParticleSystem } from "@babylonjs/core";
 import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
-import { EntityId, observe, onGet, onSet, World } from "bitecs";
+import { EntityId, observe, onGet, onRemove, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
 import { ActorData } from "src/components/ActorData";
 import { EnemyGUI } from "src/components/EnemyGUI";
@@ -12,6 +12,7 @@ import CombatHUD from "src/gui/CombatHUD";
 
 @singleton()
 export default class GameState {
+	public actionPaused: boolean = false;
 	// Player data
 	public readonly campaignId: string;
 	public readonly selectedPlayerEID: number;
@@ -24,7 +25,6 @@ export default class GameState {
 	public readonly sceneData: SceneData;
 	public readonly uiScene: Scene;
 	public readonly locationData: LocationData;
-	public actionPaused: boolean = false;
 	// GUIs
 	public readonly mainUI: AdvancedDynamicTexture;
 	public readonly insceneLocationGUI: AdvancedDynamicTexture;
@@ -121,6 +121,14 @@ export default class GameState {
 			},
 		);
 
+		observe(
+			this.world,
+			onRemove(this.EnemySprite),
+			(eid: EntityId, params: Mesh) => {
+				this.EnemySprite[eid].dispose();
+			},
+		);
+
 		observe(this.world, onGet(this.EnemySprite), (eid: EntityId) => {
 			return this.EnemySprite[eid];
 		});
@@ -133,8 +141,28 @@ export default class GameState {
 			},
 		);
 
+		observe(this.world, onRemove(this.FloatingText), (eid: EntityId) => {
+			this.FloatingText[eid].dispose();
+		});
+
 		observe(this.world, onGet(this.FloatingText), (eid: EntityId) => {
 			return this.FloatingText[eid];
+		});
+
+		observe(
+			this.world,
+			onSet(this.SpecialFX),
+			(eid: EntityId, params: SolidParticleSystem) => {
+				this.SpecialFX[eid] = params;
+			},
+		);
+
+		observe(this.world, onRemove(this.SpecialFX), (eid: EntityId) => {
+			this.SpecialFX[eid].dispose();
+		});
+
+		observe(this.world, onGet(this.SpecialFX), (eid: EntityId) => {
+			return this.SpecialFX[eid];
 		});
 	}
 }

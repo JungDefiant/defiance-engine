@@ -33,6 +33,8 @@ export default class CombatManagerSystem implements ISystem {
 	private readonly START_RECOVERY_RANGE = 2;
 	private readonly BASE_DEFENSE = 10;
 
+	private startEndCombat: boolean = false;
+
 	public constructor(
 		@inject(EnemyFactory) private enFactory: EnemyFactory,
 		@inject(delay(() => SceneManagerSystem))
@@ -56,6 +58,11 @@ export default class CombatManagerSystem implements ISystem {
 			} else {
 				gameState.actionPaused = false;
 			}
+		}
+
+		if (this.startEndCombat) {
+			this.endCombat();
+			return;
 		}
 
 		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
@@ -127,8 +134,6 @@ export default class CombatManagerSystem implements ISystem {
 			const rcvyAttr = actorData.attributes.recovery;
 			const initRange = Math.random() * this.START_RECOVERY_RANGE;
 			rcvyAttr.maximumValue = this.START_RECOVERY + initRange;
-			console.log("INIT RANGE", initRange);
-			console.log("INIT RECOV VALUE", rcvyAttr.maximumValue);
 			rcvyAttr.currentValue = 0;
 		}
 
@@ -149,8 +154,6 @@ export default class CombatManagerSystem implements ISystem {
 			const rcvyAttr = playerData.attributes.recovery;
 			rcvyAttr.maximumValue = 0;
 			playerData.queuedAction = null;
-			console.log("RECOV CURR VALUE", rcvyAttr.currentValue);
-			console.log("RECOV MAX VALUE", rcvyAttr.maximumValue);
 		});
 
 		const viewCoords = locData.exploreViewPosition;
@@ -158,6 +161,7 @@ export default class CombatManagerSystem implements ISystem {
 		camera.setTarget(DEFAULT_CAM_TARGET);
 
 		gameState.actionPaused = false;
+		this.startEndCombat = false;
 
 		this.smSystem.setGameMode(GameMode.Explore);
 	}
@@ -268,11 +272,6 @@ export default class CombatManagerSystem implements ISystem {
 		const rcvyAttr = actorData.attributes.recovery;
 		rcvyAttr.maximumValue = actionToExecute.recovery || 0.5;
 		rcvyAttr.currentValue = 0;
-
-		/*
-			Note: This could potentially be set up as a chain of functions called on
-			each target, but for now this works.
-		*/
 	}
 
 	private processAbilityEffects(
@@ -428,7 +427,6 @@ export default class CombatManagerSystem implements ISystem {
 		);
 
 		if (targetLifeAttr.currentValue === 0) {
-			console.log(target);
 			this.defeatActor(target);
 		}
 
@@ -493,9 +491,7 @@ export default class CombatManagerSystem implements ISystem {
 			}
 
 			// End combat
-			this.endCombat();
-
-			// NOTE: The action is finishing execution AFTER combat is ending; need an early cancel during the action execution
+			this.startEndCombat = true;
 		}
 	}
 }
