@@ -1,6 +1,7 @@
 import { container } from "tsyringe";
 import GameState from "../GameState";
 import { EntityId } from "bitecs";
+import { Nullable } from "@babylonjs/core";
 
 export class ActorData {
 	entityId: EntityId;
@@ -15,7 +16,7 @@ export class ActorData {
 	affinityData?: AffinityData;
 	itemData?: AbilityData[];
 	tactics?: TacticsData[];
-	queuedAction?: AbilityData;
+	queuedAction?: Nullable<AbilityData>;
 	currentTargetEIDs: number[] = [];
 	currentStatuses: EffectData[] = [];
 	isPlayer: boolean = false;

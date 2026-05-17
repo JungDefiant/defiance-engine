@@ -61,10 +61,6 @@ export class App {
 				playerEIDs: [plyerEID],
 			},
 		});
-
-		// this.smSystem.setGameMode(GameMode.Explore);
-		this.smSystem.setGameMode(GameMode.Combat);
-		await this.cmSystem.startCombat("enc_test");
 		/* TEST */
 
 		this.engine.runRenderLoop(() => {
@@ -74,6 +70,12 @@ export class App {
 			context.uiScene.render();
 			this.uiSystem.update(deltaTime);
 		});
+
+		/* TEST */
+		// this.smSystem.setGameMode(GameMode.Explore);
+		this.smSystem.setGameMode(GameMode.Combat);
+		await this.cmSystem.startCombat("enc_test");
+		/* TEST */
 	}
 
 	private async startSystems() {

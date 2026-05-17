@@ -244,6 +244,8 @@ export class PlayerGUI implements ActorGUI {
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {
+		console.log("CURR VALUE", currValue);
+		console.log("MAX VALUE", maxValue);
 		this.actBarFillUI.width = Math.max(
 			0,
 			Math.min(1, currValue / maxValue || 0),

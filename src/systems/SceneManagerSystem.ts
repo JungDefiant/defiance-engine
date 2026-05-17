@@ -32,7 +32,7 @@ import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import CombatHUD from "src/gui/CombatHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
-import { DEFAULT_CAM_TARGET } from "src/Constants";
+import { DEFAULT_CAM_FOCALLENGTH, DEFAULT_CAM_TARGET } from "src/Constants";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -70,13 +70,18 @@ export default class SceneManagerSystem implements ISystem {
 		if (newMode == GameMode.MainMenu) {
 			// X
 		} else if (newMode == GameMode.Explore) {
-			const camera = context.scene.activeCamera;
+			const camera = context.scene.activeCamera as UniversalCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.attachControl(this.gameCanvas);
+			context.scene.onPointerObservable.add((eventData) => {
+				// This will block out vertical rotation
+				// For blocking out horizontal rotation, simply use y instead of x
+				camera.cameraRotation.x = 0;
+			});
 			context.insceneLocationGUI.rootContainer.isVisible = true;
 			context.insceneCombatGUI.rootContainer.isVisible = false;
 			// X
@@ -129,11 +134,10 @@ export default class SceneManagerSystem implements ISystem {
 			new Vector3(expCamPos[0], expCamPos[1], expCamPos[2]),
 			scene,
 		);
-		camera.setFocalLength(30);
+		camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
 		camera.setTarget(DEFAULT_CAM_TARGET);
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.attachControl(this.gameCanvas, false);
-
 		scene.onPointerObservable.add((eventData) => {
 			// This will block out vertical rotation
 			// For blocking out horizontal rotation, simply use y instead of x

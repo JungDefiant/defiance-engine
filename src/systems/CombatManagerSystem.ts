@@ -46,6 +46,10 @@ export default class CombatManagerSystem implements ISystem {
 	public update(deltaTime: number): void {
 		const gameState = container.resolve(GameState);
 
+		if (gameState.gameMode !== GameMode.Combat) {
+			return;
+		}
+
 		if (gameState.actionPaused) {
 			if (this.rqeSystem.getIsStarted()) {
 				return;
@@ -100,27 +104,31 @@ export default class CombatManagerSystem implements ISystem {
 				gameState.campaignId,
 			),
 		);
-		gameState.enemyEIDs.push(
-			await this.enFactory.createEntityFromFile(
-				"enem_test",
-				gameState.campaignId,
-			),
-		);
-		gameState.enemyEIDs.push(
-			await this.enFactory.createEntityFromFile(
-				"enem_test",
-				gameState.campaignId,
-			),
-		);
+		// gameState.enemyEIDs.push(
+		// 	await this.enFactory.createEntityFromFile(
+		// 		"enem_test",
+		// 		gameState.campaignId,
+		// 	),
+		// );
+		// gameState.enemyEIDs.push(
+		// 	await this.enFactory.createEntityFromFile(
+		// 		"enem_test",
+		// 		gameState.campaignId,
+		// 	),
+		// );
 		/* TEST */
+
+		console.log("START COMBAT");
 
 		await gameState.combatHud.setActionBar(gameState.selectedPlayerEID);
 
 		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			const rcvyAttr = actorData.attributes.recovery;
-			rcvyAttr.maximumValue =
-				this.START_RECOVERY + Math.random() * this.START_RECOVERY_RANGE;
+			const initRange = Math.random() * this.START_RECOVERY_RANGE;
+			rcvyAttr.maximumValue = this.START_RECOVERY + initRange;
+			console.log("INIT RANGE", initRange);
+			console.log("INIT RECOV VALUE", rcvyAttr.maximumValue);
 			rcvyAttr.currentValue = 0;
 		}
 
@@ -136,11 +144,22 @@ export default class CombatManagerSystem implements ISystem {
 			removeEntity(gameState.world, eid);
 		});
 
-		this.smSystem.setGameMode(GameMode.Explore);
+		gameState.playerEIDs.forEach((eid) => {
+			const playerData = gameState.ActorDataComponent[eid];
+			const rcvyAttr = playerData.attributes.recovery;
+			rcvyAttr.maximumValue = 0;
+			playerData.queuedAction = null;
+			console.log("RECOV CURR VALUE", rcvyAttr.currentValue);
+			console.log("RECOV MAX VALUE", rcvyAttr.maximumValue);
+		});
 
 		const viewCoords = locData.exploreViewPosition;
 		camera.position = new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]);
 		camera.setTarget(DEFAULT_CAM_TARGET);
+
+		gameState.actionPaused = false;
+
+		this.smSystem.setGameMode(GameMode.Explore);
 	}
 
 	public async startQueueAction(
@@ -461,9 +480,9 @@ export default class CombatManagerSystem implements ISystem {
 				}
 			}
 
+			// Game over
 			alert("GAME OVER");
 			window.location.reload();
-			// Game over
 		} else {
 			for (let i = 0; i < gameState.enemyEIDs.length; i++) {
 				let eid = gameState.enemyEIDs[i];
@@ -473,8 +492,10 @@ export default class CombatManagerSystem implements ISystem {
 				}
 			}
 
-			this.endCombat();
 			// End combat
+			this.endCombat();
+
+			// NOTE: The action is finishing execution AFTER combat is ending; need an early cancel during the action execution
 		}
 	}
 }
