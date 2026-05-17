@@ -1,4 +1,6 @@
+import { resolve } from 'node:dns';
 import { defineConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   root: './',
@@ -9,5 +11,6 @@ export default defineConfig({
   },
   server: {
     host: true
-  }
+  },
+  plugins: [tsconfigPaths()]
 });

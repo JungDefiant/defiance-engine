@@ -10,15 +10,14 @@ import {
 	ScrollBar,
 	Button,
 } from "@babylonjs/gui";
-import IHUD from "./IHUD";
+import IHUD from "src/gui/IHUD";
 import DialogueManagerSystem, {
 	CharacterData,
 	DialogueChoiceData,
-	DialogueData,
 	DialogueNodeData,
-} from "../systems/DialogueManagerSystem";
+} from "src/systems/DialogueManagerSystem";
 import { container } from "tsyringe";
-import { Themes } from "./Themes";
+import { Themes } from "src/gui/Themes";
 
 export default class DialogueHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;

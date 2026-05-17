@@ -1,14 +1,14 @@
 import "reflect-metadata";
 import { container } from "tsyringe";
-import SceneManagerSystem from "./systems/SceneManagerSystem";
-import UserInterfaceSystem from "./systems/UserInterfaceSystem";
-import DialogueManagerSystem from "./systems/DialogueManagerSystem";
-import CombatManagerSystem from "./systems/CombatManagerSystem";
-import ActorStateSystem from "./systems/ActorStateSystem";
-import { PlayerFactory } from "./factories/PlayerFactory";
-import { EnemyFactory } from "./factories/EnemyFactory";
-import { App } from "./App";
-import RenderQueueSystem from "./systems/RenderQueueSystem";
+import SceneManagerSystem from "src/systems/SceneManagerSystem";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
+import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
+import CombatManagerSystem from "src/systems/CombatManagerSystem";
+import ActorStateSystem from "src/systems/ActorStateSystem";
+import { PlayerFactory } from "src/factories/PlayerFactory";
+import { EnemyFactory } from "src/factories/EnemyFactory";
+import { App } from "src/App";
+import RenderQueueSystem from "src/systems/RenderQueueSystem";
 
 const smSystem = container.resolve(SceneManagerSystem);
 const uiSystem = container.resolve(UserInterfaceSystem);

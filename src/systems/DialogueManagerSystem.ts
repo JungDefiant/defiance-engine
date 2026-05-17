@@ -1,5 +1,5 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
+import ISystem from "src/systems/ISystem";
 import {
 	AbstractMesh,
 	Nullable,
@@ -7,9 +7,9 @@ import {
 	Vector3,
 	Viewport,
 } from "@babylonjs/core";
-import UserInterfaceSystem from "./UserInterfaceSystem";
-import SceneManagerSystem from "./SceneManagerSystem";
-import GameContext, { GameMode, InteractableData } from "../GameContext";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
+import SceneManagerSystem from "src/systems/SceneManagerSystem";
+import GameState, { GameMode, InteractableData } from "src/GameState";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
@@ -23,7 +23,7 @@ export default class DialogueManagerSystem implements ISystem {
 		dlgId: string,
 		itr: { data: InteractableData; mesh: AbstractMesh },
 	): Promise<void> {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		const response = await fetch(
 			`/data/${context.campaignId}/dialogues/${dlgId}.json`,
 		);
@@ -33,8 +33,8 @@ export default class DialogueManagerSystem implements ISystem {
 		}
 
 		const smSystem = container.resolve(SceneManagerSystem);
-		const dlgHud = container.resolve(GameContext).dialogueHud;
-		const camera = container.resolve(GameContext).scene
+		const dlgHud = container.resolve(GameState).dialogueHud;
+		const camera = container.resolve(GameState).scene
 			.activeCamera as UniversalCamera;
 
 		smSystem.setGameMode(GameMode.Dialogue);
@@ -59,7 +59,7 @@ export default class DialogueManagerSystem implements ISystem {
 			return;
 		}
 
-		const dlgHud = container.resolve(GameContext).dialogueHud;
+		const dlgHud = container.resolve(GameState).dialogueHud;
 		const dialogue = this.activeDialogue.dialogues[id];
 
 		if (!dialogue || !dlgHud) {
@@ -97,7 +97,7 @@ export default class DialogueManagerSystem implements ISystem {
 	public endDialogue() {
 		// Switch mode back to Explore
 		const smSystem = container.resolve(SceneManagerSystem);
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		const camera = context.scene.activeCamera as UniversalCamera;
 		const locData = context.locationData;
 

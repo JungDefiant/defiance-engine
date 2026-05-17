@@ -1,14 +1,12 @@
 import { container, delay, inject, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import GameContext from "../GameContext";
+import GameState from "../GameState";
 import { query } from "bitecs";
 import { ActorData } from "../components/ActorData";
 import CombatManagerSystem from "./CombatManagerSystem";
 
-export interface IActorStateSystem extends ISystem {}
-
 @singleton()
-export default class ActorStateSystem implements IActorStateSystem {
+export default class ActorStateSystem implements ISystem {
 	private rcvyTickAccumulator: number = 0;
 	private regnTickAccumulator: number = 0;
 
@@ -22,16 +20,24 @@ export default class ActorStateSystem implements IActorStateSystem {
 	public async start() {}
 
 	public update(deltaTime: number): void {
-		if (this.cmSystem.getPauseCombat()) {
+		const gameState = container.resolve(GameState);
+
+		if (gameState.actionPaused) {
 			return;
 		}
 
-		const context = container.resolve(GameContext);
+		this.processRecoveryRegen(gameState, deltaTime);
+	}
+
+	private processRecoveryRegen(gameState: GameState, deltaTime: number) {
 		this.rcvyTickAccumulator += deltaTime;
 		this.regnTickAccumulator += deltaTime;
 
-		for (const eid of query(context.world, [context.ActorDataComponent])) {
-			const actorData = context.ActorDataComponent[eid];
+		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
+			const actorData = gameState.ActorDataComponent[eid];
+			if (actorData.isDefeated) {
+				return;
+			}
 			this.tickRecovery(deltaTime, actorData);
 			this.tickRegen(actorData);
 		}
@@ -42,8 +48,8 @@ export default class ActorStateSystem implements IActorStateSystem {
 	}
 
 	private tickRecovery(deltaTime: number, actorData: ActorData) {
-		const spdAttr = actorData.attributes["speed"];
-		const rcvyAttr = actorData.attributes["recovery"];
+		const spdAttr = actorData.attributes.speed;
+		const rcvyAttr = actorData.attributes.recovery;
 
 		if (rcvyAttr.currentValue < rcvyAttr.maximumValue) {
 			const amount = deltaTime * (10 / spdAttr.currentValue);
@@ -53,8 +59,8 @@ export default class ActorStateSystem implements IActorStateSystem {
 	}
 
 	private tickRegen(actorData: ActorData) {
-		const regnAttr = actorData.attributes["regen"];
-		const lifeAttr = actorData.attributes["life"];
+		const regnAttr = actorData.attributes.regen;
+		const lifeAttr = actorData.attributes.life;
 
 		if (lifeAttr.currentValue < lifeAttr.maximumValue) {
 			const amount =

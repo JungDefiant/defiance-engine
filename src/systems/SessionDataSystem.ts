@@ -1,13 +1,11 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
+import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
-import { ActorData } from "../components/ActorData";
-import GameContext from "../GameContext";
-
-export interface ISessionDataSystem extends ISystem {}
+import { ActorData } from "src/components/ActorData";
+import GameState from "src/GameState";
 
 @singleton()
-export default class SessionDataSystem implements ISessionDataSystem {
+export default class SessionDataSystem implements ISystem {
 	public async start(engine: Engine): Promise<void> {}
 
 	public update(deltaTime: number): void {}

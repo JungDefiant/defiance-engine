@@ -8,7 +8,7 @@ import {
 	Style,
 } from "@babylonjs/gui";
 import { EntityId } from "bitecs";
-import GameContext from "../GameContext";
+import GameState from "../GameState";
 import { Mesh } from "@babylonjs/core";
 import { Themes } from "../gui/Themes";
 import { ActorGUI } from "./PlayerGUI";
@@ -24,7 +24,7 @@ export class EnemyGUI implements ActorGUI {
 	private statusIconsUI: Grid;
 	private statusIcons: Map<string, Rectangle> = new Map<string, Rectangle>();
 
-	public constructor(eid: EntityId, context: GameContext, sprite: Mesh) {
+	public constructor(eid: EntityId, context: GameState, sprite: Mesh) {
 		const enActorData = context.ActorDataComponent[eid];
 
 		this.rootContainer = new StackPanel(

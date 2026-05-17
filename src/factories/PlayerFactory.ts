@@ -1,9 +1,9 @@
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { container, singleton } from "tsyringe";
-import GameContext from "../GameContext";
-import { IFactory } from "./IFactory";
-import { ActorData } from "../components/ActorData";
-import { PlayerGUI } from "../components/PlayerGUI";
+import GameState from "src/GameState";
+import { IFactory } from "src/factories/IFactory";
+import { ActorData } from "src/components/ActorData";
+import { PlayerGUI } from "src/components/PlayerGUI";
 
 @singleton()
 export class PlayerFactory implements IFactory {
@@ -21,10 +21,10 @@ export class PlayerFactory implements IFactory {
 			return -1;
 		}
 
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		const newEntity = addEntity(context.world);
 
-		const newActorComp = new ActorData(rawData);
+		const newActorComp = new ActorData(newEntity, rawData);
 		newActorComp.isPlayer = true;
 		addComponent(
 			context.world,

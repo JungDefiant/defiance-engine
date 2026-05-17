@@ -1,23 +1,18 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
-import { Engine, Nullable, Scene } from "@babylonjs/core";
-import GameContext, { GameMode } from "../GameContext";
+import ISystem from "src/systems/ISystem";
+import { Engine } from "@babylonjs/core";
+import GameState, { GameMode } from "src/GameState";
 import { query } from "bitecs";
-import { PlayerGUI } from "../components/PlayerGUI";
-import { ActorData } from "../components/ActorData";
-import { EnemyGUI } from "../components/EnemyGUI";
-
-export interface IUserInterfaceSystem extends ISystem {
-	setGameMode(newMode: GameMode): void;
-	createPlayerInput(inputMode: GameMode): void;
-}
+import { PlayerGUI } from "src/components/PlayerGUI";
+import { ActorData } from "src/components/ActorData";
+import { EnemyGUI } from "src/components/EnemyGUI";
 
 @singleton()
-export default class UserInterfaceSystem implements IUserInterfaceSystem {
+export default class UserInterfaceSystem implements ISystem {
 	public async start(engine: Engine) {}
 
 	public update(deltaTime: number) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 
 		for (const eid of query(context.world, [
 			context.ActorDataComponent,
@@ -39,7 +34,7 @@ export default class UserInterfaceSystem implements IUserInterfaceSystem {
 	}
 
 	public setGameMode(newMode: GameMode) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		context.partyInfoHud.showHideHud(
 			newMode == GameMode.Combat || newMode == GameMode.Explore,
 		);
@@ -56,29 +51,29 @@ export default class UserInterfaceSystem implements IUserInterfaceSystem {
 		);
 
 		gui.setActBarFill(
-			actorData.attributes["recovery"].currentValue,
-			actorData.attributes["recovery"].maximumValue,
+			actorData.attributes.recovery.currentValue,
+			actorData.attributes.recovery.maximumValue,
 		);
 
 		gui.setLifeBarFill(
-			actorData.attributes["life"].currentValue,
-			actorData.attributes["life"].maximumValue,
+			actorData.attributes.life.currentValue,
+			actorData.attributes.life.maximumValue,
 		);
 
 		gui.setWillBarFill(
-			actorData.attributes["will"].currentValue,
-			actorData.attributes["will"].maximumValue,
+			actorData.attributes.will.currentValue,
+			actorData.attributes.will.maximumValue,
 		);
 	}
 
 	private updateEnemyGUI(actorData: ActorData, gui: EnemyGUI) {
 		gui.setActBarFill(
-			actorData.attributes["recovery"].currentValue,
-			actorData.attributes["recovery"].maximumValue,
+			actorData.attributes.recovery.currentValue,
+			actorData.attributes.recovery.maximumValue,
 		);
 		gui.setLifeBarFill(
-			actorData.attributes["life"].currentValue,
-			actorData.attributes["life"].maximumValue,
+			actorData.attributes.life.currentValue,
+			actorData.attributes.life.maximumValue,
 		);
 	}
 }

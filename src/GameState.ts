@@ -1,34 +1,40 @@
-import { Mesh, Scene, SolidParticleSystem } from "@babylonjs/core";
+import { Mesh, Observable, Scene, SolidParticleSystem } from "@babylonjs/core";
 import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
-import { EntityId, observe, onGet, onSet, World } from "bitecs";
+import { EntityId, observe, onGet, onRemove, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
-import { ActorData } from "./components/ActorData";
-import { EnemyGUI } from "./components/EnemyGUI";
-import { PlayerGUI } from "./components/PlayerGUI";
-import PartyInfoHUD from "./gui/PartyInfoHUD";
-import ExploreHUD from "./gui/ExploreHUD";
-import DialogueHUD from "./gui/DialogueHUD";
-import CombatHUD from "./gui/CombatHUD";
+import { ActorData } from "src/components/ActorData";
+import { EnemyGUI } from "src/components/EnemyGUI";
+import { PlayerGUI } from "src/components/PlayerGUI";
+import PartyInfoHUD from "src/gui/PartyInfoHUD";
+import ExploreHUD from "src/gui/ExploreHUD";
+import DialogueHUD from "src/gui/DialogueHUD";
+import CombatHUD from "src/gui/CombatHUD";
 
 @singleton()
-export default class GameContext {
+export default class GameState {
+	public actionPaused: boolean = false;
+	// Player data
 	public readonly campaignId: string;
 	public readonly selectedPlayerEID: number;
 	public readonly playerEIDs: number[];
+	public readonly enemyEIDs: number[] = [];
+	// Scene & game data
 	public readonly gameMode: GameMode;
 	public readonly world: World;
 	public readonly scene: Scene;
 	public readonly sceneData: SceneData;
 	public readonly uiScene: Scene;
 	public readonly locationData: LocationData;
+	// GUIs
 	public readonly mainUI: AdvancedDynamicTexture;
 	public readonly insceneLocationGUI: AdvancedDynamicTexture;
 	public readonly insceneCombatGUI: AdvancedDynamicTexture;
+	// HUDs
 	public readonly partyInfoHud: PartyInfoHUD;
 	public readonly exploreHud: ExploreHUD;
 	public readonly dialogueHud: DialogueHUD;
 	public readonly combatHud: CombatHUD;
-
+	// Components
 	public readonly ActorDataComponent: ActorData[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
 	public readonly EnemyGUIComponent: EnemyGUI[] = [];
@@ -115,6 +121,14 @@ export default class GameContext {
 			},
 		);
 
+		observe(
+			this.world,
+			onRemove(this.EnemySprite),
+			(eid: EntityId, params: Mesh) => {
+				this.EnemySprite[eid].dispose();
+			},
+		);
+
 		observe(this.world, onGet(this.EnemySprite), (eid: EntityId) => {
 			return this.EnemySprite[eid];
 		});
@@ -127,8 +141,28 @@ export default class GameContext {
 			},
 		);
 
+		observe(this.world, onRemove(this.FloatingText), (eid: EntityId) => {
+			this.FloatingText[eid].dispose();
+		});
+
 		observe(this.world, onGet(this.FloatingText), (eid: EntityId) => {
 			return this.FloatingText[eid];
+		});
+
+		observe(
+			this.world,
+			onSet(this.SpecialFX),
+			(eid: EntityId, params: SolidParticleSystem) => {
+				this.SpecialFX[eid] = params;
+			},
+		);
+
+		observe(this.world, onRemove(this.SpecialFX), (eid: EntityId) => {
+			this.SpecialFX[eid].dispose();
+		});
+
+		observe(this.world, onGet(this.SpecialFX), (eid: EntityId) => {
+			return this.SpecialFX[eid];
 		});
 	}
 }

@@ -1,5 +1,5 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
+import ISystem from "src/systems/ISystem";
 import { createWorld, EntityId, query } from "bitecs";
 import {
 	Engine,
@@ -18,37 +18,24 @@ import {
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
-import DialogueManagerSystem from "./DialogueManagerSystem";
-import UserInterfaceSystem from "./UserInterfaceSystem";
-import GameContext, {
+import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
+import GameState, {
 	EventData,
 	GameMode,
 	InteractableData,
 	LocationData,
 	SceneData,
-} from "../GameContext";
-import { CreateTypography, Themes } from "../gui/Themes";
-import PartyInfoHUD from "../gui/PartyInfoHUD";
-import CombatHUD from "../gui/CombatHUD";
-import DialogueHUD from "../gui/DialogueHUD";
-import ExploreHUD from "../gui/ExploreHUD";
-
-export interface ISceneManagerSystem extends ISystem {
-	debug(debugOn: boolean): void;
-	setGameMode(GameMode: GameMode): void;
-	createScene(
-		engine: Engine,
-		fileName: string,
-		campaignId: string,
-		gameMode: GameMode,
-	): void;
-	loadLocationEvent(eventData: EventData, locationMeshes: AbstractMesh[]): void;
-	loadCombatEncounter(encounterId: string, locationIndex: number): void;
-	checkEventTriggers(): void;
-}
+} from "src/GameState";
+import { CreateTypography, Themes } from "src/gui/Themes";
+import PartyInfoHUD from "src/gui/PartyInfoHUD";
+import CombatHUD from "src/gui/CombatHUD";
+import DialogueHUD from "src/gui/DialogueHUD";
+import ExploreHUD from "src/gui/ExploreHUD";
+import { DEFAULT_CAM_FOCALLENGTH, DEFAULT_CAM_TARGET } from "src/Constants";
 
 @singleton()
-export default class SceneManagerSystem implements ISceneManagerSystem {
+export default class SceneManagerSystem implements ISystem {
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
 
 	public async start() {
@@ -58,14 +45,14 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 	}
 
 	public update(deltaTime: number) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		for (const entityId of query(context.world, [])) {
 			// Component.value[entityId]    -->     how to access component data
 		}
 	}
 
 	public debug(debugOn: boolean = true) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 
 		if (debugOn) {
 			context.scene.debugLayer.show({ overlay: true });
@@ -75,7 +62,7 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 	}
 
 	public setGameMode(newMode: GameMode) {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 
 		const uiSystem = container.resolve(UserInterfaceSystem);
 		uiSystem.setGameMode(newMode);
@@ -83,13 +70,18 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		if (newMode == GameMode.MainMenu) {
 			// X
 		} else if (newMode == GameMode.Explore) {
-			const camera = context.scene.activeCamera;
+			const camera = context.scene.activeCamera as UniversalCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.attachControl(this.gameCanvas);
+			context.scene.onPointerObservable.add((eventData) => {
+				// This will block out vertical rotation
+				// For blocking out horizontal rotation, simply use y instead of x
+				camera.cameraRotation.x = 0;
+			});
 			context.insceneLocationGUI.rootContainer.isVisible = true;
 			context.insceneCombatGUI.rootContainer.isVisible = false;
 			// X
@@ -115,8 +107,8 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			context.insceneCombatGUI.rootContainer.isVisible = true;
 		}
 
-		const newContext = { ...context, gameMode: newMode } as GameContext;
-		container.register(GameContext, { useValue: newContext });
+		const newContext = { ...context, gameMode: newMode } as GameState;
+		container.register(GameState, { useValue: newContext });
 	}
 
 	public async createScene(
@@ -142,11 +134,10 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			new Vector3(expCamPos[0], expCamPos[1], expCamPos[2]),
 			scene,
 		);
-		camera.setFocalLength(30);
-		camera.setTarget(new Vector3(0, 0, -40));
+		camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
+		camera.setTarget(DEFAULT_CAM_TARGET);
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.attachControl(this.gameCanvas, false);
-
 		scene.onPointerObservable.add((eventData) => {
 			// This will block out vertical rotation
 			// For blocking out horizontal rotation, simply use y instead of x
@@ -199,7 +190,7 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 
 		const playerEids = [0];
 
-		const newContext = new GameContext(
+		const newContext = new GameState(
 			campaignId,
 			playerEids[0],
 			playerEids,
@@ -218,7 +209,7 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 			combatHud,
 		);
 
-		container.register(GameContext, { useValue: newContext });
+		container.register(GameState, { useValue: newContext });
 	}
 
 	public async loadLocationEvent(
@@ -284,14 +275,14 @@ export default class SceneManagerSystem implements ISceneManagerSystem {
 		}
 		button.thickness = 2;
 		button.onPointerEnterObservable.add(() => {
-			const context = container.resolve(GameContext);
+			const context = container.resolve(GameState);
 			context.exploreHud.updateHighlightInfoUI(
 				interactableData.name,
 				interactableData.description,
 			);
 		});
 		button.onPointerOutObservable.add(() => {
-			const context = container.resolve(GameContext);
+			const context = container.resolve(GameState);
 			context.exploreHud.hideHighlightInfoUI();
 		});
 		button.onPointerClickObservable.add(() => {

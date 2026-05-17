@@ -1,11 +1,9 @@
 import { Nullable } from "@babylonjs/core";
 import { Container, Control, Rectangle, StackPanel } from "@babylonjs/gui";
-import IHUD from "./IHUD";
-import { Themes } from "./Themes";
-import { PlayerGUI } from "../components/PlayerGUI";
+import IHUD from "src/gui/IHUD";
+import { Themes } from "src/gui/Themes";
 import { container } from "tsyringe";
-import GameContext from "../GameContext";
-import { query } from "bitecs";
+import GameState from "src/GameState";
 
 export default class PartyInfoHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -40,7 +38,7 @@ export default class PartyInfoHUD implements IHUD {
 			return;
 		}
 
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		this.partyInfoEntryStack = new StackPanel("ui_partyInfoEntryStack");
 		this.partyInfoEntryStack.isVertical = false;
 		this.partyInfoEntryStack.spacing = 16;

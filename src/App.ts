@@ -1,15 +1,16 @@
 import "reflect-metadata";
 import { container, inject } from "tsyringe";
 import { Engine } from "@babylonjs/core";
-import SceneManagerSystem from "./systems/SceneManagerSystem";
-import DialogueManagerSystem from "./systems/DialogueManagerSystem";
-import UserInterfaceSystem from "./systems/UserInterfaceSystem";
-import CombatManagerSystem from "./systems/CombatManagerSystem";
-import ActorStateSystem from "./systems/ActorStateSystem";
-import GameContext, { GameMode } from "./GameContext";
-import { PlayerFactory } from "./factories/PlayerFactory";
-import { EnemyFactory } from "./factories/EnemyFactory";
-import RenderQueueSystem from "./systems/RenderQueueSystem";
+import SceneManagerSystem from "src/systems/SceneManagerSystem";
+import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
+import CombatManagerSystem from "src/systems/CombatManagerSystem";
+import ActorStateSystem from "src/systems/ActorStateSystem";
+import GameState, { GameMode } from "src/GameState";
+import { PlayerFactory } from "src/factories/PlayerFactory";
+import { EnemyFactory } from "src/factories/EnemyFactory";
+import RenderQueueSystem from "src/systems/RenderQueueSystem";
+import { DELTATIME_MS } from "src/Constants";
 
 // This is the engine/game loop
 export class App {
@@ -45,35 +46,36 @@ export class App {
 			"campaign_test",
 			GameMode.Combat,
 		);
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 
-		const plyrFactory = container.resolve(PlayerFactory);
-		const plyerEID = await plyrFactory.createEntityFromFile(
+		const plyerEID = await this.playerFactory.createEntityFromFile(
 			"cmd_test",
 			context.campaignId,
 		);
 		context.partyInfoHud.setPartyInfoEntryStack();
 
-		container.register(GameContext, {
+		container.register(GameState, {
 			useValue: {
 				...context,
 				selectedPlayerEID: plyerEID,
 				playerEIDs: [plyerEID],
 			},
 		});
-
-		// this.smSystem.setGameMode(GameMode.Explore);
-		this.smSystem.setGameMode(GameMode.Combat);
-		await this.cmSystem.startCombat("enc_test");
 		/* TEST */
 
 		this.engine.runRenderLoop(() => {
 			context.scene.render();
-			const deltaTime = context.scene.deltaTime / 1000;
+			const deltaTime = context.scene.deltaTime / DELTATIME_MS;
 			this.updateSystems(deltaTime);
 			context.uiScene.render();
 			this.uiSystem.update(deltaTime);
 		});
+
+		/* TEST */
+		// this.smSystem.setGameMode(GameMode.Explore);
+		this.smSystem.setGameMode(GameMode.Combat);
+		await this.cmSystem.startCombat("enc_test");
+		/* TEST */
 	}
 
 	private async startSystems() {

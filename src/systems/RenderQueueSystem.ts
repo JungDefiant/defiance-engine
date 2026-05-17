@@ -1,18 +1,13 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
+import ISystem from "src/systems/ISystem";
 import { SolidParticleSystem } from "@babylonjs/core";
 import { Queue } from "queue-typescript";
-import GameContext from "../GameContext";
+import GameState from "src/GameState";
 import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, removeEntity, set } from "bitecs";
 
-export interface IRenderQueueSystem extends ISystem {
-	startRenderQueue(): void;
-	addRenderQueueEntry(rqe: RenderQueueEntry): void;
-}
-
 @singleton()
-export default class RenderQueueSystem implements IRenderQueueSystem {
+export default class RenderQueueSystem implements ISystem {
 	private currentRenderQueue: Queue<RenderQueueEntry> =
 		new Queue<RenderQueueEntry>();
 	private renderQueueStates: RenderQueueState[] = [];
@@ -91,7 +86,7 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 	}
 
 	private initRenderQueueEntry(rqeState: RenderQueueState): void {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
 				// text
@@ -165,7 +160,7 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 		rqeState: RenderQueueState,
 		deltaTime: number,
 	): void {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
 				// text
@@ -198,7 +193,7 @@ export default class RenderQueueSystem implements IRenderQueueSystem {
 	}
 
 	private clearRenderQueueState(rqeState: RenderQueueState): void {
-		const context = container.resolve(GameContext);
+		const context = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
 				// text
