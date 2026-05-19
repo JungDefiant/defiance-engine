@@ -1,0 +1,25 @@
+Dialogue {
+    DialogueLine = (Node | Cmd | Options | Line)+
+    
+    String = (alnum | "." | "?" | "!" | "_" | space)+
+    
+    Number = #(digit+)
+    
+    Vector = "(" Number "," Number "," Number ")"
+              
+    Line = String ":" String+
+    
+    Options = OptionLine+
+    
+    OptionLine = "-" String+ MoveToNode
+    
+    Cmd = ">>" (SetVar | MoveCam)
+    
+    MoveToNode = "[" String "]"
+    
+    Node = "-----" String "-----"
+    
+    SetVar ="setvar" String String
+    
+    MoveCam = "movecam" Vector Vector
+}

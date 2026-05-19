@@ -45,24 +45,24 @@ export default class SceneManagerSystem implements ISystem {
 	}
 
 	public update(deltaTime: number) {
-		const context = container.resolve(GameState);
-		for (const entityId of query(context.world, [])) {
+		const gameState = container.resolve(GameState);
+		for (const entityId of query(gameState.world, [])) {
 			// Component.value[entityId]    -->     how to access component data
 		}
 	}
 
 	public debug(debugOn: boolean = true) {
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 
 		if (debugOn) {
-			context.scene.debugLayer.show({ overlay: true });
+			gameState.scene.debugLayer.show({ overlay: true });
 		} else {
-			context.scene.debugLayer.hide();
+			gameState.scene.debugLayer.hide();
 		}
 	}
 
 	public setGameMode(newMode: GameMode) {
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 
 		const uiSystem = container.resolve(UserInterfaceSystem);
 		uiSystem.setGameMode(newMode);
@@ -70,45 +70,45 @@ export default class SceneManagerSystem implements ISystem {
 		if (newMode == GameMode.MainMenu) {
 			// X
 		} else if (newMode == GameMode.Explore) {
-			const camera = context.scene.activeCamera as UniversalCamera;
+			const camera = gameState.scene.activeCamera as UniversalCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.attachControl(this.gameCanvas);
-			context.scene.onPointerObservable.add((eventData) => {
+			gameState.scene.onPointerObservable.add((eventData) => {
 				// This will block out vertical rotation
 				// For blocking out horizontal rotation, simply use y instead of x
 				camera.cameraRotation.x = 0;
 			});
-			context.insceneLocationGUI.rootContainer.isVisible = true;
-			context.insceneCombatGUI.rootContainer.isVisible = false;
+			gameState.insceneLocationGUI.rootContainer.isVisible = true;
+			gameState.insceneCombatGUI.rootContainer.isVisible = false;
 			// X
 		} else if (newMode == GameMode.Dialogue) {
-			const camera = context.scene.activeCamera;
+			const camera = gameState.scene.activeCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.detachControl();
-			context.insceneLocationGUI.rootContainer.isVisible = false;
-			context.insceneCombatGUI.rootContainer.isVisible = false;
+			gameState.insceneLocationGUI.rootContainer.isVisible = false;
+			gameState.insceneCombatGUI.rootContainer.isVisible = false;
 		} else if (newMode == GameMode.Combat) {
-			const camera = context.scene.activeCamera;
+			const camera = gameState.scene.activeCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.detachControl();
-			context.insceneLocationGUI.rootContainer.isVisible = false;
-			context.insceneCombatGUI.rootContainer.isVisible = true;
+			gameState.insceneLocationGUI.rootContainer.isVisible = false;
+			gameState.insceneCombatGUI.rootContainer.isVisible = true;
 		}
 
-		const newContext = { ...context, gameMode: newMode } as GameState;
-		container.register(GameState, { useValue: newContext });
+		const newGameState = { ...gameState, gameMode: newMode } as GameState;
+		container.register(GameState, { useValue: newGameState });
 	}
 
 	public async createScene(
@@ -190,7 +190,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const playerEids = [0];
 
-		const newContext = new GameState(
+		const newGameState = new GameState(
 			campaignId,
 			playerEids[0],
 			playerEids,
@@ -209,7 +209,7 @@ export default class SceneManagerSystem implements ISystem {
 			combatHud,
 		);
 
-		container.register(GameState, { useValue: newContext });
+		container.register(GameState, { useValue: newGameState });
 	}
 
 	public async loadLocationEvent(
@@ -275,15 +275,15 @@ export default class SceneManagerSystem implements ISystem {
 		}
 		button.thickness = 2;
 		button.onPointerEnterObservable.add(() => {
-			const context = container.resolve(GameState);
-			context.exploreHud.updateHighlightInfoUI(
+			const gameState = container.resolve(GameState);
+			gameState.exploreHud.updateHighlightInfoUI(
 				interactableData.name,
 				interactableData.description,
 			);
 		});
 		button.onPointerOutObservable.add(() => {
-			const context = container.resolve(GameState);
-			context.exploreHud.hideHighlightInfoUI();
+			const gameState = container.resolve(GameState);
+			gameState.exploreHud.hideHighlightInfoUI();
 		});
 		button.onPointerClickObservable.add(() => {
 			// Loads and runs dialogue based on dialogueId in interactableData

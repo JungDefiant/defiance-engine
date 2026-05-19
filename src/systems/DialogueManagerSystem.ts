@@ -7,7 +7,6 @@ import {
 	Vector3,
 	Viewport,
 } from "@babylonjs/core";
-import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import GameState, { GameMode, InteractableData } from "src/GameState";
 
@@ -23,9 +22,9 @@ export default class DialogueManagerSystem implements ISystem {
 		dlgId: string,
 		itr: { data: InteractableData; mesh: AbstractMesh },
 	): Promise<void> {
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 		const response = await fetch(
-			`/data/${context.campaignId}/dialogues/${dlgId}.json`,
+			`/data/${gameState.campaignId}/dialogues/${dlgId}.txt`,
 		);
 		const dlgData = (await response.json()) as DialogueData;
 		if (!dlgData) {
@@ -97,9 +96,9 @@ export default class DialogueManagerSystem implements ISystem {
 	public endDialogue() {
 		// Switch mode back to Explore
 		const smSystem = container.resolve(SceneManagerSystem);
-		const context = container.resolve(GameState);
-		const camera = context.scene.activeCamera as UniversalCamera;
-		const locData = context.locationData;
+		const gameState = container.resolve(GameState);
+		const camera = gameState.scene.activeCamera as UniversalCamera;
+		const locData = gameState.locationData;
 
 		smSystem.setGameMode(GameMode.Explore);
 

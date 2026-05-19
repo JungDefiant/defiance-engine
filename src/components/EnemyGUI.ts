@@ -24,15 +24,15 @@ export class EnemyGUI implements ActorGUI {
 	private statusIconsUI: Grid;
 	private statusIcons: Map<string, Rectangle> = new Map<string, Rectangle>();
 
-	public constructor(eid: EntityId, context: GameState, sprite: Mesh) {
-		const enActorData = context.ActorDataComponent[eid];
+	public constructor(eid: EntityId, gameState: GameState, sprite: Mesh) {
+		const enActorData = gameState.ActorDataComponent[eid];
 
 		this.rootContainer = new StackPanel(
 			`ui_enBattlerUI_${enActorData.id}_${eid}`,
 		);
 		this.rootContainer.widthInPixels = 120;
 		this.rootContainer.heightInPixels = 240;
-		context.insceneCombatGUI.addControl(this.rootContainer);
+		gameState.insceneCombatGUI.addControl(this.rootContainer);
 
 		this.targetingUI = new Image(
 			`ui_enBattlerTargetings_${eid}`,

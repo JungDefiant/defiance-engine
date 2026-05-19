@@ -38,12 +38,12 @@ export default class PartyInfoHUD implements IHUD {
 			return;
 		}
 
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 		this.partyInfoEntryStack = new StackPanel("ui_partyInfoEntryStack");
 		this.partyInfoEntryStack.isVertical = false;
 		this.partyInfoEntryStack.spacing = 16;
 
-		for (const entry of context.PlayerGUIComponent) {
+		for (const entry of gameState.PlayerGUIComponent) {
 			if (!entry) {
 				continue;
 			}
