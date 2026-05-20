@@ -52,15 +52,10 @@ export class App {
 			"cmd_test",
 			gameState.campaignId,
 		);
-		gameState.partyInfoHud.setPartyInfoEntryStack();
 
-		container.register(GameState, {
-			useValue: {
-				...gameState,
-				selectedPlayerEID: plyerEID,
-				playerEIDs: [plyerEID],
-			},
-		});
+		gameState.partyInfoHud.setPartyInfoEntryStack();
+		gameState.selectedPlayerEID = plyerEID;
+		gameState.playerEIDs = [plyerEID];
 		/* TEST */
 
 		this.engine.runRenderLoop(() => {

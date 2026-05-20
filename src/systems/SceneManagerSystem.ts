@@ -107,8 +107,7 @@ export default class SceneManagerSystem implements ISystem {
 			gameState.insceneCombatGUI.rootContainer.isVisible = true;
 		}
 
-		const newGameState = { ...gameState, gameMode: newMode } as GameState;
-		container.register(GameState, { useValue: newGameState });
+		gameState.gameMode = newMode;
 	}
 
 	public async createScene(
@@ -188,6 +187,7 @@ export default class SceneManagerSystem implements ISystem {
 		mainUI.addControl(combatHud.createHudRoot());
 		combatHud.showHideHud(false);
 
+		// TO DO: load player party
 		const playerEids = [0];
 
 		const newGameState = new GameState(

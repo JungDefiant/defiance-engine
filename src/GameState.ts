@@ -17,14 +17,14 @@ TO DO:
 */
 @singleton()
 export default class GameState {
-	public actionPaused: boolean = false;
-	// Player data
 	public readonly campaignId: string;
-	public readonly selectedPlayerEID: number;
-	public readonly playerEIDs: number[];
-	public readonly enemyEIDs: number[] = [];
+	public gamePaused: boolean = false;
+	public actionPaused: boolean = false;
+	public gameMode: GameMode;
+	public selectedPlayerEID: number;
+	public playerEIDs: number[];
+	public enemyEIDs: number[] = [];
 	// Scene & game data
-	public readonly gameMode: GameMode;
 	public readonly world: World;
 	public readonly scene: Scene;
 	public readonly sceneData: SceneData;
@@ -82,6 +82,10 @@ export default class GameState {
 		this.dialogueHud = dialogueHud;
 		this.combatHud = combatHud;
 
+		this.initComponentObservables();
+	}
+
+	private initComponentObservables() {
 		observe(
 			this.world,
 			onSet(this.ActorDataComponent),
