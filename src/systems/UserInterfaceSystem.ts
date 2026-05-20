@@ -14,6 +14,8 @@ export default class UserInterfaceSystem implements ISystem {
 	public update(deltaTime: number) {
 		const gameState = container.resolve(GameState);
 
+		gameState.uiScene.render();
+
 		for (const eid of query(gameState.world, [
 			gameState.ActorDataComponent,
 			gameState.PlayerGUIComponent,

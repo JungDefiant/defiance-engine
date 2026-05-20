@@ -249,8 +249,11 @@ export default class DialogueManagerSystem implements ISystem {
 		}
 
 		const nextLineId = id + 1;
-		if (!this.activeDialogue?.lines[nextLineId]) {
+		const nextLine = this.activeDialogue?.lines[nextLineId];
+		if (!nextLine) {
 			dlgHud.addExitEntry();
+		} else if (nextLine.type === "Options") {
+			this.runLine(nextLineId);
 		} else {
 			dlgHud.addContinueEntry(id, nextLineId);
 		}

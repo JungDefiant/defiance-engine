@@ -62,8 +62,6 @@ export class App {
 			gameState.scene.render();
 			const deltaTime = gameState.scene.deltaTime / DELTATIME_MS;
 			this.updateSystems(deltaTime);
-			gameState.uiScene.render();
-			this.uiSystem.update(deltaTime);
 		});
 
 		/* TEST */
@@ -88,6 +86,7 @@ export class App {
 		this.dmSystem.update(deltaTime);
 		this.cmSystem.update(deltaTime);
 		this.rqeSystem.update(deltaTime);
+		this.uiSystem.update(deltaTime);
 	}
 
 	private async startFactories() {
