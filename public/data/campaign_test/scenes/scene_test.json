@@ -2,6 +2,7 @@
     "id": "test",
     "difficultyLevel": 0,
     "startLocationId": "loc_test1",
+    "dialogueFile": "dlg_test",
     "locations": [
         {
             "id": "loc_test1",
@@ -21,7 +22,7 @@
                     "id": "itr_test1",
                     "name": "Terminal",
                     "description": "A terminal with access to the MetroNet.",
-                    "dialogueNodeId": "dlg_test",
+                    "dialogueNodeId": "ch0_start",
                     "attachedModelId": "computer",
                     "viewPosition": [
                         0.25,

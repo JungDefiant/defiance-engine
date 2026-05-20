@@ -72,9 +72,9 @@ export class App {
 		});
 
 		/* TEST */
-		// this.smSystem.setGameMode(GameMode.Explore);
-		this.smSystem.setGameMode(GameMode.Combat);
-		await this.cmSystem.startCombat("enc_test");
+		this.smSystem.setGameMode(GameMode.Explore);
+		// this.smSystem.setGameMode(GameMode.Combat);
+		// await this.cmSystem.startCombat("enc_test");
 		/* TEST */
 	}
 

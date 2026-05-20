@@ -128,7 +128,7 @@ export default class SceneManagerSystem implements ISystem {
 		const uiScene = new Scene(engine);
 		uiScene.autoClear = false;
 
-		const expCamPos = sceneData?.locations[0].exploreViewPosition!;
+		const expCamPos = sceneData.locations[0].exploreViewPosition!;
 		const camera = new UniversalCamera(
 			"cam_explore",
 			new Vector3(expCamPos[0], expCamPos[1], expCamPos[2]),
@@ -210,6 +210,9 @@ export default class SceneManagerSystem implements ISystem {
 		);
 
 		container.register(GameState, { useValue: newGameState });
+
+		const dmSystem = container.resolve(DialogueManagerSystem);
+		dmSystem.loadDialogueMap(sceneData.dialogueFile);
 	}
 
 	public async loadLocationEvent(

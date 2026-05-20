@@ -1,33 +1,162 @@
 import { container, singleton } from "tsyringe";
-import ISystem from "src/systems/ISystem";
+import grammar from "src/parser/DialogueParser.ohm-bundle";
 import {
 	AbstractMesh,
-	Nullable,
 	UniversalCamera,
 	Vector3,
 	Viewport,
 } from "@babylonjs/core";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
-import GameState, { GameMode, InteractableData } from "src/GameState";
+import GameState, { GameMode } from "src/GameState";
+import DialogueHUD from "src/gui/DialogueHUD";
+
+import type ISystem from "src/systems/ISystem";
+import type { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
+import type { InteractableData } from "src/GameState";
+import type { Nullable } from "@babylonjs/core";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
-	private activeDialogue: Nullable<DialogueData> = null;
+	private dialogueMap: Map<string, DialogueNode> = new Map<
+		string,
+		DialogueNode
+	>();
+	private activeDialogue: Nullable<DialogueNode> = null;
+	private semantics: Nullable<DialogueSemantics> = null;
 
-	public async start() {}
+	public async start() {
+		this.initSemantics();
+	}
 
 	public update(deltaTime: number) {}
 
+	public initSemantics() {
+		this.semantics = grammar.createSemantics();
+
+		this.semantics.addOperation<DialogueNode[]>("eval()", {
+			DialogueData(nodes) {
+				return nodes.children.map((node) => {
+					return node.getNode();
+				});
+			},
+		});
+
+		this.semantics.addOperation<DialogueNode>("getNode()", {
+			Node(node, _, lines, __) {
+				return {
+					name: node.sourceString,
+					lines: lines.children.flatMap((line) => {
+						switch (line.ctorName) {
+							case "Line":
+							case "Options":
+							case "Cmd":
+								return [line.getLine()];
+							default:
+								return [];
+						}
+					}) as DialogueLine[],
+				} as DialogueNode;
+			},
+		});
+
+		this.semantics.addOperation<DialogueLine>("getLine()", {
+			Line(_, char, __, txt) {
+				return {
+					type: "Line",
+					character: char.getString(),
+					text: txt.getString(),
+				} as DialogueLine;
+			},
+			Options(options) {
+				return {
+					type: "Options",
+					options: options.children.map((choice) => {
+						const text = choice.child(1).getString();
+						const moveto = choice.child(2).getString();
+						return { text, destinationNode: moveto } as DialogueOptionLine;
+					}),
+				} as DialogueLine;
+			},
+			Cmd(_, cmd) {
+				return cmd.getLine();
+			},
+			SetVar(cmd, var1, var2) {
+				return {
+					type: "Cmd",
+					cmd: cmd.sourceString,
+					vars: [var1.child(1).sourceString, var2.child(1).sourceString],
+				};
+			},
+			MoveCam(cmd, var1, var2) {
+				return {
+					type: "Cmd",
+					cmd: cmd.sourceString,
+					vars: [var1.getVector(), var2.getVector()],
+				};
+			},
+		});
+
+		this.semantics.addOperation<string>("getString()", {
+			String(_) {
+				return this.sourceString;
+			},
+			StringVar(_, str, __) {
+				return str.sourceString;
+			},
+			MoveToNode(_, dest, __) {
+				return dest.sourceString;
+			},
+		});
+
+		this.semantics.addOperation<number>("getNumber()", {
+			Number(_) {
+				return parseFloat(this.sourceString);
+			},
+			NumberVar(_, num, __) {
+				return parseFloat(num.sourceString);
+			},
+		});
+
+		this.semantics.addOperation<Vector3>("getVector3()", {
+			Vector(_, x, __, y, ___, z, _____) {
+				return new Vector3(x.getNumber(), y.getNumber(), z.getNumber());
+			},
+		});
+	}
+
+	public async loadDialogueMap(dlgId: string): Promise<void> {
+		if (!this.semantics) {
+			return;
+		}
+
+		const gameState = container.resolve(GameState);
+
+		const response = await fetch(
+			`data/${gameState.campaignId}/dialogues/${dlgId}.txt`,
+		);
+		const rawData = await response.text();
+		if (!rawData) {
+			return;
+		}
+
+		const matchResult = grammar.match(String.raw`${rawData}`);
+		if (matchResult.failed()) {
+			console.error("Match Result failed", matchResult.message);
+		} else if (matchResult.succeeded()) {
+			const dialogueNodes = this.semantics(
+				matchResult,
+			).eval() as DialogueNode[];
+			dialogueNodes.forEach((node) => {
+				this.dialogueMap.set(node.name, node);
+			});
+		}
+	}
+
 	public async startDialogue(
-		dlgId: string,
+		node: string,
 		itr: { data: InteractableData; mesh: AbstractMesh },
 	): Promise<void> {
-		const gameState = container.resolve(GameState);
-		const response = await fetch(
-			`/data/${gameState.campaignId}/dialogues/${dlgId}.txt`,
-		);
-		const dlgData = (await response.json()) as DialogueData;
-		if (!dlgData) {
+		if (!this.dialogueMap.has(node)) {
 			return;
 		}
 
@@ -37,18 +166,26 @@ export default class DialogueManagerSystem implements ISystem {
 			.activeCamera as UniversalCamera;
 
 		smSystem.setGameMode(GameMode.Dialogue);
-
 		dlgHud.clearEntryStacks();
 
 		const viewCoords = itr.data.viewPosition;
 		camera.position = itr.mesh.position.add(
 			new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]),
 		);
-		// LATER: Implement offsetting camera target
+		// TO DO: Implement moving camera to target over time
 		camera.setTarget(itr.mesh.position);
 		camera.viewport = new Viewport(0, 0, 1, 1);
 
-		this.activeDialogue = dlgData;
+		this.startDialogueNode(node);
+	}
+
+	public startDialogueNode(node: string) {
+		if (!this.dialogueMap.has(node)) {
+			return;
+		}
+
+		const dialogueData = this.dialogueMap.get(node) as DialogueNode;
+		this.activeDialogue = dialogueData;
 		this.runLine(0);
 	}
 
@@ -59,37 +196,22 @@ export default class DialogueManagerSystem implements ISystem {
 		}
 
 		const dlgHud = container.resolve(GameState).dialogueHud;
-		const dialogue = this.activeDialogue.dialogues[id];
+		const line = this.activeDialogue.lines[id];
 
-		if (!dialogue || !dlgHud) {
+		if (!dlgHud) {
 			return;
 		}
 
-		let charData;
-		const characterName = dialogue.character;
-		if (characterName) {
-			charData = this.activeDialogue.characters[characterName];
-			if (charData) {
-				// Set character portrait
-				dlgHud.setCharacterPortrait(charData);
-			}
-		}
-
-		if (dialogue.text) {
-			// Display text entry for dialogue
-			dlgHud.addTextDialogueEntry(dialogue, charData);
-		}
-
-		const choices = dialogue.choices;
-		if (!choices || dialogue.is_end || choices.length < 1) {
-			// Set end dialogue button
+		if (!line) {
 			dlgHud.addExitEntry();
-		} else if (choices.length === 1) {
-			// Set continue button
-			dlgHud.addContinueEntry(dialogue.id, dialogue.choices[0].target_id);
-		} else if (choices.length > 1) {
-			// Set choices GUI
-			dlgHud.addChoiceEntries(choices);
+			return;
+		}
+
+		switch (line.type) {
+			case "Line":
+				this.displayTextLine(id, line, dlgHud);
+			case "Options":
+				this.displayOptionsLine(line, dlgHud);
 		}
 	}
 
@@ -109,44 +231,71 @@ export default class DialogueManagerSystem implements ISystem {
 		camera.setTarget(new Vector3(0, 0, -40));
 	}
 
-	public displayText(text: string, speakerId?: string) {}
+	private displayTextLine(id: number, line: DialogueLine, dlgHud: DialogueHUD) {
+		if (!line.text) {
+			return;
+		}
 
-	public displayOptions(options: object[]) {}
+		let charData;
+		const character = line.character;
+		if (character) {
+			// Gets sprite in the scene matching the character name
+			// Moves camera to target the sprite
+		}
 
-	public setFlag(flag: string) {}
+		if (line.text) {
+			// Display text entry for dialogue
+			dlgHud.addTextDialogueEntry(line);
+		}
 
-	public setSpeaker(charId: string) {}
+		const nextLineId = id + 1;
+		if (!this.activeDialogue?.lines[nextLineId]) {
+			dlgHud.addExitEntry();
+		} else {
+			dlgHud.addContinueEntry(id, nextLineId);
+		}
+	}
 
-	public playSound(soundUrl: string) {}
+	private displayOptionsLine(line: DialogueLine, dlgHud: DialogueHUD) {
+		if (!line.options) {
+			return;
+		}
 
-	public triggerCombat(encounterId: string) {}
+		const options = line.options;
+		if (!options || options.length < 1) {
+			// Set end dialogue button
+			console.warn("No options found, exiting dialogue");
+			dlgHud.addExitEntry();
+		} else {
+			// Set choices GUI
+			dlgHud.addChoiceEntries(options);
+		}
+	}
+
+	private setFlag(flag: string) {}
+
+	private setSpeaker(charId: string) {}
+
+	private playSound(soundUrl: string) {}
+
+	private triggerCombat(encounterId: string) {}
 }
 
-export interface DialogueCharacterData {
-	[index: string]: CharacterData;
-}
-
-export interface CharacterData {
+export interface DialogueNode {
 	name: string;
-	color?: string;
-	spriteUri?: string;
+	lines: DialogueLine[];
 }
 
-export interface DialogueData {
-	characters: DialogueCharacterData;
-	dialogues: DialogueNodeData[];
+export interface DialogueLine {
+	type: "Line" | "Options" | "Cmd";
+	character?: string;
+	text?: string;
+	options?: DialogueOptionLine[];
+	cmd?: string;
+	vars?: (string | number | Vector3)[];
 }
 
-export interface DialogueNodeData {
-	id: number;
-	character: string;
+export interface DialogueOptionLine {
 	text: string;
-	choices: DialogueChoiceData[];
-	is_start: boolean;
-	is_end: boolean;
-}
-
-export interface DialogueChoiceData {
-	text: string;
-	target_id: number;
+	destinationNode: string;
 }
