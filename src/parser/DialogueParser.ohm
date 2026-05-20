@@ -1,0 +1,29 @@
+Dialogue {
+    DialogueData = Node+
+    
+    String = (alnum | "." | "," | "?" | "!" | "_")+
+
+    StringVar = "(" String ")"
+    
+    Number = #(digit+)
+
+    NumberVar = "(" Number ")"
+    
+    Vector = "(" Number "," Number "," Number ")"
+
+    MoveToNode = "[" String "]"
+    
+    Node = String "===" (Cmd | Options | Line)+ "==="
+              
+    Line = "@" String ":" String
+    
+    Options = OptionLine+
+    
+    OptionLine = "-" String MoveToNode
+    
+    Cmd = ">>" (SetVar | MoveCam)
+    
+    SetVar = "setvar" StringVar StringVar
+    
+    MoveCam = "movecam" Vector Vector
+}

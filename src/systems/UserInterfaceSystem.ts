@@ -12,35 +12,35 @@ export default class UserInterfaceSystem implements ISystem {
 	public async start(engine: Engine) {}
 
 	public update(deltaTime: number) {
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 
-		for (const eid of query(context.world, [
-			context.ActorDataComponent,
-			context.PlayerGUIComponent,
+		for (const eid of query(gameState.world, [
+			gameState.ActorDataComponent,
+			gameState.PlayerGUIComponent,
 		])) {
-			const actorData = context.ActorDataComponent[eid];
-			const playerGUI = context.PlayerGUIComponent[eid];
+			const actorData = gameState.ActorDataComponent[eid];
+			const playerGUI = gameState.PlayerGUIComponent[eid];
 			this.updatePlayerGUI(actorData, playerGUI);
 		}
 
-		for (const eid of query(context.world, [
-			context.ActorDataComponent,
-			context.EnemyGUIComponent,
+		for (const eid of query(gameState.world, [
+			gameState.ActorDataComponent,
+			gameState.EnemyGUIComponent,
 		])) {
-			const actorData = context.ActorDataComponent[eid];
-			const enemyGUI = context.EnemyGUIComponent[eid];
+			const actorData = gameState.ActorDataComponent[eid];
+			const enemyGUI = gameState.EnemyGUIComponent[eid];
 			this.updateEnemyGUI(actorData, enemyGUI);
 		}
 	}
 
 	public setGameMode(newMode: GameMode) {
-		const context = container.resolve(GameState);
-		context.partyInfoHud.showHideHud(
+		const gameState = container.resolve(GameState);
+		gameState.partyInfoHud.showHideHud(
 			newMode == GameMode.Combat || newMode == GameMode.Explore,
 		);
-		context.exploreHud.showHideHud(newMode == GameMode.Explore);
-		context.dialogueHud.showHideHud(newMode == GameMode.Dialogue);
-		context.combatHud.showHideHud(newMode == GameMode.Combat);
+		gameState.exploreHud.showHideHud(newMode == GameMode.Explore);
+		gameState.dialogueHud.showHideHud(newMode == GameMode.Dialogue);
+		gameState.combatHud.showHideHud(newMode == GameMode.Combat);
 	}
 
 	public createPlayerInput(inputMode: GameMode) {}

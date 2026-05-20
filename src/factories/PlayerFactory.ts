@@ -21,15 +21,15 @@ export class PlayerFactory implements IFactory {
 			return -1;
 		}
 
-		const context = container.resolve(GameState);
-		const newEntity = addEntity(context.world);
+		const gameState = container.resolve(GameState);
+		const newEntity = addEntity(gameState.world);
 
 		const newActorComp = new ActorData(newEntity, rawData);
 		newActorComp.isPlayer = true;
 		addComponent(
-			context.world,
+			gameState.world,
 			newEntity,
-			set(context.ActorDataComponent, newActorComp),
+			set(gameState.ActorDataComponent, newActorComp),
 		);
 
 		const newPlayerGUI = new PlayerGUI(
@@ -38,17 +38,10 @@ export class PlayerFactory implements IFactory {
 			`sprites/enemies/${newActorComp.spriteUrl}`,
 		);
 		addComponent(
-			context.world,
+			gameState.world,
 			newEntity,
-			set(context.PlayerGUIComponent, newPlayerGUI),
+			set(gameState.PlayerGUIComponent, newPlayerGUI),
 		);
-
-		// const newActorComp = CreateActorComponent(rawData);
-		// addComponent(
-		// 	context.world,
-		// 	newEntity,
-		// 	set(context.ActorComponent, newActorComp),
-		// );
 
 		return newEntity;
 	}

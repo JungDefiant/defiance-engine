@@ -40,39 +40,33 @@ export class EnemyFactory implements IFactory {
 			return -1;
 		}
 
-		const context = container.resolve(GameState);
-		const newEntity = addEntity(context.world);
+		const gameState = container.resolve(GameState);
+		const newEntity = addEntity(gameState.world);
 
 		const newActorComp = new ActorData(newEntity, rawData);
 		addComponent(
-			context.world,
+			gameState.world,
 			newEntity,
-			set(context.ActorDataComponent, newActorComp),
+			set(gameState.ActorDataComponent, newActorComp),
 		);
 
 		const newEnemySprite = this.createEnemySprite(
 			newEntity,
-			context,
+			gameState,
 			this.enSpritePositions[this.currEnemyIndex],
 		);
 		this.currEnemyIndex++;
 		addComponent(
-			context.world,
+			gameState.world,
 			newEntity,
-			set(context.EnemySprite, newEnemySprite),
+			set(gameState.CharacterSprite, newEnemySprite),
 		);
 
-		// const newActorComp = CreateActorComponent(rawData);
-		// addComponent(
-		// 	context.world,
-		// 	newEntity,
-		// 	set(context.ActorComponent, newActorComp),
-		// );
-		const newEnemyGUI = new EnemyGUI(newEntity, context, newEnemySprite);
+		const newEnemyGUI = new EnemyGUI(newEntity, gameState, newEnemySprite);
 		addComponent(
-			context.world,
+			gameState.world,
 			newEntity,
-			set(context.EnemyGUIComponent, newEnemyGUI),
+			set(gameState.EnemyGUIComponent, newEnemyGUI),
 		);
 
 		return newEntity;
@@ -80,10 +74,10 @@ export class EnemyFactory implements IFactory {
 
 	private createEnemySprite(
 		eid: EntityId,
-		context: GameState,
+		gameState: GameState,
 		position: Vector3,
 	): Mesh {
-		const actorData = context.ActorDataComponent[eid];
+		const actorData = gameState.ActorDataComponent[eid];
 
 		const enActorSprite = MeshBuilder.CreatePlane(
 			`enBattlerSprite_${actorData.id}_${eid}`,
@@ -91,19 +85,19 @@ export class EnemyFactory implements IFactory {
 				width: 1,
 				height: 2,
 			},
-			context.scene,
+			gameState.scene,
 		);
 
 		const enActorSpriteMat = new PBRMaterial(
 			`mat_enBattlerSprite_${actorData.id}_${eid}`,
-			context.scene,
+			gameState.scene,
 		);
 		enActorSprite.billboardMode = 7;
 		enActorSprite.position = position;
 
 		enActorSpriteMat.albedoTexture = new Texture(
 			`./sprites/enemies/${actorData.spriteUrl}`,
-			context.scene,
+			gameState.scene,
 		);
 		enActorSpriteMat.metallic = 0;
 		enActorSpriteMat.roughness = 0;

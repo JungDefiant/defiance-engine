@@ -67,12 +67,12 @@ export class ActorData {
 			} as ActorAttribute,
 		};
 
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
 
 		this.powerData = initData.abilityIds.map(async (el: string) => {
 			const response = await fetch(
-				`/data/${context.campaignId}/abilities/${el}.json`,
+				`/data/${gameState.campaignId}/abilities/${el}.json`,
 			);
 			const abData = (await response.json()) as AbilityData;
 

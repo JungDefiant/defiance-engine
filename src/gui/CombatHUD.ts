@@ -48,8 +48,8 @@ export default class CombatHUD implements IHUD {
 
 	public async setActionBar(eid: EntityId): Promise<void> {
 		const cmSystem = container.resolve(CombatManagerSystem);
-		const context = container.resolve(GameState);
-		const actorData = context.ActorDataComponent[eid];
+		const gameState = container.resolve(GameState);
+		const actorData = gameState.ActorDataComponent[eid];
 
 		if (!actorData) {
 			return;
@@ -65,7 +65,7 @@ export default class CombatHUD implements IHUD {
 			if (abData) {
 				abilitySlot.setActionSlotIcon(abData.iconURL as string);
 				abilitySlot.setOnClickEvent(() =>
-					cmSystem.startQueueAction(context, eid, i),
+					cmSystem.startQueueAction(gameState, eid, i),
 				);
 			} else {
 				abilitySlot.setActionSlotIcon("");
@@ -88,7 +88,7 @@ export default class CombatHUD implements IHUD {
 			if (devData) {
 				deviceSlot.setActionSlotIcon(devData.iconURL as string);
 				deviceSlot.setOnClickEvent(() =>
-					cmSystem.startQueueAction(context, eid, i),
+					cmSystem.startQueueAction(gameState, eid, i),
 				);
 			} else {
 				deviceSlot.setActionSlotIcon("");

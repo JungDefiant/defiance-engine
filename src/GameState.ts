@@ -10,6 +10,11 @@ import ExploreHUD from "src/gui/ExploreHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import CombatHUD from "src/gui/CombatHUD";
 
+/*
+TO DO:
+- Break up into smaller classes
+- Figure out what variables need to be immutable/mutable and private/public.
+*/
 @singleton()
 export default class GameState {
 	public actionPaused: boolean = false;
@@ -38,7 +43,7 @@ export default class GameState {
 	public readonly ActorDataComponent: ActorData[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
 	public readonly EnemyGUIComponent: EnemyGUI[] = [];
-	public readonly EnemySprite: Mesh[] = [];
+	public readonly CharacterSprite: Mesh[] = [];
 	public readonly FloatingText: TextBlock[] = [];
 	public readonly SpecialFX: SolidParticleSystem[] = [];
 
@@ -115,22 +120,22 @@ export default class GameState {
 
 		observe(
 			this.world,
-			onSet(this.EnemySprite),
+			onSet(this.CharacterSprite),
 			(eid: EntityId, params: Mesh) => {
-				this.EnemySprite[eid] = params;
+				this.CharacterSprite[eid] = params;
 			},
 		);
 
 		observe(
 			this.world,
-			onRemove(this.EnemySprite),
+			onRemove(this.CharacterSprite),
 			(eid: EntityId, params: Mesh) => {
-				this.EnemySprite[eid].dispose();
+				this.CharacterSprite[eid].dispose();
 			},
 		);
 
-		observe(this.world, onGet(this.EnemySprite), (eid: EntityId) => {
-			return this.EnemySprite[eid];
+		observe(this.world, onGet(this.CharacterSprite), (eid: EntityId) => {
+			return this.CharacterSprite[eid];
 		});
 
 		observe(

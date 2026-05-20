@@ -86,7 +86,7 @@ export default class RenderQueueSystem implements ISystem {
 	}
 
 	private initRenderQueueEntry(rqeState: RenderQueueState): void {
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
 				// text
@@ -101,7 +101,7 @@ export default class RenderQueueSystem implements ISystem {
 				}
 
 				for (const eid of ftTargetEids) {
-					const ftEntity = addEntity(context.world);
+					const ftEntity = addEntity(gameState.world);
 					rqeState.entityIds.push(ftEntity);
 
 					const floatingTextUI = new TextBlock(
@@ -115,19 +115,19 @@ export default class RenderQueueSystem implements ISystem {
 					floatingTextUI.linkOffsetYInPixels = 0;
 					floatingTextUI._customData = { targetEid: eid };
 
-					if (context.playerEIDs.includes(eid)) {
-						const playerGUI = context.PlayerGUIComponent[eid];
+					if (gameState.playerEIDs.includes(eid)) {
+						const playerGUI = gameState.PlayerGUIComponent[eid];
 						playerGUI.getRootContainer().addControl(floatingTextUI);
 					} else {
-						const targetSprite = context.EnemySprite[eid];
-						context.insceneCombatGUI.addControl(floatingTextUI);
+						const targetSprite = gameState.CharacterSprite[eid];
+						gameState.insceneCombatGUI.addControl(floatingTextUI);
 						floatingTextUI.linkWithMesh(targetSprite);
 					}
 
 					addComponent(
-						context.world,
+						gameState.world,
 						ftEntity,
-						set(context.FloatingText, floatingTextUI),
+						set(gameState.FloatingText, floatingTextUI),
 					);
 				}
 
@@ -142,11 +142,15 @@ export default class RenderQueueSystem implements ISystem {
 				}
 
 				for (const eid of sxTargetEids) {
-					const targetSprite = context.EnemySprite[eid];
-					const sps = new SolidParticleSystem(``, context.scene);
+					const targetSprite = gameState.CharacterSprite[eid];
+					const sps = new SolidParticleSystem(``, gameState.scene);
 
-					const sxEntity = addEntity(context.world);
-					addComponent(context.world, sxEntity, set(context.SpecialFX, sps));
+					const sxEntity = addEntity(gameState.world);
+					addComponent(
+						gameState.world,
+						sxEntity,
+						set(gameState.SpecialFX, sps),
+					);
 				}
 
 				rqeState.init = true;
@@ -160,7 +164,7 @@ export default class RenderQueueSystem implements ISystem {
 		rqeState: RenderQueueState,
 		deltaTime: number,
 	): void {
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
 				// text
@@ -168,13 +172,13 @@ export default class RenderQueueSystem implements ISystem {
 				return;
 			case RenderQueueType.FloatingText:
 				for (const eid of rqeState.entityIds) {
-					const ft = context.FloatingText[eid];
+					const ft = gameState.FloatingText[eid];
 
 					ft.alpha = Math.max(ft.alpha - 1 * deltaTime, 0);
 
 					let targetEid = ft._customData["targetEid"] as number;
 
-					if (targetEid && context.playerEIDs.includes(targetEid)) {
+					if (targetEid && gameState.playerEIDs.includes(targetEid)) {
 						ft.topInPixels = ft.topInPixels - 20 * deltaTime;
 					} else {
 						ft.linkOffsetYInPixels = ft.linkOffsetYInPixels - 20 * deltaTime;
@@ -183,7 +187,7 @@ export default class RenderQueueSystem implements ISystem {
 				return;
 			case RenderQueueType.SpecialFX:
 				for (const eid of rqeState.entityIds) {
-					const sx = context.SpecialFX[eid];
+					const sx = gameState.SpecialFX[eid];
 					sx.setParticles();
 				}
 				return;
@@ -193,7 +197,7 @@ export default class RenderQueueSystem implements ISystem {
 	}
 
 	private clearRenderQueueState(rqeState: RenderQueueState): void {
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
 				// text
@@ -201,17 +205,17 @@ export default class RenderQueueSystem implements ISystem {
 				return;
 			case RenderQueueType.FloatingText:
 				for (const eid of rqeState.entityIds) {
-					const ft = context.FloatingText[eid];
-					context.insceneCombatGUI.removeControl(ft);
+					const ft = gameState.FloatingText[eid];
+					gameState.insceneCombatGUI.removeControl(ft);
 					ft.dispose();
-					removeEntity(context.world, eid);
+					removeEntity(gameState.world, eid);
 				}
 				return;
 			case RenderQueueType.SpecialFX:
 				for (const eid of rqeState.entityIds) {
-					const sx = context.SpecialFX[eid];
+					const sx = gameState.SpecialFX[eid];
 					sx.dispose();
-					removeEntity(context.world, eid);
+					removeEntity(gameState.world, eid);
 				}
 				return;
 			case RenderQueueType.WaitUntilDone:

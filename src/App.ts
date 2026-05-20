@@ -46,17 +46,17 @@ export class App {
 			"campaign_test",
 			GameMode.Combat,
 		);
-		const context = container.resolve(GameState);
+		const gameState = container.resolve(GameState);
 
 		const plyerEID = await this.playerFactory.createEntityFromFile(
 			"cmd_test",
-			context.campaignId,
+			gameState.campaignId,
 		);
-		context.partyInfoHud.setPartyInfoEntryStack();
+		gameState.partyInfoHud.setPartyInfoEntryStack();
 
 		container.register(GameState, {
 			useValue: {
-				...context,
+				...gameState,
 				selectedPlayerEID: plyerEID,
 				playerEIDs: [plyerEID],
 			},
@@ -64,17 +64,17 @@ export class App {
 		/* TEST */
 
 		this.engine.runRenderLoop(() => {
-			context.scene.render();
-			const deltaTime = context.scene.deltaTime / DELTATIME_MS;
+			gameState.scene.render();
+			const deltaTime = gameState.scene.deltaTime / DELTATIME_MS;
 			this.updateSystems(deltaTime);
-			context.uiScene.render();
+			gameState.uiScene.render();
 			this.uiSystem.update(deltaTime);
 		});
 
 		/* TEST */
-		// this.smSystem.setGameMode(GameMode.Explore);
-		this.smSystem.setGameMode(GameMode.Combat);
-		await this.cmSystem.startCombat("enc_test");
+		this.smSystem.setGameMode(GameMode.Explore);
+		// this.smSystem.setGameMode(GameMode.Combat);
+		// await this.cmSystem.startCombat("enc_test");
 		/* TEST */
 	}
 
