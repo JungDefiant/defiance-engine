@@ -93,15 +93,11 @@ export default class CombatManagerSystem implements ISystem {
 
 		this.smSystem.setGameMode(GameMode.Combat);
 
-		const viewCoords = locData.combatViewPosition;
-		camera.position = new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]);
-		camera.setTarget(DEFAULT_CAM_TARGET);
-
 		const encData = gameState.sceneData.encounters[encId];
 
 		/*
 		To Do:
-		- Queue battler actions based on tactics (overridden by player input)
+		- Load enemies from encData
 		*/
 
 		/* TEST */
@@ -142,8 +138,6 @@ export default class CombatManagerSystem implements ISystem {
 
 	private endCombat() {
 		const gameState = container.resolve(GameState);
-		const locData = gameState.locationData;
-		const camera = gameState.scene.activeCamera as UniversalCamera;
 
 		gameState.enemyEIDs.forEach((eid) => {
 			removeEntity(gameState.world, eid);
@@ -156,14 +150,9 @@ export default class CombatManagerSystem implements ISystem {
 			playerData.queuedAction = null;
 		});
 
-		const viewCoords = locData.exploreViewPosition;
-		camera.position = new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]);
-		camera.setTarget(DEFAULT_CAM_TARGET);
-
+		this.smSystem.setGameMode(GameMode.Explore);
 		gameState.actionPaused = false;
 		this.startEndCombat = false;
-
-		this.smSystem.setGameMode(GameMode.Explore);
 	}
 
 	public async startQueueAction(

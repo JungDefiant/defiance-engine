@@ -1,4 +1,11 @@
-import { Mesh, Observable, Scene, SolidParticleSystem } from "@babylonjs/core";
+import {
+	AbstractMesh,
+	Mesh,
+	Nullable,
+	Scene,
+	SolidParticleSystem,
+	TransformNode,
+} from "@babylonjs/core";
 import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
 import { EntityId, observe, onGet, onRemove, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
@@ -29,11 +36,11 @@ export default class GameState {
 	public readonly scene: Scene;
 	public readonly sceneData: SceneData;
 	public readonly uiScene: Scene;
-	public readonly locationData: LocationData;
+	public readonly sceneNodes: TransformNode[];
+	public locationData: Nullable<LocationData> = null;
 	// GUIs
 	public readonly mainUI: AdvancedDynamicTexture;
-	public readonly insceneLocationGUI: AdvancedDynamicTexture;
-	public readonly insceneCombatGUI: AdvancedDynamicTexture;
+	public readonly sceneGUI: AdvancedDynamicTexture;
 	// HUDs
 	public readonly partyInfoHud: PartyInfoHUD;
 	public readonly exploreHud: ExploreHUD;
@@ -56,10 +63,9 @@ export default class GameState {
 		scene: Scene,
 		uiScene: Scene,
 		sceneData: SceneData,
-		locationData: LocationData,
+		sceneNodes: TransformNode[],
 		mainUI: AdvancedDynamicTexture,
-		locationGUI: AdvancedDynamicTexture,
-		combatGUI: AdvancedDynamicTexture,
+		sceneGUI: AdvancedDynamicTexture,
 		partyInfoHud: PartyInfoHUD,
 		exploreHud: ExploreHUD,
 		dialogueHud: DialogueHUD,
@@ -73,10 +79,9 @@ export default class GameState {
 		this.scene = scene;
 		this.uiScene = uiScene;
 		this.sceneData = sceneData;
-		this.locationData = locationData;
+		this.sceneNodes = sceneNodes;
 		this.mainUI = mainUI;
-		this.insceneLocationGUI = locationGUI;
-		this.insceneCombatGUI = combatGUI;
+		this.sceneGUI = sceneGUI;
 		this.partyInfoHud = partyInfoHud;
 		this.exploreHud = exploreHud;
 		this.dialogueHud = dialogueHud;
@@ -178,19 +183,21 @@ export default class GameState {
 
 export interface SceneData {
 	id: string;
+	modelURL: string;
 	difficultyLevel: number;
 	startLocationId: string;
-	locations: LocationData[];
+	dialogueFile: string;
 	encounters: EncounterData;
+	locations: LocationData[];
 }
 
 export interface LocationData {
 	id: string;
-	modelURL: string;
-	exploreViewPosition: number[];
-	combatViewPosition: number[];
+	exploreViewNodeId: string;
+	combatViewNodeId: string;
 	interactables: InteractableData[];
 	events: EventData[];
+	doors: DoorData[];
 }
 
 export interface InteractableData {
@@ -198,9 +205,14 @@ export interface InteractableData {
 	name: string;
 	description: string;
 	dialogueNodeId: string;
-	attachedModelId: string;
-	viewPosition: number[];
+	interactableNodeId: string;
+	viewPositionNodeId: string;
 	guiPositionOffset: number[];
+}
+
+export interface DoorData {
+	id: string;
+	destination: string;
 }
 
 export interface EncounterData {

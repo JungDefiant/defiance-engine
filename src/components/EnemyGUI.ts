@@ -32,7 +32,7 @@ export class EnemyGUI implements ActorGUI {
 		);
 		this.rootContainer.widthInPixels = 120;
 		this.rootContainer.heightInPixels = 240;
-		gameState.insceneCombatGUI.addControl(this.rootContainer);
+		gameState.sceneGUI.addControl(this.rootContainer);
 
 		this.targetingUI = new Image(
 			`ui_enBattlerTargetings_${eid}`,
