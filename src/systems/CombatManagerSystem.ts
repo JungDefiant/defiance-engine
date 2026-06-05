@@ -1,14 +1,14 @@
 import { container, delay, inject, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
-import { UniversalCamera, Vector3 } from "@babylonjs/core";
+import { RandomRange, UniversalCamera, Vector3 } from "@babylonjs/core";
 import GameState, { GameMode } from "src/GameState";
 import { EntityId, query, removeEntity } from "bitecs";
 import {
 	AbilityData,
-	ActionDescriptor,
-	ActionTarget,
-	ActionTrigger,
+	AbilityDescriptor,
+	AbilityTarget,
+	AbilityTrigger,
 	ActorData,
 	EffectData,
 	EffectVar,
@@ -166,7 +166,7 @@ export default class CombatManagerSystem implements ISystem {
 			? actorData.itemData && actorData.itemData[actionInd]
 			: actorData.powerData[actionInd])) as AbilityData;
 
-		if (actionData.trigger != ActionTrigger.onActionExecute) {
+		if (actionData.trigger != AbilityTrigger.onActionExecute) {
 			return;
 		}
 
@@ -183,7 +183,7 @@ export default class CombatManagerSystem implements ISystem {
 		actionData: AbilityData,
 	): void {
 		switch (actionData.target) {
-			case ActionTarget.singleEnemy:
+			case AbilityTarget.singleEnemy:
 				for (const eid of query(gameState.world, [
 					gameState.EnemyGUIComponent,
 				])) {
@@ -208,7 +208,7 @@ export default class CombatManagerSystem implements ISystem {
 		actionData: AbilityData,
 	) {
 		switch (actionData.target) {
-			case ActionTarget.singleEnemy:
+			case AbilityTarget.singleEnemy:
 				/* TEST */
 				this.finishQueueAction(gameState, actionData, sourceEid, [
 					gameState.selectedPlayerEID,
@@ -267,7 +267,7 @@ export default class CombatManagerSystem implements ISystem {
 		sourceData: ActorData,
 		targetData: ActorData,
 		actionEffects: EffectData[],
-		descriptors: ActionDescriptor[],
+		descriptors: AbilityDescriptor[],
 		context?: { [index: string]: EffectVar },
 	) {
 		let ftText;
@@ -350,7 +350,7 @@ export default class CombatManagerSystem implements ISystem {
 	private triggerSkillEffects(
 		sourceData: ActorData,
 		targetData: ActorData,
-		trigger: ActionTrigger,
+		trigger: AbilityTrigger,
 		context?: { [index: string]: EffectVar },
 	) {
 		const triggeredSkills = sourceData.skillData.filter(
@@ -370,15 +370,19 @@ export default class CombatManagerSystem implements ISystem {
 	private applyDamageEffect(
 		source: ActorData,
 		target: ActorData,
-		descriptors: ActionDescriptor[],
+		descriptors: AbilityDescriptor[],
 		effVars: { [index: string]: EffectVar },
 	): string {
 		const targetLifeAttr = target.attributes.life;
 		const targetDefenseAttr = target.attributes.defense;
-		const baseDamage = effVars["damage"] as number;
+
+		const minDamage = effVars["min"] as number;
+		const maxDamage = effVars["max"] as number;
+		const damageRoll = Math.round(RandomRange(minDamage, maxDamage));
+
 		const damageContext = {
 			effect: "damage",
-			damage: baseDamage,
+			damage: damageRoll,
 			damageMultiplier: 1,
 			targetDefense: targetDefenseAttr.currentValue,
 		};
@@ -386,7 +390,7 @@ export default class CombatManagerSystem implements ISystem {
 		this.triggerSkillEffects(
 			source,
 			target,
-			ActionTrigger.onActorEffectInflicted,
+			AbilityTrigger.onActorEffectInflicted,
 			damageContext,
 		);
 
@@ -411,7 +415,7 @@ export default class CombatManagerSystem implements ISystem {
 		this.triggerSkillEffects(
 			source,
 			target,
-			ActionTrigger.onActorEffectTaken,
+			AbilityTrigger.onActorEffectTaken,
 			damageTakenContext,
 		);
 
@@ -425,7 +429,7 @@ export default class CombatManagerSystem implements ISystem {
 	private applyHealEffect(
 		source: ActorData,
 		target: ActorData,
-		descriptors: ActionDescriptor[],
+		descriptors: AbilityDescriptor[],
 		effVars: { [index: string]: EffectVar },
 	): string {
 		const targetLifeAttr = target.attributes.life;
@@ -439,7 +443,7 @@ export default class CombatManagerSystem implements ISystem {
 		this.triggerSkillEffects(
 			source,
 			target,
-			ActionTrigger.onActorEffectTaken,
+			AbilityTrigger.onActorEffectTaken,
 			healingContext,
 		);
 
