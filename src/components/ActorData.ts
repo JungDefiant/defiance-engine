@@ -12,7 +12,7 @@ export class ActorData {
 	spriteUrl: string = "";
 	attributes: AttributeSet = {};
 	powerData: AbilityData[] = [];
-	skillData: AbilityData[] = [];
+	featData: AbilityData[] = [];
 	affinityData?: AffinityData;
 	itemData?: AbilityData[];
 	tactics?: TacticsData[];
@@ -72,7 +72,7 @@ export class ActorData {
 
 		this.powerData = initData.abilityIds.map(async (el: string) => {
 			const response = await fetch(
-				`/data/${gameState.campaignId}/abilities/${el}.json`,
+				`/data/${gameState.campaignId}/abilities/powers/${el}.json`,
 			);
 			const abData = (await response.json()) as AbilityData;
 
@@ -103,9 +103,9 @@ export interface AbilityData {
 	id: string;
 	name: string;
 	description: string;
-	trigger: ActionTrigger;
-	descriptors: ActionDescriptor[];
-	target: ActionTarget;
+	trigger: AbilityTrigger;
+	descriptors: AbilityDescriptor[];
+	target: AbilityTarget;
 	effectData: EffectData[];
 	recovery?: number;
 	cost?: number;
@@ -134,21 +134,37 @@ export interface TacticsData {
 	actionId: string;
 }
 
-export enum ActionTrigger {
+export enum AbilityTrigger {
 	onActionExecute = "onActionExecute",
 	onActorEffectTaken = "onActorEffectTaken",
 	onActorEffectInflicted = "onActorEffectInflicted",
 	onActorDefeated = "onActorDefeated",
 }
 
-export enum ActionDescriptor {
+export enum AbilityDescriptor {
+	// Ability Type
+	power = "power",
+	feat = "feat",
+	basic = "basic",
+	// Target
+	single = "single",
+	group = "group",
+	// Range
+	direct = "direct",
+	ranged = "ranged",
 	melee = "melee",
+	// Effect Type
 	impact = "impact",
+	lethal = "lethal",
+	// Source Type
 	innate = "innate",
+	weapon = "weapon",
+	// Trigger
 	attack = "attack",
+	action = "action",
 }
 
-export enum ActionTarget {
+export enum AbilityTarget {
 	self = "self",
 	singleEnemy = "single_en",
 	groupEnemy = "group_en",
