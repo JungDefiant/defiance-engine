@@ -307,15 +307,13 @@ export default class SceneManagerSystem implements ISystem {
 			return;
 		}
 
-		const button = Button.CreateSimpleButton(interactableData.id, "?");
-		button.width = 0.1;
-		button.height = 0.1;
-		button.color = "Blue";
-		button.background = "Blue";
-		if (button.textBlock) {
-			button.textBlock.color = "Black";
-		}
-		button.thickness = 2;
+		const button = Button.CreateImageOnlyButton(
+			interactableData.id,
+			"./sprites/gui/icon_interact.png",
+		);
+		button.width = 0.075;
+		button.height = 0.1125;
+		button.thickness = 0;
 		button.onPointerEnterObservable.add(() => {
 			const gameState = container.resolve(GameState);
 			gameState.exploreHud.updateHighlightInfoUI(
@@ -365,15 +363,13 @@ export default class SceneManagerSystem implements ISystem {
 			return;
 		}
 
-		const button = Button.CreateSimpleButton(doorData.id, "?");
+		const button = Button.CreateImageOnlyButton(
+			doorData.id,
+			"./sprites/gui/icon_door.png",
+		);
 		button.width = 0.1;
 		button.height = 0.1;
-		button.color = "Blue";
-		button.background = "Blue";
-		if (button.textBlock) {
-			button.textBlock.color = "Black";
-		}
-		button.thickness = 2;
+		button.thickness = 0;
 		button.onPointerEnterObservable.add(() => {
 			const gameState = container.resolve(GameState);
 			gameState.exploreHud.updateHighlightInfoUI(
