@@ -26,7 +26,14 @@
         {
             "id": "critical",
             "variables": {
-                "multiplier": 1.5
+                "effects": [
+                    {
+                        "id": "extraDamageMultiplier",
+                        "variables": {
+                            "amount": 0.25
+                        }
+                    }
+                ]
             }
         }
     ]

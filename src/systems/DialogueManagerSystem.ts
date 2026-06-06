@@ -169,8 +169,6 @@ export default class DialogueManagerSystem implements ISystem {
 		const camera = container.resolve(GameState).scene
 			.activeCamera as UniversalCamera;
 
-		console.log("ITR NODE", itr.itrNode);
-		console.log("VIEW NODE", itr.viewNode);
 		camera.position = itr.viewNode.absolutePosition;
 		// TO DO: Implement moving camera to target over time
 		camera.setTarget(itr.itrNode.absolutePosition);
