@@ -6,15 +6,15 @@
   "primaryColor": "",
   "spriteUrl": "spr_sentineltest.png",
   "attributes": {
-    "life": 400,
-    "will": 200,
+    "life": 120,
+    "will": 10,
     "speed": 10,
-    "defense": 10,
-    "critical": 1,
+    "defense": 13,
+    "critical": 11,
     "regen": 10
   },
   "abilityIds": [
-    "ab_brawl"
+    "ab_pulserifle"
   ],
   "itemIds": [
     "it_grenadefrag"
@@ -26,7 +26,7 @@
     },
     {
       "trigger": "vsHighestLife",
-      "action": "ab_brawl"
+      "action": "ab_pulserifle"
     }
   ]
 }

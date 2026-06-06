@@ -1,34 +1,27 @@
 {
     "id": "test",
     "difficultyLevel": 0,
-    "startLocationId": "loc_test1",
+    "startLocationId": "loc0",
+    "modelURL": "defiance_level.glb",
     "dialogueFile": "dlg_test",
+    "encounters": {
+        "enc_test": [
+            "en_sc_test"
+        ]
+    },
     "locations": [
         {
-            "id": "loc_test1",
-            "modelURL": "defiance_envtest.glb",
-            "exploreViewPosition": [
-                0,
-                1.5,
-                0
-            ],
-            "combatViewPosition": [
-                0,
-                1.1,
-                2.25
-            ],
+            "id": "loc0",
+            "exploreViewNodeId": "loc0_view_explore",
+            "combatViewNodeId": "loc0_view_combat",
             "interactables": [
                 {
                     "id": "itr_test1",
                     "name": "Terminal",
                     "description": "A terminal with access to the MetroNet.",
                     "dialogueNodeId": "ch0_start",
-                    "attachedModelId": "computer",
-                    "viewPosition": [
-                        0.25,
-                        0.75,
-                        -1.15
-                    ],
+                    "interactableNodeId": "itr_computer_target",
+                    "viewPositionNodeId": "itr_computer_view",
                     "guiPositionOffset": [
                         0,
                         0,
@@ -43,12 +36,26 @@
                         "TEST"
                     ]
                 }
+            ],
+            "doors": [
+                {
+                    "id": "door_t0_t1",
+                    "destination": "loc1"
+                }
+            ]
+        },
+        {
+            "id": "loc1",
+            "exploreViewNodeId": "loc1_view_explore",
+            "combatViewNodeId": "loc1_view_combat",
+            "interactables": [],
+            "events": [],
+            "doors": [
+                {
+                    "id": "door_t1_t0",
+                    "destination": "loc0"
+                }
             ]
         }
-    ],
-    "encounters": {
-        "enc_test": [
-            "en_sc_test"
-        ]
-    }
+    ]
 }
