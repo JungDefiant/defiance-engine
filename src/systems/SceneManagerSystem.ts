@@ -231,13 +231,30 @@ export default class SceneManagerSystem implements ISystem {
 		}
 
 		const camera = gameState.scene.activeCamera as UniversalCamera;
+		const locData = gameState.locationData;
+		const sceneNodes = gameState.sceneNodes;
+
 		let viewNodeId = "";
+		let camTarget = DEFAULT_CAM_TARGET;
 		switch (gameState.gameMode) {
 			case GameMode.Explore:
-				viewNodeId = gameState.locationData.exploreViewNodeId;
+				viewNodeId = locData.exploreViewNodeId;
+				if (gameState.lastExploreViewTarget !== Vector3.Zero()) {
+					camTarget = gameState.lastExploreViewTarget;
+				}
 				break;
 			case GameMode.Combat:
-				viewNodeId = gameState.locationData.combatViewNodeId;
+				viewNodeId = locData.combatViewNodeId;
+				let spawnNode = sceneNodes.find(
+					(x) => x.id === locData.combatSpawnNodeId,
+				);
+				if (spawnNode) {
+					camTarget = new Vector3(
+						spawnNode.position.x,
+						DEFAULT_CAM_TARGET.y,
+						spawnNode.position.z,
+					);
+				}
 				break;
 			default:
 				return;
@@ -251,7 +268,7 @@ export default class SceneManagerSystem implements ISystem {
 		const viewNode = gameState.sceneNodes.find((x) => x.id === viewNodeId);
 		if (camera && viewNode) {
 			camera.position = viewNode.position;
-			camera.setTarget(DEFAULT_CAM_TARGET);
+			camera.setTarget(camTarget);
 		}
 	}
 
@@ -336,6 +353,11 @@ export default class SceneManagerSystem implements ISystem {
 				return;
 			}
 
+			const currCamera = gameState.scene.activeCamera as UniversalCamera;
+			if (currCamera) {
+				gameState.lastExploreViewTarget = currCamera.getTarget();
+			}
+
 			const dmSystem = container.resolve(DialogueManagerSystem);
 			dmSystem.startDialogue(interactableData.dialogueNodeId, {
 				data: interactableData,
@@ -357,9 +379,9 @@ export default class SceneManagerSystem implements ISystem {
 		sceneNodes: TransformNode[],
 		sceneGUI: AdvancedDynamicTexture,
 	) {
-		const attachedMesh = sceneNodes.find((x) => x.id == doorData.id);
+		const sceneNode = sceneNodes.find((x) => x.id == doorData.id);
 
-		if (!attachedMesh) {
+		if (!sceneNode) {
 			return;
 		}
 
@@ -397,11 +419,15 @@ export default class SceneManagerSystem implements ISystem {
 				return;
 			}
 
+			const currCamera = gameState.scene.activeCamera as UniversalCamera;
+			if (currCamera) {
+				gameState.lastExploreViewTarget = sceneNode.position;
+			}
 			gameState.locationData = newLoc;
 			smSystem.resetViewPosition(gameState);
 		});
 		sceneGUI.addControl(button);
-		button.linkWithMesh(attachedMesh);
+		button.linkWithMesh(sceneNode);
 	}
 
 	private async loadCombatEncounter(

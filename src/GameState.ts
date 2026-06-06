@@ -5,6 +5,7 @@ import {
 	Scene,
 	SolidParticleSystem,
 	TransformNode,
+	Vector3,
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
 import { EntityId, observe, onGet, onRemove, onSet, World } from "bitecs";
@@ -16,6 +17,7 @@ import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import CombatHUD from "src/gui/CombatHUD";
+import { DEFAULT_CAM_TARGET } from "./Constants";
 
 /*
 TO DO:
@@ -31,6 +33,7 @@ export default class GameState {
 	public selectedPlayerEID: number;
 	public playerEIDs: number[];
 	public enemyEIDs: number[] = [];
+	public lastExploreViewTarget: Vector3 = DEFAULT_CAM_TARGET;
 	// Scene & game data
 	public readonly world: World;
 	public readonly scene: Scene;
@@ -195,6 +198,7 @@ export interface LocationData {
 	id: string;
 	exploreViewNodeId: string;
 	combatViewNodeId: string;
+	combatSpawnNodeId: string;
 	interactables: InteractableData[];
 	events: EventData[];
 	doors: DoorData[];
