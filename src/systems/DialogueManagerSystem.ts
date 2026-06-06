@@ -13,7 +13,7 @@ import DialogueHUD from "src/gui/DialogueHUD";
 import type ISystem from "src/systems/ISystem";
 import type { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 import type { InteractableData } from "src/GameState";
-import type { Nullable } from "@babylonjs/core";
+import type { Nullable, TransformNode } from "@babylonjs/core";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
@@ -154,7 +154,11 @@ export default class DialogueManagerSystem implements ISystem {
 
 	public async startDialogue(
 		node: string,
-		itr: { data: InteractableData; mesh: AbstractMesh },
+		itr: {
+			data: InteractableData;
+			itrNode: TransformNode;
+			viewNode: TransformNode;
+		},
 	): Promise<void> {
 		if (!this.dialogueMap.has(node)) {
 			return;
@@ -165,16 +169,12 @@ export default class DialogueManagerSystem implements ISystem {
 		const camera = container.resolve(GameState).scene
 			.activeCamera as UniversalCamera;
 
+		camera.position = itr.viewNode.absolutePosition;
+		// TO DO: Implement moving camera to target over time
+		camera.setTarget(itr.itrNode.absolutePosition);
+
 		smSystem.setGameMode(GameMode.Dialogue);
 		dlgHud.clearEntryStacks();
-
-		const viewCoords = itr.data.viewPosition;
-		camera.position = itr.mesh.position.add(
-			new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]),
-		);
-		// TO DO: Implement moving camera to target over time
-		camera.setTarget(itr.mesh.position);
-		camera.viewport = new Viewport(0, 0, 1, 1);
 
 		this.startDialogueNode(node);
 	}
@@ -223,12 +223,6 @@ export default class DialogueManagerSystem implements ISystem {
 		const locData = gameState.locationData;
 
 		smSystem.setGameMode(GameMode.Explore);
-
-		const viewCoords = locData.exploreViewPosition;
-		camera.position = new Vector3(viewCoords[0], viewCoords[1], viewCoords[2]);
-		camera.viewport = new Viewport(0, 0.1, 1, 1);
-		// LATER: Implement offsetting camera target
-		camera.setTarget(new Vector3(0, 0, -40));
 	}
 
 	private displayTextLine(id: number, line: DialogueLine, dlgHud: DialogueHUD) {
@@ -275,7 +269,14 @@ export default class DialogueManagerSystem implements ISystem {
 		}
 	}
 
+	// COMMANDS
 	private setFlag(flag: string) {}
+
+	private setStringVariable(name: string, value: string) {}
+
+	private setNumberVariable(name: string, value: number) {}
+
+	private moveCamera(position: Vector3, target: Vector3) {}
 
 	private setSpeaker(charId: string) {}
 

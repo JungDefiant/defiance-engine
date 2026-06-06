@@ -1,0 +1,44 @@
+{
+    "id": "ab_pulserifle",
+    "name": "Pulse Rifle",
+    "description": "",
+    "castVfxURL": "",
+    "hitVfxURL": "",
+    "castSfxURL": "",
+    "hitSfxURL": "",
+    "trigger": "onActionExecute",
+    "descriptors": [
+        "power",
+        "single",
+        "ranged",
+        "lethal",
+        "weapon",
+        "attack"
+    ],
+    "target": "single_en",
+    "recovery": 4,
+    "cost": 0,
+    "effectData": [
+        {
+            "id": "damage",
+            "variables": {
+                "min": 16,
+                "max": 48
+            }
+        },
+        {
+            "id": "critical",
+            "variables": {
+                "maxTimes": 4,
+                "effects": [
+                    {
+                        "id": "extraDamageMultiplier",
+                        "variables": {
+                            "amount": 0.25
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

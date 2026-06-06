@@ -120,7 +120,7 @@ export default class RenderQueueSystem implements ISystem {
 						playerGUI.getRootContainer().addControl(floatingTextUI);
 					} else {
 						const targetSprite = gameState.CharacterSprite[eid];
-						gameState.insceneCombatGUI.addControl(floatingTextUI);
+						gameState.combatGUI.addControl(floatingTextUI);
 						floatingTextUI.linkWithMesh(targetSprite);
 					}
 
@@ -206,7 +206,7 @@ export default class RenderQueueSystem implements ISystem {
 			case RenderQueueType.FloatingText:
 				for (const eid of rqeState.entityIds) {
 					const ft = gameState.FloatingText[eid];
-					gameState.insceneCombatGUI.removeControl(ft);
+					gameState.combatGUI.removeControl(ft);
 					ft.dispose();
 					removeEntity(gameState.world, eid);
 				}
