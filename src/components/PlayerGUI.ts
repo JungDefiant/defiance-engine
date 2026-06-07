@@ -384,7 +384,7 @@ export class PlayerGUI implements ActorGUI {
 		barValueUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		barValueUI.widthInPixels = 25;
-		barValueUI.heightInPixels = 12;
+		barValueUI.heightInPixels = 14;
 		barValueUI.topInPixels = 2;
 		barValueUI.color = color;
 		barValueUI.style = style;
