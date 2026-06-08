@@ -95,33 +95,12 @@ export default class CombatManagerSystem implements ISystem {
 
 		const encData = gameState.sceneData.encounters[encId];
 
-		/*
-		To Do:
-		- Load enemies from encData
-		*/
-
-		/* TEST */
-		gameState.enemyEIDs.push(
-			await this.enFactory.createEntityFromFile(
-				"enem_test",
-				gameState.campaignId,
-			),
-		);
-		// gameState.enemyEIDs.push(
-		// 	await this.enFactory.createEntityFromFile(
-		// 		"enem_test",
-		// 		gameState.campaignId,
-		// 	),
-		// );
-		// gameState.enemyEIDs.push(
-		// 	await this.enFactory.createEntityFromFile(
-		// 		"enem_test",
-		// 		gameState.campaignId,
-		// 	),
-		// );
-		/* TEST */
-
-		console.log("START COMBAT");
+		for (let i = 0; i < encData.length; i++) {
+			const enId = encData[i];
+			gameState.enemyEIDs.push(
+				await this.enFactory.createEntityFromFile(enId, gameState.campaignId),
+			);
+		}
 
 		await gameState.combatHud.setActionBar(gameState.selectedPlayerEID);
 
