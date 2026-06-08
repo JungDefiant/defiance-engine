@@ -8,7 +8,7 @@ import {
 	Container,
 	Style,
 } from "@babylonjs/gui";
-import { Themes } from "../gui/Themes";
+import { Themes } from "../Themes";
 import { EntityId } from "bitecs";
 
 export interface ActorGUI {
@@ -338,7 +338,7 @@ export class PlayerGUI implements ActorGUI {
 			name.toUpperCase(),
 		);
 		statLabelUi.widthInPixels = 44;
-		statLabelUi.heightInPixels = 18;
+		statLabelUi.heightInPixels = 20;
 		statLabelUi.style = style;
 		statLabelUi.color = color;
 		statLabelUi.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;

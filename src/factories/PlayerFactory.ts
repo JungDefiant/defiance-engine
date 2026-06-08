@@ -3,7 +3,7 @@ import { container, singleton } from "tsyringe";
 import GameState from "src/GameState";
 import { IFactory } from "src/factories/IFactory";
 import { ActorData } from "src/components/ActorData";
-import { PlayerGUI } from "src/components/PlayerGUI";
+import { PlayerGUI } from "src/gui/components/PlayerGUI";
 
 @singleton()
 export class PlayerFactory implements IFactory {

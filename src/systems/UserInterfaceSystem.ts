@@ -3,9 +3,9 @@ import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
 import GameState, { GameMode } from "src/GameState";
 import { query } from "bitecs";
-import { PlayerGUI } from "src/components/PlayerGUI";
+import { PlayerGUI } from "src/gui/components/PlayerGUI";
 import { ActorData } from "src/components/ActorData";
-import { EnemyGUI } from "src/components/EnemyGUI";
+import { EnemyGUI } from "src/gui/components/EnemyGUI";
 
 @singleton()
 export default class UserInterfaceSystem implements ISystem {

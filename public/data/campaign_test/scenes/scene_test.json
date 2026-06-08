@@ -6,7 +6,7 @@
     "dialogueFile": "dlg_test",
     "encounters": {
         "enc_test": [
-            "en_sc_test"
+            "enem_test"
         ]
     },
     "locations": [
@@ -14,6 +14,7 @@
             "id": "loc0",
             "exploreViewNodeId": "loc0_view_explore",
             "combatViewNodeId": "loc0_view_combat",
+            "combatSpawnNodeId": "loc0_spawn_enemy",
             "interactables": [
                 {
                     "id": "itr_test1",
@@ -48,6 +49,7 @@
             "id": "loc1",
             "exploreViewNodeId": "loc1_view_explore",
             "combatViewNodeId": "loc1_view_combat",
+            "combatSpawnNodeId": "loc1_spawn_enemy",
             "interactables": [],
             "events": [],
             "doors": [

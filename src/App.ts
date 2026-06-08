@@ -40,12 +40,7 @@ export class App {
 		await this.startSystems();
 
 		/* TEST */
-		await this.smSystem.createScene(
-			this.engine,
-			"scene_test",
-			"campaign_test",
-			GameMode.Combat,
-		);
+		await this.smSystem.createScene(this.engine, "scene_test", "campaign_test");
 		const gameState = container.resolve(GameState);
 
 		const plyerEID = await this.playerFactory.createEntityFromFile(
@@ -65,9 +60,9 @@ export class App {
 		});
 
 		/* TEST */
-		this.smSystem.setGameMode(GameMode.Explore);
-		// this.smSystem.setGameMode(GameMode.Combat);
-		// await this.cmSystem.startCombat("enc_test");
+		// this.smSystem.setGameMode(GameMode.Explore);
+		this.smSystem.setGameMode(GameMode.Combat);
+		await this.cmSystem.startCombat("enc_test");
 		/* TEST */
 	}
 

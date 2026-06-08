@@ -35,6 +35,7 @@ import CombatHUD from "src/gui/CombatHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
 import { DEFAULT_CAM_FOCALLENGTH, DEFAULT_CAM_TARGET } from "src/Constants";
+import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -108,7 +109,6 @@ export default class SceneManagerSystem implements ISystem {
 		engine: Engine,
 		fileName: string,
 		campaignId: string,
-		gameMode: GameMode,
 	) {
 		const response = await fetch(`/data/${campaignId}/scenes/${fileName}.json`);
 		const sceneData = (await response.json()) as SceneData;
@@ -124,7 +124,6 @@ export default class SceneManagerSystem implements ISystem {
 		const sceneNodes = (
 			await ImportMeshAsync(`./models/maps/${sceneData.modelURL}`, scene)
 		).transformNodes;
-		console.log("SCENE NODES", sceneNodes);
 
 		const camera = new UniversalCamera("cam_explore", Vector3.Zero(), scene);
 		camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
@@ -155,6 +154,7 @@ export default class SceneManagerSystem implements ISystem {
 			uiScene,
 			Texture.NEAREST_SAMPLINGMODE,
 		);
+
 		const sceneGUI = AdvancedDynamicTexture.CreateFullscreenUI(
 			"ui_scene",
 			true,
@@ -181,6 +181,10 @@ export default class SceneManagerSystem implements ISystem {
 		mainUI.addControl(combatHud.createHudRoot());
 		combatHud.showHideHud(false);
 
+		const gameOverScreen = new GameOverScreen();
+		mainUI.addControl(gameOverScreen.getRoot());
+		gameOverScreen.showHide(false);
+
 		// TO DO: load player party
 		const playerEids = [0];
 
@@ -188,7 +192,7 @@ export default class SceneManagerSystem implements ISystem {
 			campaignId,
 			playerEids[0],
 			playerEids,
-			gameMode,
+			GameMode.Explore,
 			world,
 			scene,
 			uiScene,
@@ -200,6 +204,7 @@ export default class SceneManagerSystem implements ISystem {
 			exploreHud,
 			dialogueHud,
 			combatHud,
+			gameOverScreen,
 		);
 
 		container.register(GameState, { useValue: newGameState });
@@ -429,9 +434,4 @@ export default class SceneManagerSystem implements ISystem {
 		sceneGUI.addControl(button);
 		button.linkWithMesh(sceneNode);
 	}
-
-	private async loadCombatEncounter(
-		encounterId: string,
-		locationIndex: number,
-	) {}
 }

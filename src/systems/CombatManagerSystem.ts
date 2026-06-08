@@ -1,7 +1,12 @@
 import { container, delay, inject, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
-import { RandomRange, UniversalCamera, Vector3 } from "@babylonjs/core";
+import {
+	Constants,
+	RandomRange,
+	UniversalCamera,
+	Vector3,
+} from "@babylonjs/core";
 import GameState, { GameMode } from "src/GameState";
 import { EntityId, query, removeEntity } from "bitecs";
 import {
@@ -21,7 +26,11 @@ import RenderQueueSystem, {
 	RenderQueueVarsSpecialFX,
 } from "./RenderQueueSystem";
 import { Themes } from "src/gui/Themes";
-import { DEFAULT_CAM_TARGET as DEFAULT_CAM_TARGET } from "src/Constants";
+import {
+	DEFAULT_CAM_TARGET as DEFAULT_CAM_TARGET,
+	PAUSE_RENDERQUEUE,
+	PAUSE_VICTORYSCREEN,
+} from "src/Constants";
 
 /*
 TO DO
@@ -52,16 +61,13 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		if (gameState.actionPaused) {
-			if (this.rqeSystem.getIsStarted()) {
-				return;
-			} else {
-				gameState.actionPaused = false;
-			}
+		if (gameState.actionPauseSet.size > 0) {
+			return;
 		}
 
 		if (this.startEndCombat) {
-			this.endCombat();
+			gameState.actionPauseSet.add(PAUSE_VICTORYSCREEN);
+			gameState.combatHud.showHideVictoryScreen(true);
 			return;
 		}
 
@@ -80,7 +86,7 @@ export default class CombatManagerSystem implements ISystem {
 				actorData.queuedAction &&
 				rcvyAttr.currentValue === rcvyAttr.maximumValue
 			) {
-				gameState.actionPaused = true;
+				gameState.actionPauseSet.add(PAUSE_RENDERQUEUE);
 				this.executeQueuedAction(gameState, actorData);
 			}
 		}
@@ -88,8 +94,6 @@ export default class CombatManagerSystem implements ISystem {
 
 	public async startCombat(encId: string): Promise<void> {
 		const gameState = container.resolve(GameState);
-		const locData = gameState.locationData;
-		const camera = gameState.scene.activeCamera as UniversalCamera;
 
 		this.smSystem.setGameMode(GameMode.Combat);
 
@@ -112,10 +116,10 @@ export default class CombatManagerSystem implements ISystem {
 			rcvyAttr.currentValue = 0;
 		}
 
-		gameState.actionPaused = false;
+		gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 	}
 
-	private endCombat() {
+	public endCombat() {
 		const gameState = container.resolve(GameState);
 
 		gameState.enemyEIDs.forEach((eid) => {
@@ -130,7 +134,9 @@ export default class CombatManagerSystem implements ISystem {
 		});
 
 		this.smSystem.setGameMode(GameMode.Explore);
-		gameState.actionPaused = false;
+		if (gameState.actionPauseSet.size > 0) {
+			gameState.actionPauseSet.clear();
+		}
 		this.startEndCombat = false;
 	}
 
@@ -216,14 +222,19 @@ export default class CombatManagerSystem implements ISystem {
 	): Promise<void> {
 		const actionToExecute = await actorData.queuedAction;
 		if (!actionToExecute) {
-			gameState.actionPaused = false;
+			gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 			return;
 		}
 
 		const actionEffects = actionToExecute.effectData;
 		const actionTargetIds = actorData.currentTargetEIDs;
 
-		// this.addActionRQEs(sourceEid, actionTargetIds, actionToExecute);
+		this.addActionRQEs(
+			actorData.entityId,
+			actionTargetIds,
+			actorData,
+			actionToExecute,
+		);
 
 		actionTargetIds.forEach((eid) => {
 			const targetData = gameState.ActorDataComponent[eid];
@@ -257,6 +268,7 @@ export default class CombatManagerSystem implements ISystem {
 						...eff.variables,
 						...context,
 					});
+
 					this.addFloatingTextRQE(
 						targetData.entityId,
 						ftText,
@@ -283,32 +295,43 @@ export default class CombatManagerSystem implements ISystem {
 	private addActionRQEs(
 		sourceEid: EntityId,
 		targetEids: EntityId[],
+		sourceData: ActorData,
 		actionData: AbilityData,
 	) {
-		const castRQE = new RenderQueueEntry(
-			RenderQueueType.SpecialFX,
+		const msgRQE = new RenderQueueEntry(
+			RenderQueueType.MessageDisplay,
 			{
-				targets: [sourceEid],
-				vfxUrl: actionData.castVfxURL as string,
-				audioUrl: actionData.castSfxURL as string,
-			} as RenderQueueVarsSpecialFX,
-			true,
-			0.5,
+				text: `${sourceData.name} : ${actionData.name}`,
+			},
+			false,
+			1.05,
 		);
 
-		const hitRQE = new RenderQueueEntry(
-			RenderQueueType.SpecialFX,
-			{
-				targets: targetEids,
-				vfxUrl: actionData.hitVfxURL as string,
-				audioUrl: actionData.hitSfxURL as string,
-			} as RenderQueueVarsSpecialFX,
-			true,
-			0.5,
-		);
+		// const castRQE = new RenderQueueEntry(
+		// 	RenderQueueType.SpecialFX,
+		// 	{
+		// 		targets: [sourceEid],
+		// 		vfxUrl: actionData.castVfxURL as string,
+		// 		audioUrl: actionData.castSfxURL as string,
+		// 	} as RenderQueueVarsSpecialFX,
+		// 	true,
+		// 	0.5,
+		// );
 
-		this.rqeSystem.addRenderQueueEntry(castRQE);
-		this.rqeSystem.addRenderQueueEntry(hitRQE);
+		// const hitRQE = new RenderQueueEntry(
+		// 	RenderQueueType.SpecialFX,
+		// 	{
+		// 		targets: targetEids,
+		// 		vfxUrl: actionData.hitVfxURL as string,
+		// 		audioUrl: actionData.hitSfxURL as string,
+		// 	} as RenderQueueVarsSpecialFX,
+		// 	true,
+		// 	0.5,
+		// );
+
+		this.rqeSystem.addRenderQueueEntry(msgRQE);
+		// this.rqeSystem.addRenderQueueEntry(castRQE);
+		// this.rqeSystem.addRenderQueueEntry(hitRQE);
 	}
 
 	private addFloatingTextRQE(targetEid: number, text: string, color: string) {
@@ -450,9 +473,7 @@ export default class CombatManagerSystem implements ISystem {
 				}
 			}
 
-			// Game over
-			alert("GAME OVER");
-			window.location.reload();
+			gameState.gameOverScreen.showHide(true);
 		} else {
 			for (let i = 0; i < gameState.enemyEIDs.length; i++) {
 				let eid = gameState.enemyEIDs[i];

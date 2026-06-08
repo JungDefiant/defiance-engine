@@ -5,6 +5,7 @@ import { Queue } from "queue-typescript";
 import GameState from "src/GameState";
 import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, removeEntity, set } from "bitecs";
+import { PAUSE_RENDERQUEUE } from "src/Constants";
 
 @singleton()
 export default class RenderQueueSystem implements ISystem {
@@ -23,24 +24,16 @@ export default class RenderQueueSystem implements ISystem {
 		}
 
 		if (
-			this.renderQueueStates.length === 0 ||
-			!this.renderQueueStates[this.renderQueueStates.length - 1].rqe.isBlocking
+			(this.renderQueueStates.length === 0 ||
+				!this.renderQueueStates[this.renderQueueStates.length - 1].rqe
+					.isBlocking) &&
+			this.currentRenderQueue.length !== 0
 		) {
-			if (this.currentRenderQueue.length === 0) {
-				this.isStarted = false;
-				return;
-			}
-
 			const nextRqe = this.currentRenderQueue.dequeue();
-
 			this.renderQueueStates.push(new RenderQueueState(nextRqe));
 		}
 
 		this.processRenderQueueStates(deltaTime);
-	}
-
-	public getIsStarted(): boolean {
-		return this.isStarted;
 	}
 
 	public startRenderQueue(): void {
@@ -69,6 +62,7 @@ export default class RenderQueueSystem implements ISystem {
 				this.tickRenderQueueEntry(state, deltaTime);
 
 				state.timeAccumulated += deltaTime;
+
 				if (state.timeAccumulated >= state.rqe.duration) {
 					state.timeAccumulated = state.rqe.duration;
 					isActive = false;
@@ -83,14 +77,28 @@ export default class RenderQueueSystem implements ISystem {
 				return false;
 			}
 		});
+
+		if (this.renderQueueStates.length === 0) {
+			const gameState = container.resolve(GameState);
+			if (gameState && gameState.actionPauseSet.has(PAUSE_RENDERQUEUE)) {
+				gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
+			}
+			this.isStarted = false;
+		}
 	}
 
 	private initRenderQueueEntry(rqeState: RenderQueueState): void {
 		const gameState = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
-				// text
+				const msgText = rqeState.rqe.vars["text"] as string;
+				if (!msgText) {
+					return;
+				}
 
+				gameState.combatHud.setMessageDisplay(true, msgText);
+
+				rqeState.init = true;
 				return;
 			case RenderQueueType.FloatingText:
 				const ftText = rqeState.rqe.vars["text"] as string;
@@ -120,7 +128,7 @@ export default class RenderQueueSystem implements ISystem {
 						playerGUI.getRootContainer().addControl(floatingTextUI);
 					} else {
 						const targetSprite = gameState.CharacterSprite[eid];
-						gameState.combatGUI.addControl(floatingTextUI);
+						gameState.sceneGUI.addControl(floatingTextUI);
 						floatingTextUI.linkWithMesh(targetSprite);
 					}
 
@@ -166,10 +174,6 @@ export default class RenderQueueSystem implements ISystem {
 	): void {
 		const gameState = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
-			case RenderQueueType.MessageDisplay:
-				// text
-
-				return;
 			case RenderQueueType.FloatingText:
 				for (const eid of rqeState.entityIds) {
 					const ft = gameState.FloatingText[eid];
@@ -191,7 +195,7 @@ export default class RenderQueueSystem implements ISystem {
 					sx.setParticles();
 				}
 				return;
-			case RenderQueueType.WaitUntilDone:
+			default:
 				return;
 		}
 	}
@@ -200,13 +204,12 @@ export default class RenderQueueSystem implements ISystem {
 		const gameState = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
-				// text
-
+				gameState.combatHud.setMessageDisplay(false);
 				return;
 			case RenderQueueType.FloatingText:
 				for (const eid of rqeState.entityIds) {
 					const ft = gameState.FloatingText[eid];
-					gameState.combatGUI.removeControl(ft);
+					gameState.sceneGUI.removeControl(ft);
 					ft.dispose();
 					removeEntity(gameState.world, eid);
 				}
@@ -266,6 +269,11 @@ export enum RenderQueueType {
 
 export interface RenderQueueVars {
 	[index: string]: string | number | string[] | number[];
+}
+
+export interface RenderQueueVarsMessageDisplay {
+	text: string;
+	color: string;
 }
 
 export interface RenderQueueVarsFloatingText {

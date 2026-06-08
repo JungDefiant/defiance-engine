@@ -11,13 +11,14 @@ import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
 import { EntityId, observe, onGet, onRemove, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
 import { ActorData } from "src/components/ActorData";
-import { EnemyGUI } from "src/components/EnemyGUI";
-import { PlayerGUI } from "src/components/PlayerGUI";
+import { EnemyGUI } from "src/gui/components/EnemyGUI";
+import { PlayerGUI } from "src/gui/components/PlayerGUI";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import CombatHUD from "src/gui/CombatHUD";
 import { DEFAULT_CAM_TARGET } from "./Constants";
+import { GameOverScreen } from "./gui/screens/GameOverScreen";
 
 /*
 TO DO:
@@ -28,7 +29,7 @@ TO DO:
 export default class GameState {
 	public readonly campaignId: string;
 	public gamePaused: boolean = false;
-	public actionPaused: boolean = false;
+	public actionPauseSet: Set<string> = new Set();
 	public gameMode: GameMode;
 	public selectedPlayerEID: number;
 	public playerEIDs: number[];
@@ -49,6 +50,8 @@ export default class GameState {
 	public readonly exploreHud: ExploreHUD;
 	public readonly dialogueHud: DialogueHUD;
 	public readonly combatHud: CombatHUD;
+	// Screens
+	public readonly gameOverScreen: GameOverScreen;
 	// Components
 	public readonly ActorDataComponent: ActorData[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
@@ -73,6 +76,7 @@ export default class GameState {
 		exploreHud: ExploreHUD,
 		dialogueHud: DialogueHUD,
 		combatHud: CombatHUD,
+		gameOverScreen: GameOverScreen,
 	) {
 		this.campaignId = campaignId;
 		this.selectedPlayerEID = selectedPlayerEID;
@@ -89,6 +93,7 @@ export default class GameState {
 		this.exploreHud = exploreHud;
 		this.dialogueHud = dialogueHud;
 		this.combatHud = combatHud;
+		this.gameOverScreen = gameOverScreen;
 
 		this.initComponentObservables();
 	}

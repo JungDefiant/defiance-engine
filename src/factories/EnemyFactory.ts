@@ -10,14 +10,14 @@ import {
 	Texture,
 	Vector3,
 } from "@babylonjs/core";
-import { EnemyGUI } from "src/components/EnemyGUI";
+import { EnemyGUI } from "src/gui/components/EnemyGUI";
 
 @singleton()
 export class EnemyFactory implements IFactory {
 	private readonly enSpritePositions: Vector3[] = [
-		new Vector3(0, 1, -1.25),
-		new Vector3(1, 1, -1.5),
-		new Vector3(-1, 1, -1.5),
+		new Vector3(0, 0.4, 0),
+		new Vector3(0, 0, 0),
+		new Vector3(0, 0, 0),
 	];
 
 	private currEnemyIndex = 0;
@@ -32,6 +32,17 @@ export class EnemyFactory implements IFactory {
 			return -1;
 		}
 
+		const gameState = container.resolve(GameState);
+
+		const spawnPosition = gameState.sceneNodes.find(
+			(node) => node.id === gameState.locationData?.combatSpawnNodeId,
+		)?.position;
+
+		console.log(spawnPosition);
+		if (!spawnPosition) {
+			return -1;
+		}
+
 		const response = await fetch(
 			`/data/${campaignId}/enemies/${fileName}.json`,
 		);
@@ -40,7 +51,6 @@ export class EnemyFactory implements IFactory {
 			return -1;
 		}
 
-		const gameState = container.resolve(GameState);
 		const newEntity = addEntity(gameState.world);
 
 		const newActorComp = new ActorData(newEntity, rawData);
@@ -53,7 +63,7 @@ export class EnemyFactory implements IFactory {
 		const newEnemySprite = this.createEnemySprite(
 			newEntity,
 			gameState,
-			this.enSpritePositions[this.currEnemyIndex],
+			spawnPosition.add(this.enSpritePositions[this.currEnemyIndex]),
 		);
 		this.currEnemyIndex++;
 		addComponent(
@@ -82,8 +92,8 @@ export class EnemyFactory implements IFactory {
 		const enActorSprite = MeshBuilder.CreatePlane(
 			`enBattlerSprite_${actorData.id}_${eid}`,
 			{
-				width: 1,
-				height: 2,
+				width: 0.5,
+				height: 1,
 			},
 			gameState.scene,
 		);
