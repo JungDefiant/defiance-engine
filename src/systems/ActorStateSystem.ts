@@ -1,9 +1,8 @@
-import { container, delay, inject, singleton } from "tsyringe";
+import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import GameState from "../GameState";
 import { query } from "bitecs";
 import { ActorData } from "../components/ActorData";
-import CombatManagerSystem from "./CombatManagerSystem";
 
 @singleton()
 export default class ActorStateSystem implements ISystem {
@@ -12,17 +11,12 @@ export default class ActorStateSystem implements ISystem {
 
 	private readonly regnTicks: number = 5;
 
-	public constructor(
-		@inject(delay(() => CombatManagerSystem))
-		private cmSystem: CombatManagerSystem,
-	) {}
-
 	public async start() {}
 
 	public update(deltaTime: number): void {
 		const gameState = container.resolve(GameState);
 
-		if (gameState.actionPaused) {
+		if (gameState.actionPauseSet.size > 0) {
 			return;
 		}
 

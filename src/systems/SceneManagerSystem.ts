@@ -255,9 +255,9 @@ export default class SceneManagerSystem implements ISystem {
 				);
 				if (spawnNode) {
 					camTarget = new Vector3(
-						spawnNode.position.x,
+						spawnNode.absolutePosition.x,
 						DEFAULT_CAM_TARGET.y,
-						spawnNode.position.z,
+						spawnNode.absolutePosition.z,
 					);
 				}
 				break;
@@ -272,7 +272,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const viewNode = gameState.sceneNodes.find((x) => x.id === viewNodeId);
 		if (camera && viewNode) {
-			camera.position = viewNode.position;
+			camera.position = viewNode.absolutePosition;
 			camera.setTarget(camTarget);
 		}
 	}

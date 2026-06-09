@@ -7,7 +7,9 @@ import {
 	Mesh,
 	MeshBuilder,
 	PBRMaterial,
+	Space,
 	Texture,
+	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
 import { EnemyGUI } from "src/gui/components/EnemyGUI";
@@ -15,9 +17,9 @@ import { EnemyGUI } from "src/gui/components/EnemyGUI";
 @singleton()
 export class EnemyFactory implements IFactory {
 	private readonly enSpritePositions: Vector3[] = [
+		new Vector3(0.05, 0.4, 0),
 		new Vector3(0, 0.4, 0),
-		new Vector3(0, 0, 0),
-		new Vector3(0, 0, 0),
+		new Vector3(0.05, 0.4, 0),
 	];
 
 	private currEnemyIndex = 0;
@@ -33,13 +35,16 @@ export class EnemyFactory implements IFactory {
 		}
 
 		const gameState = container.resolve(GameState);
+		const locData = gameState.locationData;
+		if (!gameState || !locData) {
+			return -1;
+		}
 
-		const spawnPosition = gameState.sceneNodes.find(
-			(node) => node.id === gameState.locationData?.combatSpawnNodeId,
-		)?.position;
+		const spawnNode = gameState.sceneNodes.find(
+			(node) => node.id === locData.combatSpawnNodeId,
+		);
 
-		console.log(spawnPosition);
-		if (!spawnPosition) {
+		if (!spawnNode) {
 			return -1;
 		}
 
@@ -60,12 +65,16 @@ export class EnemyFactory implements IFactory {
 			set(gameState.ActorDataComponent, newActorComp),
 		);
 
+		const spawnPositionOffset = new Vector3(0.2, 0.28, -0.25);
 		const newEnemySprite = this.createEnemySprite(
 			newEntity,
 			gameState,
-			spawnPosition.add(this.enSpritePositions[this.currEnemyIndex]),
+			spawnNode,
+			spawnPositionOffset,
 		);
+
 		this.currEnemyIndex++;
+
 		addComponent(
 			gameState.world,
 			newEntity,
@@ -85,15 +94,16 @@ export class EnemyFactory implements IFactory {
 	private createEnemySprite(
 		eid: EntityId,
 		gameState: GameState,
-		position: Vector3,
+		parentNode: TransformNode,
+		positionOffset: Vector3,
 	): Mesh {
 		const actorData = gameState.ActorDataComponent[eid];
 
 		const enActorSprite = MeshBuilder.CreatePlane(
 			`enBattlerSprite_${actorData.id}_${eid}`,
 			{
-				width: 0.5,
-				height: 1,
+				width: 0.4,
+				height: 0.8,
 			},
 			gameState.scene,
 		);
@@ -102,8 +112,11 @@ export class EnemyFactory implements IFactory {
 			`mat_enBattlerSprite_${actorData.id}_${eid}`,
 			gameState.scene,
 		);
+		enActorSprite.parent = parentNode;
 		enActorSprite.billboardMode = 7;
-		enActorSprite.position = position;
+		enActorSprite.rotate(Vector3.Forward(), Math.PI, Space.WORLD);
+		enActorSprite.setAbsolutePosition(parentNode.absolutePosition);
+		enActorSprite.locallyTranslate(positionOffset);
 
 		enActorSpriteMat.albedoTexture = new Texture(
 			`./sprites/enemies/${actorData.spriteUrl}`,
