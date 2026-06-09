@@ -28,21 +28,18 @@ import RenderQueueSystem, {
 import { Themes } from "src/gui/Themes";
 import {
 	DEFAULT_CAM_TARGET as DEFAULT_CAM_TARGET,
+	PAUSE_GAMEOVER,
 	PAUSE_RENDERQUEUE,
 	PAUSE_VICTORYSCREEN,
 } from "src/Constants";
 
-/*
-TO DO
-- Remove dependencies to other systems by processing through components or events
-*/
 @singleton()
 export default class CombatManagerSystem implements ISystem {
 	private readonly START_RECOVERY = 3;
 	private readonly START_RECOVERY_RANGE = 2;
 	private readonly BASE_DEFENSE = 10;
 
-	private startEndCombat: boolean = false;
+	private combatState: CombatState = CombatState.Default;
 
 	public constructor(
 		@inject(EnemyFactory) private enFactory: EnemyFactory,
@@ -65,10 +62,13 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		if (this.startEndCombat) {
+		if (this.combatState === CombatState.Victory) {
 			gameState.actionPauseSet.add(PAUSE_VICTORYSCREEN);
 			gameState.combatHud.showHideVictoryScreen(true);
 			return;
+		} else if (this.combatState === CombatState.Gameover) {
+			gameState.actionPauseSet.add(PAUSE_GAMEOVER);
+			gameState.gameOverScreen.showHide(true);
 		}
 
 		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
@@ -137,7 +137,7 @@ export default class CombatManagerSystem implements ISystem {
 		if (gameState.actionPauseSet.size > 0) {
 			gameState.actionPauseSet.clear();
 		}
-		this.startEndCombat = false;
+		this.combatState = CombatState.Default;
 	}
 
 	public async startQueueAction(
@@ -473,7 +473,7 @@ export default class CombatManagerSystem implements ISystem {
 				}
 			}
 
-			gameState.gameOverScreen.showHide(true);
+			this.combatState = CombatState.Gameover;
 		} else {
 			for (let i = 0; i < gameState.enemyEIDs.length; i++) {
 				let eid = gameState.enemyEIDs[i];
@@ -484,7 +484,13 @@ export default class CombatManagerSystem implements ISystem {
 			}
 
 			// End combat
-			this.startEndCombat = true;
+			this.combatState = CombatState.Victory;
 		}
 	}
+}
+
+export enum CombatState {
+	Default,
+	Victory,
+	Gameover,
 }
