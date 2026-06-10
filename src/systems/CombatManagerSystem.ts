@@ -1,12 +1,7 @@
 import { container, delay, inject, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
-import {
-	Constants,
-	RandomRange,
-	UniversalCamera,
-	Vector3,
-} from "@babylonjs/core";
+import { RandomRange, Vector3 } from "@babylonjs/core";
 import GameState, { GameMode } from "src/GameState";
 import { EntityId, query, removeEntity } from "bitecs";
 import {
@@ -23,11 +18,10 @@ import { clamp } from "src/Utils";
 import RenderQueueSystem, {
 	RenderQueueEntry,
 	RenderQueueType,
-	RenderQueueVarsSpecialFX,
 } from "./RenderQueueSystem";
 import { Themes } from "src/gui/Themes";
 import {
-	DEFAULT_CAM_TARGET as DEFAULT_CAM_TARGET,
+	DEFAULT_CAM_TARGET,
 	PAUSE_GAMEOVER,
 	PAUSE_RENDERQUEUE,
 	PAUSE_VICTORYSCREEN,
@@ -38,6 +32,7 @@ export default class CombatManagerSystem implements ISystem {
 	private readonly START_RECOVERY = 3;
 	private readonly START_RECOVERY_RANGE = 2;
 	private readonly BASE_DEFENSE = 10;
+	private readonly BASE_SPAWN_POSITION = new Vector3(0, 0.28, 0);
 
 	private combatState: CombatState = CombatState.Default;
 
@@ -69,6 +64,7 @@ export default class CombatManagerSystem implements ISystem {
 		} else if (this.combatState === CombatState.Gameover) {
 			gameState.actionPauseSet.add(PAUSE_GAMEOVER);
 			gameState.gameOverScreen.showHide(true);
+			return;
 		}
 
 		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
@@ -101,8 +97,18 @@ export default class CombatManagerSystem implements ISystem {
 
 		for (let i = 0; i < encData.length; i++) {
 			const enId = encData[i];
+			const offsetVector = new Vector3(
+				0,
+				0,
+				(encData.length - 1) * -0.2 + i * 0.4,
+			);
+			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
 			gameState.enemyEIDs.push(
-				await this.enFactory.createEntityFromFile(enId, gameState.campaignId),
+				await this.enFactory.createEntityFromFileAtPosition(
+					enId,
+					gameState.campaignId,
+					spawnPosition,
+				),
 			);
 		}
 
@@ -483,7 +489,6 @@ export default class CombatManagerSystem implements ISystem {
 				}
 			}
 
-			// End combat
 			this.combatState = CombatState.Victory;
 		}
 	}

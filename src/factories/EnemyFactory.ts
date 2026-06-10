@@ -1,6 +1,6 @@
 import { container, singleton } from "tsyringe";
 import { IFactory } from "src/factories/IFactory";
-import { addComponent, addEntity, EntityId, set } from "bitecs";
+import { addComponent, addEntity, EntityId, query, set } from "bitecs";
 import GameState from "src/GameState";
 import { ActorData } from "src/components/ActorData";
 import {
@@ -16,24 +16,23 @@ import { EnemyGUI } from "src/gui/components/EnemyGUI";
 
 @singleton()
 export class EnemyFactory implements IFactory {
-	private readonly enSpritePositions: Vector3[] = [
-		new Vector3(0.05, 0.4, 0),
-		new Vector3(0, 0.4, 0),
-		new Vector3(0.05, 0.4, 0),
-	];
-
-	private currEnemyIndex = 0;
-
 	public start() {}
+
+	public async createEntityFromFileAtPosition(
+		fileName: string,
+		campaignId: string,
+		position: Vector3,
+	): Promise<EntityId> {
+		const newEntity = await this.createEntityFromFile(fileName, campaignId);
+		const gameState = container.resolve(GameState);
+		gameState.CharacterSprite[newEntity].locallyTranslate(position);
+		return newEntity;
+	}
 
 	public async createEntityFromFile(
 		fileName: string,
 		campaignId: string,
 	): Promise<EntityId> {
-		if (this.currEnemyIndex > 2) {
-			return -1;
-		}
-
 		const gameState = container.resolve(GameState);
 		const locData = gameState.locationData;
 		if (!gameState || !locData) {
@@ -65,15 +64,11 @@ export class EnemyFactory implements IFactory {
 			set(gameState.ActorDataComponent, newActorComp),
 		);
 
-		const spawnPositionOffset = new Vector3(0.2, 0.28, -0.25);
 		const newEnemySprite = this.createEnemySprite(
 			newEntity,
 			gameState,
 			spawnNode,
-			spawnPositionOffset,
 		);
-
-		this.currEnemyIndex++;
 
 		addComponent(
 			gameState.world,
@@ -95,7 +90,6 @@ export class EnemyFactory implements IFactory {
 		eid: EntityId,
 		gameState: GameState,
 		parentNode: TransformNode,
-		positionOffset: Vector3,
 	): Mesh {
 		const actorData = gameState.ActorDataComponent[eid];
 
@@ -116,7 +110,7 @@ export class EnemyFactory implements IFactory {
 		enActorSprite.billboardMode = 7;
 		enActorSprite.rotate(Vector3.Forward(), Math.PI, Space.WORLD);
 		enActorSprite.setAbsolutePosition(parentNode.absolutePosition);
-		enActorSprite.locallyTranslate(positionOffset);
+		// enActorSprite.locallyTranslate(positionOffset);
 
 		enActorSpriteMat.albedoTexture = new Texture(
 			`./sprites/enemies/${actorData.spriteUrl}`,
