@@ -34,21 +34,22 @@ export class GameOverScreen {
 		gameOverLabel.heightInPixels = 64;
 		stackPanel.addControl(gameOverLabel);
 
-		// PROTOTYPE: TO REMOVE
-		const resetButton = Button.CreateSimpleButton("ui_resetButton", "Reset");
-		resetButton.color = Themes.primary1;
-		resetButton.background = Themes.primary3;
-		resetButton.heightInPixels = 32;
-		resetButton.widthInPixels = 120;
-		if (resetButton.textBlock) {
-			resetButton.textBlock.color = Themes.neutral2;
-			resetButton.textBlock.style = Themes.typography.header3;
+		const mainMenuButton = Button.CreateSimpleButton(
+			"ui_mainMenuButton",
+			"Main Menu",
+		);
+		mainMenuButton.color = Themes.primary1;
+		mainMenuButton.background = Themes.primary3;
+		mainMenuButton.heightInPixels = 32;
+		mainMenuButton.widthInPixels = 120;
+		if (mainMenuButton.textBlock) {
+			mainMenuButton.textBlock.color = Themes.neutral2;
+			mainMenuButton.textBlock.style = Themes.typography.header3;
 		}
-		resetButton.onPointerClickObservable.add(() => {
+		mainMenuButton.onPointerClickObservable.add(() => {
 			window.location.reload();
 		});
-		stackPanel.addControl(resetButton);
-		//
+		stackPanel.addControl(mainMenuButton);
 	}
 
 	public getRoot(): Container {

@@ -8,3 +8,4 @@ export const PAUSE_VICTORYSCREEN = "pause_victoryScreen";
 export const PAUSE_RENDERQUEUE = "pause_renderQueue";
 export const PAUSE_DIALOGUE = "pause_dialogue";
 export const PAUSE_TACTICALPAUSE = "pause_tacticalPause";
+export const DEFAULT_CAMPAIGN_ID = "campaign_test";

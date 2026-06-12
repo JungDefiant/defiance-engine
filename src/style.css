@@ -139,3 +139,15 @@ button:focus-visible {
     src: local("VeryVeryPunkFont"),
         url('./assets/fonts/punk-font.otf')
 }
+
+@font-face {
+    font-family: "Blackcraft";
+    src: local("Blackcraft"),
+        url('./assets/fonts/blackcraft.otf')
+}
+
+@font-face {
+    font-family: "KurlandRegular";
+    src: local("KurlandRegular"),
+        url('./assets/fonts/kurland-regular.otf')
+}

@@ -24,7 +24,7 @@ export function CreateTypography(adt: AdvancedDynamicTexture) {
 	Themes.typography.header2 = header2Style;
 
 	const header1Style = adt.createStyle();
-	header1Style.fontFamily = "VeryVeryPunkFont";
+	header1Style.fontFamily = "KurlandRegular";
 	header1Style.fontSize = 64;
 	Themes.typography.header1 = header1Style;
 }
