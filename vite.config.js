@@ -3,10 +3,14 @@ import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  base: '/defiance-engine/',
+  base: '/',
   publicDir: 'public',
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
+  server: {
+    host: true
   },
   plugins: [tsconfigPaths()]
 });

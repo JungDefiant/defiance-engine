@@ -1,7 +1,5 @@
 import {
-	AbstractMesh,
 	ActionManager,
-	KeyboardInfo,
 	Mesh,
 	Nullable,
 	Scene,
@@ -10,7 +8,8 @@ import {
 	Vector3,
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
-import { EntityId, observe, onGet, onRemove, onSet, World } from "bitecs";
+import { EntityId, observe, onGet, onRemove, onSet } from "bitecs";
+import type { World } from "bitecs";
 import { singleton } from "tsyringe";
 import { ActorData } from "src/components/ActorData";
 import { EnemyGUI } from "src/gui/components/EnemyGUI";
