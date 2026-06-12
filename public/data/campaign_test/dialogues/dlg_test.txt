@@ -1,14 +1,15 @@
 ch0_start
 ===
-@Speaker: asfdsgfdsahfsda
-@_: ahfdahdfghdfgs
-- option 1 [ch1_start]
-- option 2 [_]
-@_: nnnnnnnnnnnnn
+@Speaker: This is an example of someone speaking.
+@_: This is an example of narration.
+@_: Would you like to start combat?
+- Yes [ch1_start]
+- No [_]
+@_: X
 ===
 
 ch1_start
 ===
-@_: bbbbbbbbbb
-@_: ccccccccccc
+@_: Alright, combat will start!
+>> startcombat (enc_test)
 ===

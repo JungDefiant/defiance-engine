@@ -47,7 +47,7 @@ export default class PartyInfoHUD implements IHUD {
 			if (!entry) {
 				continue;
 			}
-			this.partyInfoEntryStack.addControl(entry.getRootContainer());
+			this.partyInfoEntryStack.addControl(entry.getRoot());
 		}
 
 		this.rootContainer.addControl(this.partyInfoEntryStack);

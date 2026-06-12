@@ -38,8 +38,8 @@ export default class GameState {
 	public enemyEIDs: number[] = [];
 	public lastExploreViewTarget: Vector3 = DEFAULT_CAM_TARGET;
 	public gameMode: GameMode;
-	public actionManager: ActionManager;
 	public selectedPlayerEID: number;
+	public actionManager: Nullable<ActionManager> = null;
 	// Game configurations
 	public controlSettings: ControlSettings = new ControlSettings();
 	// Scene data
@@ -71,7 +71,6 @@ export default class GameState {
 	public constructor(
 		campaignId: string,
 		gameMode: GameMode,
-		actionManager: ActionManager,
 		selectedPlayerEID: number,
 		playerEIDs: number[],
 		world: World,
@@ -90,7 +89,6 @@ export default class GameState {
 	) {
 		this.campaignId = campaignId;
 		this.gameMode = gameMode;
-		this.actionManager = actionManager;
 		this.selectedPlayerEID = selectedPlayerEID;
 		this.playerEIDs = playerEIDs;
 		this.world = world;
@@ -137,6 +135,14 @@ export default class GameState {
 
 		observe(
 			this.world,
+			onRemove(this.PlayerGUIComponent),
+			(eid: EntityId, params: Mesh) => {
+				this.PlayerGUIComponent[eid].getRoot().dispose();
+			},
+		);
+
+		observe(
+			this.world,
 			onSet(this.EnemyGUIComponent),
 			(eid: EntityId, params: EnemyGUI) => {
 				this.EnemyGUIComponent[eid] = params;
@@ -149,17 +155,17 @@ export default class GameState {
 
 		observe(
 			this.world,
-			onSet(this.CharacterSprite),
+			onRemove(this.EnemyGUIComponent),
 			(eid: EntityId, params: Mesh) => {
-				this.CharacterSprite[eid] = params;
+				this.EnemyGUIComponent[eid].getRoot().dispose();
 			},
 		);
 
 		observe(
 			this.world,
-			onRemove(this.CharacterSprite),
+			onSet(this.CharacterSprite),
 			(eid: EntityId, params: Mesh) => {
-				this.CharacterSprite[eid].dispose();
+				this.CharacterSprite[eid] = params;
 			},
 		);
 
@@ -169,18 +175,26 @@ export default class GameState {
 
 		observe(
 			this.world,
+			onRemove(this.CharacterSprite),
+			(eid: EntityId, params: Mesh) => {
+				this.CharacterSprite[eid].dispose();
+			},
+		);
+
+		observe(
+			this.world,
 			onSet(this.FloatingText),
 			(eid: EntityId, params: TextBlock) => {
 				this.FloatingText[eid] = params;
 			},
 		);
 
-		observe(this.world, onRemove(this.FloatingText), (eid: EntityId) => {
-			this.FloatingText[eid].dispose();
-		});
-
 		observe(this.world, onGet(this.FloatingText), (eid: EntityId) => {
 			return this.FloatingText[eid];
+		});
+
+		observe(this.world, onRemove(this.FloatingText), (eid: EntityId) => {
+			this.FloatingText[eid].dispose();
 		});
 
 		observe(
@@ -191,12 +205,12 @@ export default class GameState {
 			},
 		);
 
-		observe(this.world, onRemove(this.SpecialFX), (eid: EntityId) => {
-			this.SpecialFX[eid].dispose();
-		});
-
 		observe(this.world, onGet(this.SpecialFX), (eid: EntityId) => {
 			return this.SpecialFX[eid];
+		});
+
+		observe(this.world, onRemove(this.SpecialFX), (eid: EntityId) => {
+			this.SpecialFX[eid].dispose();
 		});
 	}
 }

@@ -34,7 +34,7 @@ export class PlayerGUI implements ActorGUI {
 	private statusIconsUI: Grid;
 	private statusIcons: Map<string, Rectangle> = new Map<string, Rectangle>();
 
-	public getRootContainer(): Container {
+	public getRoot(): Container {
 		return this.rootContainer;
 	}
 
