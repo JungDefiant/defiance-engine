@@ -21,6 +21,7 @@
   "devDependencies": {
     "@ohm-js/cli": "^2.0.1",
     "@types/node": "^24.11.0",
+    "esbuild": "^0.28.1",
     "queue-typescript": "^1.0.1",
     "typescript": "~5.9.3",
     "vite": "^8.0.16"
