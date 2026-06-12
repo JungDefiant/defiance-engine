@@ -26,7 +26,6 @@ import RenderQueueSystem, {
 } from "./RenderQueueSystem";
 import { Themes } from "src/gui/Themes";
 import {
-	DEFAULT_CAM_TARGET,
 	PAUSE_GAMEOVER,
 	PAUSE_RENDERQUEUE,
 	PAUSE_TACTICALPAUSE,
@@ -112,12 +111,15 @@ export default class CombatManagerSystem implements ISystem {
 				(encData.length - 1) * -this.SPAWN_OFFSET + i * this.SPAWN_OFFSET * 2,
 			);
 			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
-			gameState.enemyEIDs.push(
-				await this.enFactory.createEntityFromFileAtPosition(
-					enId,
-					gameState.campaignId,
-					spawnPosition,
-				),
+			const newEnemy = await this.enFactory.createEntityFromFileAtPosition(
+				enId,
+				gameState.campaignId,
+				spawnPosition,
+			);
+			gameState.enemyEIDs.push(newEnemy);
+			const enActorData = gameState.ActorDataComponent[newEnemy];
+			enActorData.name = enActorData.name.concat(
+				` ${String.fromCharCode(65 + i)}`,
 			);
 		}
 
@@ -132,10 +134,17 @@ export default class CombatManagerSystem implements ISystem {
 		}
 
 		gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
+
+		// Hide inscene UI
 	}
 
 	public endCombat() {
 		const gameState = container.resolve(GameState);
+
+		if (gameState.actionManager) {
+			gameState.actionManager.dispose();
+			gameState.actionManager = null;
+		}
 
 		gameState.enemyEIDs.forEach((eid) => {
 			removeEntity(gameState.world, eid);
@@ -147,6 +156,9 @@ export default class CombatManagerSystem implements ISystem {
 			rcvyAttr.maximumValue = 0;
 			playerData.queuedAction = null;
 		});
+
+		// Clear inscene UI
+		// Show rest of inscene UI
 
 		this.smSystem.setGameMode(GameMode.Explore);
 		if (gameState.actionPauseSet.size > 0) {
@@ -181,7 +193,12 @@ export default class CombatManagerSystem implements ISystem {
 		const actorData = gameState.ActorDataComponent[gameState.selectedPlayerEID];
 		await gameState.combatHud.setActionBar(actorData, this, gameState);
 
-		const actionManager = gameState.scene.actionManager;
+		const actionManager = new ActionManager(gameState.scene);
+		if (gameState.actionManager) {
+			gameState.actionManager.dispose();
+			gameState.actionManager = null;
+		}
+
 		for (let i = 0; i < actorData.powerData.length; i++) {
 			actionManager.registerAction(
 				new ExecuteCodeAction(
@@ -229,6 +246,8 @@ export default class CombatManagerSystem implements ISystem {
 				},
 			),
 		);
+
+		gameState.actionManager = actionManager;
 	}
 
 	private setTacticalPause(isActive: boolean, gameState: GameState) {

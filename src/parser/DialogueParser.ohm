@@ -21,9 +21,11 @@ Dialogue {
     
     OptionLine = "-" String MoveToNode
     
-    Cmd = ">>" (SetVar | MoveCam)
+    Cmd = ">>" (SetVar | MoveCam | StartCombat)
     
     SetVar = "setvar" StringVar StringVar
     
     MoveCam = "movecam" Vector Vector
+
+    StartCombat = "startcombat" StringVar
 }

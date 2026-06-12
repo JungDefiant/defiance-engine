@@ -6,8 +6,6 @@
     "dialogueFile": "dlg_test",
     "encounters": {
         "enc_test": [
-            "enem_test",
-            "enem_test",
             "enem_test"
         ]
     },
