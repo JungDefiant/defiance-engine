@@ -9,11 +9,11 @@
     "generate": "ohm generateBundles --withTypes --esm 'src/parser/*.ohm'"
   },
   "dependencies": {
-    "ohm-js": "^17.0.0",
     "@babylonjs/core": "^8.54.1",
     "@babylonjs/gui": "^8.54.1",
     "@babylonjs/loaders": "^8.54.1",
     "bitecs": "^0.4.0",
+    "ohm-js": "^17.0.0",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.10.0",
     "vite-tsconfig-paths": "^6.1.1"
@@ -23,6 +23,6 @@
     "@types/node": "^24.11.0",
     "queue-typescript": "^1.0.1",
     "typescript": "~5.9.3",
-    "vite": "^5.0.11"
+    "vite": "^8.0.16"
   }
 }
