@@ -6,11 +6,7 @@ export default defineConfig({
   base: '/',
   publicDir: 'public',
   build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-  },
-  server: {
-    host: true
+    outDir: 'dist'
   },
   plugins: [tsconfigPaths()]
 });
