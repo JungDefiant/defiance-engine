@@ -14,6 +14,7 @@ import type ISystem from "src/systems/ISystem";
 import type { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 import type { InteractableData } from "src/GameState";
 import type { Nullable, TransformNode } from "@babylonjs/core";
+import { PAUSE_DIALOGUE } from "src/Constants";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
@@ -164,10 +165,16 @@ export default class DialogueManagerSystem implements ISystem {
 			return;
 		}
 
+		const gameState = container.resolve(GameState);
 		const smSystem = container.resolve(SceneManagerSystem);
-		const dlgHud = container.resolve(GameState).dialogueHud;
-		const camera = container.resolve(GameState).scene
-			.activeCamera as UniversalCamera;
+		const dlgHud = gameState.dialogueHud;
+		const camera = gameState.scene.activeCamera as UniversalCamera;
+
+		if (!gameState || !smSystem || !dlgHud || !camera) {
+			return;
+		}
+
+		gameState.actionPauseSet.add(PAUSE_DIALOGUE);
 
 		camera.position = itr.viewNode.absolutePosition;
 		// TO DO: Implement moving camera to target over time
@@ -216,12 +223,10 @@ export default class DialogueManagerSystem implements ISystem {
 	}
 
 	public endDialogue() {
-		// Switch mode back to Explore
 		const smSystem = container.resolve(SceneManagerSystem);
 		const gameState = container.resolve(GameState);
-		const camera = gameState.scene.activeCamera as UniversalCamera;
-		const locData = gameState.locationData;
 
+		gameState.actionPauseSet.delete(PAUSE_DIALOGUE);
 		smSystem.setGameMode(GameMode.Explore);
 	}
 

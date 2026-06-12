@@ -16,6 +16,7 @@ import {
 	Viewport,
 	Texture,
 	TransformNode,
+	ActionManager,
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
@@ -35,6 +36,8 @@ import CombatHUD from "src/gui/CombatHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
 import { DEFAULT_CAM_FOCALLENGTH, DEFAULT_CAM_TARGET } from "src/Constants";
+import { GameOverScreen } from "src/gui/screens/GameOverScreen";
+import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -108,7 +111,6 @@ export default class SceneManagerSystem implements ISystem {
 		engine: Engine,
 		fileName: string,
 		campaignId: string,
-		gameMode: GameMode,
 	) {
 		const response = await fetch(`/data/${campaignId}/scenes/${fileName}.json`);
 		const sceneData = (await response.json()) as SceneData;
@@ -124,7 +126,6 @@ export default class SceneManagerSystem implements ISystem {
 		const sceneNodes = (
 			await ImportMeshAsync(`./models/maps/${sceneData.modelURL}`, scene)
 		).transformNodes;
-		console.log("SCENE NODES", sceneNodes);
 
 		const camera = new UniversalCamera("cam_explore", Vector3.Zero(), scene);
 		camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
@@ -155,6 +156,7 @@ export default class SceneManagerSystem implements ISystem {
 			uiScene,
 			Texture.NEAREST_SAMPLINGMODE,
 		);
+
 		const sceneGUI = AdvancedDynamicTexture.CreateFullscreenUI(
 			"ui_scene",
 			true,
@@ -181,14 +183,26 @@ export default class SceneManagerSystem implements ISystem {
 		mainUI.addControl(combatHud.createHudRoot());
 		combatHud.showHideHud(false);
 
+		const gameOverScreen = new GameOverScreen();
+		mainUI.addControl(gameOverScreen.getRoot());
+		gameOverScreen.showHide(false);
+
+		const tacticalPauseScreen = new TacticalPauseScreen();
+		mainUI.addControl(tacticalPauseScreen.getRoot());
+		tacticalPauseScreen.showHide(false);
+
+		const actionManager = new ActionManager(scene);
+		scene.actionManager = actionManager;
+
 		// TO DO: load player party
 		const playerEids = [0];
 
 		const newGameState = new GameState(
 			campaignId,
+			GameMode.Explore,
+			actionManager,
 			playerEids[0],
 			playerEids,
-			gameMode,
 			world,
 			scene,
 			uiScene,
@@ -200,6 +214,8 @@ export default class SceneManagerSystem implements ISystem {
 			exploreHud,
 			dialogueHud,
 			combatHud,
+			gameOverScreen,
+			tacticalPauseScreen,
 		);
 
 		container.register(GameState, { useValue: newGameState });
@@ -250,9 +266,9 @@ export default class SceneManagerSystem implements ISystem {
 				);
 				if (spawnNode) {
 					camTarget = new Vector3(
-						spawnNode.position.x,
+						spawnNode.absolutePosition.x,
 						DEFAULT_CAM_TARGET.y,
-						spawnNode.position.z,
+						spawnNode.absolutePosition.z,
 					);
 				}
 				break;
@@ -267,7 +283,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const viewNode = gameState.sceneNodes.find((x) => x.id === viewNodeId);
 		if (camera && viewNode) {
-			camera.position = viewNode.position;
+			camera.position = viewNode.absolutePosition;
 			camera.setTarget(camTarget);
 		}
 	}
@@ -326,7 +342,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const button = Button.CreateImageOnlyButton(
 			interactableData.id,
-			"./sprites/gui/icon_interact.png",
+			"./sprites/gui/icons/icon_interact.png",
 		);
 		button.width = 0.075;
 		button.height = 0.1125;
@@ -387,7 +403,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const button = Button.CreateImageOnlyButton(
 			doorData.id,
-			"./sprites/gui/icon_door.png",
+			"./sprites/gui/icons/icon_door.png",
 		);
 		button.width = 0.1;
 		button.height = 0.1;
@@ -429,9 +445,4 @@ export default class SceneManagerSystem implements ISystem {
 		sceneGUI.addControl(button);
 		button.linkWithMesh(sceneNode);
 	}
-
-	private async loadCombatEncounter(
-		encounterId: string,
-		locationIndex: number,
-	) {}
 }

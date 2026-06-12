@@ -20,7 +20,8 @@
         {
             "id": "damage",
             "variables": {
-                "damage": 16
+                "min": 12,
+                "max": 20
             }
         },
         {

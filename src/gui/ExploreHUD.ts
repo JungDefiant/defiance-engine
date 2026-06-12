@@ -13,7 +13,6 @@ export default class ExploreHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
 
 	private highlightInfoUI: Nullable<Container> = null;
-	private alertLevelUI: Nullable<Container> = null;
 
 	private readonly headerUIName = "ui_highlightInfoUIHeader";
 	private readonly descriptionUIName = "ui_highlightInfoUIDescription";
@@ -70,17 +69,14 @@ export default class ExploreHUD implements IHUD {
 		highlightInfoUI.heightInPixels = 50;
 		highlightInfoUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
-		const highlightHeader = new TextBlock(this.headerUIName, "Header");
+		const highlightHeader = new TextBlock(this.headerUIName, "");
 		highlightHeader.fontSize = 14;
 		highlightHeader.topInPixels = -10;
 		highlightHeader.color = Themes.neutral2;
 		highlightHeader.style = Themes.typography.header3;
 		highlightInfoUI.addControl(highlightHeader);
 
-		const highlightDescription = new TextBlock(
-			this.descriptionUIName,
-			"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec ex odio, ultricies quis lorem vitae, blandit convallis.",
-		);
+		const highlightDescription = new TextBlock(this.descriptionUIName, "");
 		highlightDescription.fontSize = 11;
 		highlightDescription.lineSpacing = -8;
 		highlightDescription.topInPixels = 20;

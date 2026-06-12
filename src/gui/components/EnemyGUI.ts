@@ -8,9 +8,9 @@ import {
 	Style,
 } from "@babylonjs/gui";
 import { EntityId } from "bitecs";
-import GameState from "../GameState";
+import GameState from "../../GameState";
 import { Mesh } from "@babylonjs/core";
-import { Themes } from "../gui/Themes";
+import { Themes } from "../Themes";
 import { ActorGUI } from "./PlayerGUI";
 
 export class EnemyGUI implements ActorGUI {

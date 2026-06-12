@@ -12,7 +12,6 @@ import { EnemyFactory } from "src/factories/EnemyFactory";
 import RenderQueueSystem from "src/systems/RenderQueueSystem";
 import { DELTATIME_MS } from "src/Constants";
 
-// This is the engine/game loop
 export class App {
 	private engine: Engine;
 
@@ -40,12 +39,7 @@ export class App {
 		await this.startSystems();
 
 		/* TEST */
-		await this.smSystem.createScene(
-			this.engine,
-			"scene_test",
-			"campaign_test",
-			GameMode.Combat,
-		);
+		await this.smSystem.createScene(this.engine, "scene_test", "campaign_test");
 		const gameState = container.resolve(GameState);
 
 		const plyerEID = await this.playerFactory.createEntityFromFile(
@@ -61,7 +55,7 @@ export class App {
 		this.engine.runRenderLoop(() => {
 			gameState.scene.render();
 			const deltaTime = gameState.scene.deltaTime / DELTATIME_MS;
-			this.updateSystems(deltaTime);
+			this.updateSystems(deltaTime, gameState);
 		});
 
 		/* TEST */
@@ -80,13 +74,13 @@ export class App {
 		await this.rqeSystem.start();
 	}
 
-	private updateSystems(deltaTime: number) {
+	private updateSystems(deltaTime: number, gameState: GameState) {
 		this.smSystem.update(deltaTime);
 		this.asSystem.update(deltaTime);
 		this.dmSystem.update(deltaTime);
-		this.cmSystem.update(deltaTime);
-		this.rqeSystem.update(deltaTime);
-		this.uiSystem.update(deltaTime);
+		this.cmSystem.update(deltaTime, gameState);
+		this.rqeSystem.update(deltaTime, gameState);
+		this.uiSystem.update(deltaTime, gameState);
 	}
 
 	private async startFactories() {

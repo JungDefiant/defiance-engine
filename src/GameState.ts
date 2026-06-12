@@ -1,5 +1,7 @@
 import {
 	AbstractMesh,
+	ActionManager,
+	KeyboardInfo,
 	Mesh,
 	Nullable,
 	Scene,
@@ -11,13 +13,15 @@ import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
 import { EntityId, observe, onGet, onRemove, onSet, World } from "bitecs";
 import { singleton } from "tsyringe";
 import { ActorData } from "src/components/ActorData";
-import { EnemyGUI } from "src/components/EnemyGUI";
-import { PlayerGUI } from "src/components/PlayerGUI";
+import { EnemyGUI } from "src/gui/components/EnemyGUI";
+import { PlayerGUI } from "src/gui/components/PlayerGUI";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import CombatHUD from "src/gui/CombatHUD";
 import { DEFAULT_CAM_TARGET } from "./Constants";
+import { GameOverScreen } from "./gui/screens/GameOverScreen";
+import { TacticalPauseScreen } from "./gui/screens/TacticalPauseScreen";
 
 /*
 TO DO:
@@ -28,13 +32,17 @@ TO DO:
 export default class GameState {
 	public readonly campaignId: string;
 	public gamePaused: boolean = false;
-	public actionPaused: boolean = false;
-	public gameMode: GameMode;
-	public selectedPlayerEID: number;
+	public actionPauseSet: Set<string> = new Set();
+	public renderPauseSet: Set<string> = new Set();
 	public playerEIDs: number[];
 	public enemyEIDs: number[] = [];
 	public lastExploreViewTarget: Vector3 = DEFAULT_CAM_TARGET;
-	// Scene & game data
+	public gameMode: GameMode;
+	public actionManager: ActionManager;
+	public selectedPlayerEID: number;
+	// Game configurations
+	public controlSettings: ControlSettings = new ControlSettings();
+	// Scene data
 	public readonly world: World;
 	public readonly scene: Scene;
 	public readonly sceneData: SceneData;
@@ -49,6 +57,9 @@ export default class GameState {
 	public readonly exploreHud: ExploreHUD;
 	public readonly dialogueHud: DialogueHUD;
 	public readonly combatHud: CombatHUD;
+	// Screens
+	public readonly gameOverScreen: GameOverScreen;
+	public readonly tacticalPauseScreen: TacticalPauseScreen;
 	// Components
 	public readonly ActorDataComponent: ActorData[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
@@ -59,9 +70,10 @@ export default class GameState {
 
 	public constructor(
 		campaignId: string,
+		gameMode: GameMode,
+		actionManager: ActionManager,
 		selectedPlayerEID: number,
 		playerEIDs: number[],
-		gameMode: GameMode,
 		world: World,
 		scene: Scene,
 		uiScene: Scene,
@@ -73,11 +85,14 @@ export default class GameState {
 		exploreHud: ExploreHUD,
 		dialogueHud: DialogueHUD,
 		combatHud: CombatHUD,
+		gameOverScreen: GameOverScreen,
+		tacticalPauseScreen: TacticalPauseScreen,
 	) {
 		this.campaignId = campaignId;
+		this.gameMode = gameMode;
+		this.actionManager = actionManager;
 		this.selectedPlayerEID = selectedPlayerEID;
 		this.playerEIDs = playerEIDs;
-		this.gameMode = gameMode;
 		this.world = world;
 		this.scene = scene;
 		this.uiScene = uiScene;
@@ -89,6 +104,8 @@ export default class GameState {
 		this.exploreHud = exploreHud;
 		this.dialogueHud = dialogueHud;
 		this.combatHud = combatHud;
+		this.gameOverScreen = gameOverScreen;
+		this.tacticalPauseScreen = tacticalPauseScreen;
 
 		this.initComponentObservables();
 	}
@@ -182,6 +199,24 @@ export default class GameState {
 			return this.SpecialFX[eid];
 		});
 	}
+}
+
+export class ControlSettings {
+	powerActions: number[] = [
+		"Q".charCodeAt(0),
+		"W".charCodeAt(0),
+		"E".charCodeAt(0),
+		"R".charCodeAt(0),
+		"D".charCodeAt(0),
+		"F".charCodeAt(0),
+	];
+	deviceActions: number[] = [
+		"1".charCodeAt(0),
+		"2".charCodeAt(0),
+		"3".charCodeAt(0),
+		"4".charCodeAt(0),
+	];
+	tacticalPause: number = 32;
 }
 
 export interface SceneData {

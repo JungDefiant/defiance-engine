@@ -7,6 +7,7 @@ import {
 	ScrollBar,
 	Button,
 	TextWrapping,
+	Image,
 } from "@babylonjs/gui";
 import type IHUD from "src/gui/IHUD";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
@@ -17,7 +18,9 @@ import type {
 	DialogueOptionLine,
 	DialogueLine,
 } from "src/systems/DialogueManagerSystem";
-import type { Nullable } from "@babylonjs/core";
+import { Rotate2dBlock, type Nullable } from "@babylonjs/core";
+import StackPanelImage from "./components/StackPanelImage";
+import GameState from "src/GameState";
 
 export default class DialogueHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -66,35 +69,65 @@ export default class DialogueHUD implements IHUD {
 			return;
 		}
 
-		const entryRoot = new StackPanel("ui_dialogueNode");
-		entryRoot.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		entryRoot.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		entryRoot.width = 1.0;
-		entryRoot.adaptHeightToChildren = true;
-		entryRoot.isVertical = true;
+		const rootContainer = new Rectangle("ui_dialogueNode");
+		rootContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+		rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		rootContainer.width = "100%";
+		rootContainer.adaptHeightToChildren = true;
 
-		if (dlgData.character && dlgData.character !== this.EMPTY_INPUT) {
+		const stackPanel = new StackPanelImage("ui_dialogueStackPanel", "");
+		stackPanel.isVertical = true;
+		stackPanel.width = "100%";
+		stackPanel.adaptHeightToChildren = true;
+		stackPanel.spacing = 4;
+		rootContainer.addControl(stackPanel);
+
+		const hasSpeaker =
+			dlgData.character && dlgData.character !== this.EMPTY_INPUT;
+		if (dlgData.character && hasSpeaker) {
+			stackPanel.source = "./sprites/dialogue/gui_textbox.png";
+
 			const speakerLabel = new TextBlock(
 				"ui_speaker_" + dlgData.character.trim().toLowerCase(),
 				dlgData.character,
 			);
 			speakerLabel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 			speakerLabel.style = Themes.typography.header3;
-			speakerLabel.color = Themes.neutral2;
+			speakerLabel.color = Themes.primary3;
+			speakerLabel.paddingLeftInPixels = 16;
+			speakerLabel.paddingTopInPixels = 4;
 			speakerLabel.resizeToFit = true;
-			entryRoot.addControl(speakerLabel);
+			stackPanel.addControl(speakerLabel);
+
+			rootContainer.background = "";
+			rootContainer.color = "";
+			rootContainer.thickness = 0;
+		} else {
+			rootContainer.background = Themes.warning;
+			rootContainer.color = Themes.primary3;
+			rootContainer.thickness = 2;
 		}
 
 		const lineUI = new TextBlock("ui_line", dlgData.text);
 		lineUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		lineUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		lineUI.color = Themes.neutral2;
+		lineUI.color = Themes.primary3;
 		lineUI.style = Themes.typography.bodyText;
 		lineUI.resizeToFit = true;
 		lineUI.textWrapping = TextWrapping.WordWrap;
-		entryRoot.addControl(lineUI);
+		if (hasSpeaker) {
+			lineUI.paddingLeftInPixels = lineUI.paddingRightInPixels = 16;
+			lineUI.paddingBottomInPixels = 4;
+		} else {
+			lineUI.paddingBottomInPixels =
+				lineUI.paddingTopInPixels =
+				lineUI.paddingLeftInPixels =
+				lineUI.paddingRightInPixels =
+					8;
+		}
+		stackPanel.addControl(lineUI);
 
-		this.textEntryStack.addControl(entryRoot);
+		this.textEntryStack.addControl(rootContainer);
 	}
 
 	public addContinueEntry(currDlgId: number, nextDlgId: number): void {
@@ -115,9 +148,9 @@ export default class DialogueHUD implements IHUD {
 		);
 		buttonUI.width = 1;
 		buttonUI.heightInPixels = 40;
-		buttonUI.color = Themes.neutral2;
-		buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
-		buttonUI.thickness = 0;
+		buttonUI.color = Themes.primary1;
+		buttonUI.background = Themes.primary3;
+		buttonUI.thickness = 2;
 
 		if (buttonUI.textBlock) {
 			buttonUI.textBlock.textHorizontalAlignment =
@@ -155,9 +188,9 @@ export default class DialogueHUD implements IHUD {
 		const buttonUI = Button.CreateSimpleButton("ui_line_exit", "End Dialogue");
 		buttonUI.width = 1;
 		buttonUI.heightInPixels = 40;
-		buttonUI.color = Themes.neutral2;
-		buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
-		buttonUI.thickness = 0;
+		buttonUI.color = Themes.primary1;
+		buttonUI.background = Themes.primary3;
+		buttonUI.thickness = 2;
 
 		if (buttonUI.textBlock) {
 			buttonUI.textBlock.textHorizontalAlignment =
@@ -204,9 +237,9 @@ export default class DialogueHUD implements IHUD {
 			);
 			buttonUI.width = 1;
 			buttonUI.heightInPixels = 40;
-			buttonUI.color = Themes.neutral2;
-			buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
-			buttonUI.thickness = 0;
+			buttonUI.color = Themes.primary1;
+			buttonUI.background = Themes.primary3;
+			buttonUI.thickness = 2;
 
 			if (buttonUI.textBlock) {
 				buttonUI.textBlock.textHorizontalAlignment =
@@ -224,12 +257,17 @@ export default class DialogueHUD implements IHUD {
 				buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
 			});
 			buttonUI.onPointerClickObservable.addOnce(() => {
+				const gameState = container.resolve(GameState);
+				const pcName =
+					gameState.ActorDataComponent[gameState.playerEIDs[0]].name;
+
 				if (
 					!choiceData.destinationNode ||
 					choiceData.destinationNode === this.EMPTY_INPUT
 				) {
 					this.addTextDialogueEntry({
 						type: "Line",
+						character: pcName,
 						id: index,
 						text: choiceData.text,
 					} as DialogueLine);
@@ -239,6 +277,7 @@ export default class DialogueHUD implements IHUD {
 
 				this.addTextDialogueEntry({
 					type: "Line",
+					character: pcName,
 					id: index,
 					text: choiceData.text,
 				} as DialogueLine);

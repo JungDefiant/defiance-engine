@@ -22,7 +22,7 @@ export class ActionSlot {
 		this.actionIcon.height = 1;
 		this.rootContainer.addControl(this.actionIcon);
 
-		this.actionLabel = new TextBlock("ui_actionSlotLabel", "Q");
+		this.actionLabel = new TextBlock("ui_actionSlotLabel", "");
 		this.actionLabel.color = Themes.neutral2;
 		this.actionLabel.style = Themes.typography.caption;
 		this.actionLabel.widthInPixels = 16;
