@@ -321,7 +321,7 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryStack.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		this.textEntryStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.textEntryStack.width = 1;
-		this.textEntryStack.spacing = 24;
+		this.textEntryStack.spacing = 8;
 		this.textEntryStack.paddingLeft = 6;
 		this.textEntryStack.paddingRight = 6;
 		this.textEntryStack.paddingBottom = 6;

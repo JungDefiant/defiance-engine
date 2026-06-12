@@ -1,19 +1,21 @@
 import "reflect-metadata";
 import { container, inject } from "tsyringe";
-import { Engine } from "@babylonjs/core";
+import { Engine, Scene, UniversalCamera, Vector3 } from "@babylonjs/core";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import ActorStateSystem from "src/systems/ActorStateSystem";
-import GameState, { GameMode } from "src/GameState";
+import GameState, { CampaignData } from "src/GameState";
 import { PlayerFactory } from "src/factories/PlayerFactory";
 import { EnemyFactory } from "src/factories/EnemyFactory";
 import RenderQueueSystem from "src/systems/RenderQueueSystem";
-import { DELTATIME_MS } from "src/Constants";
+import { MainMenuScreen } from "./gui/screens/MainMenuScreen";
+import { DEFAULT_CAMPAIGN_ID } from "./Constants";
 
 export class App {
 	private engine: Engine;
+	private mainMenuScene: Scene;
 
 	constructor(
 		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
@@ -28,41 +30,55 @@ export class App {
 		const canvas = document.getElementById(
 			"gameCanvas",
 		)! as any as HTMLCanvasElement;
+
 		this.engine = new Engine(canvas);
 		window.addEventListener("resize", () => {
 			this.engine.resize();
 		});
+
+		this.mainMenuScene = new Scene(this.engine);
+		this.mainMenuScene.autoClear = false;
+
+		const mainMenuScreen = new MainMenuScreen(this.mainMenuScene, this);
+		const uiCamera = new UniversalCamera(
+			"cam_gui",
+			Vector3.Zero(),
+			this.mainMenuScene,
+		);
 	}
 
-	public async run() {
+	public gotoMainMenu() {
+		this.engine.runRenderLoop(() => {
+			this.mainMenuScene.render();
+		});
+	}
+
+	public async startGame() {
+		this.engine.stopRenderLoop();
+		this.mainMenuScene.dispose();
+
+		const response = await fetch(`/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`);
+		const campaignData = (await response.json()) as CampaignData;
+		container.register("CampaignData", { useValue: campaignData });
+
 		await this.startFactories();
 		await this.startSystems();
-
-		/* TEST */
-		await this.smSystem.createScene(this.engine, "scene_test", "campaign_test");
-		const gameState = container.resolve(GameState);
-
-		const plyerEID = await this.playerFactory.createEntityFromFile(
-			"cmd_test",
-			gameState.campaignId,
+		await this.smSystem.createScene(
+			this.engine,
+			campaignData.startSceneId,
+			campaignData.id,
+			campaignData.startingPartyIds,
 		);
+		await this.smSystem.runScene(this.engine, this);
+	}
 
-		gameState.partyInfoHud.setPartyInfoEntryStack();
-		gameState.selectedPlayerEID = plyerEID;
-		gameState.playerEIDs = [plyerEID];
-		/* TEST */
-
-		this.engine.runRenderLoop(() => {
-			gameState.scene.render();
-			const deltaTime = gameState.scene.deltaTime / DELTATIME_MS;
-			this.updateSystems(deltaTime, gameState);
-		});
-
-		/* TEST */
-		this.smSystem.setGameMode(GameMode.Explore);
-		// this.smSystem.setGameMode(GameMode.Combat);
-		// await this.cmSystem.startCombat("enc_test");
-		/* TEST */
+	public updateSystems(deltaTime: number, gameState: GameState) {
+		this.smSystem.update(deltaTime);
+		this.asSystem.update(deltaTime);
+		this.dmSystem.update(deltaTime);
+		this.cmSystem.update(deltaTime, gameState);
+		this.rqeSystem.update(deltaTime, gameState);
+		this.uiSystem.update(deltaTime, gameState);
 	}
 
 	private async startSystems() {
@@ -72,15 +88,6 @@ export class App {
 		await this.dmSystem.start();
 		await this.cmSystem.start();
 		await this.rqeSystem.start();
-	}
-
-	private updateSystems(deltaTime: number, gameState: GameState) {
-		this.smSystem.update(deltaTime);
-		this.asSystem.update(deltaTime);
-		this.dmSystem.update(deltaTime);
-		this.cmSystem.update(deltaTime, gameState);
-		this.rqeSystem.update(deltaTime, gameState);
-		this.uiSystem.update(deltaTime, gameState);
 	}
 
 	private async startFactories() {

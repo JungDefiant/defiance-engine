@@ -219,6 +219,15 @@ export class ControlSettings {
 	tacticalPause: number = 32;
 }
 
+export interface CampaignData {
+	id: string;
+	startSceneId: "";
+	startDialogueId: "";
+	flagIds: [];
+	keyItemIds: [];
+	startingPartyIds: string[];
+}
+
 export interface SceneData {
 	id: string;
 	modelURL: string;

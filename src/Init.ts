@@ -29,4 +29,4 @@ const app = new App(
 	plyrFactory,
 	enFactory,
 );
-app.run();
+app.gotoMainMenu();

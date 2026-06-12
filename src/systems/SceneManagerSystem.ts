@@ -1,6 +1,6 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
-import { createWorld, EntityId, query } from "bitecs";
+import { createWorld, deleteWorld, EntityId, query } from "bitecs";
 import {
 	Engine,
 	HemisphericLight,
@@ -23,6 +23,7 @@ import "@babylonjs/loaders";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import GameState, {
+	CampaignData,
 	DoorData,
 	EventData,
 	GameMode,
@@ -35,9 +36,15 @@ import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import CombatHUD from "src/gui/CombatHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
-import { DEFAULT_CAM_FOCALLENGTH, DEFAULT_CAM_TARGET } from "src/Constants";
+import {
+	DEFAULT_CAM_FOCALLENGTH,
+	DEFAULT_CAM_TARGET,
+	DELTATIME_MS,
+} from "src/Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
+import { PlayerFactory } from "src/factories/PlayerFactory";
+import { App } from "src/App";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -111,6 +118,7 @@ export default class SceneManagerSystem implements ISystem {
 		engine: Engine,
 		fileName: string,
 		campaignId: string,
+		characterIds: string[],
 	) {
 		const response = await fetch(`/data/${campaignId}/scenes/${fileName}.json`);
 		const sceneData = (await response.json()) as SceneData;
@@ -130,6 +138,7 @@ export default class SceneManagerSystem implements ISystem {
 		const camera = new UniversalCamera("cam_explore", Vector3.Zero(), scene);
 		camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
 		camera.setTarget(DEFAULT_CAM_TARGET);
+		camera.position = new Vector3(0, 0.4, 0);
 		camera.minZ = 0;
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.attachControl(this.gameCanvas, false);
@@ -166,6 +175,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
 
+		// Initialize UI and HUDs
 		CreateTypography(mainUI);
 
 		const partyInfoHud = new PartyInfoHUD();
@@ -194,15 +204,13 @@ export default class SceneManagerSystem implements ISystem {
 		const actionManager = new ActionManager(scene);
 		scene.actionManager = actionManager;
 
-		// TO DO: load player party
-		const playerEids = [0];
-
+		// Initialize GameState
 		const newGameState = new GameState(
 			campaignId,
 			GameMode.Explore,
 			actionManager,
-			playerEids[0],
-			playerEids,
+			-1,
+			[],
 			world,
 			scene,
 			uiScene,
@@ -217,9 +225,21 @@ export default class SceneManagerSystem implements ISystem {
 			gameOverScreen,
 			tacticalPauseScreen,
 		);
-
 		container.register(GameState, { useValue: newGameState });
 
+		// Load Player Party
+		const playerEids: number[] = [];
+		for (let i = 0; i < characterIds.length; i++) {
+			playerEids.push(
+				await this.loadPlayerCharacter(characterIds[i], campaignId),
+			);
+		}
+
+		newGameState.playerEIDs = playerEids;
+		newGameState.selectedPlayerEID = playerEids[0];
+		newGameState.partyInfoHud.setPartyInfoEntryStack();
+
+		// Load Location
 		const locationData = await this.loadLocation(
 			sceneData.startLocationId,
 			scene,
@@ -227,11 +247,29 @@ export default class SceneManagerSystem implements ISystem {
 			sceneNodes,
 			sceneGUI,
 		);
-
 		newGameState.locationData = locationData;
 
+		// Load Dialogue
 		const dmSystem = container.resolve(DialogueManagerSystem);
 		dmSystem.loadDialogueMap(sceneData.dialogueFile);
+
+		this.setGameMode(GameMode.Explore);
+	}
+
+	public async runScene(engine: Engine, app: App) {
+		const gameState = container.resolve(GameState);
+		engine.runRenderLoop(() => {
+			gameState.scene.render();
+			const deltaTime = gameState.scene.deltaTime / DELTATIME_MS;
+			app.updateSystems(deltaTime, gameState);
+		});
+	}
+
+	public async disposeScene() {
+		const gameState = container.resolve(GameState);
+		gameState.scene.dispose();
+		gameState.uiScene.dispose();
+		deleteWorld(gameState.world);
 	}
 
 	public checkEventTriggers() {}
@@ -286,6 +324,19 @@ export default class SceneManagerSystem implements ISystem {
 			camera.position = viewNode.absolutePosition;
 			camera.setTarget(camTarget);
 		}
+	}
+
+	private async loadPlayerCharacter(
+		charId: string,
+		campaignId: string,
+	): Promise<number> {
+		const playerFactory = container.resolve(PlayerFactory);
+		const plyerEID = await playerFactory.createEntityFromFile(
+			charId,
+			campaignId,
+		);
+
+		return plyerEID;
 	}
 
 	private async clearSceneGUI() {

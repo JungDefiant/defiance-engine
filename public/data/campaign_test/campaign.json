@@ -1,8 +1,10 @@
 {
-    "id": "",
-    "startMapId": "",
+    "id": "campaign_test",
+    "startSceneId": "scene_test",
     "startDialogueId": "",
     "flagIds": [],
     "keyItemIds": [],
-    "partyIds": []
+    "startingPartyIds": [
+        "pc_test"
+    ]
 }
