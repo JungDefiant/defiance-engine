@@ -132,13 +132,9 @@ export default class GameState {
 			return this.PlayerGUIComponent[eid];
 		});
 
-		observe(
-			this.world,
-			onRemove(this.PlayerGUIComponent),
-			(eid: EntityId, params: Mesh) => {
-				this.PlayerGUIComponent[eid].getRoot().dispose();
-			},
-		);
+		observe(this.world, onRemove(this.PlayerGUIComponent), (eid: EntityId) => {
+			this.PlayerGUIComponent[eid].getRoot().dispose();
+		});
 
 		observe(
 			this.world,
@@ -152,13 +148,9 @@ export default class GameState {
 			return this.EnemyGUIComponent[eid];
 		});
 
-		observe(
-			this.world,
-			onRemove(this.EnemyGUIComponent),
-			(eid: EntityId, params: Mesh) => {
-				this.EnemyGUIComponent[eid].getRoot().dispose();
-			},
-		);
+		observe(this.world, onRemove(this.EnemyGUIComponent), (eid: EntityId) => {
+			this.EnemyGUIComponent[eid].getRoot().dispose();
+		});
 
 		observe(
 			this.world,
@@ -172,13 +164,9 @@ export default class GameState {
 			return this.CharacterSprite[eid];
 		});
 
-		observe(
-			this.world,
-			onRemove(this.CharacterSprite),
-			(eid: EntityId, params: Mesh) => {
-				this.CharacterSprite[eid].dispose();
-			},
-		);
+		observe(this.world, onRemove(this.CharacterSprite), (eid: EntityId) => {
+			this.CharacterSprite[eid].dispose();
+		});
 
 		observe(
 			this.world,

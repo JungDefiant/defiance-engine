@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build --base=/",
+    "local-build": "tsc && vite build --base=./",
     "preview": "vite preview",
     "generate": "ohm generateBundles --withTypes --esm 'src/parser/*.ohm'"
   },

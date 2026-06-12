@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "outDir": "dist",
-    "target": "ES2020",
+    "target": "es6",
     "useDefineForClassFields": true,
     "lib": [
       "ES2020",
       "DOM",
-      "DOM.Iterable"
+      "DOM.Iterable",
+      "ES6"
     ],
     "types": [
       "@babylonjs/core",
@@ -17,9 +18,8 @@
 
     // Bundler
     "moduleResolution": "bundler",
-    "moduleDetection": "force",
     "allowImportingTsExtensions": true,
-    "isolatedModules": false,
+    "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "jsx": "react-jsx",
@@ -42,6 +42,6 @@
     }
   },
   "include": [
-    "./src"
+    "src"
   ]
 }

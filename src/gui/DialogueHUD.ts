@@ -7,7 +7,6 @@ import {
 	ScrollBar,
 	Button,
 	TextWrapping,
-	Image,
 } from "@babylonjs/gui";
 import type IHUD from "src/gui/IHUD";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
@@ -18,7 +17,7 @@ import type {
 	DialogueOptionLine,
 	DialogueLine,
 } from "src/systems/DialogueManagerSystem";
-import { Rotate2dBlock, type Nullable } from "@babylonjs/core";
+import { type Nullable } from "@babylonjs/core";
 import StackPanelImage from "./components/StackPanelImage";
 import GameState from "src/GameState";
 
@@ -114,7 +113,7 @@ export default class DialogueHUD implements IHUD {
 		lineUI.color = Themes.primary3;
 		lineUI.style = Themes.typography.bodyText;
 		lineUI.resizeToFit = true;
-		lineUI.textWrapping = TextWrapping.WordWrap;
+		lineUI.textWrapping = 1;
 		if (hasSpeaker) {
 			lineUI.paddingLeftInPixels = lineUI.paddingRightInPixels = 16;
 			lineUI.paddingBottomInPixels = 4;

@@ -13,7 +13,7 @@ import RenderQueueSystem from "src/systems/RenderQueueSystem";
 // Source - https://stackoverflow.com/a/77970818
 // Posted by Helto, modified by community. See post 'Timeline' for change history
 // Retrieved 2026-06-12, License - CC BY-SA 4.0
-window.addEventListener("vite:preloadError", (event) => {
+window.addEventListener("vite:preloadError", () => {
 	window.location.reload();
 });
 

@@ -83,7 +83,7 @@ export default class ExploreHUD implements IHUD {
 		highlightDescription.paddingLeftInPixels =
 			highlightDescription.paddingRightInPixels = 8;
 		highlightDescription.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		highlightDescription.textWrapping = TextWrapping.WordWrap;
+		highlightDescription.textWrapping = 1;
 		highlightDescription.color = Themes.neutral2;
 		highlightDescription.style = Themes.typography.bodyText;
 		highlightInfoUI.addControl(highlightDescription);

@@ -51,7 +51,7 @@ export class MainMenuScreen {
 		mainMenuTitle.style = Themes.typography.header1;
 		mainMenuTitle.width = "100%";
 		mainMenuTitle.heightInPixels = 128;
-		mainMenuTitle.textWrapping = TextWrapping.WordWrap;
+		mainMenuTitle.textWrapping = 1;
 		stackPanel.addControl(mainMenuTitle);
 
 		const newGameButton = Button.CreateSimpleButton(
