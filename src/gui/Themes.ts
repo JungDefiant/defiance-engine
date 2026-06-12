@@ -43,7 +43,8 @@ export const Themes = {
 	warning: "#FCE400",
 	error: "#ED145B",
 	dialogueBackgroundOpacity: "AA",
-	textButtonDefaultOpacity: "11",
+	tacticalPauseOpacity: "22",
+	textButtonDefaultOpacity: "AA",
 	textButtonHighlightOpacity: "FF",
 	typography: {
 		caption: {} as Style,

@@ -11,8 +11,10 @@ import { EnemyGUI } from "src/gui/components/EnemyGUI";
 export default class UserInterfaceSystem implements ISystem {
 	public async start(engine: Engine) {}
 
-	public update(deltaTime: number) {
-		const gameState = container.resolve(GameState);
+	public update(deltaTime: number, gameState?: GameState) {
+		if (!gameState) {
+			return;
+		}
 
 		gameState.uiScene.render();
 

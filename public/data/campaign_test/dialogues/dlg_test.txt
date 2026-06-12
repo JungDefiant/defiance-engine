@@ -1,6 +1,6 @@
 ch0_start
 ===
-@_: asfdsgfdsahfsda
+@Speaker: asfdsgfdsahfsda
 @_: ahfdahdfghdfgs
 - option 1 [ch1_start]
 - option 2 [_]

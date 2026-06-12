@@ -18,8 +18,12 @@ export default class RenderQueueSystem implements ISystem {
 
 	public async start(): Promise<void> {}
 
-	public update(deltaTime: number): void {
+	public update(deltaTime: number, gameState?: GameState): void {
 		if (!this.isStarted) {
+			return;
+		}
+
+		if (gameState && gameState.renderPauseSet.size > 0) {
 			return;
 		}
 

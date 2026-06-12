@@ -7,3 +7,4 @@ export const PAUSE_GAMEOVER = "pause_gameOver";
 export const PAUSE_VICTORYSCREEN = "pause_victoryScreen";
 export const PAUSE_RENDERQUEUE = "pause_renderQueue";
 export const PAUSE_DIALOGUE = "pause_dialogue";
+export const PAUSE_TACTICALPAUSE = "pause_tacticalPause";

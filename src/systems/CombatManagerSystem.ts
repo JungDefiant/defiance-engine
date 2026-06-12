@@ -1,7 +1,12 @@
 import { container, delay, inject, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
-import { RandomRange, Vector3 } from "@babylonjs/core";
+import {
+	ActionManager,
+	ExecuteCodeAction,
+	RandomRange,
+	Vector3,
+} from "@babylonjs/core";
 import GameState, { GameMode } from "src/GameState";
 import { EntityId, query, removeEntity } from "bitecs";
 import {
@@ -24,6 +29,7 @@ import {
 	DEFAULT_CAM_TARGET,
 	PAUSE_GAMEOVER,
 	PAUSE_RENDERQUEUE,
+	PAUSE_TACTICALPAUSE,
 	PAUSE_VICTORYSCREEN,
 } from "src/Constants";
 
@@ -33,6 +39,7 @@ export default class CombatManagerSystem implements ISystem {
 	private readonly START_RECOVERY_RANGE = 2;
 	private readonly BASE_DEFENSE = 10;
 	private readonly BASE_SPAWN_POSITION = new Vector3(0, 0.28, 0);
+	private readonly SPAWN_OFFSET = 0.2;
 
 	private combatState: CombatState = CombatState.Default;
 
@@ -46,8 +53,10 @@ export default class CombatManagerSystem implements ISystem {
 
 	public async start() {}
 
-	public update(deltaTime: number): void {
-		const gameState = container.resolve(GameState);
+	public update(deltaTime: number, gameState?: GameState): void {
+		if (!gameState) {
+			return;
+		}
 
 		if (gameState.gameMode !== GameMode.Combat) {
 			return;
@@ -100,7 +109,7 @@ export default class CombatManagerSystem implements ISystem {
 			const offsetVector = new Vector3(
 				0,
 				0,
-				(encData.length - 1) * -0.2 + i * 0.4,
+				(encData.length - 1) * -this.SPAWN_OFFSET + i * this.SPAWN_OFFSET * 2,
 			);
 			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
 			gameState.enemyEIDs.push(
@@ -112,7 +121,7 @@ export default class CombatManagerSystem implements ISystem {
 			);
 		}
 
-		await gameState.combatHud.setActionBar(gameState.selectedPlayerEID);
+		await this.initControls(gameState);
 
 		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
 			const actorData = gameState.ActorDataComponent[eid];
@@ -166,6 +175,72 @@ export default class CombatManagerSystem implements ISystem {
 		} else {
 			this.setNPCActionTargeting(gameState, eid, actionData);
 		}
+	}
+
+	private async initControls(gameState: GameState) {
+		const actorData = gameState.ActorDataComponent[gameState.selectedPlayerEID];
+		await gameState.combatHud.setActionBar(actorData, this, gameState);
+
+		const actionManager = gameState.scene.actionManager;
+		for (let i = 0; i < actorData.powerData.length; i++) {
+			actionManager.registerAction(
+				new ExecuteCodeAction(
+					{
+						trigger: ActionManager.OnKeyDownTrigger,
+						parameter: gameState.controlSettings.powerActions[i],
+					},
+					() => {
+						const cmSystem = container.resolve(CombatManagerSystem);
+						cmSystem.startQueueAction(gameState, actorData.entityId, i);
+					},
+				),
+			);
+		}
+
+		if (actorData.itemData) {
+			for (let i = 0; i < actorData.itemData.length; i++) {
+				actionManager.registerAction(
+					new ExecuteCodeAction(
+						{
+							trigger: ActionManager.OnKeyDownTrigger,
+							parameter: gameState.controlSettings.deviceActions[i],
+						},
+						() => {
+							const cmSystem = container.resolve(CombatManagerSystem);
+							cmSystem.startQueueAction(gameState, actorData.entityId, i);
+						},
+					),
+				);
+			}
+		}
+
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: gameState.controlSettings.tacticalPause,
+				},
+				() => {
+					const cmSystem = container.resolve(CombatManagerSystem);
+					cmSystem.setTacticalPause(
+						!gameState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
+						gameState,
+					);
+				},
+			),
+		);
+	}
+
+	private setTacticalPause(isActive: boolean, gameState: GameState) {
+		if (isActive) {
+			gameState.actionPauseSet.add(PAUSE_TACTICALPAUSE);
+			gameState.renderPauseSet.add(PAUSE_TACTICALPAUSE);
+		} else {
+			gameState.actionPauseSet.delete(PAUSE_TACTICALPAUSE);
+			gameState.renderPauseSet.delete(PAUSE_TACTICALPAUSE);
+		}
+
+		gameState.tacticalPauseScreen.showHide(isActive);
 	}
 
 	private setPlayerActionTargeting(
@@ -275,22 +350,14 @@ export default class CombatManagerSystem implements ISystem {
 						...context,
 					});
 
-					this.addFloatingTextRQE(
-						targetData.entityId,
-						ftText,
-						Themes.secondary3,
-					);
+					this.addFloatingTextRQE(targetData.entityId, ftText, Themes.neutral2);
 					break;
 				case "healing":
 					ftText = this.applyHealEffect(sourceData, targetData, descriptors, {
 						...eff.variables,
 						...context,
 					});
-					this.addFloatingTextRQE(
-						targetData.entityId,
-						ftText,
-						Themes.secondary1,
-					);
+					this.addFloatingTextRQE(targetData.entityId, ftText, Themes.success);
 					break;
 				default:
 					return;

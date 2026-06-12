@@ -16,6 +16,7 @@ import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import GameState, { GameMode } from "src/GameState";
 import { EntityId } from "bitecs";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
+import { ActorData } from "src/components/ActorData";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -78,11 +79,11 @@ export default class CombatHUD implements IHUD {
 		return this.rootContainer;
 	}
 
-	public async setActionBar(eid: EntityId): Promise<void> {
-		const cmSystem = container.resolve(CombatManagerSystem);
-		const gameState = container.resolve(GameState);
-		const actorData = gameState.ActorDataComponent[eid];
-
+	public async setActionBar(
+		actorData: ActorData,
+		cmSystem: CombatManagerSystem,
+		gameState: GameState,
+	): Promise<void> {
 		if (!actorData) {
 			return;
 		}
@@ -97,7 +98,12 @@ export default class CombatHUD implements IHUD {
 			if (abData) {
 				abilitySlot.setActionSlotIcon(abData.iconURL as string);
 				abilitySlot.setOnClickEvent(() =>
-					cmSystem.startQueueAction(gameState, eid, i),
+					cmSystem.startQueueAction(gameState, actorData.entityId, i),
+				);
+				abilitySlot.setActionLabelText(
+					String.fromCharCode(
+						gameState.controlSettings.powerActions[i],
+					).toUpperCase(),
 				);
 			} else {
 				abilitySlot.setActionSlotIcon("");
@@ -120,7 +126,12 @@ export default class CombatHUD implements IHUD {
 			if (devData) {
 				deviceSlot.setActionSlotIcon(devData.iconURL as string);
 				deviceSlot.setOnClickEvent(() =>
-					cmSystem.startQueueAction(gameState, eid, i),
+					cmSystem.startQueueAction(gameState, actorData.entityId, i),
+				);
+				deviceSlot.setActionLabelText(
+					String.fromCharCode(
+						gameState.controlSettings.deviceActions[i],
+					).toUpperCase(),
 				);
 			} else {
 				deviceSlot.setActionSlotIcon("");

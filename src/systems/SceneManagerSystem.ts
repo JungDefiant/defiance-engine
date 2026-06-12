@@ -16,6 +16,7 @@ import {
 	Viewport,
 	Texture,
 	TransformNode,
+	ActionManager,
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
@@ -36,6 +37,7 @@ import DialogueHUD from "src/gui/DialogueHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
 import { DEFAULT_CAM_FOCALLENGTH, DEFAULT_CAM_TARGET } from "src/Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
+import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -185,14 +187,22 @@ export default class SceneManagerSystem implements ISystem {
 		mainUI.addControl(gameOverScreen.getRoot());
 		gameOverScreen.showHide(false);
 
+		const tacticalPauseScreen = new TacticalPauseScreen();
+		mainUI.addControl(tacticalPauseScreen.getRoot());
+		tacticalPauseScreen.showHide(false);
+
+		const actionManager = new ActionManager(scene);
+		scene.actionManager = actionManager;
+
 		// TO DO: load player party
 		const playerEids = [0];
 
 		const newGameState = new GameState(
 			campaignId,
+			GameMode.Explore,
+			actionManager,
 			playerEids[0],
 			playerEids,
-			GameMode.Explore,
 			world,
 			scene,
 			uiScene,
@@ -205,6 +215,7 @@ export default class SceneManagerSystem implements ISystem {
 			dialogueHud,
 			combatHud,
 			gameOverScreen,
+			tacticalPauseScreen,
 		);
 
 		container.register(GameState, { useValue: newGameState });
@@ -331,7 +342,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const button = Button.CreateImageOnlyButton(
 			interactableData.id,
-			"./sprites/gui/icon_interact.png",
+			"./sprites/gui/icons/icon_interact.png",
 		);
 		button.width = 0.075;
 		button.height = 0.1125;
@@ -392,7 +403,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const button = Button.CreateImageOnlyButton(
 			doorData.id,
-			"./sprites/gui/icon_door.png",
+			"./sprites/gui/icons/icon_door.png",
 		);
 		button.width = 0.1;
 		button.height = 0.1;
