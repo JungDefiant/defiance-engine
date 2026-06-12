@@ -71,7 +71,6 @@ export default class GameState {
 	public constructor(
 		campaignId: string,
 		gameMode: GameMode,
-		actionManager: ActionManager,
 		selectedPlayerEID: number,
 		playerEIDs: number[],
 		world: World,
@@ -90,7 +89,6 @@ export default class GameState {
 	) {
 		this.campaignId = campaignId;
 		this.gameMode = gameMode;
-		this.actionManager = actionManager;
 		this.selectedPlayerEID = selectedPlayerEID;
 		this.playerEIDs = playerEIDs;
 		this.world = world;

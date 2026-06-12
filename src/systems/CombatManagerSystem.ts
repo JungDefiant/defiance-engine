@@ -193,11 +193,12 @@ export default class CombatManagerSystem implements ISystem {
 		const actorData = gameState.ActorDataComponent[gameState.selectedPlayerEID];
 		await gameState.combatHud.setActionBar(actorData, this, gameState);
 
-		const actionManager = new ActionManager(gameState.scene);
 		if (gameState.actionManager) {
 			gameState.actionManager.dispose();
 			gameState.actionManager = null;
 		}
+
+		const actionManager = new ActionManager(gameState.scene);
 
 		for (let i = 0; i < actorData.powerData.length; i++) {
 			actionManager.registerAction(
@@ -248,6 +249,7 @@ export default class CombatManagerSystem implements ISystem {
 		);
 
 		gameState.actionManager = actionManager;
+		gameState.scene.actionManager = actionManager;
 	}
 
 	private setTacticalPause(isActive: boolean, gameState: GameState) {
