@@ -201,14 +201,10 @@ export default class SceneManagerSystem implements ISystem {
 		mainUI.addControl(tacticalPauseScreen.getRoot());
 		tacticalPauseScreen.showHide(false);
 
-		const actionManager = new ActionManager(scene);
-		scene.actionManager = actionManager;
-
 		// Initialize GameState
 		const newGameState = new GameState(
 			campaignId,
 			GameMode.Explore,
-			actionManager,
 			-1,
 			[],
 			world,

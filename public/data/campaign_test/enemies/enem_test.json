@@ -14,7 +14,7 @@
     "regen": 10
   },
   "abilityIds": [
-    "ab_pulserifle"
+    "ab_brawl"
   ],
   "itemIds": [
     "it_grenadefrag"
@@ -26,7 +26,7 @@
     },
     {
       "trigger": "vsHighestLife",
-      "action": "ab_pulserifle"
+      "action": "ab_brawl"
     }
   ]
 }

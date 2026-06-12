@@ -6,6 +6,7 @@ import {
 	StackPanel,
 	TextBlock,
 	Style,
+	Container,
 } from "@babylonjs/gui";
 import { EntityId } from "bitecs";
 import GameState from "../../GameState";
@@ -103,6 +104,10 @@ export class EnemyGUI implements ActorGUI {
 
 		this.rootContainer.linkWithMesh(sprite);
 		this.rootContainer.linkOffsetY = 40;
+	}
+
+	public getRoot(): Container {
+		return this.rootContainer;
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {

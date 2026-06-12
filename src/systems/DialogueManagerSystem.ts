@@ -1,20 +1,15 @@
 import { container, singleton } from "tsyringe";
+import { UniversalCamera, Vector3 } from "@babylonjs/core";
+import type { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 import grammar from "src/parser/DialogueParser.ohm-bundle";
-import {
-	AbstractMesh,
-	UniversalCamera,
-	Vector3,
-	Viewport,
-} from "@babylonjs/core";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import GameState, { GameMode } from "src/GameState";
 import DialogueHUD from "src/gui/DialogueHUD";
-
 import type ISystem from "src/systems/ISystem";
-import type { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 import type { InteractableData } from "src/GameState";
 import type { Nullable, TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
+import CombatManagerSystem from "./CombatManagerSystem";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
@@ -93,6 +88,13 @@ export default class DialogueManagerSystem implements ISystem {
 					type: "Cmd",
 					cmd: cmd.sourceString,
 					vars: [var1.getVector(), var2.getVector()],
+				};
+			},
+			StartCombat(cmd, var1) {
+				return {
+					type: "Cmd",
+					cmd: cmd.sourceString,
+					vars: [var1.child(1).sourceString],
 				};
 			},
 		});
@@ -219,6 +221,8 @@ export default class DialogueManagerSystem implements ISystem {
 				this.displayTextLine(id, line, dlgHud);
 			case "Options":
 				this.displayOptionsLine(line, dlgHud);
+			case "Cmd":
+				this.runCommand(line);
 		}
 	}
 
@@ -274,6 +278,23 @@ export default class DialogueManagerSystem implements ISystem {
 		}
 	}
 
+	private runCommand(line: DialogueLine) {
+		if (!line.cmd || !line.vars) {
+			return;
+		}
+		switch (line.cmd) {
+			case "setvar":
+				this.setStringVariable(line.vars[0] as string, line.vars[1] as string);
+				return;
+			case "movecam":
+				this.moveCamera(line.vars[0] as Vector3, line.vars[1] as Vector3);
+				return;
+			case "startcombat":
+				this.startCombat(line.vars[0] as string);
+				return;
+		}
+	}
+
 	// COMMANDS
 	private setFlag(flag: string) {}
 
@@ -287,7 +308,11 @@ export default class DialogueManagerSystem implements ISystem {
 
 	private playSound(soundUrl: string) {}
 
-	private triggerCombat(encounterId: string) {}
+	private startCombat(encounterId: string) {
+		this.endDialogue();
+		const cmSystem = container.resolve(CombatManagerSystem);
+		cmSystem.startCombat(encounterId);
+	}
 }
 
 export interface DialogueNode {

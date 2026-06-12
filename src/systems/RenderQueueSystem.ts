@@ -129,7 +129,7 @@ export default class RenderQueueSystem implements ISystem {
 
 					if (gameState.playerEIDs.includes(eid)) {
 						const playerGUI = gameState.PlayerGUIComponent[eid];
-						playerGUI.getRootContainer().addControl(floatingTextUI);
+						playerGUI.getRoot().addControl(floatingTextUI);
 					} else {
 						const targetSprite = gameState.CharacterSprite[eid];
 						gameState.sceneGUI.addControl(floatingTextUI);

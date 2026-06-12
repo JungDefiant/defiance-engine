@@ -26,6 +26,7 @@ export interface DialogueActionDict<T> extends BaseActionDict<T> {
   Cmd?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode) => T;
   SetVar?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
   MoveCam?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
+  StartCombat?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode) => T;
 }
 
 export interface DialogueSemantics extends Semantics {
