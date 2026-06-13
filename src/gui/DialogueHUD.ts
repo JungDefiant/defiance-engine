@@ -84,7 +84,7 @@ export default class DialogueHUD implements IHUD {
 		const hasSpeaker =
 			dlgData.character && dlgData.character !== this.EMPTY_INPUT;
 		if (dlgData.character && hasSpeaker) {
-			stackPanel.source = "./sprites/dialogue/gui_textbox.png";
+			stackPanel.source = `${import.meta.env.BASE_URL}/sprites/dialogue/gui_textbox.png`;
 
 			const speakerLabel = new TextBlock(
 				"ui_speaker_" + dlgData.character.trim().toLowerCase(),

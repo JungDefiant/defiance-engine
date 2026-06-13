@@ -120,7 +120,9 @@ export default class SceneManagerSystem implements ISystem {
 		campaignId: string,
 		characterIds: string[],
 	) {
-		const response = await fetch(`/data/${campaignId}/scenes/${fileName}.json`);
+		const response = await fetch(
+			`${import.meta.env.BASE_URL}/data/${campaignId}/scenes/${fileName}.json`,
+		);
 		const sceneData = (await response.json()) as SceneData;
 		if (!sceneData) {
 			return;
@@ -132,7 +134,10 @@ export default class SceneManagerSystem implements ISystem {
 		uiScene.autoClear = false;
 
 		const sceneNodes = (
-			await ImportMeshAsync(`./models/maps/${sceneData.modelURL}`, scene)
+			await ImportMeshAsync(
+				`${import.meta.env.BASE_URL}/models/maps/${sceneData.modelURL}`,
+				scene,
+			)
 		).transformNodes;
 
 		const camera = new UniversalCamera("cam_explore", Vector3.Zero(), scene);
@@ -389,7 +394,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const button = Button.CreateImageOnlyButton(
 			interactableData.id,
-			"./sprites/gui/icons/icon_interact.png",
+			`${import.meta.env.BASE_URL}/sprites/gui/icons/icon_interact.png`,
 		);
 		button.width = 0.075;
 		button.height = 0.1125;
@@ -450,7 +455,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const button = Button.CreateImageOnlyButton(
 			doorData.id,
-			"./sprites/gui/icons/icon_door.png",
+			`${import.meta.env.BASE_URL}/sprites/gui/icons/icon_door.png`,
 		);
 		button.width = 0.1;
 		button.height = 0.1;

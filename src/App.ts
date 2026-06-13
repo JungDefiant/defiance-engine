@@ -57,7 +57,9 @@ export class App {
 		this.engine.stopRenderLoop();
 		this.mainMenuScene.dispose();
 
-		const response = await fetch(`/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`);
+		const response = await fetch(
+			`${import.meta.env.BASE_URL}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
+		);
 		const campaignData = (await response.json()) as CampaignData;
 		container.register("CampaignData", { useValue: campaignData });
 

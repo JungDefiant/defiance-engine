@@ -27,7 +27,7 @@ export class MainMenuScreen {
 
 		const backgroundImage = new Image(
 			"ui_mainMenuBackgroundImage",
-			"/sprites/gui/gui_mainmenu.png",
+			`${import.meta.env.BASE_URL}/sprites/gui/gui_mainmenu.png`,
 		);
 		backgroundImage.width = "100%";
 		backgroundImage.height = "100%";

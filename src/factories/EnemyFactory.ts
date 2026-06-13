@@ -48,7 +48,7 @@ export class EnemyFactory implements IFactory {
 		}
 
 		const response = await fetch(
-			`/data/${campaignId}/enemies/${fileName}.json`,
+			`${import.meta.env.BASE_URL}/data/${campaignId}/enemies/${fileName}.json`,
 		);
 		const rawData = await response.json();
 		if (!rawData) {
@@ -113,7 +113,7 @@ export class EnemyFactory implements IFactory {
 		// enActorSprite.locallyTranslate(positionOffset);
 
 		enActorSpriteMat.albedoTexture = new Texture(
-			`./sprites/enemies/${actorData.spriteUrl}`,
+			`${import.meta.env.BASE_URL}/sprites/enemies/${actorData.spriteUrl}`,
 			gameState.scene,
 		);
 		enActorSpriteMat.metallic = 0;

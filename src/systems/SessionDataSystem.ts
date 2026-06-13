@@ -12,7 +12,9 @@ export default class SessionDataSystem implements ISystem {
 
 	public async loadSaveData(id: string): Promise<SaveData> {
 		// TEST
-		const response = await fetch(`/data/sav_test.json`);
+		const response = await fetch(
+			`${import.meta.env.BASE_URL}/data/sav_test.json`,
+		);
 		const rawData = await response.json();
 		return rawData;
 

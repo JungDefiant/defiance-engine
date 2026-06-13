@@ -72,7 +72,7 @@ export class ActorData {
 
 		this.powerData = initData.abilityIds.map(async (el: string) => {
 			const response = await fetch(
-				`/data/${gameState.campaignId}/abilities/powers/${el}.json`,
+				`${import.meta.env.BASE_URL}/data/${gameState.campaignId}/abilities/powers/${el}.json`,
 			);
 			const abData = (await response.json()) as AbilityData;
 

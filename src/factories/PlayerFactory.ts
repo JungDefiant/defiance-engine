@@ -14,7 +14,7 @@ export class PlayerFactory implements IFactory {
 		campaignId: string,
 	): Promise<EntityId> {
 		const response = await fetch(
-			`/data/${campaignId}/playableChars/${fileName}.json`,
+			`${import.meta.env.BASE_URL}/data/${campaignId}/playableChars/${fileName}.json`,
 		);
 		const rawData = await response.json();
 		if (!rawData) {

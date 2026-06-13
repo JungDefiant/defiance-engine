@@ -135,7 +135,7 @@ export default class DialogueManagerSystem implements ISystem {
 		const gameState = container.resolve(GameState);
 
 		const response = await fetch(
-			`data/${gameState.campaignId}/dialogues/${dlgId}.txt`,
+			`${import.meta.env.BASE_URL}/data/${gameState.campaignId}/dialogues/${dlgId}.txt`,
 		);
 		const rawData = await response.text();
 		if (!rawData) {
