@@ -4,11 +4,10 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   base: '/defiance-engine/',
-  publicDir: '/defiance-engine/public',
+  publicDir: 'public',
   build: {
     outDir: 'dist',
-    emptyOutDir: true,
-    minify: 'esbuild'
+    emptyOutDir: true
   },
   server: {
     host: true
