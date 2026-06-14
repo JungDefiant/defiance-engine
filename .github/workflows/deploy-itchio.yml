@@ -46,6 +46,6 @@ jobs:
       - name: Setup butler
         uses: remarkablegames/setup-butler@v2
       - name: Upload to itch.io
-        run: butler push directory ${{ secrets.ITCH_USER_NAME }}/${{secrets.ITCH_GAME}}:html5
+        run: butler push build.zip ${{ secrets.ITCH_USER_NAME }}/${{secrets.ITCH_GAME}}:html5
         env:
           BUTLER_API_KEY: ${{ secrets.API_KEY }}
