@@ -44,7 +44,7 @@ jobs:
         with:
           args: zip -qq -r build.zip dist
       - name: Publish to Itch
-        uses: Oval-Tutu/publish-to-itch-with-butler
+        uses: Oval-Tutu/publish-to-itch-with-butler@v1
         with:
           api-key: ${{ secrets.API_KEY }}
           itch_user: ${{ secrets.ITCH_USER_NAME }}
