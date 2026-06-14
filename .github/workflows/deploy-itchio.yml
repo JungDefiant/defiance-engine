@@ -17,7 +17,7 @@ permissions:
 
 # Allow one concurrent deployment
 concurrency:
-  group: "pages"
+  group: "itch"
   cancel-in-progress: true
 
 jobs:
@@ -44,11 +44,11 @@ jobs:
         with:
           args: zip -qq -r build.zip dist
       - name: Publish to Itch
-        uses: Oval-Tutu/publish-to-itch-with-butler@v1
+        uses: Oval-Tutu/publish-to-itch-with-butler
         with:
-          api-key: ${{ secrets.BUTLER_API_KEY }}
+          api-key: ${{ secrets.API_KEY }}
           itch_user: ${{ secrets.ITCH_USER_NAME }}
           itch_game: ${{ secrets.ITCH_GAME }}
           channel: windows
           package: ./build.zip
-          version: 1.0.0
+          version: ${{ github.event.release.tag_name }}
