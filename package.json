@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build-pages": "tsc && vite build --base=/defiance-engine/",
     "preview": "vite preview",
     "generate": "ohm generateBundles --withTypes --esm 'src/parser/*.ohm'"
   },
