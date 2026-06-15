@@ -148,6 +148,7 @@ export default class SceneManagerSystem implements ISystem {
 		camera.minZ = 0;
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.inputs.clear();
+		camera.inputs.addMouse();
 		camera.attachControl(this.gameCanvas, false);
 		scene.onPointerObservable.add((eventData) => {
 			// This will block out vertical rotation
