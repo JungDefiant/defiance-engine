@@ -12,5 +12,7 @@ export default defineConfig({
   server: {
     host: true
   },
-  plugins: [tsconfigPaths()]
+  resolve: {
+    tsconfigPaths: true
+  }
 });

@@ -11,11 +11,13 @@ import {
 import { CreateTypography, Themes } from "../Themes";
 import { Scene, Texture } from "@babylonjs/core";
 import { App } from "src/App";
+import { getPublicRoot } from "src/Utils";
 
 export class MainMenuScreen {
 	private root: AdvancedDynamicTexture;
 
 	public constructor(scene: Scene, app: App) {
+		const env = import.meta.env;
 		this.root = AdvancedDynamicTexture.CreateFullscreenUI(
 			"ui_main",
 			true,
@@ -27,7 +29,7 @@ export class MainMenuScreen {
 
 		const backgroundImage = new Image(
 			"ui_mainMenuBackgroundImage",
-			`${import.meta.env.BASE_URL}/sprites/gui/gui_mainmenu.png`,
+			`${getPublicRoot()}/sprites/gui/gui_mainmenu.png`,
 		);
 		backgroundImage.width = "100%";
 		backgroundImage.height = "100%";

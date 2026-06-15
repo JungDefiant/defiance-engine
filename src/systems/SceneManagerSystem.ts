@@ -22,15 +22,6 @@ import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
 import "@babylonjs/loaders";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
-import GameState, {
-	CampaignData,
-	DoorData,
-	EventData,
-	GameMode,
-	InteractableData,
-	LocationData,
-	SceneData,
-} from "src/GameState";
 import { CreateTypography, Themes } from "src/gui/Themes";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import CombatHUD from "src/gui/CombatHUD";
@@ -45,6 +36,15 @@ import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { PlayerFactory } from "src/factories/PlayerFactory";
 import { App } from "src/App";
+import GameState from "src/GameState";
+import {
+	DoorData,
+	EventData,
+	GameMode,
+	InteractableData,
+	LocationData,
+	SceneData,
+} from "src/states/GameData";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -146,6 +146,7 @@ export default class SceneManagerSystem implements ISystem {
 		camera.position = new Vector3(0, 0.4, 0);
 		camera.minZ = 0;
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
+		camera.inputs.clear();
 		camera.attachControl(this.gameCanvas, false);
 		scene.onPointerObservable.add((eventData) => {
 			// This will block out vertical rotation
@@ -254,7 +255,7 @@ export default class SceneManagerSystem implements ISystem {
 		const dmSystem = container.resolve(DialogueManagerSystem);
 		dmSystem.loadDialogueMap(sceneData.dialogueFile);
 
-		this.setGameMode(GameMode.Explore);
+		// this.setGameMode(GameMode.Explore);
 	}
 
 	public async runScene(engine: Engine, app: App) {

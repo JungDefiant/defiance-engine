@@ -7,7 +7,7 @@ import {
 	RandomRange,
 	Vector3,
 } from "@babylonjs/core";
-import GameState, { GameMode } from "src/GameState";
+import GameState from "src/GameState";
 import { EntityId, query, removeEntity } from "bitecs";
 import {
 	AbilityData,
@@ -31,6 +31,7 @@ import {
 	PAUSE_TACTICALPAUSE,
 	PAUSE_VICTORYSCREEN,
 } from "src/Constants";
+import { GameMode } from "src/states/GameData";
 
 @singleton()
 export default class CombatManagerSystem implements ISystem {
@@ -41,14 +42,6 @@ export default class CombatManagerSystem implements ISystem {
 	private readonly SPAWN_OFFSET = 0.2;
 
 	private combatState: CombatState = CombatState.Default;
-
-	public constructor(
-		@inject(EnemyFactory) private enFactory: EnemyFactory,
-		@inject(delay(() => SceneManagerSystem))
-		private smSystem: SceneManagerSystem,
-		@inject(delay(() => RenderQueueSystem))
-		private rqeSystem: RenderQueueSystem,
-	) {}
 
 	public async start() {}
 
@@ -98,8 +91,10 @@ export default class CombatManagerSystem implements ISystem {
 
 	public async startCombat(encId: string): Promise<void> {
 		const gameState = container.resolve(GameState);
+		const smSystem = container.resolve(SceneManagerSystem);
+		const enFactory = container.resolve(EnemyFactory);
 
-		this.smSystem.setGameMode(GameMode.Combat);
+		smSystem.setGameMode(GameMode.Combat);
 
 		const encData = gameState.sceneData.encounters[encId];
 
@@ -111,7 +106,7 @@ export default class CombatManagerSystem implements ISystem {
 				(encData.length - 1) * -this.SPAWN_OFFSET + i * this.SPAWN_OFFSET * 2,
 			);
 			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
-			const newEnemy = await this.enFactory.createEntityFromFileAtPosition(
+			const newEnemy = await enFactory.createEntityFromFileAtPosition(
 				enId,
 				gameState.campaignId,
 				spawnPosition,
@@ -140,6 +135,7 @@ export default class CombatManagerSystem implements ISystem {
 
 	public endCombat() {
 		const gameState = container.resolve(GameState);
+		const smSystem = container.resolve(SceneManagerSystem);
 
 		if (gameState.actionManager) {
 			gameState.actionManager.dispose();
@@ -160,7 +156,7 @@ export default class CombatManagerSystem implements ISystem {
 		// Clear inscene UI
 		// Show rest of inscene UI
 
-		this.smSystem.setGameMode(GameMode.Explore);
+		smSystem.setGameMode(GameMode.Explore);
 		if (gameState.actionPauseSet.size > 0) {
 			gameState.actionPauseSet.clear();
 		}
@@ -322,6 +318,7 @@ export default class CombatManagerSystem implements ISystem {
 		gameState: GameState,
 		actorData: ActorData,
 	): Promise<void> {
+		const rqeSystem = container.resolve(RenderQueueSystem);
 		const actionToExecute = await actorData.queuedAction;
 		if (!actionToExecute) {
 			gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
@@ -332,6 +329,7 @@ export default class CombatManagerSystem implements ISystem {
 		const actionTargetIds = actorData.currentTargetEIDs;
 
 		this.addActionRQEs(
+			rqeSystem,
 			actorData.entityId,
 			actionTargetIds,
 			actorData,
@@ -348,7 +346,7 @@ export default class CombatManagerSystem implements ISystem {
 			);
 		});
 
-		this.rqeSystem.startRenderQueue();
+		rqeSystem.startRenderQueue();
 
 		const rcvyAttr = actorData.attributes.recovery;
 		rcvyAttr.maximumValue = actionToExecute.recovery || 0.5;
@@ -387,6 +385,7 @@ export default class CombatManagerSystem implements ISystem {
 	}
 
 	private addActionRQEs(
+		rqeSystem: RenderQueueSystem,
 		sourceEid: EntityId,
 		targetEids: EntityId[],
 		sourceData: ActorData,
@@ -423,12 +422,13 @@ export default class CombatManagerSystem implements ISystem {
 		// 	0.5,
 		// );
 
-		this.rqeSystem.addRenderQueueEntry(msgRQE);
+		rqeSystem.addRenderQueueEntry(msgRQE);
 		// this.rqeSystem.addRenderQueueEntry(castRQE);
 		// this.rqeSystem.addRenderQueueEntry(hitRQE);
 	}
 
 	private addFloatingTextRQE(targetEid: number, text: string, color: string) {
+		const rqeSystem = container.resolve(RenderQueueSystem);
 		const ftRQE = new RenderQueueEntry(
 			RenderQueueType.FloatingText,
 			{
@@ -440,7 +440,7 @@ export default class CombatManagerSystem implements ISystem {
 			1,
 		);
 
-		this.rqeSystem.addRenderQueueEntry(ftRQE);
+		rqeSystem.addRenderQueueEntry(ftRQE);
 	}
 
 	private triggerFeatEffects(
