@@ -7,7 +7,7 @@ import {
 	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
-import { AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Control, TextBlock } from "@babylonjs/gui";
 import { EntityId, observe, onGet, onRemove, onSet } from "bitecs";
 import type { World } from "bitecs";
 import { singleton } from "tsyringe";
@@ -41,6 +41,7 @@ export default class GameState {
 	public gameMode: GameMode;
 	public selectedPlayerEID: number;
 	public actionManager: Nullable<ActionManager> = null;
+	public exploreGUIControls: Control[] = [];
 	// Game configurations
 	public controlSettings: ControlSettings = new ControlSettings();
 	// Scene data

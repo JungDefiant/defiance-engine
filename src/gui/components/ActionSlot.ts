@@ -19,16 +19,17 @@ export class ActionSlot {
 		this.actionIcon = new Image("ui_actionSlotIcon");
 		this.actionIcon.source = iconSrc;
 		this.actionIcon.width = 1;
-		this.actionIcon.height = 1;
 		this.rootContainer.addControl(this.actionIcon);
 
 		this.actionLabel = new TextBlock("ui_actionSlotLabel", "");
-		this.actionLabel.color = Themes.neutral2;
-		this.actionLabel.style = Themes.typography.caption;
-		this.actionLabel.widthInPixels = 16;
-		this.actionLabel.heightInPixels = 16;
-		this.actionLabel.topInPixels = -8;
-		this.actionLabel.leftInPixels = -3;
+		this.actionLabel.color = Themes.neutral1;
+		this.actionLabel.style = Themes.typography.header3;
+		this.actionLabel.outlineWidth = 2;
+		this.actionLabel.outlineColor = Themes.primary3;
+		this.actionLabel.widthInPixels = 24;
+		this.actionLabel.heightInPixels = 24;
+		this.actionLabel.topInPixels = -4;
+		this.actionLabel.leftInPixels = -1;
 		this.actionLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		this.actionLabel.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_LEFT;

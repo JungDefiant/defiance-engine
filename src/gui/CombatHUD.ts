@@ -173,7 +173,7 @@ export default class CombatHUD implements IHUD {
 		abilitiesLabel.color = Themes.neutral2;
 		abilitiesLabel.style = Themes.typography.header3;
 		abilitiesLabel.widthInPixels = 120;
-		abilitiesLabel.heightInPixels = 18;
+		abilitiesLabel.heightInPixels = 20;
 		abilitiesLabel.topInPixels = 1;
 		abilitiesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		abilitiesLabel.textHorizontalAlignment =
@@ -184,7 +184,7 @@ export default class CombatHUD implements IHUD {
 		devicesLabel.color = Themes.neutral2;
 		devicesLabel.style = Themes.typography.header3;
 		devicesLabel.widthInPixels = 120;
-		devicesLabel.heightInPixels = 18;
+		devicesLabel.heightInPixels = 20;
 		devicesLabel.topInPixels = 1;
 		devicesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		devicesLabel.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
@@ -290,8 +290,10 @@ export default class CombatHUD implements IHUD {
 			"ui_victoryScreenLabel",
 			"VICTORY",
 		);
-		victoryScreenLabel.color = Themes.primary3;
+		victoryScreenLabel.color = Themes.neutral2;
 		victoryScreenLabel.style = Themes.typography.header1;
+		victoryScreenLabel.outlineWidth = 2;
+		victoryScreenLabel.outlineColor = Themes.primary3;
 		victoryScreenLabel.heightInPixels = 64;
 		victoryScreenUI.addControl(victoryScreenLabel);
 

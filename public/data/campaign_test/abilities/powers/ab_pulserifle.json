@@ -2,6 +2,7 @@
     "id": "ab_pulserifle",
     "name": "Pulse Rifle",
     "description": "",
+    "iconURL": "sprites/gui/icons/weapons/icon_pulserifle.png",
     "castVfxURL": "",
     "hitVfxURL": "",
     "castSfxURL": "",

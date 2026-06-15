@@ -18,7 +18,7 @@ import {
 	TransformNode,
 	ActionManager,
 } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Button } from "@babylonjs/gui";
+import { AdvancedDynamicTexture, Button, Control } from "@babylonjs/gui";
 import "@babylonjs/loaders";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
@@ -92,6 +92,9 @@ export default class SceneManagerSystem implements ISystem {
 				camera.cameraRotation.x = 0;
 			});
 			gameState.sceneGUI.rootContainer.isVisible = true;
+			gameState.exploreGUIControls.forEach((child) => {
+				child.isVisible = true;
+			});
 			this.resetViewPosition(gameState);
 		} else if (newMode == GameMode.Dialogue) {
 			const camera = gameState.scene.activeCamera;
@@ -111,6 +114,9 @@ export default class SceneManagerSystem implements ISystem {
 
 			camera.detachControl();
 			gameState.sceneGUI.rootContainer.isVisible = true;
+			gameState.exploreGUIControls.forEach((child) => {
+				child.isVisible = false;
+			});
 			this.resetViewPosition(gameState);
 		}
 	}
@@ -250,6 +256,7 @@ export default class SceneManagerSystem implements ISystem {
 			sceneData,
 			sceneNodes,
 			sceneGUI,
+			newGameState.exploreGUIControls,
 		);
 		newGameState.locationData = locationData;
 
@@ -356,8 +363,10 @@ export default class SceneManagerSystem implements ISystem {
 		sceneData: SceneData,
 		sceneNodes: TransformNode[],
 		sceneGUI: AdvancedDynamicTexture,
+		exploreGuiArr: Control[],
 	): Promise<Nullable<LocationData>> {
 		await this.clearSceneGUI();
+		exploreGuiArr.length = 0;
 
 		const locationData = sceneData.locations.find(
 			(loc) => loc.id === locationId,
@@ -368,7 +377,12 @@ export default class SceneManagerSystem implements ISystem {
 		}
 
 		locationData.interactables.forEach(async (itr) => {
-			await this.loadLocationInteractable(itr, sceneNodes, sceneGUI);
+			await this.loadLocationInteractable(
+				itr,
+				sceneNodes,
+				sceneGUI,
+				exploreGuiArr,
+			);
 		});
 
 		locationData.events.forEach(async (evt) => {
@@ -376,7 +390,7 @@ export default class SceneManagerSystem implements ISystem {
 		});
 
 		locationData.doors.forEach(async (door) => {
-			await this.loadLocationDoor(door, sceneNodes, sceneGUI);
+			await this.loadLocationDoor(door, sceneNodes, sceneGUI, exploreGuiArr);
 		});
 
 		return locationData;
@@ -386,6 +400,7 @@ export default class SceneManagerSystem implements ISystem {
 		interactableData: InteractableData,
 		sceneNodes: TransformNode[],
 		sceneGUI: AdvancedDynamicTexture,
+		exploreGuiArr: Control[],
 	) {
 		const interactableNode = sceneNodes.find(
 			(x) => x.id == interactableData.interactableNodeId,
@@ -440,6 +455,7 @@ export default class SceneManagerSystem implements ISystem {
 			});
 		});
 		sceneGUI.addControl(button);
+		exploreGuiArr.push(button);
 		button.linkWithMesh(interactableNode);
 	}
 
@@ -452,6 +468,7 @@ export default class SceneManagerSystem implements ISystem {
 		doorData: DoorData,
 		sceneNodes: TransformNode[],
 		sceneGUI: AdvancedDynamicTexture,
+		exploreGuiArr: Control[],
 	) {
 		const sceneNode = sceneNodes.find((x) => x.id == doorData.id);
 
@@ -478,7 +495,6 @@ export default class SceneManagerSystem implements ISystem {
 			gameState.exploreHud.hideHighlightInfoUI();
 		});
 		button.onPointerClickObservable.add(async () => {
-			// Loads and runs dialogue based on dialogueId in interactableData
 			const gameState = container.resolve(GameState);
 			const smSystem = container.resolve(SceneManagerSystem);
 			const newLoc = await smSystem.loadLocation(
@@ -487,6 +503,7 @@ export default class SceneManagerSystem implements ISystem {
 				gameState.sceneData,
 				gameState.sceneNodes,
 				gameState.sceneGUI,
+				gameState.exploreGUIControls,
 			);
 
 			if (!newLoc) {
@@ -501,6 +518,7 @@ export default class SceneManagerSystem implements ISystem {
 			smSystem.resetViewPosition(gameState);
 		});
 		sceneGUI.addControl(button);
+		exploreGuiArr.push(button);
 		button.linkWithMesh(sceneNode);
 	}
 }

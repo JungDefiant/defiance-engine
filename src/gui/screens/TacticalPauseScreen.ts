@@ -24,8 +24,10 @@ export class TacticalPauseScreen {
 			"ui_tacticalPauseLabel",
 			"TACTICAL PAUSE",
 		);
-		tacticalPauseLabel.color = Themes.error;
-		tacticalPauseLabel.style = Themes.typography.header1;
+		tacticalPauseLabel.color = Themes.neutral2;
+		tacticalPauseLabel.style = Themes.typography.header2;
+		tacticalPauseLabel.outlineWidth = 2;
+		tacticalPauseLabel.outlineColor = Themes.primary3;
 		tacticalPauseLabel.heightInPixels = 64;
 		tacticalPauseLabel.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		tacticalPauseLabel.horizontalAlignment =
