@@ -3,6 +3,7 @@ import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
 import { ActorData } from "src/components/ActorData";
 import GameState from "src/GameState";
+import { getPublicRoot } from "src/Utils";
 
 @singleton()
 export default class SessionDataSystem implements ISystem {
@@ -12,9 +13,7 @@ export default class SessionDataSystem implements ISystem {
 
 	public async loadSaveData(id: string): Promise<SaveData> {
 		// TEST
-		const response = await fetch(
-			`${import.meta.env.BASE_URL}/data/sav_test.json`,
-		);
+		const response = await fetch(`${getPublicRoot()}/data/sav_test.json`);
 		const rawData = await response.json();
 		return rawData;
 

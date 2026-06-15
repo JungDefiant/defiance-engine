@@ -13,6 +13,7 @@ import RenderQueueSystem from "src/systems/RenderQueueSystem";
 import { MainMenuScreen } from "src/gui/screens/MainMenuScreen";
 import { DEFAULT_CAMPAIGN_ID } from "src/Constants";
 import { CampaignData } from "src/states/GameData";
+import { getPublicRoot } from "src/Utils";
 
 export class App {
 	private engine: Engine;
@@ -59,7 +60,7 @@ export class App {
 		this.mainMenuScene.dispose();
 
 		const response = await fetch(
-			`${import.meta.env.BASE_URL}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
+			`${getPublicRoot()}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
 		);
 		const campaignData = (await response.json()) as CampaignData;
 		container.register("CampaignData", { useValue: campaignData });

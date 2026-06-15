@@ -45,6 +45,7 @@ import {
 	LocationData,
 	SceneData,
 } from "src/states/GameData";
+import { getPublicRoot } from "src/Utils";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -121,7 +122,7 @@ export default class SceneManagerSystem implements ISystem {
 		characterIds: string[],
 	) {
 		const response = await fetch(
-			`${import.meta.env.BASE_URL}/data/${campaignId}/scenes/${fileName}.json`,
+			`${getPublicRoot()}/data/${campaignId}/scenes/${fileName}.json`,
 		);
 		const sceneData = (await response.json()) as SceneData;
 		if (!sceneData) {
@@ -135,7 +136,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const sceneNodes = (
 			await ImportMeshAsync(
-				`${import.meta.env.BASE_URL}/models/maps/${sceneData.modelURL}`,
+				`${getPublicRoot()}/models/maps/${sceneData.modelURL}`,
 				scene,
 			)
 		).transformNodes;
@@ -395,7 +396,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const button = Button.CreateImageOnlyButton(
 			interactableData.id,
-			`${import.meta.env.BASE_URL}/sprites/gui/icons/icon_interact.png`,
+			`${getPublicRoot()}/sprites/gui/icons/icon_interact.png`,
 		);
 		button.width = 0.075;
 		button.height = 0.1125;
@@ -456,7 +457,7 @@ export default class SceneManagerSystem implements ISystem {
 
 		const button = Button.CreateImageOnlyButton(
 			doorData.id,
-			`${import.meta.env.BASE_URL}/sprites/gui/icons/icon_door.png`,
+			`${getPublicRoot()}/sprites/gui/icons/icon_door.png`,
 		);
 		button.width = 0.1;
 		button.height = 0.1;

@@ -2,6 +2,7 @@ import { container } from "tsyringe";
 import GameState from "../GameState";
 import { EntityId } from "bitecs";
 import { Nullable } from "@babylonjs/core";
+import { getPublicRoot } from "src/Utils";
 
 export class ActorData {
 	entityId: EntityId;
@@ -72,7 +73,7 @@ export class ActorData {
 
 		this.powerData = initData.abilityIds.map(async (el: string) => {
 			const response = await fetch(
-				`${import.meta.env.BASE_URL}/data/${gameState.campaignId}/abilities/powers/${el}.json`,
+				`${getPublicRoot()}/data/${gameState.campaignId}/abilities/powers/${el}.json`,
 			);
 			const abData = (await response.json()) as AbilityData;
 

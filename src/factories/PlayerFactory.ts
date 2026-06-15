@@ -4,6 +4,7 @@ import GameState from "src/GameState";
 import { IFactory } from "src/factories/IFactory";
 import { ActorData } from "src/components/ActorData";
 import { PlayerGUI } from "src/gui/components/PlayerGUI";
+import { getPublicRoot } from "src/Utils";
 
 @singleton()
 export class PlayerFactory implements IFactory {
@@ -14,7 +15,7 @@ export class PlayerFactory implements IFactory {
 		campaignId: string,
 	): Promise<EntityId> {
 		const response = await fetch(
-			`${import.meta.env.BASE_URL}/data/${campaignId}/playableChars/${fileName}.json`,
+			`${getPublicRoot()}/data/${campaignId}/playableChars/${fileName}.json`,
 		);
 		const rawData = await response.json();
 		if (!rawData) {

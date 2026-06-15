@@ -10,6 +10,7 @@ import { GameMode, type InteractableData } from "src/states/GameData";
 import type { Nullable, TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";
+import { getPublicRoot } from "src/Utils";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
@@ -135,7 +136,7 @@ export default class DialogueManagerSystem implements ISystem {
 		const gameState = container.resolve(GameState);
 
 		const response = await fetch(
-			`${import.meta.env.BASE_URL}/data/${gameState.campaignId}/dialogues/${dlgId}.txt`,
+			`${getPublicRoot()}/data/${gameState.campaignId}/dialogues/${dlgId}.txt`,
 		);
 		const rawData = await response.text();
 		if (!rawData) {

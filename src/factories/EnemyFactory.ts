@@ -13,6 +13,7 @@ import {
 	Vector3,
 } from "@babylonjs/core";
 import { EnemyGUI } from "src/gui/components/EnemyGUI";
+import { getPublicRoot } from "src/Utils";
 
 @singleton()
 export class EnemyFactory implements IFactory {
@@ -48,7 +49,7 @@ export class EnemyFactory implements IFactory {
 		}
 
 		const response = await fetch(
-			`${import.meta.env.BASE_URL}/data/${campaignId}/enemies/${fileName}.json`,
+			`${getPublicRoot()}/data/${campaignId}/enemies/${fileName}.json`,
 		);
 		const rawData = await response.json();
 		if (!rawData) {
@@ -113,7 +114,7 @@ export class EnemyFactory implements IFactory {
 		// enActorSprite.locallyTranslate(positionOffset);
 
 		enActorSpriteMat.albedoTexture = new Texture(
-			`${import.meta.env.BASE_URL}/sprites/enemies/${actorData.spriteUrl}`,
+			`${getPublicRoot()}/sprites/enemies/${actorData.spriteUrl}`,
 			gameState.scene,
 		);
 		enActorSpriteMat.metallic = 0;

@@ -20,6 +20,7 @@ import type {
 import { type Nullable } from "@babylonjs/core";
 import StackPanelImage from "./components/StackPanelImage";
 import GameState from "src/GameState";
+import { getPublicRoot } from "src/Utils";
 
 export default class DialogueHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -84,7 +85,7 @@ export default class DialogueHUD implements IHUD {
 		const hasSpeaker =
 			dlgData.character && dlgData.character !== this.EMPTY_INPUT;
 		if (dlgData.character && hasSpeaker) {
-			stackPanel.source = `${import.meta.env.BASE_URL}/sprites/dialogue/gui_textbox.png`;
+			stackPanel.source = `${getPublicRoot()}/sprites/dialogue/gui_textbox.png`;
 
 			const speakerLabel = new TextBlock(
 				"ui_speaker_" + dlgData.character.trim().toLowerCase(),
