@@ -257,7 +257,7 @@ export default class SceneManagerSystem implements ISystem {
 		const dmSystem = container.resolve(DialogueManagerSystem);
 		dmSystem.loadDialogueMap(sceneData.dialogueFile);
 
-		// this.setGameMode(GameMode.Explore);
+		this.setGameMode(GameMode.Explore);
 	}
 
 	public async runScene(engine: Engine, app: App) {
@@ -426,7 +426,10 @@ export default class SceneManagerSystem implements ISystem {
 
 			const currCamera = gameState.scene.activeCamera as UniversalCamera;
 			if (currCamera) {
-				gameState.lastExploreViewTarget = currCamera.getTarget();
+				gameState.lastExploreViewTarget = Vector3.TransformNormal(
+					currCamera.getTarget(),
+					currCamera.getWorldMatrix(),
+				);
 			}
 
 			const dmSystem = container.resolve(DialogueManagerSystem);
@@ -492,7 +495,7 @@ export default class SceneManagerSystem implements ISystem {
 
 			const currCamera = gameState.scene.activeCamera as UniversalCamera;
 			if (currCamera) {
-				gameState.lastExploreViewTarget = sceneNode.position;
+				gameState.lastExploreViewTarget = sceneNode.absolutePosition;
 			}
 			gameState.locationData = newLoc;
 			smSystem.resetViewPosition(gameState);
