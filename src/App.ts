@@ -6,12 +6,13 @@ import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import ActorStateSystem from "src/systems/ActorStateSystem";
-import GameState, { CampaignData } from "src/GameState";
+import GameState from "src/GameState";
 import { PlayerFactory } from "src/factories/PlayerFactory";
 import { EnemyFactory } from "src/factories/EnemyFactory";
 import RenderQueueSystem from "src/systems/RenderQueueSystem";
-import { MainMenuScreen } from "./gui/screens/MainMenuScreen";
-import { DEFAULT_CAMPAIGN_ID } from "./Constants";
+import { MainMenuScreen } from "src/gui/screens/MainMenuScreen";
+import { DEFAULT_CAMPAIGN_ID } from "src/Constants";
+import { CampaignData } from "src/states/GameData";
 
 export class App {
 	private engine: Engine;

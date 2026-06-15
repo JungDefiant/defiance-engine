@@ -13,9 +13,7 @@ import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/components/ActionSlot";
 import { container } from "tsyringe";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
-import GameState, { GameMode } from "src/GameState";
-import { EntityId } from "bitecs";
-import SceneManagerSystem from "src/systems/SceneManagerSystem";
+import GameState from "src/GameState";
 import { ActorData } from "src/components/ActorData";
 
 export default class CombatHUD implements IHUD {
