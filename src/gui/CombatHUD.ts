@@ -15,6 +15,7 @@ import { container } from "tsyringe";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import GameState from "src/GameState";
 import { ActorData } from "src/components/ActorData";
+import { getPublicRoot } from "src/Utils";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -122,7 +123,7 @@ export default class CombatHUD implements IHUD {
 			}
 
 			if (devData) {
-				deviceSlot.setActionSlotIcon(devData.iconURL as string);
+				deviceSlot.setActionSlotIcon(`${getPublicRoot()}${devData.iconURL as string}`);
 				deviceSlot.setOnClickEvent(() =>
 					cmSystem.startQueueAction(gameState, actorData.entityId, i),
 				);
