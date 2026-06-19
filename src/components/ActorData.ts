@@ -4,6 +4,8 @@ import { EntityId } from "bitecs";
 import { Nullable } from "@babylonjs/core";
 import { getPublicRoot } from "src/Utils";
 
+const BASE_REGEN_TICKS: number = 5;
+
 export class ActorData {
 	entityId: EntityId;
 	id: string = "";
@@ -64,6 +66,17 @@ export class ActorData {
 			recovery: {
 				baseValue: 0,
 				maximumValue: 0,
+				currentValue: 0,
+			} as ActorAttribute,
+			regenTimer: {
+				baseValue: +(
+					BASE_REGEN_TICKS *
+					(10 / initData.attributes.regen)
+				).toFixed(2),
+				maximumValue: +(
+					BASE_REGEN_TICKS *
+					(10 / initData.attributes.regen)
+				).toFixed(2),
 				currentValue: 0,
 			} as ActorAttribute,
 		};

@@ -6,12 +6,12 @@
     "primaryColor": "",
     "spriteUrl": "spr_sentineltest.png",
     "attributes": {
-        "life": 200,
+        "life": 40,
         "will": 4,
-        "speed": 10,
-        "defense": 10,
-        "critical": 10,
-        "regen": 10
+        "speed": 11,
+        "defense": 11,
+        "critical": 11,
+        "regen": 11
     },
     "affinityId": "",
     "abilityIds": [

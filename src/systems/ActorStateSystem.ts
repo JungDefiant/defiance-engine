@@ -6,10 +6,6 @@ import { ActorData } from "../components/ActorData";
 
 @singleton()
 export default class ActorStateSystem implements ISystem {
-	private rcvyTickAccumulator: number = 0;
-	private regnTickAccumulator: number = 0;
-
-	private readonly regnTicks: number = 5;
 
 	public async start() {}
 
@@ -24,21 +20,14 @@ export default class ActorStateSystem implements ISystem {
 	}
 
 	private processRecoveryRegen(gameState: GameState, deltaTime: number) {
-		this.rcvyTickAccumulator += deltaTime;
-		this.regnTickAccumulator += deltaTime;
-
 		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			if (actorData.isDefeated) {
 				return;
 			}
 			this.tickRecovery(deltaTime, actorData);
-			this.tickRegen(actorData);
+			this.tickRegen(deltaTime, actorData);
 		}
-
-		this.regnTickAccumulator =
-			Math.floor(this.regnTickAccumulator / this.regnTicks) +
-			(this.regnTickAccumulator % this.regnTicks);
 	}
 
 	private tickRecovery(deltaTime: number, actorData: ActorData) {
@@ -52,17 +41,21 @@ export default class ActorStateSystem implements ISystem {
 		}
 	}
 
-	private tickRegen(actorData: ActorData) {
-		const regnAttr = actorData.attributes.regen;
+	private tickRegen(deltaTime: number, actorData: ActorData) {
+		const regnTimerAttr = actorData.attributes.regenTimer;
 		const lifeAttr = actorData.attributes.life;
 
-		if (lifeAttr.currentValue < lifeAttr.maximumValue) {
-			const amount =
-				Math.floor(this.regnTickAccumulator / this.regnTicks) *
-				regnAttr.currentValue;
-			const newLifeAttrVal = lifeAttr.currentValue + amount;
+		regnTimerAttr.currentValue += deltaTime;
 
-			lifeAttr.currentValue = Math.min(newLifeAttrVal, lifeAttr.maximumValue);
+		if (
+			regnTimerAttr.currentValue >= regnTimerAttr.maximumValue &&
+			lifeAttr.currentValue < lifeAttr.maximumValue
+		) {
+			lifeAttr.currentValue = Math.min(
+				lifeAttr.currentValue + 1,
+				lifeAttr.maximumValue,
+			);
+			regnTimerAttr.currentValue = 0;
 		}
 	}
 }

@@ -6,7 +6,7 @@
   "primaryColor": "",
   "spriteUrl": "spr_sentineltest.png",
   "attributes": {
-    "life": 120,
+    "life": 40,
     "will": 10,
     "speed": 10,
     "defense": 13,
