@@ -7,7 +7,7 @@
     "spriteUrl": "spr_sentineltest.png",
     "attributes": {
         "life": 40,
-        "will": 4,
+        "will": 10,
         "speed": 11,
         "defense": 11,
         "critical": 11,

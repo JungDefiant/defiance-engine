@@ -4,7 +4,7 @@ import { EntityId } from "bitecs";
 import { Nullable } from "@babylonjs/core";
 import { getPublicRoot } from "src/Utils";
 
-const BASE_REGEN_TICKS: number = 5;
+const BASE_REGEN_TICKS: number = 4;
 
 export class ActorData {
 	entityId: EntityId;
