@@ -64,7 +64,7 @@ export class PlayerGUI implements ActorGUI {
 
 		const rootStackPanel = new StackPanel("ui_rootStackPanel_" + eid);
 		rootStackPanel.width = 1;
-		rootStackPanel.heightInPixels = 128;
+		rootStackPanel.heightInPixels = 130;
 		rootStackPanel.spacing = 8;
 		rootStackPanel.isVertical = true;
 		rootStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
@@ -127,7 +127,7 @@ export class PlayerGUI implements ActorGUI {
 		);
 		this.charNameUI.width = 1;
 		this.charNameUI.height = 1;
-		this.charNameUI.style = Themes.typography.header3;
+		this.charNameUI.style = Themes.typography.header4;
 		this.charNameUI.color = Themes.neutral2;
 		this.charNameUI.topInPixels = 0;
 		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
@@ -385,7 +385,6 @@ export class PlayerGUI implements ActorGUI {
 		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		barValueUI.widthInPixels = 24;
 		barValueUI.heightInPixels = 12;
-		// barValueUI.topInPixels = 2;
 		barValueUI.color = color;
 		barValueUI.style = style;
 		return barValueUI;

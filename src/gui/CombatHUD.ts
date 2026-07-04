@@ -123,7 +123,9 @@ export default class CombatHUD implements IHUD {
 			}
 
 			if (devData) {
-				deviceSlot.setActionSlotIcon(`${getPublicRoot()}${devData.iconURL as string}`);
+				deviceSlot.setActionSlotIcon(
+					`${getPublicRoot()}${devData.iconURL as string}`,
+				);
 				deviceSlot.setOnClickEvent(() =>
 					cmSystem.startQueueAction(gameState, actorData.entityId, i),
 				);
@@ -172,7 +174,7 @@ export default class CombatHUD implements IHUD {
 
 		const abilitiesLabel = new TextBlock("ui_abilitiesLabel", "ABILITIES");
 		abilitiesLabel.color = Themes.neutral2;
-		abilitiesLabel.style = Themes.typography.header3;
+		abilitiesLabel.style = Themes.typography.header4;
 		abilitiesLabel.widthInPixels = 120;
 		abilitiesLabel.heightInPixels = 20;
 		abilitiesLabel.topInPixels = 1;
@@ -183,7 +185,7 @@ export default class CombatHUD implements IHUD {
 
 		const devicesLabel = new TextBlock("ui_devicesLabel", "DEVICES");
 		devicesLabel.color = Themes.neutral2;
-		devicesLabel.style = Themes.typography.header3;
+		devicesLabel.style = Themes.typography.header4;
 		devicesLabel.widthInPixels = 120;
 		devicesLabel.heightInPixels = 20;
 		devicesLabel.topInPixels = 1;
@@ -233,7 +235,7 @@ export default class CombatHUD implements IHUD {
 
 		const messageDisplayText = new TextBlock("ui_messageDisplayText", "");
 		messageDisplayText.color = Themes.neutral2;
-		messageDisplayText.style = Themes.typography.header3;
+		messageDisplayText.style = Themes.typography.header4;
 		messageDisplayText.width = 100;
 		messageDisplayText.height = 100;
 		messageDisplayText.textVerticalAlignment =
@@ -252,8 +254,6 @@ export default class CombatHUD implements IHUD {
 		combatLogUI.thickness = 1;
 		combatLogUI.widthInPixels = 160;
 		combatLogUI.heightInPixels = 180;
-		combatLogUI.top = 5;
-		combatLogUI.left = 5;
 		combatLogUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		combatLogUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 
@@ -267,7 +267,7 @@ export default class CombatHUD implements IHUD {
 
 		const combatLogLabel = new TextBlock("ui_combatLogLabel", "COMBAT LOG");
 		combatLogLabel.color = Themes.neutral2;
-		combatLogLabel.style = Themes.typography.header3;
+		combatLogLabel.style = Themes.typography.header4;
 		combatLogLabel.width = 100;
 		combatLogLabel.height = 100;
 		combatLogLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
@@ -308,7 +308,7 @@ export default class CombatHUD implements IHUD {
 		continueButton.widthInPixels = 120;
 		if (continueButton.textBlock) {
 			continueButton.textBlock.color = Themes.neutral2;
-			continueButton.textBlock.style = Themes.typography.header3;
+			continueButton.textBlock.style = Themes.typography.header4;
 		}
 		continueButton.onPointerClickObservable.add(() => {
 			const cmSystem = container.resolve(CombatManagerSystem);

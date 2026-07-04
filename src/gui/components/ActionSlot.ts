@@ -23,7 +23,7 @@ export class ActionSlot {
 
 		this.actionLabel = new TextBlock("ui_actionSlotLabel", "");
 		this.actionLabel.color = Themes.neutral1;
-		this.actionLabel.style = Themes.typography.header3;
+		this.actionLabel.style = Themes.typography.header4;
 		this.actionLabel.outlineWidth = 2;
 		this.actionLabel.outlineColor = Themes.primary3;
 		this.actionLabel.widthInPixels = 24;

@@ -44,7 +44,7 @@ export class GameOverScreen {
 		mainMenuButton.widthInPixels = 120;
 		if (mainMenuButton.textBlock) {
 			mainMenuButton.textBlock.color = Themes.neutral2;
-			mainMenuButton.textBlock.style = Themes.typography.header3;
+			mainMenuButton.textBlock.style = Themes.typography.header4;
 		}
 		mainMenuButton.onPointerClickObservable.add(() => {
 			window.location.reload();

@@ -54,7 +54,7 @@ export class MainMenuScreen {
 			"IMMORTAL REBELLION",
 		);
 		mainMenuTitle.color = Themes.neutral2;
-		mainMenuTitle.style = Themes.typography.header1;
+		mainMenuTitle.style = Themes.typography.title;
 		mainMenuTitle.width = "100%";
 		mainMenuTitle.heightInPixels = 160;
 		mainMenuTitle.textWrapping = 1;
