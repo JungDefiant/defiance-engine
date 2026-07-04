@@ -1,26 +1,40 @@
 import { AdvancedDynamicTexture, Style } from "@babylonjs/gui";
 
 export function CreateTypography(adt: AdvancedDynamicTexture) {
+	const newFonts = [
+		new FontFace("ComicSans", 'url("src/assets/fonts/comic-sans.ttf")'),
+		new FontFace("RobotoMono", 'url("src/assets/fonts/roboto-mono-med.ttf")'),
+		new FontFace(
+			"KurlandRegular",
+			'url("src/assets/fonts/kurland-regular.otf")',
+		),
+	];
+
+	newFonts.forEach((val) => {
+		document.fonts.add(val);
+		val.load();
+	});
+
 	const captionStyle = adt.createStyle();
 	captionStyle.fontFamily = "ComicSans";
-	captionStyle.fontSize = 12;
+	captionStyle.fontSize = 10;
 	Themes.typography.caption = captionStyle;
 
 	const bodyTextStyle = adt.createStyle();
 	bodyTextStyle.fontFamily = "ComicSans";
-	bodyTextStyle.fontSize = 14;
+	bodyTextStyle.fontSize = 12;
 	Themes.typography.bodyText = bodyTextStyle;
 
 	const header3Style = adt.createStyle();
 	header3Style.fontFamily = "RobotoMono";
 	header3Style.fontWeight = "normal";
-	header3Style.fontSize = 16;
+	header3Style.fontSize = 14;
 	Themes.typography.header3 = header3Style;
 
 	const header2Style = adt.createStyle();
 	header2Style.fontFamily = "RobotoMono";
 	header2Style.fontWeight = "semibold";
-	header2Style.fontSize = 18;
+	header2Style.fontSize = 24;
 	Themes.typography.header2 = header2Style;
 
 	const header1Style = adt.createStyle();

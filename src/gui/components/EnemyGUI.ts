@@ -98,7 +98,7 @@ export class EnemyGUI implements ActorGUI {
 			eid,
 			"lifeLabel",
 			Themes.neutral2,
-			Themes.typography.caption,
+			Themes.typography.bodyText,
 		);
 		this.lifeBarBGUI.addControl(this.lifeBarValueUI);
 

@@ -17,6 +17,7 @@
     "bitecs": "^0.4.0",
     "ohm-js": "^17.0.0",
     "reflect-metadata": "^0.2.2",
+    "tsx": "^4.23.0",
     "tsyringe": "^4.10.0",
     "vite-tsconfig-paths": "^6.1.1"
   },

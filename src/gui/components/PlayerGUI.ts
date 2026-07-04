@@ -130,7 +130,7 @@ export class PlayerGUI implements ActorGUI {
 		this.charNameUI.style = Themes.typography.header3;
 		this.charNameUI.color = Themes.neutral2;
 		this.charNameUI.topInPixels = 0;
-		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		this.charNameBgUI.addControl(this.charNameUI);
 
 		// ACT BAR
@@ -199,7 +199,7 @@ export class PlayerGUI implements ActorGUI {
 			eid,
 			"lifeLabel",
 			Themes.neutral2,
-			Themes.typography.caption,
+			Themes.typography.bodyText,
 		);
 		lifeStackUI.addControl(this.lifeBarValueUI);
 
@@ -238,7 +238,7 @@ export class PlayerGUI implements ActorGUI {
 			eid,
 			"willLabel",
 			Themes.neutral2,
-			Themes.typography.caption,
+			Themes.typography.bodyText,
 		);
 		willStackUI.addControl(this.willBarValueUI);
 	}
@@ -342,7 +342,7 @@ export class PlayerGUI implements ActorGUI {
 		statLabelUi.style = style;
 		statLabelUi.color = color;
 		statLabelUi.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		statLabelUi.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		statLabelUi.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		statLabelUi.paddingTopInPixels = 3;
 		statLabelUi.paddingLeftInPixels = 4;
 		return statLabelUi;
@@ -383,9 +383,9 @@ export class PlayerGUI implements ActorGUI {
 		barValueUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-		barValueUI.widthInPixels = 25;
-		barValueUI.heightInPixels = 14;
-		barValueUI.topInPixels = 2;
+		barValueUI.widthInPixels = 24;
+		barValueUI.heightInPixels = 12;
+		// barValueUI.topInPixels = 2;
 		barValueUI.color = color;
 		barValueUI.style = style;
 		return barValueUI;

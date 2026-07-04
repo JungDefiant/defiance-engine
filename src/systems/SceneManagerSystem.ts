@@ -152,7 +152,7 @@ export default class SceneManagerSystem implements ISystem {
 		camera.setTarget(DEFAULT_CAM_TARGET);
 		camera.position = new Vector3(0, 0.4, 0);
 		camera.minZ = 0;
-		camera.viewport = new Viewport(0, 0.1, 1, 1);
+		camera.viewport = new Viewport(0, 0.05, 1, 1);
 		camera.inputs.clear();
 		camera.inputs.addMouse();
 		camera.attachControl(this.gameCanvas, false);
@@ -179,6 +179,8 @@ export default class SceneManagerSystem implements ISystem {
 			uiScene,
 			Texture.NEAREST_SAMPLINGMODE,
 		);
+		mainUI.idealWidth = 800;
+		mainUI.idealHeight = 600;
 
 		const sceneGUI = AdvancedDynamicTexture.CreateFullscreenUI(
 			"ui_scene",
@@ -186,11 +188,21 @@ export default class SceneManagerSystem implements ISystem {
 			scene,
 			Texture.NEAREST_SAMPLINGMODE,
 		);
+		sceneGUI.idealWidth = 800;
+		sceneGUI.idealHeight = 600;
 
 		const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
 
 		// Initialize UI and HUDs
 		CreateTypography(mainUI);
+
+		document.fonts.ready.then(() => {
+			mainUI.markAsDirty();
+		});
+
+		document.fonts.ready.then(() => {
+			sceneGUI.markAsDirty();
+		});
 
 		const partyInfoHud = new PartyInfoHUD();
 		mainUI.addControl(partyInfoHud.createHudRoot());
