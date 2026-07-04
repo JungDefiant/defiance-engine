@@ -528,6 +528,7 @@ export default class SceneManagerSystem implements ISystem {
 			}
 			gameState.locationData = newLoc;
 			smSystem.resetViewPosition(gameState);
+			gameState.exploreHud.hideHighlightInfoUI();
 		});
 		sceneGUI.addControl(button);
 		exploreGuiArr.push(button);
