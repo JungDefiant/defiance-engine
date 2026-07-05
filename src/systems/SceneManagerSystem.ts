@@ -331,6 +331,7 @@ export default class SceneManagerSystem implements ISystem {
 				viewNodeId = locData.exploreViewNodeId;
 				if (gameState.lastExploreViewTarget !== Vector3.Zero()) {
 					camTarget = gameState.lastExploreViewTarget;
+					camTarget.y = DEFAULT_CAM_TARGET.y;
 				}
 				break;
 			case GameMode.Combat:
