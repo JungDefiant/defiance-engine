@@ -46,6 +46,7 @@ import {
 	SceneData,
 } from "src/states/GameData";
 import { getPublicRoot } from "src/Utils";
+import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -228,6 +229,10 @@ export default class SceneManagerSystem implements ISystem {
 		mainUI.addControl(gameOverScreen.getRoot());
 		gameOverScreen.showHide(false);
 
+		const victoryScreen = new VictoryScreen();
+		mainUI.addControl(victoryScreen.getRoot());
+		victoryScreen.showHide(false);
+
 		// Initialize GameState
 		const newGameState = new GameState(
 			campaignId,
@@ -247,6 +252,7 @@ export default class SceneManagerSystem implements ISystem {
 			combatHud,
 			gameOverScreen,
 			tacticalPauseScreen,
+			victoryScreen,
 		);
 		container.register(GameState, { useValue: newGameState });
 
@@ -331,7 +337,7 @@ export default class SceneManagerSystem implements ISystem {
 				if (spawnNode) {
 					camTarget = new Vector3(
 						spawnNode.absolutePosition.x,
-						DEFAULT_CAM_TARGET.y,
+						0.2,
 						spawnNode.absolutePosition.z,
 					);
 				}

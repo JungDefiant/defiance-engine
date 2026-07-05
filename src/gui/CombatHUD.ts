@@ -1,6 +1,5 @@
 import { Nullable } from "@babylonjs/core";
 import {
-	Button,
 	Container,
 	Control,
 	Grid,
@@ -11,7 +10,6 @@ import {
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/components/ActionSlot";
-import { container } from "tsyringe";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import GameState from "src/GameState";
 import { ActorData } from "src/components/ActorData";
@@ -23,7 +21,6 @@ export default class CombatHUD implements IHUD {
 	private actionBarUI: Nullable<Container> = null;
 	private messageDisplayUI: Nullable<Container> = null;
 	private combatLogUI: Nullable<Container> = null;
-	private victoryScreenUI: Nullable<Container> = null;
 
 	private abilitySlots: ActionSlot[] = [];
 	private deviceSlots: ActionSlot[] = [];
@@ -38,14 +35,6 @@ export default class CombatHUD implements IHUD {
 		}
 
 		this.rootContainer.isVisible = show;
-	}
-
-	public showHideVictoryScreen(show: boolean): void {
-		if (!this.victoryScreenUI) {
-			return;
-		}
-
-		this.victoryScreenUI.isVisible = show;
 	}
 
 	public createHudRoot(): Container {
@@ -70,10 +59,6 @@ export default class CombatHUD implements IHUD {
 
 		this.combatLogUI = this.createCombatLog();
 		this.rootContainer.addControl(this.combatLogUI);
-
-		this.victoryScreenUI = this.createVictoryScreen();
-		this.rootContainer.addControl(this.victoryScreenUI);
-		this.victoryScreenUI.isVisible = false;
 
 		return this.rootContainer;
 	}
@@ -276,50 +261,5 @@ export default class CombatHUD implements IHUD {
 		combatLogUI.addControl(combatLogHeader);
 
 		return combatLogUI;
-	}
-
-	// CONVERT TO SCREEN; DISPLAYED AT TOP Z-INDEX
-	private createVictoryScreen(): Container {
-		const victoryScreenUI = new StackPanel("ui_victoryScreen");
-		victoryScreenUI.isVertical = true;
-		victoryScreenUI.spacing = 20;
-		victoryScreenUI.widthInPixels = 360;
-		victoryScreenUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		victoryScreenUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		victoryScreenUI.top = 200;
-
-		const victoryScreenLabel = new TextBlock(
-			"ui_victoryScreenLabel",
-			"VICTORY",
-		);
-		victoryScreenLabel.color = Themes.neutral2;
-		victoryScreenLabel.style = Themes.typography.header1;
-		victoryScreenLabel.outlineWidth = 2;
-		victoryScreenLabel.outlineColor = Themes.primary3;
-		victoryScreenLabel.heightInPixels = 64;
-		victoryScreenUI.addControl(victoryScreenLabel);
-
-		const continueButton = Button.CreateSimpleButton(
-			"ui_continueButton",
-			"Continue",
-		);
-		continueButton.color = Themes.primary1;
-		continueButton.background = Themes.primary3;
-		continueButton.heightInPixels = 32;
-		continueButton.widthInPixels = 120;
-		if (continueButton.textBlock) {
-			continueButton.textBlock.color = Themes.neutral2;
-			continueButton.textBlock.style = Themes.typography.header4;
-		}
-		continueButton.onPointerClickObservable.add(() => {
-			const cmSystem = container.resolve(CombatManagerSystem);
-			if (cmSystem) {
-				cmSystem.endCombat();
-				this.showHideVictoryScreen(false);
-			}
-		});
-		victoryScreenUI.addControl(continueButton);
-
-		return victoryScreenUI;
 	}
 }

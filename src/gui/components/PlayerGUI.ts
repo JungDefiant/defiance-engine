@@ -263,7 +263,9 @@ export class PlayerGUI implements ActorGUI {
 	}
 
 	public setSelected(isSelected: boolean): void {
-		this.backgroundUI.thickness = isSelected ? 4 : 1;
+		this.backgroundUI.background = isSelected
+			? Themes.neutral3
+			: Themes.primary3;
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {

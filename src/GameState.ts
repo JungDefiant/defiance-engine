@@ -23,6 +23,7 @@ import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { ControlSettings, GameMode, LocationData } from "src/states/GameData";
 import type { SceneData } from "src/states/GameData";
+import { VictoryScreen } from "./gui/screens/VictoryScreen";
 
 /*
 TO DO:
@@ -62,6 +63,7 @@ export default class GameState {
 	// Screens
 	public readonly gameOverScreen: GameOverScreen;
 	public readonly tacticalPauseScreen: TacticalPauseScreen;
+	public readonly victoryScreen: VictoryScreen;
 	// Components
 	public readonly ActorDataComponent: ActorData[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
@@ -88,6 +90,7 @@ export default class GameState {
 		combatHud: CombatHUD,
 		gameOverScreen: GameOverScreen,
 		tacticalPauseScreen: TacticalPauseScreen,
+		victoryScreen: VictoryScreen,
 	) {
 		this.campaignId = campaignId;
 		this.gameMode = gameMode;
@@ -106,6 +109,7 @@ export default class GameState {
 		this.combatHud = combatHud;
 		this.gameOverScreen = gameOverScreen;
 		this.tacticalPauseScreen = tacticalPauseScreen;
+		this.victoryScreen = victoryScreen;
 
 		this.initComponentObservables();
 	}

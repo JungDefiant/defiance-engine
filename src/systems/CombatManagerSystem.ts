@@ -60,7 +60,7 @@ export default class CombatManagerSystem implements ISystem {
 
 		if (this.combatState === CombatState.Victory) {
 			gameState.actionPauseSet.add(PAUSE_VICTORYSCREEN);
-			gameState.combatHud.showHideVictoryScreen(true);
+			gameState.victoryScreen.showHide(true);
 			return;
 		} else if (this.combatState === CombatState.Gameover) {
 			gameState.actionPauseSet.add(PAUSE_GAMEOVER);
