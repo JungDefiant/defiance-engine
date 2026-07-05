@@ -14,6 +14,8 @@ export class ControlSettings {
 		"4".charCodeAt(0),
 	];
 	tacticalPause: number = 32;
+	switchPlayerLeft: number = "A".charCodeAt(0);
+	switchPlayerRight: number = "S".charCodeAt(0);
 }
 
 export interface CampaignData {

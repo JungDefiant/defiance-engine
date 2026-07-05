@@ -17,6 +17,7 @@ import {
 	Texture,
 	TransformNode,
 	ActionManager,
+	ExecuteCodeAction,
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Control } from "@babylonjs/gui";
 import "@babylonjs/loaders";
@@ -31,6 +32,7 @@ import {
 	DEFAULT_CAM_FOCALLENGTH,
 	DEFAULT_CAM_TARGET,
 	DELTATIME_MS,
+	PAUSE_TACTICALPAUSE,
 } from "src/Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
@@ -47,6 +49,7 @@ import {
 } from "src/states/GameData";
 import { getPublicRoot } from "src/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
+import CombatManagerSystem from "./CombatManagerSystem";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -97,6 +100,7 @@ export default class SceneManagerSystem implements ISystem {
 				child.isVisible = true;
 			});
 			this.resetViewPosition(gameState);
+			this.resetControls(gameState);
 		} else if (newMode == GameMode.Dialogue) {
 			const camera = gameState.scene.activeCamera;
 
@@ -356,6 +360,70 @@ export default class SceneManagerSystem implements ISystem {
 			camera.position = viewNode.absolutePosition;
 			camera.setTarget(camTarget);
 		}
+	}
+
+	public async resetControls(gameState: GameState) {
+		if (gameState.actionManager) {
+			gameState.actionManager.dispose();
+			gameState.actionManager = null;
+		}
+
+		const actionManager = new ActionManager(gameState.scene);
+
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: gameState.controlSettings.switchPlayerLeft,
+				},
+				() => {
+					const uiSystem = container.resolve(UserInterfaceSystem);
+					if (!uiSystem) {
+						return;
+					}
+
+					let selPlyEidIndex = gameState.playerEIDs.findIndex(
+						(x) => x === gameState.selectedPlayerEID,
+					);
+					let newSelPlyEIDIndex = selPlyEidIndex - 1;
+					if (newSelPlyEIDIndex < 0) {
+						newSelPlyEIDIndex = gameState.playerEIDs.length - 1;
+					}
+					uiSystem.setSelectedCharacter(
+						gameState.playerEIDs[newSelPlyEIDIndex],
+					);
+				},
+			),
+		);
+
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: gameState.controlSettings.switchPlayerRight,
+				},
+				() => {
+					const uiSystem = container.resolve(UserInterfaceSystem);
+					if (!uiSystem) {
+						return;
+					}
+
+					let selPlyEidIndex = gameState.playerEIDs.findIndex(
+						(x) => x === gameState.selectedPlayerEID,
+					);
+					let newSelPlyEIDIndex = selPlyEidIndex + 1;
+					if (newSelPlyEIDIndex > gameState.playerEIDs.length - 1) {
+						newSelPlyEIDIndex = 0;
+					}
+					uiSystem.setSelectedCharacter(
+						gameState.playerEIDs[newSelPlyEIDIndex],
+					);
+				},
+			),
+		);
+
+		gameState.actionManager = actionManager;
+		gameState.scene.actionManager = actionManager;
 	}
 
 	private async loadPlayerCharacter(

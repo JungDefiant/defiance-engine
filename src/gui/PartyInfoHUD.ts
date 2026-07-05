@@ -28,6 +28,8 @@ export default class PartyInfoHUD implements IHUD {
 		background.thickness = 2;
 		background.width = 1;
 		background.heightInPixels = 110;
+		background.isPointerBlocker = true;
+
 		this.rootContainer.addControl(background);
 
 		return this.rootContainer;
