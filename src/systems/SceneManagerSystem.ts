@@ -249,6 +249,8 @@ export default class SceneManagerSystem implements ISystem {
 		);
 		container.register(GameState, { useValue: newGameState });
 
+		newGameState.lastExploreViewTarget = DEFAULT_CAM_TARGET;
+
 		// Load Player Party
 		const playerEids: number[] = [];
 		for (let i = 0; i < characterIds.length; i++) {
@@ -453,10 +455,7 @@ export default class SceneManagerSystem implements ISystem {
 
 			const currCamera = gameState.scene.activeCamera as UniversalCamera;
 			if (currCamera) {
-				gameState.lastExploreViewTarget = Vector3.TransformNormal(
-					currCamera.getTarget(),
-					currCamera.getWorldMatrix(),
-				);
+				gameState.lastExploreViewTarget = currCamera.getTarget();
 			}
 
 			const dmSystem = container.resolve(DialogueManagerSystem);
