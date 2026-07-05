@@ -27,6 +27,10 @@ export class MainMenuScreen {
 
 		CreateTypography(this.root);
 
+		document.fonts.ready.then(() => {
+			this.root.markAsDirty();
+		});
+
 		const backgroundImage = new Image(
 			"ui_mainMenuBackgroundImage",
 			`${getPublicRoot()}/sprites/gui/gui_mainmenu.png`,
@@ -40,7 +44,7 @@ export class MainMenuScreen {
 		stackPanel.isVertical = true;
 		stackPanel.width = "50%";
 		stackPanel.spacing = 20;
-		stackPanel.topInPixels = 128;
+		stackPanel.topInPixels = 120;
 		stackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		stackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		this.root.addControl(stackPanel);
@@ -50,23 +54,23 @@ export class MainMenuScreen {
 			"IMMORTAL REBELLION",
 		);
 		mainMenuTitle.color = Themes.neutral2;
-		mainMenuTitle.style = Themes.typography.header1;
+		mainMenuTitle.style = Themes.typography.title;
 		mainMenuTitle.width = "100%";
-		mainMenuTitle.heightInPixels = 128;
+		mainMenuTitle.heightInPixels = 160;
 		mainMenuTitle.textWrapping = 1;
 		stackPanel.addControl(mainMenuTitle);
 
 		const newGameButton = Button.CreateSimpleButton(
 			"ui_newGameButton",
-			"New Game",
+			"NEW GAME",
 		);
 		newGameButton.color = Themes.primary1;
 		newGameButton.background = Themes.primary3;
-		newGameButton.widthInPixels = 120;
-		newGameButton.heightInPixels = 32;
+		newGameButton.widthInPixels = 200;
+		newGameButton.heightInPixels = 40;
 		if (newGameButton.textBlock) {
 			newGameButton.textBlock.color = Themes.neutral2;
-			newGameButton.textBlock.style = Themes.typography.header3;
+			newGameButton.textBlock.style = Themes.typography.header2;
 		}
 		newGameButton.onPointerClickObservable.add(
 			async () => await app.startGame(),

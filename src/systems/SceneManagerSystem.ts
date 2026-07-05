@@ -17,6 +17,7 @@ import {
 	Texture,
 	TransformNode,
 	ActionManager,
+	ExecuteCodeAction,
 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Control } from "@babylonjs/gui";
 import "@babylonjs/loaders";
@@ -31,6 +32,7 @@ import {
 	DEFAULT_CAM_FOCALLENGTH,
 	DEFAULT_CAM_TARGET,
 	DELTATIME_MS,
+	PAUSE_TACTICALPAUSE,
 } from "src/Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
@@ -46,6 +48,8 @@ import {
 	SceneData,
 } from "src/states/GameData";
 import { getPublicRoot } from "src/Utils";
+import { VictoryScreen } from "src/gui/screens/VictoryScreen";
+import CombatManagerSystem from "./CombatManagerSystem";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -96,6 +100,7 @@ export default class SceneManagerSystem implements ISystem {
 				child.isVisible = true;
 			});
 			this.resetViewPosition(gameState);
+			this.resetControls(gameState);
 		} else if (newMode == GameMode.Dialogue) {
 			const camera = gameState.scene.activeCamera;
 
@@ -179,6 +184,8 @@ export default class SceneManagerSystem implements ISystem {
 			uiScene,
 			Texture.NEAREST_SAMPLINGMODE,
 		);
+		mainUI.idealWidth = 800;
+		mainUI.idealHeight = 600;
 
 		const sceneGUI = AdvancedDynamicTexture.CreateFullscreenUI(
 			"ui_scene",
@@ -186,34 +193,49 @@ export default class SceneManagerSystem implements ISystem {
 			scene,
 			Texture.NEAREST_SAMPLINGMODE,
 		);
+		sceneGUI.idealWidth = 800;
+		sceneGUI.idealHeight = 600;
 
 		const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
 
 		// Initialize UI and HUDs
 		CreateTypography(mainUI);
 
-		const partyInfoHud = new PartyInfoHUD();
-		mainUI.addControl(partyInfoHud.createHudRoot());
+		document.fonts.ready.then(() => {
+			mainUI.markAsDirty();
+		});
 
+		document.fonts.ready.then(() => {
+			sceneGUI.markAsDirty();
+		});
+
+		// NOTE: Order of the HUDs matter!
 		const exploreHud = new ExploreHUD();
 		mainUI.addControl(exploreHud.createHudRoot());
 		exploreHud.showHideHud(false);
-
-		const dialogueHud = new DialogueHUD();
-		mainUI.addControl(dialogueHud.createHudRoot());
-		dialogueHud.showHideHud(false);
 
 		const combatHud = new CombatHUD();
 		mainUI.addControl(combatHud.createHudRoot());
 		combatHud.showHideHud(false);
 
+		const tacticalPauseScreen = new TacticalPauseScreen();
+		mainUI.addControl(tacticalPauseScreen.getRoot());
+		tacticalPauseScreen.showHide(false);
+
+		const partyInfoHud = new PartyInfoHUD();
+		mainUI.addControl(partyInfoHud.createHudRoot());
+
+		const dialogueHud = new DialogueHUD();
+		mainUI.addControl(dialogueHud.createHudRoot());
+		dialogueHud.showHideHud(false);
+
 		const gameOverScreen = new GameOverScreen();
 		mainUI.addControl(gameOverScreen.getRoot());
 		gameOverScreen.showHide(false);
 
-		const tacticalPauseScreen = new TacticalPauseScreen();
-		mainUI.addControl(tacticalPauseScreen.getRoot());
-		tacticalPauseScreen.showHide(false);
+		const victoryScreen = new VictoryScreen();
+		mainUI.addControl(victoryScreen.getRoot());
+		victoryScreen.showHide(false);
 
 		// Initialize GameState
 		const newGameState = new GameState(
@@ -234,8 +256,11 @@ export default class SceneManagerSystem implements ISystem {
 			combatHud,
 			gameOverScreen,
 			tacticalPauseScreen,
+			victoryScreen,
 		);
 		container.register(GameState, { useValue: newGameState });
+
+		newGameState.lastExploreViewTarget = DEFAULT_CAM_TARGET;
 
 		// Load Player Party
 		const playerEids: number[] = [];
@@ -316,7 +341,7 @@ export default class SceneManagerSystem implements ISystem {
 				if (spawnNode) {
 					camTarget = new Vector3(
 						spawnNode.absolutePosition.x,
-						DEFAULT_CAM_TARGET.y,
+						0.2,
 						spawnNode.absolutePosition.z,
 					);
 				}
@@ -335,6 +360,70 @@ export default class SceneManagerSystem implements ISystem {
 			camera.position = viewNode.absolutePosition;
 			camera.setTarget(camTarget);
 		}
+	}
+
+	public async resetControls(gameState: GameState) {
+		if (gameState.actionManager) {
+			gameState.actionManager.dispose();
+			gameState.actionManager = null;
+		}
+
+		const actionManager = new ActionManager(gameState.scene);
+
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: gameState.controlSettings.switchPlayerLeft,
+				},
+				() => {
+					const uiSystem = container.resolve(UserInterfaceSystem);
+					if (!uiSystem) {
+						return;
+					}
+
+					let selPlyEidIndex = gameState.playerEIDs.findIndex(
+						(x) => x === gameState.selectedPlayerEID,
+					);
+					let newSelPlyEIDIndex = selPlyEidIndex - 1;
+					if (newSelPlyEIDIndex < 0) {
+						newSelPlyEIDIndex = gameState.playerEIDs.length - 1;
+					}
+					uiSystem.setSelectedCharacter(
+						gameState.playerEIDs[newSelPlyEIDIndex],
+					);
+				},
+			),
+		);
+
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: gameState.controlSettings.switchPlayerRight,
+				},
+				() => {
+					const uiSystem = container.resolve(UserInterfaceSystem);
+					if (!uiSystem) {
+						return;
+					}
+
+					let selPlyEidIndex = gameState.playerEIDs.findIndex(
+						(x) => x === gameState.selectedPlayerEID,
+					);
+					let newSelPlyEIDIndex = selPlyEidIndex + 1;
+					if (newSelPlyEIDIndex > gameState.playerEIDs.length - 1) {
+						newSelPlyEIDIndex = 0;
+					}
+					uiSystem.setSelectedCharacter(
+						gameState.playerEIDs[newSelPlyEIDIndex],
+					);
+				},
+			),
+		);
+
+		gameState.actionManager = actionManager;
+		gameState.scene.actionManager = actionManager;
 	}
 
 	private async loadPlayerCharacter(
@@ -441,10 +530,7 @@ export default class SceneManagerSystem implements ISystem {
 
 			const currCamera = gameState.scene.activeCamera as UniversalCamera;
 			if (currCamera) {
-				gameState.lastExploreViewTarget = Vector3.TransformNormal(
-					currCamera.getTarget(),
-					currCamera.getWorldMatrix(),
-				);
+				gameState.lastExploreViewTarget = currCamera.getTarget();
 			}
 
 			const dmSystem = container.resolve(DialogueManagerSystem);
@@ -516,6 +602,7 @@ export default class SceneManagerSystem implements ISystem {
 			}
 			gameState.locationData = newLoc;
 			smSystem.resetViewPosition(gameState);
+			gameState.exploreHud.hideHighlightInfoUI();
 		});
 		sceneGUI.addControl(button);
 		exploreGuiArr.push(button);

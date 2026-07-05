@@ -6,6 +6,7 @@ import GameState from "src/GameState";
 import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, removeEntity, set } from "bitecs";
 import { PAUSE_RENDERQUEUE } from "src/Constants";
+import { Themes } from "src/gui/Themes";
 
 @singleton()
 export default class RenderQueueSystem implements ISystem {
@@ -120,11 +121,12 @@ export default class RenderQueueSystem implements ISystem {
 						`ui_floatingText_${ftEntity}`,
 						ftText,
 					);
-					floatingTextUI.widthInPixels = 96;
-					floatingTextUI.heightInPixels = 96;
+					floatingTextUI.widthInPixels = 128;
+					floatingTextUI.heightInPixels = 128;
 					floatingTextUI.color = ftColor;
 					floatingTextUI.alpha = 1;
 					floatingTextUI.linkOffsetYInPixels = 0;
+					floatingTextUI.style = Themes.typography.header1;
 					floatingTextUI._customData = { targetEid: eid };
 
 					if (gameState.playerEIDs.includes(eid)) {

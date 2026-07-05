@@ -10,6 +10,9 @@ import {
 } from "@babylonjs/gui";
 import { Themes } from "../Themes";
 import { EntityId } from "bitecs";
+import { container } from "tsyringe";
+import GameState from "src/GameState";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 
 export interface ActorGUI {
 	setActBarFill(currValue: number, maxValue: number): void;
@@ -19,6 +22,7 @@ export interface ActorGUI {
 
 export class PlayerGUI implements ActorGUI {
 	private rootContainer: Container;
+	private backgroundUI: Rectangle;
 	private charNameBgUI: Rectangle;
 	private charNameUI: TextBlock;
 	private actBarBgUI: Rectangle;
@@ -45,29 +49,45 @@ export class PlayerGUI implements ActorGUI {
 		this.rootContainer.top = -5;
 		this.rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
-		const backgroundUI = new Rectangle("ui_playerBgUI_" + eid);
-		backgroundUI.width = 1;
-		backgroundUI.heightInPixels = 128;
-		backgroundUI.background = Themes.primary3;
-		backgroundUI.color = Themes.primary1;
-		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		this.rootContainer.addControl(backgroundUI);
+		this.backgroundUI = new Rectangle("ui_playerBgUI_" + eid);
+		this.backgroundUI.width = 1;
+		this.backgroundUI.heightInPixels = 128;
+		this.backgroundUI.background = Themes.primary3;
+		this.backgroundUI.color = Themes.primary1;
+		this.backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.backgroundUI.onPointerClickObservable.add(() => {
+			console.log("SELECTED CHAR", eid);
+			const uiSystem = container.resolve(UserInterfaceSystem);
+			uiSystem.setSelectedCharacter(eid);
+		});
+
+		this.rootContainer.addControl(this.backgroundUI);
 
 		const portraitUI = new Image("ui_portraitUI_" + eid, spriteSrc);
-		portraitUI.clipContent = true;
 		portraitUI.width = 1.25;
 		portraitUI.height = 2.5;
 		portraitUI.top = 285;
 		portraitUI.highlightColor = "";
 		portraitUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		portraitUI.detectPointerOnOpaqueOnly = true;
+		portraitUI.onPointerClickObservable.add(() => {
+			console.log("SELECTED CHAR", eid);
+			const uiSystem = container.resolve(UserInterfaceSystem);
+			uiSystem.setSelectedCharacter(eid);
+		});
 		this.rootContainer.addControl(portraitUI);
 
 		const rootStackPanel = new StackPanel("ui_rootStackPanel_" + eid);
 		rootStackPanel.width = 1;
-		rootStackPanel.heightInPixels = 128;
+		rootStackPanel.heightInPixels = 130;
 		rootStackPanel.spacing = 8;
 		rootStackPanel.isVertical = true;
 		rootStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		rootStackPanel.onPointerClickObservable.add(() => {
+			console.log("SELECTED CHAR", eid);
+			const uiSystem = container.resolve(UserInterfaceSystem);
+			uiSystem.setSelectedCharacter(eid);
+		});
 		this.rootContainer.addControl(rootStackPanel);
 
 		const iconStackPanel = new StackPanel("ui_barStackPanel_" + eid);
@@ -76,7 +96,6 @@ export class PlayerGUI implements ActorGUI {
 		iconStackPanel.spacing = 100;
 		iconStackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		iconStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-
 		rootStackPanel.addControl(iconStackPanel);
 
 		const barStackPanel = new StackPanel("ui_barStackPanel_" + eid);
@@ -127,10 +146,10 @@ export class PlayerGUI implements ActorGUI {
 		);
 		this.charNameUI.width = 1;
 		this.charNameUI.height = 1;
-		this.charNameUI.style = Themes.typography.header3;
+		this.charNameUI.style = Themes.typography.header4;
 		this.charNameUI.color = Themes.neutral2;
 		this.charNameUI.topInPixels = 0;
-		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		this.charNameBgUI.addControl(this.charNameUI);
 
 		// ACT BAR
@@ -199,7 +218,7 @@ export class PlayerGUI implements ActorGUI {
 			eid,
 			"lifeLabel",
 			Themes.neutral2,
-			Themes.typography.caption,
+			Themes.typography.bodyText,
 		);
 		lifeStackUI.addControl(this.lifeBarValueUI);
 
@@ -238,9 +257,15 @@ export class PlayerGUI implements ActorGUI {
 			eid,
 			"willLabel",
 			Themes.neutral2,
-			Themes.typography.caption,
+			Themes.typography.bodyText,
 		);
 		willStackUI.addControl(this.willBarValueUI);
+	}
+
+	public setSelected(isSelected: boolean): void {
+		this.backgroundUI.background = isSelected
+			? Themes.neutral3
+			: Themes.primary3;
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {
@@ -342,7 +367,7 @@ export class PlayerGUI implements ActorGUI {
 		statLabelUi.style = style;
 		statLabelUi.color = color;
 		statLabelUi.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		statLabelUi.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		statLabelUi.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		statLabelUi.paddingTopInPixels = 3;
 		statLabelUi.paddingLeftInPixels = 4;
 		return statLabelUi;
@@ -383,9 +408,8 @@ export class PlayerGUI implements ActorGUI {
 		barValueUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-		barValueUI.widthInPixels = 25;
-		barValueUI.heightInPixels = 14;
-		barValueUI.topInPixels = 2;
+		barValueUI.widthInPixels = 24;
+		barValueUI.heightInPixels = 12;
 		barValueUI.color = color;
 		barValueUI.style = style;
 		return barValueUI;

@@ -73,7 +73,7 @@ export default class ExploreHUD implements IHUD {
 		highlightHeader.fontSize = 14;
 		highlightHeader.topInPixels = -10;
 		highlightHeader.color = Themes.neutral2;
-		highlightHeader.style = Themes.typography.header3;
+		highlightHeader.style = Themes.typography.header4;
 		highlightInfoUI.addControl(highlightHeader);
 
 		const highlightDescription = new TextBlock(this.descriptionUIName, "");
@@ -92,6 +92,4 @@ export default class ExploreHUD implements IHUD {
 
 		return highlightInfoUI;
 	}
-
-	// private createAlertLevelUI() { }
 }

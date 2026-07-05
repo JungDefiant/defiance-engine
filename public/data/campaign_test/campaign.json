@@ -5,6 +5,8 @@
     "flagIds": [],
     "keyItemIds": [],
     "startingPartyIds": [
+        "pc_test",
+        "pc_test",
         "pc_test"
     ]
 }

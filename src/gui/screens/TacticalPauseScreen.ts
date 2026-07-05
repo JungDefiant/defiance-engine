@@ -1,11 +1,4 @@
-import {
-	Button,
-	Container,
-	Control,
-	Rectangle,
-	StackPanel,
-	TextBlock,
-} from "@babylonjs/gui";
+import { Container, Control, Rectangle, TextBlock } from "@babylonjs/gui";
 import { Themes } from "../Themes";
 
 export class TacticalPauseScreen {
@@ -25,7 +18,7 @@ export class TacticalPauseScreen {
 			"TACTICAL PAUSE",
 		);
 		tacticalPauseLabel.color = Themes.neutral2;
-		tacticalPauseLabel.style = Themes.typography.header2;
+		tacticalPauseLabel.style = Themes.typography.header1;
 		tacticalPauseLabel.outlineWidth = 2;
 		tacticalPauseLabel.outlineColor = Themes.primary3;
 		tacticalPauseLabel.heightInPixels = 64;

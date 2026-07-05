@@ -32,6 +32,7 @@ import {
 	PAUSE_VICTORYSCREEN,
 } from "src/Constants";
 import { GameMode } from "src/states/GameData";
+import UserInterfaceSystem from "./UserInterfaceSystem";
 
 @singleton()
 export default class CombatManagerSystem implements ISystem {
@@ -60,7 +61,7 @@ export default class CombatManagerSystem implements ISystem {
 
 		if (this.combatState === CombatState.Victory) {
 			gameState.actionPauseSet.add(PAUSE_VICTORYSCREEN);
-			gameState.combatHud.showHideVictoryScreen(true);
+			gameState.victoryScreen.showHide(true);
 			return;
 		} else if (this.combatState === CombatState.Gameover) {
 			gameState.actionPauseSet.add(PAUSE_GAMEOVER);
@@ -118,7 +119,7 @@ export default class CombatManagerSystem implements ISystem {
 			);
 		}
 
-		await this.initControls(gameState);
+		await this.resetControls(gameState);
 
 		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
 			const actorData = gameState.ActorDataComponent[eid];
@@ -185,7 +186,7 @@ export default class CombatManagerSystem implements ISystem {
 		}
 	}
 
-	private async initControls(gameState: GameState) {
+	public async resetControls(gameState: GameState) {
 		const actorData = gameState.ActorDataComponent[gameState.selectedPlayerEID];
 		await gameState.combatHud.setActionBar(actorData, this, gameState);
 
@@ -244,11 +245,63 @@ export default class CombatManagerSystem implements ISystem {
 			),
 		);
 
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: gameState.controlSettings.switchPlayerLeft,
+				},
+				() => {
+					const uiSystem = container.resolve(UserInterfaceSystem);
+					if (!uiSystem) {
+						return;
+					}
+
+					let selPlyEidIndex = gameState.playerEIDs.findIndex(
+						(x) => x === gameState.selectedPlayerEID,
+					);
+					let newSelPlyEIDIndex = selPlyEidIndex - 1;
+					if (newSelPlyEIDIndex < 0) {
+						newSelPlyEIDIndex = gameState.playerEIDs.length - 1;
+					}
+					uiSystem.setSelectedCharacter(
+						gameState.playerEIDs[newSelPlyEIDIndex],
+					);
+				},
+			),
+		);
+
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: gameState.controlSettings.switchPlayerRight,
+				},
+				() => {
+					const uiSystem = container.resolve(UserInterfaceSystem);
+					if (!uiSystem) {
+						return;
+					}
+
+					let selPlyEidIndex = gameState.playerEIDs.findIndex(
+						(x) => x === gameState.selectedPlayerEID,
+					);
+					let newSelPlyEIDIndex = selPlyEidIndex + 1;
+					if (newSelPlyEIDIndex > gameState.playerEIDs.length - 1) {
+						newSelPlyEIDIndex = 0;
+					}
+					uiSystem.setSelectedCharacter(
+						gameState.playerEIDs[newSelPlyEIDIndex],
+					);
+				},
+			),
+		);
+
 		gameState.actionManager = actionManager;
 		gameState.scene.actionManager = actionManager;
 	}
 
-	private setTacticalPause(isActive: boolean, gameState: GameState) {
+	public setTacticalPause(isActive: boolean, gameState: GameState) {
 		if (isActive) {
 			gameState.actionPauseSet.add(PAUSE_TACTICALPAUSE);
 			gameState.renderPauseSet.add(PAUSE_TACTICALPAUSE);

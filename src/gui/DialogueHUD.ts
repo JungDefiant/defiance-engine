@@ -92,7 +92,7 @@ export default class DialogueHUD implements IHUD {
 				dlgData.character,
 			);
 			speakerLabel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-			speakerLabel.style = Themes.typography.header3;
+			speakerLabel.style = Themes.typography.header4;
 			speakerLabel.color = Themes.primary3;
 			speakerLabel.paddingLeftInPixels = 16;
 			speakerLabel.paddingTopInPixels = 4;
@@ -157,7 +157,7 @@ export default class DialogueHUD implements IHUD {
 				Control.HORIZONTAL_ALIGNMENT_LEFT;
 			buttonUI.textBlock.paddingLeftInPixels = 8;
 			buttonUI.textBlock.color = Themes.neutral2;
-			buttonUI.textBlock.style = Themes.typography.header3;
+			buttonUI.textBlock.style = Themes.typography.header4;
 		}
 
 		buttonUI.onPointerEnterObservable.add(() => {
@@ -197,7 +197,7 @@ export default class DialogueHUD implements IHUD {
 				Control.HORIZONTAL_ALIGNMENT_LEFT;
 			buttonUI.textBlock.paddingLeftInPixels = 8;
 			buttonUI.textBlock.color = Themes.neutral2;
-			buttonUI.textBlock.style = Themes.typography.header3;
+			buttonUI.textBlock.style = Themes.typography.header4;
 		}
 
 		buttonUI.onPointerEnterObservable.add(() => {
@@ -246,7 +246,7 @@ export default class DialogueHUD implements IHUD {
 					Control.HORIZONTAL_ALIGNMENT_LEFT;
 				buttonUI.textBlock.paddingLeftInPixels = 8;
 				buttonUI.textBlock.color = Themes.neutral2;
-				buttonUI.textBlock.style = Themes.typography.header3;
+				buttonUI.textBlock.style = Themes.typography.header4;
 			}
 
 			buttonUI.onPointerEnterObservable.add(() => {

@@ -2,11 +2,12 @@ import { container, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
 import GameState from "src/GameState";
-import { query } from "bitecs";
+import { EntityId, query } from "bitecs";
 import { PlayerGUI } from "src/gui/components/PlayerGUI";
 import { ActorData } from "src/components/ActorData";
 import { EnemyGUI } from "src/gui/components/EnemyGUI";
 import { GameMode } from "src/states/GameData";
+import CombatManagerSystem from "./CombatManagerSystem";
 
 @singleton()
 export default class UserInterfaceSystem implements ISystem {
@@ -46,6 +47,30 @@ export default class UserInterfaceSystem implements ISystem {
 		gameState.exploreHud.showHideHud(newMode == GameMode.Explore);
 		gameState.dialogueHud.showHideHud(newMode == GameMode.Dialogue);
 		gameState.combatHud.showHideHud(newMode == GameMode.Combat);
+	}
+
+	public setSelectedCharacter(eid: EntityId) {
+		const gameState = container.resolve(GameState);
+		if (!gameState.playerEIDs.includes(eid)) {
+			return;
+		}
+
+		gameState.selectedPlayerEID = eid;
+		gameState.PlayerGUIComponent.forEach((gui, eid) => {
+			if (eid === gameState.selectedPlayerEID) {
+				gui.setSelected(true);
+			} else {
+				gui.setSelected(false);
+			}
+		});
+
+		if (gameState.gameMode === GameMode.Combat) {
+			const cmSystem = container.resolve(CombatManagerSystem);
+			if (!cmSystem) {
+				return;
+			}
+			cmSystem.resetControls(gameState);
+		}
 	}
 
 	public createPlayerInput(inputMode: GameMode) {}
