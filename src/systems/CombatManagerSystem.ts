@@ -118,7 +118,7 @@ export default class CombatManagerSystem implements ISystem {
 			);
 		}
 
-		await this.initControls(gameState);
+		await this.resetControls(gameState);
 
 		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
 			const actorData = gameState.ActorDataComponent[eid];
@@ -185,7 +185,7 @@ export default class CombatManagerSystem implements ISystem {
 		}
 	}
 
-	private async initControls(gameState: GameState) {
+	public async resetControls(gameState: GameState) {
 		const actorData = gameState.ActorDataComponent[gameState.selectedPlayerEID];
 		await gameState.combatHud.setActionBar(actorData, this, gameState);
 

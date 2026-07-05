@@ -152,7 +152,7 @@ export default class SceneManagerSystem implements ISystem {
 		camera.setTarget(DEFAULT_CAM_TARGET);
 		camera.position = new Vector3(0, 0.4, 0);
 		camera.minZ = 0;
-		camera.viewport = new Viewport(0, 0.05, 1, 1);
+		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.inputs.clear();
 		camera.inputs.addMouse();
 		camera.attachControl(this.gameCanvas, false);
@@ -204,28 +204,29 @@ export default class SceneManagerSystem implements ISystem {
 			sceneGUI.markAsDirty();
 		});
 
-		const partyInfoHud = new PartyInfoHUD();
-		mainUI.addControl(partyInfoHud.createHudRoot());
-
+		// NOTE: Order of the HUDs matter!
 		const exploreHud = new ExploreHUD();
 		mainUI.addControl(exploreHud.createHudRoot());
 		exploreHud.showHideHud(false);
-
-		const dialogueHud = new DialogueHUD();
-		mainUI.addControl(dialogueHud.createHudRoot());
-		dialogueHud.showHideHud(false);
 
 		const combatHud = new CombatHUD();
 		mainUI.addControl(combatHud.createHudRoot());
 		combatHud.showHideHud(false);
 
-		const gameOverScreen = new GameOverScreen();
-		mainUI.addControl(gameOverScreen.getRoot());
-		gameOverScreen.showHide(false);
-
 		const tacticalPauseScreen = new TacticalPauseScreen();
 		mainUI.addControl(tacticalPauseScreen.getRoot());
 		tacticalPauseScreen.showHide(false);
+
+		const partyInfoHud = new PartyInfoHUD();
+		mainUI.addControl(partyInfoHud.createHudRoot());
+
+		const dialogueHud = new DialogueHUD();
+		mainUI.addControl(dialogueHud.createHudRoot());
+		dialogueHud.showHideHud(false);
+
+		const gameOverScreen = new GameOverScreen();
+		mainUI.addControl(gameOverScreen.getRoot());
+		gameOverScreen.showHide(false);
 
 		// Initialize GameState
 		const newGameState = new GameState(

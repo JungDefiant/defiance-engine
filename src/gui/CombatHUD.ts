@@ -278,6 +278,7 @@ export default class CombatHUD implements IHUD {
 		return combatLogUI;
 	}
 
+	// CONVERT TO SCREEN; DISPLAYED AT TOP Z-INDEX
 	private createVictoryScreen(): Container {
 		const victoryScreenUI = new StackPanel("ui_victoryScreen");
 		victoryScreenUI.isVertical = true;

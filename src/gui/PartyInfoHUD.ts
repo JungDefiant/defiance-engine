@@ -44,11 +44,12 @@ export default class PartyInfoHUD implements IHUD {
 		this.partyInfoEntryStack.spacing = 16;
 		this.partyInfoEntryStack.topInPixels = -4;
 
-		for (const entry of gameState.PlayerGUIComponent) {
+		for (const [eid, entry] of gameState.PlayerGUIComponent.entries()) {
 			if (!entry) {
 				continue;
 			}
 			this.partyInfoEntryStack.addControl(entry.getRoot());
+			entry.setSelected(gameState.selectedPlayerEID === eid);
 		}
 
 		this.rootContainer.addControl(this.partyInfoEntryStack);

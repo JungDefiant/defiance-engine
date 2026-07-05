@@ -10,6 +10,9 @@ import {
 } from "@babylonjs/gui";
 import { Themes } from "../Themes";
 import { EntityId } from "bitecs";
+import { container } from "tsyringe";
+import GameState from "src/GameState";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 
 export interface ActorGUI {
 	setActBarFill(currValue: number, maxValue: number): void;
@@ -19,6 +22,7 @@ export interface ActorGUI {
 
 export class PlayerGUI implements ActorGUI {
 	private rootContainer: Container;
+	private backgroundUI: Rectangle;
 	private charNameBgUI: Rectangle;
 	private charNameUI: TextBlock;
 	private actBarBgUI: Rectangle;
@@ -45,21 +49,32 @@ export class PlayerGUI implements ActorGUI {
 		this.rootContainer.top = -5;
 		this.rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
-		const backgroundUI = new Rectangle("ui_playerBgUI_" + eid);
-		backgroundUI.width = 1;
-		backgroundUI.heightInPixels = 128;
-		backgroundUI.background = Themes.primary3;
-		backgroundUI.color = Themes.primary1;
-		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		this.rootContainer.addControl(backgroundUI);
+		this.backgroundUI = new Rectangle("ui_playerBgUI_" + eid);
+		this.backgroundUI.width = 1;
+		this.backgroundUI.heightInPixels = 128;
+		this.backgroundUI.background = Themes.primary3;
+		this.backgroundUI.color = Themes.primary1;
+		this.backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.backgroundUI.onPointerClickObservable.add(() => {
+			console.log("SELECTED CHAR", eid);
+			const uiSystem = container.resolve(UserInterfaceSystem);
+			uiSystem.setSelectedCharacter(eid);
+		});
+
+		this.rootContainer.addControl(this.backgroundUI);
 
 		const portraitUI = new Image("ui_portraitUI_" + eid, spriteSrc);
-		portraitUI.clipContent = true;
 		portraitUI.width = 1.25;
 		portraitUI.height = 2.5;
 		portraitUI.top = 285;
 		portraitUI.highlightColor = "";
 		portraitUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		portraitUI.detectPointerOnOpaqueOnly = true;
+		portraitUI.onPointerClickObservable.add(() => {
+			console.log("SELECTED CHAR", eid);
+			const uiSystem = container.resolve(UserInterfaceSystem);
+			uiSystem.setSelectedCharacter(eid);
+		});
 		this.rootContainer.addControl(portraitUI);
 
 		const rootStackPanel = new StackPanel("ui_rootStackPanel_" + eid);
@@ -68,6 +83,11 @@ export class PlayerGUI implements ActorGUI {
 		rootStackPanel.spacing = 8;
 		rootStackPanel.isVertical = true;
 		rootStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		rootStackPanel.onPointerClickObservable.add(() => {
+			console.log("SELECTED CHAR", eid);
+			const uiSystem = container.resolve(UserInterfaceSystem);
+			uiSystem.setSelectedCharacter(eid);
+		});
 		this.rootContainer.addControl(rootStackPanel);
 
 		const iconStackPanel = new StackPanel("ui_barStackPanel_" + eid);
@@ -76,7 +96,6 @@ export class PlayerGUI implements ActorGUI {
 		iconStackPanel.spacing = 100;
 		iconStackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		iconStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-
 		rootStackPanel.addControl(iconStackPanel);
 
 		const barStackPanel = new StackPanel("ui_barStackPanel_" + eid);
@@ -241,6 +260,10 @@ export class PlayerGUI implements ActorGUI {
 			Themes.typography.bodyText,
 		);
 		willStackUI.addControl(this.willBarValueUI);
+	}
+
+	public setSelected(isSelected: boolean): void {
+		this.backgroundUI.thickness = isSelected ? 4 : 1;
 	}
 
 	public setActBarFill(currValue: number, maxValue: number): void {
