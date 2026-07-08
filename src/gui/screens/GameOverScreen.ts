@@ -13,16 +13,15 @@ export class GameOverScreen {
 
 	public constructor() {
 		this.rootContainer = new Rectangle("ui_gameOverGUI");
-		this.rootContainer.width = "100%";
-		this.rootContainer.height = "100%";
+		this.rootContainer.width = 1;
+		this.rootContainer.height = 1;
 		this.rootContainer.thickness = 0;
 		this.rootContainer.background = Themes.primary3;
 		this.rootContainer.isVisible = false;
 
 		const stackPanel = new StackPanel("ui_gameOverStackPanel");
 		stackPanel.isVertical = true;
-		stackPanel.width = "100%";
-		// stackPanel.height = 240;
+		stackPanel.width = 1;
 		stackPanel.spacing = 20;
 		stackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		stackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;

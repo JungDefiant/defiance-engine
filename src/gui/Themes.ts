@@ -34,13 +34,13 @@ export function CreateTypography(adt: AdvancedDynamicTexture) {
 	const header3Style = adt.createStyle();
 	header3Style.fontFamily = "RobotoMono";
 	header3Style.fontWeight = "normal";
-	header3Style.fontSize = 24;
+	header3Style.fontSize = 16;
 	Themes.typography.header3 = header4Style;
 
 	const header2Style = adt.createStyle();
 	header2Style.fontFamily = "RobotoMono";
-	header2Style.fontWeight = "semibold";
-	header2Style.fontSize = 36;
+	header2Style.fontWeight = "normal";
+	header2Style.fontSize = 24;
 	Themes.typography.header2 = header2Style;
 
 	const header1Style = adt.createStyle();
