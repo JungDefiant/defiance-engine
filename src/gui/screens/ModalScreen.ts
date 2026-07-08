@@ -22,11 +22,13 @@ export class ModalScreen {
 
 	public constructor() {
 		this.rootContainer = new Rectangle("ui_modalGUI");
-		this.rootContainer.widthInPixels = 600;
-		this.rootContainer.adaptHeightToChildren = true;
+		this.rootContainer.widthInPixels = 400;
+		this.rootContainer.heightInPixels = 400;
 		this.rootContainer.thickness = 1;
 		this.rootContainer.color = Themes.primary1;
 		this.rootContainer.background = Themes.primary3;
+		this.rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.rootContainer.topInPixels = -100;
 		this.rootContainer.isVisible = false;
 
 		const stackPanel = new StackPanel("ui_modalStackPanel");
@@ -34,42 +36,47 @@ export class ModalScreen {
 		stackPanel.width = 1;
 		stackPanel.adaptHeightToChildren = true;
 		stackPanel.spacing = 20;
-		stackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+		stackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		stackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		this.rootContainer.addControl(stackPanel);
 
 		this.modalLabel = new TextBlock("ui_modalLabel", "");
-		this.modalLabel.color = Themes.neutral1;
-		this.modalLabel.style = Themes.typography.header1;
+		this.modalLabel.color = Themes.neutral2;
+		this.modalLabel.style = Themes.typography.header2;
 		this.modalLabel.heightInPixels = 64;
-		stackPanel.addControl(this.modalLabel);
+		this.modalLabel.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.rootContainer.addControl(this.modalLabel);
 
 		const textBodyPanel = new StackPanel("ui_textBodyPanel");
 		textBodyPanel.isVertical = false;
 		textBodyPanel.width = 1;
 		textBodyPanel.adaptHeightToChildren = true;
-		textBodyPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		textBodyPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		textBodyPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		stackPanel.addControl(textBodyPanel);
-
-		this.modalText = new TextBlock("ui_modalLabel", "");
-		this.modalText.color = Themes.neutral1;
-		this.modalText.style = Themes.typography.bodyText;
-		this.modalText.heightInPixels = 0;
-		textBodyPanel.addControl(this.modalText);
+		this.rootContainer.addControl(textBodyPanel);
 
 		this.modalImage = new Image("ui_modalImage", "");
-		this.modalImage.widthInPixels = 0;
-		this.modalImage.heightInPixels = 0;
+		this.modalImage.widthInPixels = 200;
+		this.modalImage.heightInPixels = 150;
+		this.modalImage.stretch = Image.STRETCH_UNIFORM;
 		textBodyPanel.addControl(this.modalImage);
+
+		this.modalText = new TextBlock("ui_modalLabel", "");
+		this.modalText.color = Themes.neutral2;
+		this.modalText.style = Themes.typography.bodyText;
+		this.modalText.resizeToFit = true;
+		this.modalText.paddingLeftInPixels = this.modalText.paddingRightInPixels = 16;
+		textBodyPanel.addControl(this.modalText);
 
 		const buttonPanel = new StackPanel("ui_buttonStackPanel");
 		buttonPanel.isVertical = false;
-		buttonPanel.width = 1;
-		buttonPanel.adaptHeightToChildren = true;
+		buttonPanel.heightInPixels = 40;
+		buttonPanel.adaptWidthToChildren = true;
+		buttonPanel.spacing = 16;
+		buttonPanel.paddingLeftInPixels = buttonPanel.paddingRightInPixels = buttonPanel.paddingBottomInPixels = 8;
 		buttonPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		buttonPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		stackPanel.addControl(buttonPanel);
+		buttonPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+		this.rootContainer.addControl(buttonPanel);
 
 		const thisScreen = this;
 
@@ -81,6 +88,11 @@ export class ModalScreen {
 		lastPageButton.background = Themes.primary3;
 		lastPageButton.heightInPixels = 32;
 		lastPageButton.widthInPixels = 32;
+		lastPageButton.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		if(lastPageButton.image)
+		{
+			lastPageButton.image.stretch = Image.STRETCH_UNIFORM;
+		}
 		lastPageButton.onPointerClickObservable.add(() => {
 			thisScreen.renderPageByIndex(thisScreen.currentPageIndex - 1);
 		});
@@ -95,6 +107,11 @@ export class ModalScreen {
 		nextPageButton.background = Themes.primary3;
 		nextPageButton.heightInPixels = 32;
 		nextPageButton.widthInPixels = 32;
+		nextPageButton.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		if(nextPageButton.image)
+		{
+			nextPageButton.image.stretch = Image.STRETCH_UNIFORM;
+		}
 		nextPageButton.onPointerClickObservable.add(() => {
 			thisScreen.renderPageByIndex(thisScreen.currentPageIndex + 1);
 
@@ -107,6 +124,11 @@ export class ModalScreen {
 		exitButton.background = Themes.primary3;
 		exitButton.heightInPixels = 32;
 		exitButton.widthInPixels = 32;
+		exitButton.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		if(exitButton.image)
+		{
+			exitButton.image.stretch = Image.STRETCH_UNIFORM;
+		}
 		exitButton.onPointerClickObservable.add(() => {
 			thisScreen.showHide(false);
 		});
@@ -114,10 +136,11 @@ export class ModalScreen {
 		this.navButtons[2] = exitButton;
 
 		this.pageCount = new TextBlock("ui_modalPageCount", "");
-		this.pageCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
 		this.pageCount.style = Themes.typography.header3;
-		this.pageCount.widthInPixels = 32;
+		this.pageCount.color = Themes.neutral2;
+		this.pageCount.widthInPixels = 96;
 		this.pageCount.heightInPixels = 32;
+		this.pageCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
 		buttonPanel.addControl(this.pageCount);
 
 		this.currentPageIndex = 0;
@@ -153,6 +176,8 @@ export class ModalScreen {
 		if (currentPage.imageSrc) {
 			this.modalImage.source = currentPage.imageSrc;
 			this.modalImage.isVisible = true;
+			console.log("IMAGE!", currentPage.imageSrc);
+			this.modalText.widthInPixels = 400;
 		} else {
 			this.modalImage.isVisible = false;
 		}
