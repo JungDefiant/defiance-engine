@@ -14,7 +14,7 @@ export class ModalScreen {
 	private modalLabel: TextBlock;
 	private modalText: TextBlock;
 	private modalImage: Image;
-	private currentPage: ModalPage = { title: "", textBody: "", imageSrc: "" };
+	private currentPageIndex: number;
 	private modalPages: ModalPage[] = [];
 	private navButtons: Button[] = [];
 
@@ -68,19 +68,7 @@ export class ModalScreen {
 		buttonPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		stackPanel.addControl(buttonPanel);
 
-		const nextPageButton = Button.CreateImageOnlyButton(
-			"ui_nextPageButton",
-			"src/",
-		);
-		nextPageButton.color = Themes.primary1;
-		nextPageButton.background = Themes.primary3;
-		nextPageButton.heightInPixels = 32;
-		nextPageButton.widthInPixels = 32;
-		nextPageButton.onPointerClickObservable.add(() => {
-			// Switch to next page
-		});
-		buttonPanel.addControl(nextPageButton);
-		this.navButtons[0] = nextPageButton;
+		const thisScreen = this;
 
 		const lastPageButton = Button.CreateImageOnlyButton(
 			"ui_lastPageButton",
@@ -91,10 +79,25 @@ export class ModalScreen {
 		lastPageButton.heightInPixels = 32;
 		lastPageButton.widthInPixels = 32;
 		lastPageButton.onPointerClickObservable.add(() => {
-			// Switch to last page
+			thisScreen.renderPageByIndex(thisScreen.currentPageIndex - 1);
 		});
 		buttonPanel.addControl(lastPageButton);
-		this.navButtons[1] = lastPageButton;
+		this.navButtons[0] = lastPageButton;
+
+		const nextPageButton = Button.CreateImageOnlyButton(
+			"ui_nextPageButton",
+			"src/",
+		);
+		nextPageButton.color = Themes.primary1;
+		nextPageButton.background = Themes.primary3;
+		nextPageButton.heightInPixels = 32;
+		nextPageButton.widthInPixels = 32;
+		nextPageButton.onPointerClickObservable.add(() => {
+			thisScreen.renderPageByIndex(thisScreen.currentPageIndex + 1);
+
+		});
+		buttonPanel.addControl(nextPageButton);
+		this.navButtons[1] = nextPageButton;
 
 		const exitButton = Button.CreateImageOnlyButton("ui_exitButton", "src/");
 		exitButton.color = Themes.primary1;
@@ -102,10 +105,12 @@ export class ModalScreen {
 		exitButton.heightInPixels = 32;
 		exitButton.widthInPixels = 32;
 		exitButton.onPointerClickObservable.add(() => {
-			// Close modal
+			thisScreen.showHide(false);
 		});
 		buttonPanel.addControl(exitButton);
 		this.navButtons[2] = exitButton;
+
+		this.currentPageIndex = 0;
 	}
 
 	public getRoot(): Container {
@@ -123,19 +128,41 @@ export class ModalScreen {
 
 	public renderPageByIndex(index: number) {
 		// Check for out of bounds and early exit
+		if(index < 0) {
+			index = this.modalPages.length - 1;
+		}
+		else if (index > this.modalPages.length - 1) {
+			index = 0;
+		}
 
-		this.currentPage = this.modalPages[0];
+		this.currentPageIndex = index;
+		const currentPage = this.modalPages[index];
 
-		this.modalLabel.text = this.currentPage.title;
-		if (this.currentPage.imageSrc) {
-			this.modalImage.source = this.currentPage.imageSrc;
+		this.modalLabel.text = currentPage.title;
+    	this.modalText.text = currentPage.textBody;
+		if (currentPage.imageSrc) {
+			this.modalImage.source = currentPage.imageSrc;
 			this.modalImage.isVisible = true;
 		} else {
 			this.modalImage.isVisible = false;
 		}
-    this.modalText.text = this.currentPage.textBody;
-    
-    
+
+		this.navButtons.forEach((button) => button.isVisible = false);
+
+		if(index > 0 && this.modalPages.length > 1) {
+			// Enables last page button
+			this.navButtons[0].isVisible = true;
+		}
+
+		if(index < this.modalPages.length - 1 && this.modalPages.length > 1) {
+			// Enables next page button
+			this.navButtons[1].isVisible = true;
+		}
+
+		if(index === this.modalPages.length - 1) {
+			// Enables exit button
+			this.navButtons[2].isVisible = true;
+		}
 	}
 }
 
