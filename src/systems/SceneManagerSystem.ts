@@ -259,8 +259,9 @@ export default class SceneManagerSystem implements ISystem {
 			exploreHud,
 			dialogueHud,
 			combatHud,
-			gameOverScreen,
 			tacticalPauseScreen,
+			modalScreen,
+			gameOverScreen,
 			victoryScreen,
 		);
 		container.register(GameState, { useValue: newGameState });

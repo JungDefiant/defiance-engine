@@ -24,6 +24,7 @@ import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { ControlSettings, GameMode, LocationData } from "src/states/GameData";
 import type { SceneData } from "src/states/GameData";
 import { VictoryScreen } from "./gui/screens/VictoryScreen";
+import { ModalScreen } from "./gui/screens/ModalScreen";
 
 /*
 TO DO:
@@ -61,8 +62,9 @@ export default class GameState {
 	public readonly dialogueHud: DialogueHUD;
 	public readonly combatHud: CombatHUD;
 	// Screens
-	public readonly gameOverScreen: GameOverScreen;
 	public readonly tacticalPauseScreen: TacticalPauseScreen;
+	public readonly modalScreen: ModalScreen;
+	public readonly gameOverScreen: GameOverScreen;
 	public readonly victoryScreen: VictoryScreen;
 	// Components
 	public readonly ActorDataComponent: ActorData[] = [];
@@ -88,8 +90,9 @@ export default class GameState {
 		exploreHud: ExploreHUD,
 		dialogueHud: DialogueHUD,
 		combatHud: CombatHUD,
-		gameOverScreen: GameOverScreen,
 		tacticalPauseScreen: TacticalPauseScreen,
+		modalScreen: ModalScreen,
+		gameOverScreen: GameOverScreen,
 		victoryScreen: VictoryScreen,
 	) {
 		this.campaignId = campaignId;
@@ -107,8 +110,9 @@ export default class GameState {
 		this.exploreHud = exploreHud;
 		this.dialogueHud = dialogueHud;
 		this.combatHud = combatHud;
-		this.gameOverScreen = gameOverScreen;
 		this.tacticalPauseScreen = tacticalPauseScreen;
+		this.modalScreen = modalScreen;
+		this.gameOverScreen = gameOverScreen;
 		this.victoryScreen = victoryScreen;
 
 		this.initComponentObservables();
