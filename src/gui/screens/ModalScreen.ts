@@ -9,6 +9,8 @@ import {
 } from "@babylonjs/gui";
 import { Themes } from "../Themes";
 import { getPublicRoot } from "src/Utils";
+import { container } from "tsyringe";
+import GameState from "src/GameState";
 
 export class ModalScreen {
 	private rootContainer: Rectangle;
@@ -151,6 +153,16 @@ export class ModalScreen {
 	}
 
 	public showHide(show: boolean) {
+		const gameState = container.resolve(GameState);
+		if(show) {
+			gameState.actionPauseSet.add("PAUSE_MODAL");
+			gameState.renderPauseSet.add("PAUSE_MODAL");
+		}
+		else {
+			gameState.actionPauseSet.delete("PAUSE_MODAL");
+			gameState.renderPauseSet.add("PAUSE_MODAL");
+
+		}
 		this.rootContainer.isVisible = show;
 	}
 

@@ -232,7 +232,6 @@ export default class SceneManagerSystem implements ISystem {
 
 		const modalScreen = new ModalScreen();
 		mainUI.addControl(modalScreen.getRoot());
-		modalScreen.showHide(false);
 
 		const gameOverScreen = new GameOverScreen();
 		mainUI.addControl(gameOverScreen.getRoot());
