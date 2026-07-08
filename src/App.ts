@@ -76,7 +76,7 @@ export class App {
 		);
 		await this.smSystem.runScene(this.engine, this);
 
-		// Test Code
+		// Test Code - Modal Screens
 		// const gameState = container.resolve(GameState);
 		// gameState.modalScreen.setNewPages(
 		// 	[ 
