@@ -8,21 +8,24 @@ import {
 	TextBlock,
 } from "@babylonjs/gui";
 import { Themes } from "../Themes";
+import { getPublicRoot } from "src/Utils";
 
 export class ModalScreen {
 	private rootContainer: Rectangle;
 	private modalLabel: TextBlock;
 	private modalText: TextBlock;
 	private modalImage: Image;
+	private pageCount: TextBlock;
 	private currentPageIndex: number;
 	private modalPages: ModalPage[] = [];
 	private navButtons: Button[] = [];
 
 	public constructor() {
 		this.rootContainer = new Rectangle("ui_modalGUI");
-		this.rootContainer.widthInPixels = 0;
+		this.rootContainer.widthInPixels = 600;
 		this.rootContainer.adaptHeightToChildren = true;
-		this.rootContainer.thickness = 0;
+		this.rootContainer.thickness = 1;
+		this.rootContainer.color = Themes.primary1;
 		this.rootContainer.background = Themes.primary3;
 		this.rootContainer.isVisible = false;
 
@@ -72,7 +75,7 @@ export class ModalScreen {
 
 		const lastPageButton = Button.CreateImageOnlyButton(
 			"ui_lastPageButton",
-			"src/",
+			`${getPublicRoot()}/sprites/gui/icons/icon_lastpage.png`,
 		);
 		lastPageButton.color = Themes.primary1;
 		lastPageButton.background = Themes.primary3;
@@ -86,7 +89,7 @@ export class ModalScreen {
 
 		const nextPageButton = Button.CreateImageOnlyButton(
 			"ui_nextPageButton",
-			"src/",
+			`${getPublicRoot()}/sprites/gui/icons/icon_nextpage.png`,
 		);
 		nextPageButton.color = Themes.primary1;
 		nextPageButton.background = Themes.primary3;
@@ -99,7 +102,7 @@ export class ModalScreen {
 		buttonPanel.addControl(nextPageButton);
 		this.navButtons[1] = nextPageButton;
 
-		const exitButton = Button.CreateImageOnlyButton("ui_exitButton", "src/");
+		const exitButton = Button.CreateImageOnlyButton("ui_exitButton", `${getPublicRoot()}/sprites/gui/icons/icon_exit.png`);
 		exitButton.color = Themes.primary1;
 		exitButton.background = Themes.primary3;
 		exitButton.heightInPixels = 32;
@@ -109,6 +112,13 @@ export class ModalScreen {
 		});
 		buttonPanel.addControl(exitButton);
 		this.navButtons[2] = exitButton;
+
+		this.pageCount = new TextBlock("ui_modalPageCount", "");
+		this.pageCount.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+		this.pageCount.style = Themes.typography.header3;
+		this.pageCount.widthInPixels = 32;
+		this.pageCount.heightInPixels = 32;
+		buttonPanel.addControl(this.pageCount);
 
 		this.currentPageIndex = 0;
 	}
@@ -147,6 +157,15 @@ export class ModalScreen {
 			this.modalImage.isVisible = false;
 		}
 
+		if(this.modalPages.length > 1) {
+			this.pageCount.text = `${index + 1} / ${this.modalPages.length}`;
+			this.pageCount.isVisible = true;
+		}
+		else {
+			this.pageCount.isVisible = false;
+		}
+
+
 		this.navButtons.forEach((button) => button.isVisible = false);
 
 		if(index > 0 && this.modalPages.length > 1) {
@@ -163,6 +182,7 @@ export class ModalScreen {
 			// Enables exit button
 			this.navButtons[2].isVisible = true;
 		}
+
 	}
 }
 

@@ -74,6 +74,9 @@ export class App {
 			campaignData.startingPartyIds,
 		);
 		await this.smSystem.runScene(this.engine, this);
+
+		// Test code
+		
 	}
 
 	public updateSystems(deltaTime: number, gameState: GameState) {

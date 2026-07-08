@@ -50,6 +50,7 @@ import {
 import { getPublicRoot } from "src/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import CombatManagerSystem from "./CombatManagerSystem";
+import { ModalScreen } from "src/gui/screens/ModalScreen";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -228,6 +229,10 @@ export default class SceneManagerSystem implements ISystem {
 		const dialogueHud = new DialogueHUD();
 		mainUI.addControl(dialogueHud.createHudRoot());
 		dialogueHud.showHideHud(false);
+
+		const modalScreen = new ModalScreen();
+		mainUI.addControl(modalScreen.getRoot());
+		modalScreen.showHide(false);
 
 		const gameOverScreen = new GameOverScreen();
 		mainUI.addControl(gameOverScreen.getRoot());
