@@ -1,13 +1,12 @@
 import { container, singleton } from "tsyringe";
 import { UniversalCamera, Vector3 } from "@babylonjs/core";
-import type { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 import grammar from "src/parser/DialogueParser.ohm-bundle";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import GameState from "src/states/GameState";
 import DialogueHUD from "src/gui/DialogueHUD";
 import type ISystem from "src/systems/ISystem";
-import { DialogueLine, DialogueNode, DialogueOptionLine, GameMode, type InteractableData } from "src/states/GameData";
-import type { Nullable, TransformNode } from "@babylonjs/core";
+import { DialogueLine, DialogueNode, DialogueOptionLine, GameMode } from "src/states/GameData";
+import type { TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { getPublicRoot } from "src/Utils";
