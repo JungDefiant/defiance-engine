@@ -10,7 +10,7 @@ import {
 import { Themes } from "../Themes";
 import { getPublicRoot } from "src/Utils";
 import { container } from "tsyringe";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 
 export class ModalScreen {
 	private rootContainer: Rectangle;

@@ -1,9 +1,9 @@
 
-
 export interface GameEvent {
     type: EventType,
     trigger: EventTrigger,
     source: string,
+    isTriggered: boolean
 }
 
 export enum EventType {

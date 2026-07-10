@@ -1,6 +1,6 @@
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { container, singleton } from "tsyringe";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import { IFactory } from "src/factories/IFactory";
 import { ActorData } from "src/components/ActorData";
 import { PlayerGUI } from "src/gui/components/PlayerGUI";

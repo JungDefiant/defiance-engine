@@ -7,7 +7,7 @@ import {
 	RandomRange,
 	Vector3,
 } from "@babylonjs/core";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import { EntityId, query, removeEntity } from "bitecs";
 import {
 	AbilityData,
@@ -31,7 +31,7 @@ import {
 	PAUSE_TACTICALPAUSE,
 	PAUSE_VICTORYSCREEN,
 } from "src/Constants";
-import { GameMode } from "src/states/GameData";
+import { GameMode } from "src/states/ControlSettings";
 import UserInterfaceSystem from "./UserInterfaceSystem";
 
 @singleton()

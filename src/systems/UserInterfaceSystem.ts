@@ -1,12 +1,12 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import { EntityId, query } from "bitecs";
 import { PlayerGUI } from "src/gui/components/PlayerGUI";
 import { ActorData } from "src/components/ActorData";
 import { EnemyGUI } from "src/gui/components/EnemyGUI";
-import { GameMode } from "src/states/GameData";
+import { GameMode } from "src/states/ControlSettings";
 import CombatManagerSystem from "./CombatManagerSystem";
 
 @singleton()

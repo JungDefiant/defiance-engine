@@ -38,7 +38,7 @@ import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { PlayerFactory } from "src/factories/PlayerFactory";
 import { App } from "src/App";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import {
 	DoorData,
 	EventData,
@@ -46,7 +46,7 @@ import {
 	InteractableData,
 	LocationData,
 	SceneData,
-} from "src/states/GameData";
+} from "src/states/ControlSettings";
 import { getPublicRoot } from "src/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import CombatManagerSystem from "./CombatManagerSystem";

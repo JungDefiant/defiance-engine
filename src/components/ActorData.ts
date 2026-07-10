@@ -1,5 +1,5 @@
 import { container } from "tsyringe";
-import GameState from "../GameState";
+import GameState from "../states/GameState";
 import { EntityId } from "bitecs";
 import { Nullable } from "@babylonjs/core";
 import { getPublicRoot } from "src/Utils";

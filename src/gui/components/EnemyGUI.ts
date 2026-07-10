@@ -9,7 +9,7 @@ import {
 	Container,
 } from "@babylonjs/gui";
 import { EntityId } from "bitecs";
-import GameState from "../../GameState";
+import GameState from "../../states/GameState";
 import { Mesh } from "@babylonjs/core";
 import { Themes } from "../Themes";
 import { ActorGUI } from "./PlayerGUI";

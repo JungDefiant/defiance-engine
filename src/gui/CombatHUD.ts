@@ -11,7 +11,7 @@ import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/components/ActionSlot";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import { ActorData } from "src/components/ActorData";
 import { getPublicRoot } from "src/Utils";
 

@@ -1,7 +1,7 @@
 import { container, singleton } from "tsyringe";
 import { IFactory } from "src/factories/IFactory";
 import { addComponent, addEntity, EntityId, query, set } from "bitecs";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import { ActorData } from "src/components/ActorData";
 import {
 	Mesh,

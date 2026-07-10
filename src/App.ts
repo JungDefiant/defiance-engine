@@ -6,13 +6,13 @@ import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import ActorStateSystem from "src/systems/ActorStateSystem";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import { PlayerFactory } from "src/factories/PlayerFactory";
 import { EnemyFactory } from "src/factories/EnemyFactory";
 import RenderQueueSystem from "src/systems/RenderQueueSystem";
 import { MainMenuScreen } from "src/gui/screens/MainMenuScreen";
 import { DEFAULT_CAMPAIGN_ID } from "src/Constants";
-import { CampaignData } from "src/states/GameData";
+import { CampaignData } from "src/states/ControlSettings";
 import { getPublicRoot } from "src/Utils";
 import { ModalPage } from "./gui/screens/ModalScreen";
 

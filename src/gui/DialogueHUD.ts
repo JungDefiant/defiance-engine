@@ -19,7 +19,7 @@ import type {
 } from "src/systems/DialogueManagerSystem";
 import { type Nullable } from "@babylonjs/core";
 import StackPanelImage from "./components/StackPanelImage";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import { getPublicRoot } from "src/Utils";
 
 export default class DialogueHUD implements IHUD {

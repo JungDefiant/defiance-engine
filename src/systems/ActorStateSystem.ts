@@ -1,6 +1,6 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
-import GameState from "../GameState";
+import GameState from "../states/GameState";
 import { query } from "bitecs";
 import { ActorData } from "../components/ActorData";
 

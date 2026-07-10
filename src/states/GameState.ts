@@ -18,13 +18,14 @@ import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import CombatHUD from "src/gui/CombatHUD";
-import { DEFAULT_CAM_TARGET } from "./Constants";
+import { DEFAULT_CAM_TARGET } from "../Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
-import { ControlSettings, GameMode, LocationData } from "src/states/GameData";
-import type { SceneData } from "src/states/GameData";
-import { VictoryScreen } from "./gui/screens/VictoryScreen";
-import { ModalScreen } from "./gui/screens/ModalScreen";
+import { ControlSettings, GameMode, LocationData } from "src/states/ControlSettings";
+import type { SceneData } from "src/states/ControlSettings";
+import { VictoryScreen } from "../gui/screens/VictoryScreen";
+import { ModalScreen } from "../gui/screens/ModalScreen";
+import { GameEvent } from "src/gui/components/GameEvent";
 
 /*
 TO DO:
@@ -35,8 +36,6 @@ TO DO:
 export default class GameState {
 	public readonly campaignId: string;
 	public gamePaused: boolean = false;
-	public actionPauseSet: Set<string> = new Set();
-	public renderPauseSet: Set<string> = new Set();
 	public playerEIDs: number[];
 	public enemyEIDs: number[] = [];
 	public lastExploreViewTarget: Vector3 = DEFAULT_CAM_TARGET;
@@ -44,6 +43,9 @@ export default class GameState {
 	public selectedPlayerEID: number;
 	public actionManager: Nullable<ActionManager> = null;
 	public exploreGUIControls: Control[] = [];
+	public actionPauseSet: Set<string> = new Set();
+	public renderPauseSet: Set<string> = new Set();
+	public controlPauseSet: Set<string> = new Set();
 	// Game configurations
 	public controlSettings: ControlSettings = new ControlSettings();
 	// Scene data
@@ -73,6 +75,7 @@ export default class GameState {
 	public readonly CharacterSprite: Mesh[] = [];
 	public readonly FloatingText: TextBlock[] = [];
 	public readonly SpecialFX: SolidParticleSystem[] = [];
+	public readonly GameEvent: GameEvent[] = [];
 
 	public constructor(
 		campaignId: string,
@@ -119,6 +122,7 @@ export default class GameState {
 	}
 
 	private initComponentObservables() {
+		// Actor Data Component
 		observe(
 			this.world,
 			onSet(this.ActorDataComponent),
@@ -131,6 +135,11 @@ export default class GameState {
 			return this.ActorDataComponent[eid];
 		});
 
+		observe(this.world, onRemove(this.ActorDataComponent), (eid: EntityId) => {
+			this.ActorDataComponent.splice(eid);
+		});
+
+		// Player GUI Component
 		observe(
 			this.world,
 			onSet(this.PlayerGUIComponent),
@@ -145,8 +154,10 @@ export default class GameState {
 
 		observe(this.world, onRemove(this.PlayerGUIComponent), (eid: EntityId) => {
 			this.PlayerGUIComponent[eid].getRoot().dispose();
+			this.PlayerGUIComponent.splice(eid);
 		});
 
+		// Enemy GUI Component
 		observe(
 			this.world,
 			onSet(this.EnemyGUIComponent),
@@ -161,8 +172,10 @@ export default class GameState {
 
 		observe(this.world, onRemove(this.EnemyGUIComponent), (eid: EntityId) => {
 			this.EnemyGUIComponent[eid].getRoot().dispose();
+			this.EnemyGUIComponent.splice(eid);
 		});
 
+		// Character Sprite
 		observe(
 			this.world,
 			onSet(this.CharacterSprite),
@@ -177,8 +190,10 @@ export default class GameState {
 
 		observe(this.world, onRemove(this.CharacterSprite), (eid: EntityId) => {
 			this.CharacterSprite[eid].dispose();
+			this.CharacterSprite.splice(eid);
 		});
 
+		// Floating Text
 		observe(
 			this.world,
 			onSet(this.FloatingText),
@@ -193,8 +208,10 @@ export default class GameState {
 
 		observe(this.world, onRemove(this.FloatingText), (eid: EntityId) => {
 			this.FloatingText[eid].dispose();
+			this.FloatingText.splice(eid);
 		});
 
+		// Special FX
 		observe(
 			this.world,
 			onSet(this.SpecialFX),
@@ -209,6 +226,24 @@ export default class GameState {
 
 		observe(this.world, onRemove(this.SpecialFX), (eid: EntityId) => {
 			this.SpecialFX[eid].dispose();
+			this.SpecialFX.splice(eid);
+		});
+
+		// Game Event
+		observe(
+			this.world,
+			onSet(this.GameEvent),
+			(eid: EntityId, params: GameEvent) => {
+				this.GameEvent[eid] = params;
+			},
+		);
+
+		observe(this.world, onGet(this.GameEvent), (eid: EntityId) => {
+			return this.GameEvent[eid];
+		});
+
+		observe(this.world, onRemove(this.GameEvent), (eid: EntityId) => {
+			this.GameEvent.splice(eid);
 		});
 	}
 }
