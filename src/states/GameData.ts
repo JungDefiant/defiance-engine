@@ -37,6 +37,7 @@ export interface SceneData {
 	dialogueFile: string;
 	encounters: EncounterData;
 	locations: LocationData[];
+	modalRefs: string[];
 }
 
 export interface LocationData {
@@ -97,4 +98,15 @@ export interface DialogueLine {
 export interface DialogueOptionLine {
 	text: string;
 	destinationNode: string;
+}
+
+export interface ModalData {
+	id: string;
+	pages: ModalPage[];
+}
+
+export interface ModalPage {
+	title: string;
+	textBody: string;
+	imageSrc?: string;
 }

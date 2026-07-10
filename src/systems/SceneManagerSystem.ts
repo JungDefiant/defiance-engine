@@ -45,12 +45,14 @@ import {
 	GameMode,
 	InteractableData,
 	LocationData,
+	ModalData,
 	SceneData,
 } from "src/states/GameData";
 import { getPublicRoot } from "src/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
+import EventHandlerSystem from "./EventHandlerSystem";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -292,7 +294,11 @@ export default class SceneManagerSystem implements ISystem {
 
 		// Load Dialogue
 		const dmSystem = container.resolve(DialogueManagerSystem);
-		dmSystem.loadDialogueMap(sceneData.dialogueFile);
+		await dmSystem.initSemantics();
+		await dmSystem.loadDialogueMap(sceneData.dialogueFile);
+
+		// Load Modal Data
+		await this.loadModalMap(sceneData.modalRefs);
 
 		this.setGameMode(GameMode.Explore);
 	}
@@ -612,5 +618,26 @@ export default class SceneManagerSystem implements ISystem {
 		sceneGUI.addControl(button);
 		exploreGuiArr.push(button);
 		button.linkWithMesh(sceneNode);
+	}
+
+	public async loadModalMap(modalRefs: string[]): Promise<void> {
+		const gs = container.resolve(GameState);
+
+		if (!gs.semantics) {
+			return;
+		}
+
+        for(const ref in modalRefs) {
+            const response = await fetch(
+                `${getPublicRoot()}/data/${gs.campaignId}/modals/${ref}.txt`,
+            );
+            const modalData = (await response.json()) as ModalData;
+            if (!modalData) {
+                return;
+            }
+    
+           gs.modalMap.set(modalData.id, modalData);
+        }
+
 	}
 }

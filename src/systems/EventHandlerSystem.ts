@@ -1,6 +1,5 @@
 import { container, singleton } from "tsyringe";
 import { Engine } from "@babylonjs/core";
-import { getPublicRoot } from "src/Utils";
 import ISystem from "./ISystem";
 import { query, removeComponent } from "bitecs";
 import GameState from "src/states/GameState";
@@ -21,26 +20,30 @@ export default class SessionDataSystem implements ISystem {
         for(const eid of query(gameState.world, [gameState.GameEvent])) {
             const event = gameState.GameEvent[eid];
             if(event.isTriggered) {
-                this.triggerEvent(event, gameState);
+                this.triggerEvent(event);
                 removeComponent(gameState.world, eid, event);
             }
         }
     }
 
-    private triggerEvent(event: GameEvent, gameState: GameState) {
+    private triggerEvent(event: GameEvent) {
         switch(event.type) {
             case EventType.Dialogue:
                 const dmSystem = container.resolve(DialogueManagerSystem);
-                dmSystem.startDialogue(event.source);
+                dmSystem.startDialogue(event.id);
                 return;
             case EventType.Modal:
-                // Load modal data
-                // gameState.modalScreen.setNewPages();
-                gameState.modalScreen.showHide(true);
+                const gs = container.resolve(GameState);
+                const modalData = gs.modalMap.get(event.id);
+                if(!modalData) {
+                    return;
+                }
+                gs.modalScreen.setNewPages(modalData.pages);
+                gs.modalScreen.showHide(true);
                 return;
             case EventType.Combat:
                 const cmSystem = container.resolve(CombatManagerSystem);
-                cmSystem.startCombat(event.source);
+                cmSystem.startCombat(event.id);
                 return;
         }
     }

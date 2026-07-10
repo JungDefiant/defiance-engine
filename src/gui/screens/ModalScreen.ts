@@ -11,6 +11,7 @@ import { Themes } from "../Themes";
 import { getPublicRoot } from "src/Utils";
 import { container } from "tsyringe";
 import GameState from "src/states/GameState";
+import { ModalPage } from "src/states/GameData";
 
 export class ModalScreen {
 	private rootContainer: Rectangle;
@@ -221,10 +222,4 @@ export class ModalScreen {
 		}
 
 	}
-}
-
-export interface ModalPage {
-	title: string;
-	textBody: string;
-	imageSrc?: string;
 }

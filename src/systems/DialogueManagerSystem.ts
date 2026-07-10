@@ -156,28 +156,25 @@ export default class DialogueManagerSystem implements ISystem {
 		},
 	): Promise<void> {
 		const gs = container.resolve(GameState);
+		const smSystem = container.resolve(SceneManagerSystem);
+		const dlgHud = gs.dialogueHud;
+		const camera = gs.scene.activeCamera as UniversalCamera;
+
+		if (!gs || !smSystem || !dlgHud || !camera) {
+			return;
+		}
 
 		if (!gs.dialogueMap.has(node)) {
 			return;
 		}
 
-		const gameState = container.resolve(GameState);
-		const smSystem = container.resolve(SceneManagerSystem);
-		const dlgHud = gameState.dialogueHud;
-		const camera = gameState.scene.activeCamera as UniversalCamera;
-
-		if (!gameState || !smSystem || !dlgHud || !camera) {
-			return;
-		}
-
-		gameState.actionPauseSet.add(PAUSE_DIALOGUE);
+		gs.actionPauseSet.add(PAUSE_DIALOGUE);
 
 		if(itr) {
 			camera.position = itr.viewNode.absolutePosition;
 			// TO DO: Implement moving camera to target over time
 			camera.setTarget(itr.itrNode.absolutePosition);
 		}
-		
 
 		smSystem.setGameMode(GameMode.Dialogue);
 		dlgHud.clearEntryStacks();
@@ -197,14 +194,8 @@ export default class DialogueManagerSystem implements ISystem {
 		this.runLine(0);
 	}
 
-	public runLine(id: number, gameState?: GameState) {
-		let gs: GameState;
-		if(!gameState) {
-			gs = container.resolve(GameState);
-		}
-		else {
-			gs = gameState;
-		}
+	public runLine(id: number) {
+		const gs = container.resolve(GameState);
 
 		// Get dialogue HUD
 		if (!gs.activeDialogue) {

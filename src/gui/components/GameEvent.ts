@@ -2,7 +2,7 @@
 export interface GameEvent {
     type: EventType,
     trigger: EventTrigger,
-    source: string,
+    id: string,
     isTriggered: boolean
 }
 

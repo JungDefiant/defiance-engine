@@ -22,7 +22,7 @@ import { DEFAULT_CAM_TARGET } from "../Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { ControlSettings, GameMode, LocationData } from "src/states/GameData";
-import type { DialogueNode, SceneData } from "src/states/GameData";
+import type { DialogueNode, ModalData, SceneData } from "src/states/GameData";
 import { VictoryScreen } from "../gui/screens/VictoryScreen";
 import { ModalScreen } from "../gui/screens/ModalScreen";
 import { GameEvent } from "src/gui/components/GameEvent";
@@ -58,10 +58,8 @@ export default class GameState {
 	public readonly sceneData: SceneData;
 	public readonly uiScene: Scene;
 	public readonly sceneNodes: TransformNode[];
-	public readonly dialogueMap: Map<string, DialogueNode> = new Map<
-	string,
-	DialogueNode
->();
+	public readonly dialogueMap: Map<string, DialogueNode> = new Map();
+	public readonly modalMap: Map<string, ModalData> = new Map();
 	// GUIs
 	public readonly mainUI: AdvancedDynamicTexture;
 	public readonly sceneGUI: AdvancedDynamicTexture;
