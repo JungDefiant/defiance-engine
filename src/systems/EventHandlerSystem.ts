@@ -18,7 +18,6 @@ export default class SessionDataSystem implements ISystem {
 		}
 
         for(const evt of gameState.currentLocation.events) {
-            console.log("EVENT", evt);
             if(evt.isTriggered) {
                 this.triggerEvent(evt);
                 evt.isTriggered = false;

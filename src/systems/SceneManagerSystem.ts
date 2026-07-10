@@ -629,21 +629,18 @@ export default class SceneManagerSystem implements ISystem {
 	public async loadModalMap(modalRefs: string[]): Promise<void> {
 		const gs = container.resolve(GameState);
 
-		if (!gs.semantics) {
-			return;
-		}
-
-        for(const ref in modalRefs) {
+        modalRefs.forEach(async (ref) => {
             const response = await fetch(
-                `${getPublicRoot()}/data/${gs.campaignId}/modals/${ref}.txt`,
+                `${getPublicRoot()}/data/${gs.campaignId}/modals/${ref}.json`,
             );
             const modalData = (await response.json()) as ModalData;
+
             if (!modalData) {
                 return;
             }
     
            gs.modalMap.set(modalData.id, modalData);
-        }
+        });
 
 	}
 }

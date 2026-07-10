@@ -9,6 +9,9 @@
             "enem_test"
         ]
     },
+    "modalRefs": [
+        "mdl_test"
+    ],
     "locations": [
         {
             "id": "loc0",
