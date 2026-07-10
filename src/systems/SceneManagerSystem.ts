@@ -41,7 +41,6 @@ import { App } from "src/App";
 import GameState from "src/states/GameState";
 import {
 	DoorData,
-	EventData,
 	GameMode,
 	InteractableData,
 	LocationData,
@@ -53,6 +52,7 @@ import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import EventHandlerSystem from "./EventHandlerSystem";
+import { EventData } from "src/states/EventData";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -614,6 +614,12 @@ export default class SceneManagerSystem implements ISystem {
 			gameState.currentLocation = newLoc;
 			smSystem.resetViewPosition(gameState);
 			gameState.exploreHud.hideHighlightInfoUI();
+
+			newLoc.events.forEach((evt) => {
+				if(evt.trigger === "OnLocationEnter") {
+					evt.isTriggered = true;
+				}
+			});
 		});
 		sceneGUI.addControl(button);
 		exploreGuiArr.push(button);

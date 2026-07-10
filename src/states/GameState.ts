@@ -25,7 +25,6 @@ import { ControlSettings, GameMode, LocationData } from "src/states/GameData";
 import type { DialogueNode, ModalData, SceneData } from "src/states/GameData";
 import { VictoryScreen } from "../gui/screens/VictoryScreen";
 import { ModalScreen } from "../gui/screens/ModalScreen";
-import { GameEvent } from "src/gui/components/GameEvent";
 import { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 
 /*
@@ -80,7 +79,6 @@ export default class GameState {
 	public readonly CharacterSprite: Mesh[] = [];
 	public readonly FloatingText: TextBlock[] = [];
 	public readonly SpecialFX: SolidParticleSystem[] = [];
-	public readonly GameEvent: GameEvent[] = [];
 
 	public constructor(
 		campaignId: string,
@@ -232,23 +230,6 @@ export default class GameState {
 		observe(this.world, onRemove(this.SpecialFX), (eid: EntityId) => {
 			this.SpecialFX[eid].dispose();
 			this.SpecialFX.splice(eid);
-		});
-
-		// Game Event
-		observe(
-			this.world,
-			onSet(this.GameEvent),
-			(eid: EntityId, params: GameEvent) => {
-				this.GameEvent[eid] = params;
-			},
-		);
-
-		observe(this.world, onGet(this.GameEvent), (eid: EntityId) => {
-			return this.GameEvent[eid];
-		});
-
-		observe(this.world, onRemove(this.GameEvent), (eid: EntityId) => {
-			this.GameEvent.splice(eid);
 		});
 	}
 }

@@ -3,47 +3,47 @@ import { Engine } from "@babylonjs/core";
 import ISystem from "./ISystem";
 import { query, removeComponent } from "bitecs";
 import GameState from "src/states/GameState";
-import { EventType, GameEvent } from "src/gui/components/GameEvent";
+import { EventData } from "src/states/EventData";
 import DialogueManagerSystem from "./DialogueManagerSystem";
 import CombatManagerSystem from "./CombatManagerSystem";
 
 
 @singleton()
 export default class SessionDataSystem implements ISystem {
-	public async start(engine: Engine): Promise<void> {}
+	public async start(): Promise<void> {}
 
 	public update(deltaTime: number, gameState?: GameState): void {
-        if (!gameState) {
+        if (!gameState || !gameState.currentLocation) {
 			return;
 		}
 
-        for(const eid of query(gameState.world, [gameState.GameEvent])) {
-            const event = gameState.GameEvent[eid];
-            if(event.isTriggered) {
-                this.triggerEvent(event);
-                removeComponent(gameState.world, eid, event);
+        for(const evt of gameState.currentLocation.events) {
+            console.log("EVENT", evt);
+            if(evt.isTriggered) {
+                this.triggerEvent(evt);
+                evt.isTriggered = false;
             }
         }
     }
 
-    private triggerEvent(event: GameEvent) {
+    private triggerEvent(event: EventData) {
         switch(event.type) {
-            case EventType.Dialogue:
+            case "Dialogue":
                 const dmSystem = container.resolve(DialogueManagerSystem);
-                dmSystem.startDialogue(event.id);
+                dmSystem.startDialogue(event.refId);
                 return;
-            case EventType.Modal:
+            case "Modal":
                 const gs = container.resolve(GameState);
-                const modalData = gs.modalMap.get(event.id);
+                const modalData = gs.modalMap.get(event.refId);
                 if(!modalData) {
                     return;
                 }
                 gs.modalScreen.setNewPages(modalData.pages);
                 gs.modalScreen.showHide(true);
                 return;
-            case EventType.Combat:
+            case "Combat":
                 const cmSystem = container.resolve(CombatManagerSystem);
-                cmSystem.startCombat(event.id);
+                cmSystem.startCombat(event.refId);
                 return;
         }
     }

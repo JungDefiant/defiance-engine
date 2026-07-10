@@ -31,12 +31,7 @@
                 }
             ],
             "events": [
-                {
-                    "id": "evt_test1",
-                    "flagTriggers": [
-                        "TEST"
-                    ]
-                }
+                
             ],
             "doors": [
                 {
@@ -51,7 +46,14 @@
             "combatViewNodeId": "loc1_view_combat",
             "combatSpawnNodeId": "loc1_spawn_enemy",
             "interactables": [],
-            "events": [],
+            "events": [
+                {
+                    "id": "evt_test1",
+                    "type": "Modal",
+                    "trigger": "OnLocationEnter",
+                    "refId": "mdl_test"
+                }
+            ],
             "doors": [
                 {
                     "id": "door_t1_t0",

@@ -14,7 +14,7 @@ import { MainMenuScreen } from "src/gui/screens/MainMenuScreen";
 import { DEFAULT_CAMPAIGN_ID } from "src/Constants";
 import { CampaignData } from "src/states/GameData";
 import { getPublicRoot } from "src/Utils";
-import { ModalPage } from "./gui/screens/ModalScreen";
+import EventHandlerSystem from "src/systems/EventHandlerSystem";
 
 export class App {
 	private engine: Engine;
@@ -27,6 +27,7 @@ export class App {
 		@inject(DialogueManagerSystem) private dmSystem: DialogueManagerSystem,
 		@inject(CombatManagerSystem) private cmSystem: CombatManagerSystem,
 		@inject(ActorStateSystem) private asSystem: ActorStateSystem,
+		@inject(EventHandlerSystem) private ehSystem: EventHandlerSystem,
 		@inject(PlayerFactory) private playerFactory: PlayerFactory,
 		@inject(EnemyFactory) private enemyFactory: EnemyFactory,
 	) {
@@ -83,6 +84,7 @@ export class App {
 		this.dmSystem.update(deltaTime);
 		this.cmSystem.update(deltaTime, gameState);
 		this.rqeSystem.update(deltaTime, gameState);
+		this.ehSystem.update(deltaTime, gameState);
 		this.uiSystem.update(deltaTime, gameState);
 	}
 
@@ -93,6 +95,7 @@ export class App {
 		await this.dmSystem.start();
 		await this.cmSystem.start();
 		await this.rqeSystem.start();
+		await this.ehSystem.start();
 	}
 
 	private async startFactories() {

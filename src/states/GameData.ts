@@ -1,4 +1,5 @@
 import { Vector3 } from "@babylonjs/core";
+import { EventData } from "src/states/EventData";
 
 export class ControlSettings {
 	powerActions: number[] = [
@@ -67,11 +68,6 @@ export interface DoorData {
 
 export interface EncounterData {
 	[index: string]: string[];
-}
-
-export interface EventData {
-	id: string;
-	flagTriggers: string[];
 }
 
 export enum GameMode {
