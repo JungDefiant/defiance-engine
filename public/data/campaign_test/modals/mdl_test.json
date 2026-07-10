@@ -1,0 +1,18 @@
+{
+    "id": "mdl_test",
+    "pages": [
+        {
+            "title": "Page 1",
+            "textBody": "Example text"
+        },
+        {
+            "title": "Page 2",
+            "textBody": "Example text w/ image",
+            "imageSrc": "/sprites/enemies/spr_sentineltest.png"
+        },
+        {
+            "title": "Page 3",
+            "textBody": "Example text 2"
+        }
+    ]
+}

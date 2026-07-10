@@ -75,27 +75,6 @@ export class App {
 			campaignData.startingPartyIds,
 		);
 		await this.smSystem.runScene(this.engine, this);
-
-		// Test Code - Modal Screens
-		// const gameState = container.resolve(GameState);
-		// gameState.modalScreen.setNewPages(
-		// 	[ 
-		// 		{
-		// 			title: "Page 1",
-		// 			textBody: "Example text"
-		// 		} as ModalPage,
-		// 		{
-		// 			title: "Page 2",
-		// 			textBody: "Example text w/ image",
-		// 			imageSrc: `${getPublicRoot()}/sprites/enemies/spr_sentineltest.png`
-		// 		} as ModalPage,
-		// 		{
-		// 			title: "Page 3",
-		// 			textBody: "Example text 2"
-		// 		} as ModalPage
-		// 	]
-		// );
-		// gameState.modalScreen.showHide(true);
 	}
 
 	public updateSystems(deltaTime: number, gameState: GameState) {
