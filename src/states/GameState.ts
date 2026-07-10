@@ -21,11 +21,12 @@ import CombatHUD from "src/gui/CombatHUD";
 import { DEFAULT_CAM_TARGET } from "../Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
-import { ControlSettings, GameMode, LocationData } from "src/states/ControlSettings";
-import type { SceneData } from "src/states/ControlSettings";
+import { ControlSettings, GameMode, LocationData } from "src/states/GameData";
+import type { DialogueNode, SceneData } from "src/states/GameData";
 import { VictoryScreen } from "../gui/screens/VictoryScreen";
 import { ModalScreen } from "../gui/screens/ModalScreen";
 import { GameEvent } from "src/gui/components/GameEvent";
+import { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 
 /*
 TO DO:
@@ -41,6 +42,8 @@ export default class GameState {
 	public lastExploreViewTarget: Vector3 = DEFAULT_CAM_TARGET;
 	public gameMode: GameMode;
 	public selectedPlayerEID: number;
+	public activeDialogue: Nullable<DialogueNode> = null;
+	public currentLocation: Nullable<LocationData> = null;
 	public actionManager: Nullable<ActionManager> = null;
 	public exploreGUIControls: Control[] = [];
 	public actionPauseSet: Set<string> = new Set();
@@ -48,13 +51,17 @@ export default class GameState {
 	public controlPauseSet: Set<string> = new Set();
 	// Game configurations
 	public controlSettings: ControlSettings = new ControlSettings();
+	public semantics: Nullable<DialogueSemantics> = null;
 	// Scene data
 	public readonly world: World;
 	public readonly scene: Scene;
 	public readonly sceneData: SceneData;
 	public readonly uiScene: Scene;
 	public readonly sceneNodes: TransformNode[];
-	public locationData: Nullable<LocationData> = null;
+	public readonly dialogueMap: Map<string, DialogueNode> = new Map<
+	string,
+	DialogueNode
+>();
 	// GUIs
 	public readonly mainUI: AdvancedDynamicTexture;
 	public readonly sceneGUI: AdvancedDynamicTexture;

@@ -1,3 +1,5 @@
+import { Vector3 } from "@babylonjs/core";
+
 export class ControlSettings {
 	powerActions: number[] = [
 		"Q".charCodeAt(0),
@@ -76,4 +78,23 @@ export enum GameMode {
 	Combat,
 	Explore,
 	Dialogue,
+}
+
+export interface DialogueNode {
+	name: string;
+	lines: DialogueLine[];
+}
+
+export interface DialogueLine {
+	type: "Line" | "Options" | "Cmd";
+	character?: string;
+	text?: string;
+	options?: DialogueOptionLine[];
+	cmd?: string;
+	vars?: (string | number | Vector3)[];
+}
+
+export interface DialogueOptionLine {
+	text: string;
+	destinationNode: string;
 }

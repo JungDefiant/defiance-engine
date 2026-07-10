@@ -46,7 +46,7 @@ import {
 	InteractableData,
 	LocationData,
 	SceneData,
-} from "src/states/ControlSettings";
+} from "src/states/GameData";
 import { getPublicRoot } from "src/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import CombatManagerSystem from "./CombatManagerSystem";
@@ -288,7 +288,7 @@ export default class SceneManagerSystem implements ISystem {
 			sceneGUI,
 			newGameState.exploreGUIControls,
 		);
-		newGameState.locationData = locationData;
+		newGameState.currentLocation = locationData;
 
 		// Load Dialogue
 		const dmSystem = container.resolve(DialogueManagerSystem);
@@ -320,13 +320,13 @@ export default class SceneManagerSystem implements ISystem {
 			gameState = container.resolve(GameState);
 		}
 
-		if (!gameState.locationData) {
+		if (!gameState.currentLocation) {
 			console.warn("NO LOCATION DATA");
 			return;
 		}
 
 		const camera = gameState.scene.activeCamera as UniversalCamera;
-		const locData = gameState.locationData;
+		const locData = gameState.currentLocation;
 		const sceneNodes = gameState.sceneNodes;
 
 		let viewNodeId = "";
@@ -541,7 +541,6 @@ export default class SceneManagerSystem implements ISystem {
 
 			const dmSystem = container.resolve(DialogueManagerSystem);
 			dmSystem.startDialogue(interactableData.dialogueNodeId, {
-				data: interactableData,
 				itrNode: interactableNode,
 				viewNode: viewNode,
 			});
@@ -606,7 +605,7 @@ export default class SceneManagerSystem implements ISystem {
 			if (currCamera) {
 				gameState.lastExploreViewTarget = sceneNode.absolutePosition;
 			}
-			gameState.locationData = newLoc;
+			gameState.currentLocation = newLoc;
 			smSystem.resetViewPosition(gameState);
 			gameState.exploreHud.hideHighlightInfoUI();
 		});
