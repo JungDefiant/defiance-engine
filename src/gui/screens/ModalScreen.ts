@@ -189,7 +189,6 @@ export class ModalScreen {
 		if (currentPage.imageSrc) {
 			this.modalImage.source = currentPage.imageSrc;
 			this.modalImage.isVisible = true;
-			console.log("IMAGE!", currentPage.imageSrc);
 			this.modalText.widthInPixels = 400;
 		} else {
 			this.modalImage.isVisible = false;

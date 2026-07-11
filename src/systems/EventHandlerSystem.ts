@@ -17,11 +17,20 @@ export default class SessionDataSystem implements ISystem {
 			return;
 		}
 
-        for(const evt of gameState.currentLocation.events) {
+        const eventsArray = gameState.currentLocation.events;
+        const eventIndexToRemove = [];
+
+        for(const evt of eventsArray) {
             if(evt.isTriggered) {
                 this.triggerEvent(evt);
                 evt.isTriggered = false;
+                const evtIndex = eventsArray.indexOf(evt);
+                eventIndexToRemove.push(evtIndex);
             }
+        }
+
+        for(const ind of eventIndexToRemove) {
+            gameState.currentLocation.events.splice(ind);
         }
     }
 
