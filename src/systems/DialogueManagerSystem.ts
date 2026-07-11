@@ -1,36 +1,28 @@
 import { container, singleton } from "tsyringe";
 import { UniversalCamera, Vector3 } from "@babylonjs/core";
-import type { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 import grammar from "src/parser/DialogueParser.ohm-bundle";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import DialogueHUD from "src/gui/DialogueHUD";
 import type ISystem from "src/systems/ISystem";
-import { GameMode, type InteractableData } from "src/states/GameData";
-import type { Nullable, TransformNode } from "@babylonjs/core";
+import { DialogueLine, DialogueNode, DialogueOptionLine, GameMode } from "src/states/data/GameData";
+import type { TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { getPublicRoot } from "src/Utils";
+import EventHandlerSystem from "./EventHandlerSystem";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
-	private dialogueMap: Map<string, DialogueNode> = new Map<
-		string,
-		DialogueNode
-	>();
-	private activeDialogue: Nullable<DialogueNode> = null;
-	private semantics: Nullable<DialogueSemantics> = null;
-
-	public async start() {
-		this.initSemantics();
-	}
+	public async start() { }
 
 	public update(deltaTime: number) {}
 
 	public initSemantics() {
-		this.semantics = grammar.createSemantics();
+		const gs = container.resolve(GameState);
+		gs.semantics = grammar.createSemantics();
 
-		this.semantics.addOperation<DialogueNode[]>("eval()", {
+		gs.semantics.addOperation<DialogueNode[]>("eval()", {
 			DialogueData(nodes) {
 				return nodes.children.map((node) => {
 					return node.getNode();
@@ -38,7 +30,7 @@ export default class DialogueManagerSystem implements ISystem {
 			},
 		});
 
-		this.semantics.addOperation<DialogueNode>("getNode()", {
+		gs.semantics.addOperation<DialogueNode>("getNode()", {
 			Node(node, _, lines, __) {
 				return {
 					name: node.sourceString,
@@ -56,7 +48,7 @@ export default class DialogueManagerSystem implements ISystem {
 			},
 		});
 
-		this.semantics.addOperation<DialogueLine>("getLine()", {
+		gs.semantics.addOperation<DialogueLine>("getLine()", {
 			Line(_, char, __, txt) {
 				return {
 					type: "Line",
@@ -100,7 +92,7 @@ export default class DialogueManagerSystem implements ISystem {
 			},
 		});
 
-		this.semantics.addOperation<string>("getString()", {
+		gs.semantics.addOperation<string>("getString()", {
 			String(_) {
 				return this.sourceString;
 			},
@@ -112,7 +104,7 @@ export default class DialogueManagerSystem implements ISystem {
 			},
 		});
 
-		this.semantics.addOperation<number>("getNumber()", {
+		gs.semantics.addOperation<number>("getNumber()", {
 			Number(_) {
 				return parseFloat(this.sourceString);
 			},
@@ -121,7 +113,7 @@ export default class DialogueManagerSystem implements ISystem {
 			},
 		});
 
-		this.semantics.addOperation<Vector3>("getVector3()", {
+		gs.semantics.addOperation<Vector3>("getVector3()", {
 			Vector(_, x, __, y, ___, z, _____) {
 				return new Vector3(x.getNumber(), y.getNumber(), z.getNumber());
 			},
@@ -129,14 +121,14 @@ export default class DialogueManagerSystem implements ISystem {
 	}
 
 	public async loadDialogueMap(dlgId: string): Promise<void> {
-		if (!this.semantics) {
+		const gs = container.resolve(GameState);
+
+		if (!gs.semantics) {
 			return;
 		}
 
-		const gameState = container.resolve(GameState);
-
 		const response = await fetch(
-			`${getPublicRoot()}/data/${gameState.campaignId}/dialogues/${dlgId}.txt`,
+			`${getPublicRoot()}/data/${gs.campaignId}/dialogues/${dlgId}.txt`,
 		);
 		const rawData = await response.text();
 		if (!rawData) {
@@ -147,41 +139,42 @@ export default class DialogueManagerSystem implements ISystem {
 		if (matchResult.failed()) {
 			console.error("Match Result failed", matchResult.message);
 		} else if (matchResult.succeeded()) {
-			const dialogueNodes = this.semantics(
+			const dialogueNodes = gs.semantics(
 				matchResult,
 			).eval() as DialogueNode[];
 			dialogueNodes.forEach((node) => {
-				this.dialogueMap.set(node.name, node);
+				gs.dialogueMap.set(node.name, node);
 			});
 		}
 	}
 
 	public async startDialogue(
 		node: string,
-		itr: {
-			data: InteractableData;
+		itr?: {
 			itrNode: TransformNode;
 			viewNode: TransformNode;
 		},
 	): Promise<void> {
-		if (!this.dialogueMap.has(node)) {
-			return;
-		}
-
-		const gameState = container.resolve(GameState);
+		const gs = container.resolve(GameState);
 		const smSystem = container.resolve(SceneManagerSystem);
-		const dlgHud = gameState.dialogueHud;
-		const camera = gameState.scene.activeCamera as UniversalCamera;
+		const dlgHud = gs.dialogueHud;
+		const camera = gs.scene.activeCamera as UniversalCamera;
 
-		if (!gameState || !smSystem || !dlgHud || !camera) {
+		if (!gs || !smSystem || !dlgHud || !camera) {
 			return;
 		}
 
-		gameState.actionPauseSet.add(PAUSE_DIALOGUE);
+		if (!gs.dialogueMap.has(node)) {
+			return;
+		}
 
-		camera.position = itr.viewNode.absolutePosition;
-		// TO DO: Implement moving camera to target over time
-		camera.setTarget(itr.itrNode.absolutePosition);
+		gs.actionPauseSet.add(PAUSE_DIALOGUE);
+
+		if(itr) {
+			camera.position = itr.viewNode.absolutePosition;
+			// TO DO: Implement moving camera to target over time
+			camera.setTarget(itr.itrNode.absolutePosition);
+		}
 
 		smSystem.setGameMode(GameMode.Dialogue);
 		dlgHud.clearEntryStacks();
@@ -190,23 +183,27 @@ export default class DialogueManagerSystem implements ISystem {
 	}
 
 	public startDialogueNode(node: string) {
-		if (!this.dialogueMap.has(node)) {
+		const gs = container.resolve(GameState);
+
+		if (!gs.dialogueMap.has(node)) {
 			return;
 		}
 
-		const dialogueData = this.dialogueMap.get(node) as DialogueNode;
-		this.activeDialogue = dialogueData;
+		const dialogueData = gs.dialogueMap.get(node) as DialogueNode;
+		gs.activeDialogue = dialogueData;
 		this.runLine(0);
 	}
 
 	public runLine(id: number) {
+		const gs = container.resolve(GameState);
+
 		// Get dialogue HUD
-		if (!this.activeDialogue) {
+		if (!gs.activeDialogue) {
 			return;
 		}
 
 		const dlgHud = container.resolve(GameState).dialogueHud;
-		const line = this.activeDialogue.lines[id];
+		const line = gs.activeDialogue.lines[id];
 
 		if (!dlgHud) {
 			return;
@@ -229,13 +226,18 @@ export default class DialogueManagerSystem implements ISystem {
 
 	public endDialogue() {
 		const smSystem = container.resolve(SceneManagerSystem);
-		const gameState = container.resolve(GameState);
+		const gs = container.resolve(GameState);
 
-		gameState.actionPauseSet.delete(PAUSE_DIALOGUE);
+		gs.actionPauseSet.delete(PAUSE_DIALOGUE);
 		smSystem.setGameMode(GameMode.Explore);
+
+		const ehSystem = container.resolve(EventHandlerSystem);
+		ehSystem.checkEventByTrigger("OnDialogueEnd");
 	}
 
 	private displayTextLine(id: number, line: DialogueLine, dlgHud: DialogueHUD) {
+		const gs = container.resolve(GameState);
+
 		if (!line.text) {
 			return;
 		}
@@ -253,7 +255,7 @@ export default class DialogueManagerSystem implements ISystem {
 		}
 
 		const nextLineId = id + 1;
-		const nextLine = this.activeDialogue?.lines[nextLineId];
+		const nextLine = gs.activeDialogue?.lines[nextLineId];
 		if (!nextLine) {
 			dlgHud.addExitEntry();
 		} else if (nextLine.type === "Options") {
@@ -316,21 +318,4 @@ export default class DialogueManagerSystem implements ISystem {
 	}
 }
 
-export interface DialogueNode {
-	name: string;
-	lines: DialogueLine[];
-}
 
-export interface DialogueLine {
-	type: "Line" | "Options" | "Cmd";
-	character?: string;
-	text?: string;
-	options?: DialogueOptionLine[];
-	cmd?: string;
-	vars?: (string | number | Vector3)[];
-}
-
-export interface DialogueOptionLine {
-	text: string;
-	destinationNode: string;
-}

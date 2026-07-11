@@ -38,19 +38,21 @@ import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { PlayerFactory } from "src/factories/PlayerFactory";
 import { App } from "src/App";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import {
 	DoorData,
-	EventData,
 	GameMode,
 	InteractableData,
 	LocationData,
+	ModalData,
 	SceneData,
-} from "src/states/GameData";
+} from "src/states/data/GameData";
 import { getPublicRoot } from "src/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
+import EventHandlerSystem from "./EventHandlerSystem";
+import { EventData } from "src/states/data/EventData";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -288,11 +290,15 @@ export default class SceneManagerSystem implements ISystem {
 			sceneGUI,
 			newGameState.exploreGUIControls,
 		);
-		newGameState.locationData = locationData;
+		newGameState.currentLocation = locationData;
 
 		// Load Dialogue
 		const dmSystem = container.resolve(DialogueManagerSystem);
-		dmSystem.loadDialogueMap(sceneData.dialogueFile);
+		await dmSystem.initSemantics();
+		await dmSystem.loadDialogueMap(sceneData.dialogueFile);
+
+		// Load Modal Data
+		await this.loadModalMap(sceneData.modalRefs);
 
 		this.setGameMode(GameMode.Explore);
 	}
@@ -320,13 +326,13 @@ export default class SceneManagerSystem implements ISystem {
 			gameState = container.resolve(GameState);
 		}
 
-		if (!gameState.locationData) {
+		if (!gameState.currentLocation) {
 			console.warn("NO LOCATION DATA");
 			return;
 		}
 
 		const camera = gameState.scene.activeCamera as UniversalCamera;
-		const locData = gameState.locationData;
+		const locData = gameState.currentLocation;
 		const sceneNodes = gameState.sceneNodes;
 
 		let viewNodeId = "";
@@ -480,13 +486,11 @@ export default class SceneManagerSystem implements ISystem {
 			);
 		});
 
-		locationData.events.forEach(async (evt) => {
-			await this.loadLocationEvent(evt, sceneNodes);
-		});
-
 		locationData.doors.forEach(async (door) => {
 			await this.loadLocationDoor(door, sceneNodes, sceneGUI, exploreGuiArr);
 		});
+
+		this.filterLocationEvents(locationData);
 
 		return locationData;
 	}
@@ -541,7 +545,6 @@ export default class SceneManagerSystem implements ISystem {
 
 			const dmSystem = container.resolve(DialogueManagerSystem);
 			dmSystem.startDialogue(interactableData.dialogueNodeId, {
-				data: interactableData,
 				itrNode: interactableNode,
 				viewNode: viewNode,
 			});
@@ -551,10 +554,25 @@ export default class SceneManagerSystem implements ISystem {
 		button.linkWithMesh(interactableNode);
 	}
 
-	private async loadLocationEvent(
-		eventData: EventData,
-		sceneNodes: TransformNode[],
-	) {}
+	private async filterLocationEvents(
+		locationData: LocationData,
+	) {
+		const uniqueEvents = new Set<string>();
+		const eventIndsToRemove = new Array<number>();
+		locationData.events.forEach((evt, index) => {
+			const eventKey = `${evt.trigger}_${evt.type}_${evt.condition}`
+			if(uniqueEvents.has(eventKey)) {
+				eventIndsToRemove.push(index);
+			}
+			else {
+				uniqueEvents.add(eventKey);
+			}
+		});
+
+		eventIndsToRemove.forEach((index) => {
+			locationData.events.splice(index);
+		});
+	}
 
 	private async loadLocationDoor(
 		doorData: DoorData,
@@ -606,12 +624,33 @@ export default class SceneManagerSystem implements ISystem {
 			if (currCamera) {
 				gameState.lastExploreViewTarget = sceneNode.absolutePosition;
 			}
-			gameState.locationData = newLoc;
+			gameState.currentLocation = newLoc;
 			smSystem.resetViewPosition(gameState);
 			gameState.exploreHud.hideHighlightInfoUI();
+
+			const ehSystem = container.resolve(EventHandlerSystem);
+			ehSystem.checkEventByTrigger("OnLocationEnter");			
 		});
 		sceneGUI.addControl(button);
 		exploreGuiArr.push(button);
 		button.linkWithMesh(sceneNode);
+	}
+
+	public async loadModalMap(modalRefs: string[]): Promise<void> {
+		const gs = container.resolve(GameState);
+
+        modalRefs.forEach(async (ref) => {
+            const response = await fetch(
+                `${getPublicRoot()}/data/${gs.campaignId}/modals/${ref}.json`,
+            );
+            const modalData = (await response.json()) as ModalData;
+
+            if (!modalData) {
+                return;
+            }
+    
+           gs.modalMap.set(modalData.id, modalData);
+        });
+
 	}
 }

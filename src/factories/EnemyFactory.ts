@@ -1,7 +1,7 @@
 import { container, singleton } from "tsyringe";
 import { IFactory } from "src/factories/IFactory";
 import { addComponent, addEntity, EntityId, query, set } from "bitecs";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import { ActorData } from "src/components/ActorData";
 import {
 	Mesh,
@@ -35,13 +35,13 @@ export class EnemyFactory implements IFactory {
 		campaignId: string,
 	): Promise<EntityId> {
 		const gameState = container.resolve(GameState);
-		const locData = gameState.locationData;
-		if (!gameState || !locData) {
+		const loc = gameState.currentLocation;
+		if (!gameState || !loc) {
 			return -1;
 		}
 
 		const spawnNode = gameState.sceneNodes.find(
-			(node) => node.id === locData.combatSpawnNodeId,
+			(node) => node.id === loc.combatSpawnNodeId,
 		);
 
 		if (!spawnNode) {

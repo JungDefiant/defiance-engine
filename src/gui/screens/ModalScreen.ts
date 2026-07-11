@@ -10,7 +10,8 @@ import {
 import { Themes } from "../Themes";
 import { getPublicRoot } from "src/Utils";
 import { container } from "tsyringe";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
+import { ModalPage } from "src/states/data/GameData";
 
 export class ModalScreen {
 	private rootContainer: Rectangle;
@@ -188,7 +189,6 @@ export class ModalScreen {
 		if (currentPage.imageSrc) {
 			this.modalImage.source = currentPage.imageSrc;
 			this.modalImage.isVisible = true;
-			console.log("IMAGE!", currentPage.imageSrc);
 			this.modalText.widthInPixels = 400;
 		} else {
 			this.modalImage.isVisible = false;
@@ -221,10 +221,4 @@ export class ModalScreen {
 		}
 
 	}
-}
-
-export interface ModalPage {
-	title: string;
-	textBody: string;
-	imageSrc?: string;
 }

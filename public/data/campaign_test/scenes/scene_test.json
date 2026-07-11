@@ -9,6 +9,9 @@
             "enem_test"
         ]
     },
+    "modalRefs": [
+        "mdl_test"
+    ],
     "locations": [
         {
             "id": "loc0",
@@ -30,20 +33,13 @@
                     ]
                 }
             ],
-            "events": [
-                {
-                    "id": "evt_test1",
-                    "flagTriggers": [
-                        "TEST"
-                    ]
-                }
-            ],
             "doors": [
                 {
                     "id": "door_t0_t1",
                     "destination": "loc1"
                 }
-            ]
+            ],
+            "events": []
         },
         {
             "id": "loc1",
@@ -51,11 +47,19 @@
             "combatViewNodeId": "loc1_view_combat",
             "combatSpawnNodeId": "loc1_spawn_enemy",
             "interactables": [],
-            "events": [],
             "doors": [
                 {
                     "id": "door_t1_t0",
                     "destination": "loc0"
+                }
+            ],
+            "events": [
+                {
+                    "id": "evt_test1",
+                    "condition": "",
+                    "type": "Modal",
+                    "trigger": "OnLocationEnter",
+                    "refId": "mdl_test"
                 }
             ]
         }

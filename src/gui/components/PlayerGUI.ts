@@ -11,7 +11,7 @@ import {
 import { Themes } from "../Themes";
 import { EntityId } from "bitecs";
 import { container } from "tsyringe";
-import GameState from "src/GameState";
+import GameState from "src/states/GameState";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 
 export interface ActorGUI {

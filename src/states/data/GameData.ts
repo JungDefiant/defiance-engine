@@ -1,3 +1,6 @@
+import { Vector3 } from "@babylonjs/core";
+import { EventData } from "src/states/data/EventData";
+
 export class ControlSettings {
 	powerActions: number[] = [
 		"Q".charCodeAt(0),
@@ -35,6 +38,7 @@ export interface SceneData {
 	dialogueFile: string;
 	encounters: EncounterData;
 	locations: LocationData[];
+	modalRefs: string[];
 }
 
 export interface LocationData {
@@ -66,14 +70,39 @@ export interface EncounterData {
 	[index: string]: string[];
 }
 
-export interface EventData {
-	id: string;
-	flagTriggers: string[];
-}
-
 export enum GameMode {
 	MainMenu,
 	Combat,
 	Explore,
 	Dialogue,
+}
+
+export interface DialogueNode {
+	name: string;
+	lines: DialogueLine[];
+}
+
+export interface DialogueLine {
+	type: "Line" | "Options" | "Cmd";
+	character?: string;
+	text?: string;
+	options?: DialogueOptionLine[];
+	cmd?: string;
+	vars?: (string | number | Vector3)[];
+}
+
+export interface DialogueOptionLine {
+	text: string;
+	destinationNode: string;
+}
+
+export interface ModalData {
+	id: string;
+	pages: ModalPage[];
+}
+
+export interface ModalPage {
+	title: string;
+	textBody: string;
+	imageSrc?: string;
 }
