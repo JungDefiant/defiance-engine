@@ -12,7 +12,7 @@ import { EnemyFactory } from "src/factories/EnemyFactory";
 import RenderQueueSystem from "src/systems/RenderQueueSystem";
 import { MainMenuScreen } from "src/gui/screens/MainMenuScreen";
 import { DEFAULT_CAMPAIGN_ID } from "src/Constants";
-import { CampaignData } from "src/states/data/GameData";
+import { CampaignData } from "src/states/types/GameTypes";
 import { getPublicRoot } from "src/Utils";
 import EventHandlerSystem from "src/systems/EventHandlerSystem";
 

@@ -46,13 +46,13 @@ import {
 	LocationData,
 	ModalData,
 	SceneData,
-} from "src/states/data/GameData";
+} from "src/states/types/GameTypes";
 import { getPublicRoot } from "src/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import EventHandlerSystem from "./EventHandlerSystem";
-import { EventData } from "src/states/data/EventData";
+import { EventData } from "src/states/types/EventTypes";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
