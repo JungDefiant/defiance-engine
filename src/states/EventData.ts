@@ -1,21 +1,13 @@
 
 export interface EventData {
     id: string,
-    type: "Dialogue" | "Modal" | "Combat",
-    trigger: "OnLocationEnter" | "OnCombatStart" | "OnCombatEnd" | "OnDialogueEnd",
+    condition: string,
+    type: EventType,
+    trigger: EventTrigger,
     refId: string,
     isTriggered: boolean
 }
 
-export enum EventType {
-    Dialogue,
-    Modal,
-    Combat
-}
+export type EventTrigger = "OnLocationEnter" | "OnCombatStart" | "OnCombatEnd" | "OnDialogueEnd";
 
-export enum EventTrigger {
-    OnLocationEnter,
-    OnCombatStart,
-    OnCombatEnd,
-    OnDialogueEnd
-}
+export type EventType = "Dialogue" | "Modal" | "Combat";

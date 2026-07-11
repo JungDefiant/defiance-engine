@@ -486,13 +486,11 @@ export default class SceneManagerSystem implements ISystem {
 			);
 		});
 
-		locationData.events.forEach(async (evt) => {
-			await this.loadLocationEvent(evt, sceneNodes);
-		});
-
 		locationData.doors.forEach(async (door) => {
 			await this.loadLocationDoor(door, sceneNodes, sceneGUI, exploreGuiArr);
 		});
+
+		this.filterLocationEvents(locationData);
 
 		return locationData;
 	}
@@ -556,10 +554,25 @@ export default class SceneManagerSystem implements ISystem {
 		button.linkWithMesh(interactableNode);
 	}
 
-	private async loadLocationEvent(
-		eventData: EventData,
-		sceneNodes: TransformNode[],
-	) {}
+	private async filterLocationEvents(
+		locationData: LocationData,
+	) {
+		const uniqueEvents = new Set<string>();
+		const eventIndsToRemove = new Array<number>();
+		locationData.events.forEach((evt, index) => {
+			const eventKey = `${evt.trigger}_${evt.type}_${evt.condition}`
+			if(uniqueEvents.has(eventKey)) {
+				eventIndsToRemove.push(index);
+			}
+			else {
+				uniqueEvents.add(eventKey);
+			}
+		});
+
+		eventIndsToRemove.forEach((index) => {
+			locationData.events.splice(index);
+		});
+	}
 
 	private async loadLocationDoor(
 		doorData: DoorData,
@@ -615,11 +628,8 @@ export default class SceneManagerSystem implements ISystem {
 			smSystem.resetViewPosition(gameState);
 			gameState.exploreHud.hideHighlightInfoUI();
 
-			newLoc.events.forEach((evt) => {
-				if(evt.trigger === "OnLocationEnter") {
-					evt.isTriggered = true;
-				}
-			});
+			const ehSystem = container.resolve(EventHandlerSystem);
+			ehSystem.checkEventByTrigger("OnLocationEnter");			
 		});
 		sceneGUI.addControl(button);
 		exploreGuiArr.push(button);

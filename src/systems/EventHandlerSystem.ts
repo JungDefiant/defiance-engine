@@ -3,7 +3,7 @@ import { Engine } from "@babylonjs/core";
 import ISystem from "./ISystem";
 import { query, removeComponent } from "bitecs";
 import GameState from "src/states/GameState";
-import { EventData } from "src/states/EventData";
+import { EventData, EventTrigger, EventType } from "src/states/EventData";
 import DialogueManagerSystem from "./DialogueManagerSystem";
 import CombatManagerSystem from "./CombatManagerSystem";
 
@@ -12,25 +12,25 @@ import CombatManagerSystem from "./CombatManagerSystem";
 export default class SessionDataSystem implements ISystem {
 	public async start(): Promise<void> {}
 
-	public update(deltaTime: number, gameState?: GameState): void {
-        if (!gameState || !gameState.currentLocation) {
+	public update(deltaTime: number): void {}
+
+    public checkEventByTrigger(eventTrigger: EventTrigger) {
+        const gs = container.resolve(GameState);
+        if (!gs || !gs.currentLocation) {
 			return;
 		}
 
-        const eventsArray = gameState.currentLocation.events;
+        const eventsArray = gs.currentLocation.events.filter(evt => evt.trigger === eventTrigger);
         const eventIndexToRemove = [];
 
         for(const evt of eventsArray) {
-            if(evt.isTriggered) {
-                this.triggerEvent(evt);
-                evt.isTriggered = false;
-                const evtIndex = eventsArray.indexOf(evt);
-                eventIndexToRemove.push(evtIndex);
-            }
+            this.triggerEvent(evt);
+            const evtIndex = eventsArray.indexOf(evt);
+            eventIndexToRemove.push(evtIndex);
         }
 
         for(const ind of eventIndexToRemove) {
-            gameState.currentLocation.events.splice(ind);
+            gs.currentLocation.events.splice(ind);
         }
     }
 
