@@ -5,7 +5,7 @@ import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import GameState from "src/states/GameState";
 import DialogueHUD from "src/gui/DialogueHUD";
 import type ISystem from "src/systems/ISystem";
-import { DialogueLine, DialogueNode, DialogueOptionLine, GameMode } from "src/states/GameData";
+import { DialogueLine, DialogueNode, DialogueOptionLine, GameMode } from "src/states/data/GameData";
 import type { TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";

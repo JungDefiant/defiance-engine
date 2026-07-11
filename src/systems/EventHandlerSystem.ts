@@ -3,7 +3,7 @@ import { Engine } from "@babylonjs/core";
 import ISystem from "./ISystem";
 import { query, removeComponent } from "bitecs";
 import GameState from "src/states/GameState";
-import { EventData, EventTrigger, EventType } from "src/states/EventData";
+import { EventData, EventTrigger, EventType } from "src/states/data/EventData";
 import DialogueManagerSystem from "./DialogueManagerSystem";
 import CombatManagerSystem from "./CombatManagerSystem";
 

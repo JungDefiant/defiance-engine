@@ -6,7 +6,7 @@ import { EntityId, query } from "bitecs";
 import { PlayerGUI } from "src/gui/components/PlayerGUI";
 import { ActorData } from "src/components/ActorData";
 import { EnemyGUI } from "src/gui/components/EnemyGUI";
-import { GameMode } from "src/states/GameData";
+import { GameMode } from "src/states/data/GameData";
 import CombatManagerSystem from "./CombatManagerSystem";
 
 @singleton()
