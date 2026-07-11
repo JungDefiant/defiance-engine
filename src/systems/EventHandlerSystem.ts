@@ -21,16 +21,13 @@ export default class SessionDataSystem implements ISystem {
 		}
 
         const eventsArray = gs.currentLocation.events.filter(evt => evt.trigger === eventTrigger);
-        const eventIndexToRemove = [];
 
         for(const evt of eventsArray) {
+            // TO DO: Check condition for event to trigger
             this.triggerEvent(evt);
             const evtIndex = eventsArray.indexOf(evt);
-            eventIndexToRemove.push(evtIndex);
-        }
-
-        for(const ind of eventIndexToRemove) {
-            gs.currentLocation.events.splice(ind);
+            gs.currentLocation.events.splice(evtIndex);
+            return;
         }
     }
 

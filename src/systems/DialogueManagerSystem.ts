@@ -10,6 +10,7 @@ import type { TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { getPublicRoot } from "src/Utils";
+import EventHandlerSystem from "./EventHandlerSystem";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
@@ -229,6 +230,9 @@ export default class DialogueManagerSystem implements ISystem {
 
 		gs.actionPauseSet.delete(PAUSE_DIALOGUE);
 		smSystem.setGameMode(GameMode.Explore);
+
+		const ehSystem = container.resolve(EventHandlerSystem);
+		ehSystem.checkEventByTrigger("OnDialogueEnd");
 	}
 
 	private displayTextLine(id: number, line: DialogueLine, dlgHud: DialogueHUD) {

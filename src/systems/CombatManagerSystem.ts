@@ -33,6 +33,7 @@ import {
 } from "src/Constants";
 import { GameMode } from "src/states/GameData";
 import UserInterfaceSystem from "./UserInterfaceSystem";
+import EventHandlerSystem from "./EventHandlerSystem";
 
 @singleton()
 export default class CombatManagerSystem implements ISystem {
@@ -131,7 +132,8 @@ export default class CombatManagerSystem implements ISystem {
 
 		gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 
-		// Hide inscene UI
+		const ehSystem = container.resolve(EventHandlerSystem);
+		ehSystem.checkEventByTrigger("OnCombatStart");
 	}
 
 	public endCombat() {
@@ -162,6 +164,9 @@ export default class CombatManagerSystem implements ISystem {
 			gameState.actionPauseSet.clear();
 		}
 		this.combatState = CombatState.Default;
+
+		const ehSystem = container.resolve(EventHandlerSystem);
+		ehSystem.checkEventByTrigger("OnCombatEnd");
 	}
 
 	public async startQueueAction(
