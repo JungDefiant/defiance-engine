@@ -180,7 +180,7 @@ export default class DialogueManagerSystem implements ISystem {
 					}
 
 					const stringTerm = term.sourceString;
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey);
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as string;
 
 					return storyVarValue === stringTerm;
 				};
@@ -194,28 +194,93 @@ export default class DialogueManagerSystem implements ISystem {
 					}
 	
 					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey);
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
 	
 					return storyVarValue === numberTerm;
 				}
 			},
 			StringVarNeq(varKey, _, term) {
-				return () => false;
+				return () => {
+					const storyVarKey = varKey.sourceString;
+					if (!gs.storyVariableMap.has(storyVarKey)) {
+						return false;
+					}
+
+					const stringTerm = term.sourceString;
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as string;
+
+					return storyVarValue !== stringTerm;
+				};
 			},
 			NumberVarNeq(varKey, _, __, term) {
-				return () => false;
+				return () => {
+					const storyVarKey = varKey.sourceString;
+	
+					if (!gs.storyVariableMap.has(storyVarKey)) {
+						return false;
+					}
+	
+					const numberTerm = term.getNumber();
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
+	
+					return storyVarValue !== numberTerm;
+				}
 			},
 			VarLt(varKey, _, term) {
-				return () => false;
+				return () => {
+					const storyVarKey = varKey.sourceString;
+	
+					if (!gs.storyVariableMap.has(storyVarKey)) {
+						return false;
+					}
+	
+					const numberTerm = term.getNumber();
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
+	
+					return storyVarValue < numberTerm;
+				}
 			},
 			VarLte(varKey, _, term) {
-				return () => false;
+				return () => {
+					const storyVarKey = varKey.sourceString;
+	
+					if (!gs.storyVariableMap.has(storyVarKey)) {
+						return false;
+					}
+	
+					const numberTerm = term.getNumber();
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
+	
+					return storyVarValue <= numberTerm;
+				}
 			},
 			VarGt(varKey, _, term) {
-				return () => false;
+				return () => {
+					const storyVarKey = varKey.sourceString;
+	
+					if (!gs.storyVariableMap.has(storyVarKey)) {
+						return false;
+					}
+	
+					const numberTerm = term.getNumber();
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
+	
+					return storyVarValue > numberTerm;
+				}
 			},
 			VarGte(varKey, _, term) {
-				return () => false;
+				return () => {
+					const storyVarKey = varKey.sourceString;
+	
+					if (!gs.storyVariableMap.has(storyVarKey)) {
+						return false;
+					}
+	
+					const numberTerm = term.getNumber();
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
+	
+					return storyVarValue >= numberTerm;
+				}
 			}
 		});
 	}
