@@ -173,7 +173,6 @@ export default class DialogueManagerSystem implements ISystem {
 				return cond.parseConditional();
 			},
 			StringVarEq(varKey, _, term) {
-				console.log(`STRINGVAREQ: ${varKey.sourceString} == ${term.sourceString}`);
 				return () => {
 					const storyVarKey = varKey.sourceString;
 					if (!gs.storyVariableMap.has(storyVarKey)) {
@@ -188,19 +187,14 @@ export default class DialogueManagerSystem implements ISystem {
 			},
 			NumberVarEq(varKey, _, __, term) {
 				return () => {
-					console.log("NUMVAREQ");
 					const storyVarKey = varKey.sourceString;
-					console.log("VARKEY", storyVarKey);
 	
 					if (!gs.storyVariableMap.has(storyVarKey)) {
-						console.log("NO STORY VAR");
 						return false;
 					}
 	
 					const numberTerm = term.getNumber();
 					const storyVarValue = gs.storyVariableMap.get(storyVarKey);
-	
-					console.log("EQ?", storyVarValue === numberTerm);
 	
 					return storyVarValue === numberTerm;
 				}
@@ -302,7 +296,6 @@ export default class DialogueManagerSystem implements ISystem {
 
 	public runLine(id: number) {
 		const gs = container.resolve(GameState);
-		console.log("RUN LINE", id);
 
 		// Get dialogue HUD
 		if (!gs.activeDialogue) {
@@ -322,8 +315,6 @@ export default class DialogueManagerSystem implements ISystem {
 			dlgHud.addExitEntry();
 			return;
 		}
-
-		console.log("LINE", line);
 
 		switch (line.type) {
 			case "Line":
@@ -414,8 +405,6 @@ export default class DialogueManagerSystem implements ISystem {
 			return;
 		}
 
-		console.log("RUN COMMAND");
-
 		switch (line.cmd) {
 			case "setnumbervar":
 				this.setNumberVariable(line.vars[0] as string, line.vars[1] as number);
@@ -434,12 +423,10 @@ export default class DialogueManagerSystem implements ISystem {
 		const nextLineId = id + 1;
 		const nextLine = gs.activeDialogue?.lines[nextLineId];
 		if (!nextLine) {
-			console.log("END DIALOGUE");
 			this.endDialogue();
 			return;
 		}
 
-		console.log("RUN LINE");
 		this.runLine(nextLineId);
 	}
 
