@@ -1,5 +1,5 @@
 import { Vector3 } from "@babylonjs/core";
-import { EventData } from "src/states/data/EventData";
+import { EventData } from "src/states/types/EventTypes";
 
 export class ControlSettings {
 	powerActions: number[] = [
@@ -83,7 +83,8 @@ export interface DialogueNode {
 }
 
 export interface DialogueLine {
-	type: "Line" | "Options" | "Cmd";
+	type: DialogueLineType;
+	condition: ConditionFunction;
 	character?: string;
 	text?: string;
 	options?: DialogueOptionLine[];
@@ -91,9 +92,12 @@ export interface DialogueLine {
 	vars?: (string | number | Vector3)[];
 }
 
+export type DialogueLineType = "Line" | "Options" | "Cmd" | "Line_condition" | "Cmd_condition";
+
 export interface DialogueOptionLine {
 	text: string;
 	destinationNode: string;
+	condition: ConditionFunction;
 }
 
 export interface ModalData {
@@ -105,4 +109,10 @@ export interface ModalPage {
 	title: string;
 	textBody: string;
 	imageSrc?: string;
+}
+
+export type StoryVariable = string | number;
+
+export interface ConditionFunction {
+	(): boolean;
 }

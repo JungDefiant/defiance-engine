@@ -1,11 +1,17 @@
 ch0_start
 ===
+>> setnumbervar (EX2) (10)
+{EX2 == $10} >> setstringvar (EX1) (Hella)
+{EX2 == $10} @_: EX2 set to 10.
+{EX1 == Hella} @_: EX1 set to Hella.
+{EX2 == $5} @_: This should not show up.
 @Speaker: This is an example of someone speaking.
 @_: This is an example of narration.
+{EX2 == $10} @_: This is an example of a conditional line.
 @_: Would you like to start combat?
 - Yes [ch1_start]
 - No [_]
-@_: X
+{EX1 == Hella} - Conditional option! EX1 equals Hella [_]
 ===
 
 ch1_start

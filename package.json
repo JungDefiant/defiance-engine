@@ -8,7 +8,7 @@
     "build-pages": "tsc && vite build --base=/defiance-engine/",
     "build-itch": "tsc && vite build",
     "preview": "vite preview",
-    "generate": "ohm generateBundles --withTypes --esm 'src/parser/*.ohm'"
+    "generateOhm": "npx ohm generateBundles --withTypes --esm 'src/parser/*.ohm'"
   },
   "dependencies": {
     "@babylonjs/core": "^8.54.1",

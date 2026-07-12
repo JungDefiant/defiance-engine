@@ -21,8 +21,8 @@ import CombatHUD from "src/gui/CombatHUD";
 import { DEFAULT_CAM_TARGET } from "../Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
-import { ControlSettings, GameMode, LocationData } from "src/states/data/GameData";
-import type { DialogueNode, ModalData, SceneData } from "src/states/data/GameData";
+import { ControlSettings, GameMode, LocationData } from "src/states/types/GameTypes";
+import type { DialogueNode, ModalData, SceneData, StoryVariable } from "src/states/types/GameTypes";
 import { VictoryScreen } from "../gui/screens/VictoryScreen";
 import { ModalScreen } from "../gui/screens/ModalScreen";
 import { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
@@ -34,45 +34,46 @@ TO DO:
 */
 @singleton()
 export default class GameState {
+	// Campaign State
 	public readonly campaignId: string;
-	public gamePaused: boolean = false;
+	public readonly storyVariableMap: Map<string, StoryVariable> = new Map();
+	// Gameplay state
+	public gameMode: GameMode;
 	public playerEIDs: number[];
+	public selectedPlayerEID: number;
 	public enemyEIDs: number[] = [];
 	public lastExploreViewTarget: Vector3 = DEFAULT_CAM_TARGET;
-	public gameMode: GameMode;
-	public selectedPlayerEID: number;
-	public activeDialogue: Nullable<DialogueNode> = null;
 	public currentLocation: Nullable<LocationData> = null;
+	// Dialogue state
+	public semantics: Nullable<DialogueSemantics> = null;
+	public activeDialogue: Nullable<DialogueNode> = null;
+	public readonly dialogueMap: Map<string, DialogueNode> = new Map();
+	// Control state
 	public actionManager: Nullable<ActionManager> = null;
 	public exploreGUIControls: Control[] = [];
-	public actionPauseSet: Set<string> = new Set();
-	public renderPauseSet: Set<string> = new Set();
-	public controlPauseSet: Set<string> = new Set();
-	// Game configurations
-	public controlSettings: ControlSettings = new ControlSettings();
-	public semantics: Nullable<DialogueSemantics> = null;
-	// Scene data
+	public readonly controlSettings: ControlSettings = new ControlSettings();
+	public readonly actionPauseSet: Set<string> = new Set();
+	public readonly renderPauseSet: Set<string> = new Set();
+	public readonly controlPauseSet: Set<string> = new Set();
+	// Scene state
 	public readonly world: World;
 	public readonly scene: Scene;
 	public readonly sceneData: SceneData;
 	public readonly uiScene: Scene;
 	public readonly sceneNodes: TransformNode[];
-	public readonly dialogueMap: Map<string, DialogueNode> = new Map();
-	public readonly modalMap: Map<string, ModalData> = new Map();
-	// GUIs
+	// GUI state
 	public readonly mainUI: AdvancedDynamicTexture;
 	public readonly sceneGUI: AdvancedDynamicTexture;
-	// HUDs
+	public readonly modalMap: Map<string, ModalData> = new Map();
 	public readonly partyInfoHud: PartyInfoHUD;
 	public readonly exploreHud: ExploreHUD;
 	public readonly dialogueHud: DialogueHUD;
 	public readonly combatHud: CombatHUD;
-	// Screens
 	public readonly tacticalPauseScreen: TacticalPauseScreen;
 	public readonly modalScreen: ModalScreen;
 	public readonly gameOverScreen: GameOverScreen;
 	public readonly victoryScreen: VictoryScreen;
-	// Components
+	// Components state
 	public readonly ActorDataComponent: ActorData[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
 	public readonly EnemyGUIComponent: EnemyGUI[] = [];
