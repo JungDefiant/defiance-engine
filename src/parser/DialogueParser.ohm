@@ -2,30 +2,36 @@ Dialogue {
     DialogueData = Node+
     
     String = (alnum | "." | "," | "?" | "!" | "_")+
-
     StringVar = "(" String ")"
-    
     Number = #(digit+)
-
     NumberVar = "(" Number ")"
-    
     Vector = "(" Number "," Number "," Number ")"
 
-    MoveToNode = "[" String "]"
-    
-    Node = String "===" (Cmd | Options | Line)+ "==="
-              
-    Line = "@" String ":" String
-    
-    Options = OptionLine+
-    
-    OptionLine = "-" String MoveToNode
-    
-    Cmd = ">>" (SetVar | MoveCam | StartCombat)
-    
-    SetVar = "setvar" StringVar StringVar
-    
-    MoveCam = "movecam" Vector Vector
+    StringVarEq  = String "==" String
+    NumberVarEq  = String "==" "$" Number
+    StringVarNeq = String "!=" String
+    NumberVarNeq = String "!=" "$" Number
+    VarLt  = String "<"  Number
+    VarLte = String "<=" Number
+    VarGt  = String ">"  Number
+    VarGte = String ">=" Number
+    Conditional = "{" (StringVarEq | NumberVarEq | StringVarNeq | NumberVarNeq | VarLt | VarLte | VarGt | VarGte ) "}"
 
+    MoveToNode = "[" String "]"
+    Node = String "===" (Cmd | Options | Line | Cmd_condition | Line_condition)+ "==="
+    
+    Line = "@" String ":" String
+    Line_condition = Conditional "@" String ":" String
+
+    Options = (OptionLine | OptionLine_condition)+
+    OptionLine = "-" String MoveToNode
+    OptionLine_condition = Conditional "-" String MoveToNode
+    
+    Cmd = ">>" Command
+    Cmd_condition = Conditional ">>" Command
+    Command = SetStringVar | SetNumberVar | MoveCam | StartCombat
+    SetStringVar = "setstringvar" StringVar StringVar
+    SetNumberVar = "setnumbervar" StringVar NumberVar
+    MoveCam = "movecam" Vector Vector
     StartCombat = "startcombat" StringVar
 }

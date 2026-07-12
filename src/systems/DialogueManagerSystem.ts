@@ -5,7 +5,7 @@ import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import GameState from "src/states/GameState";
 import DialogueHUD from "src/gui/DialogueHUD";
 import type ISystem from "src/systems/ISystem";
-import { DialogueLine, DialogueNode, DialogueOptionLine, GameMode } from "src/states/types/GameTypes";
+import { ConditionFunction, DialogueLine, DialogueNode, DialogueOptionLine, GameMode } from "src/states/types/GameTypes";
 import type { TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";
@@ -16,7 +16,7 @@ import EventHandlerSystem from "./EventHandlerSystem";
 export default class DialogueManagerSystem implements ISystem {
 	public async start() { }
 
-	public update(deltaTime: number) {}
+	public update(deltaTime: number) { }
 
 	public initSemantics() {
 		const gs = container.resolve(GameState);
@@ -39,6 +39,8 @@ export default class DialogueManagerSystem implements ISystem {
 							case "Line":
 							case "Options":
 							case "Cmd":
+							case "Line_condition":
+							case "Cmd_condition":
 								return [line.getLine()];
 							default:
 								return [];
@@ -54,26 +56,71 @@ export default class DialogueManagerSystem implements ISystem {
 					type: "Line",
 					character: char.getString(),
 					text: txt.getString(),
+					condition: () => true
 				} as DialogueLine;
+			},
+			Line_condition(cond, _, char, __, txt) {
+				const condition = cond.parseConditional();
+				const line = {
+					type: "Line",
+					character: char.getString(),
+					text: txt.getString(),
+					condition
+				} as DialogueLine;
+				return line;
 			},
 			Options(options) {
 				return {
 					type: "Options",
 					options: options.children.map((choice) => {
-						const text = choice.child(1).getString();
-						const moveto = choice.child(2).getString();
-						return { text, destinationNode: moveto } as DialogueOptionLine;
+						if (choice.ctorName === "OptionLine_condition") {
+							const condition = choice.child(0).parseConditional();
+							const text = choice.child(2).getString();
+							const moveto = choice.child(3).getString();
+
+							return { 
+								text, 
+								destinationNode: moveto, 
+								condition 
+							} as DialogueOptionLine;
+						}
+						else {
+							return { 
+								text: choice.child(1).getString(), 
+								destinationNode: choice.child(2).getString(), 
+								condition: () => true 
+							} as DialogueOptionLine;
+						}
+
 					}),
 				} as DialogueLine;
 			},
 			Cmd(_, cmd) {
 				return cmd.getLine();
 			},
-			SetVar(cmd, var1, var2) {
+			Cmd_condition(cond, _, cmd) {
+				const condition = cond.parseConditional();
+				const cmdLine = cmd.getLine();
+				cmdLine.condition = condition;
+				return cmdLine;
+			},
+			Command(cmd) {
+				return cmd.getLine();
+			},
+			SetStringVar(cmd, var1, var2) {
 				return {
 					type: "Cmd",
 					cmd: cmd.sourceString,
-					vars: [var1.child(1).sourceString, var2.child(1).sourceString],
+					vars: [var1.child(1).getString(), var2.child(1).getString()],
+					condition: () => true
+				};
+			},
+			SetNumberVar(cmd, var1, var2) {
+				return {
+					type: "Cmd",
+					cmd: cmd.sourceString,
+					vars: [var1.child(1).getString(), var2.child(1).getNumber()],
+					condition: () => true
 				};
 			},
 			MoveCam(cmd, var1, var2) {
@@ -81,6 +128,7 @@ export default class DialogueManagerSystem implements ISystem {
 					type: "Cmd",
 					cmd: cmd.sourceString,
 					vars: [var1.getVector(), var2.getVector()],
+					condition: () => true
 				};
 			},
 			StartCombat(cmd, var1) {
@@ -88,6 +136,7 @@ export default class DialogueManagerSystem implements ISystem {
 					type: "Cmd",
 					cmd: cmd.sourceString,
 					vars: [var1.child(1).sourceString],
+					condition: () => true
 				};
 			},
 		});
@@ -117,6 +166,63 @@ export default class DialogueManagerSystem implements ISystem {
 			Vector(_, x, __, y, ___, z, _____) {
 				return new Vector3(x.getNumber(), y.getNumber(), z.getNumber());
 			},
+		});
+
+		gs.semantics.addOperation<ConditionFunction>("parseConditional()", {
+			Conditional(_, cond, __) {
+				return cond.parseConditional();
+			},
+			StringVarEq(varKey, _, term) {
+				console.log(`STRINGVAREQ: ${varKey.sourceString} == ${term.sourceString}`);
+				return () => {
+					const storyVarKey = varKey.sourceString;
+					if (!gs.storyVariableMap.has(storyVarKey)) {
+						return false;
+					}
+
+					const stringTerm = term.sourceString;
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey);
+
+					return storyVarValue === stringTerm;
+				};
+			},
+			NumberVarEq(varKey, _, __, term) {
+				return () => {
+					console.log("NUMVAREQ");
+					const storyVarKey = varKey.sourceString;
+					console.log("VARKEY", storyVarKey);
+	
+					if (!gs.storyVariableMap.has(storyVarKey)) {
+						console.log("NO STORY VAR");
+						return false;
+					}
+	
+					const numberTerm = term.getNumber();
+					const storyVarValue = gs.storyVariableMap.get(storyVarKey);
+	
+					console.log("EQ?", storyVarValue === numberTerm);
+	
+					return storyVarValue === numberTerm;
+				}
+			},
+			StringVarNeq(varKey, _, term) {
+				return () => false;
+			},
+			NumberVarNeq(varKey, _, __, term) {
+				return () => false;
+			},
+			VarLt(varKey, _, term) {
+				return () => false;
+			},
+			VarLte(varKey, _, term) {
+				return () => false;
+			},
+			VarGt(varKey, _, term) {
+				return () => false;
+			},
+			VarGte(varKey, _, term) {
+				return () => false;
+			}
 		});
 	}
 
@@ -170,7 +276,7 @@ export default class DialogueManagerSystem implements ISystem {
 
 		gs.actionPauseSet.add(PAUSE_DIALOGUE);
 
-		if(itr) {
+		if (itr) {
 			camera.position = itr.viewNode.absolutePosition;
 			// TO DO: Implement moving camera to target over time
 			camera.setTarget(itr.itrNode.absolutePosition);
@@ -196,9 +302,11 @@ export default class DialogueManagerSystem implements ISystem {
 
 	public runLine(id: number) {
 		const gs = container.resolve(GameState);
+		console.log("RUN LINE", id);
 
 		// Get dialogue HUD
 		if (!gs.activeDialogue) {
+			this.endDialogue();
 			return;
 		}
 
@@ -206,6 +314,7 @@ export default class DialogueManagerSystem implements ISystem {
 		const line = gs.activeDialogue.lines[id];
 
 		if (!dlgHud) {
+			this.endDialogue();
 			return;
 		}
 
@@ -214,13 +323,30 @@ export default class DialogueManagerSystem implements ISystem {
 			return;
 		}
 
+		console.log("LINE", line);
+
 		switch (line.type) {
 			case "Line":
-				this.displayTextLine(id, line, dlgHud);
+				if(line.condition()) {
+					this.displayTextLine(id, line, dlgHud);
+				}
+				else {
+					const nextLineId = id + 1;
+					this.runLine(nextLineId);
+				}
+				break;
 			case "Options":
 				this.displayOptionsLine(line, dlgHud);
+				break;
 			case "Cmd":
-				this.runCommand(line);
+				if(line.condition()) {
+					this.runCommand(id, line);
+				}
+				else {
+					const nextLineId = id + 1;
+					this.runLine(nextLineId);
+				}
+				break;
 		}
 	}
 
@@ -242,7 +368,6 @@ export default class DialogueManagerSystem implements ISystem {
 			return;
 		}
 
-		let charData;
 		const character = line.character;
 		if (character) {
 			// Gets sprite in the scene matching the character name
@@ -281,35 +406,61 @@ export default class DialogueManagerSystem implements ISystem {
 		}
 	}
 
-	private runCommand(line: DialogueLine) {
-		if (!line.cmd || !line.vars) {
+	private runCommand(id: number, line: DialogueLine) {
+		const gs = container.resolve(GameState);
+
+		if (!gs || !line.cmd || !line.vars) {
+			this.endDialogue();
 			return;
 		}
+
+		console.log("RUN COMMAND");
+
 		switch (line.cmd) {
-			case "setvar":
+			case "setnumbervar":
+				this.setNumberVariable(line.vars[0] as string, line.vars[1] as number);
+				break;
+			case "setstringvar":
 				this.setStringVariable(line.vars[0] as string, line.vars[1] as string);
-				return;
+				break;
 			case "movecam":
 				this.moveCamera(line.vars[0] as Vector3, line.vars[1] as Vector3);
-				return;
+				break;
 			case "startcombat":
 				this.startCombat(line.vars[0] as string);
-				return;
+				break;
 		}
+
+		const nextLineId = id + 1;
+		const nextLine = gs.activeDialogue?.lines[nextLineId];
+		if (!nextLine) {
+			console.log("END DIALOGUE");
+			this.endDialogue();
+			return;
+		}
+
+		console.log("RUN LINE");
+		this.runLine(nextLineId);
 	}
 
 	// COMMANDS
-	private setFlag(flag: string) {}
+	private setFlag(flag: string) { }
 
-	private setStringVariable(name: string, value: string) {}
+	private setStringVariable(name: string, value: string) {
+		const gs = container.resolve(GameState);
+		gs.storyVariableMap.set(name, value);
+	}
 
-	private setNumberVariable(name: string, value: number) {}
+	private setNumberVariable(name: string, value: number) {
+		const gs = container.resolve(GameState);
+		gs.storyVariableMap.set(name, value);
+	}
 
-	private moveCamera(position: Vector3, target: Vector3) {}
+	private moveCamera(position: Vector3, target: Vector3) { }
 
-	private setSpeaker(charId: string) {}
+	private setSpeaker(charId: string) { }
 
-	private playSound(soundUrl: string) {}
+	private playSound(soundUrl: string) { }
 
 	private startCombat(encounterId: string) {
 		this.endDialogue();

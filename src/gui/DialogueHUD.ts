@@ -12,15 +12,11 @@ import type IHUD from "src/gui/IHUD";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import { container } from "tsyringe";
 import { Themes } from "src/gui/Themes";
-
-import type {
-	DialogueOptionLine,
-	DialogueLine,
-} from "src/systems/DialogueManagerSystem";
 import { type Nullable } from "@babylonjs/core";
 import StackPanelImage from "./components/StackPanelImage";
 import GameState from "src/states/GameState";
 import { getPublicRoot } from "src/Utils";
+import { DialogueLine, DialogueOptionLine } from "src/states/types/GameTypes";
 
 export default class DialogueHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -230,6 +226,10 @@ export default class DialogueHUD implements IHUD {
 				return;
 			}
 
+			if (!choiceData.condition()) {
+				return;
+			}
+
 			const numChoice = index + 1;
 			const buttonUI = Button.CreateSimpleButton(
 				"ui_choice_" + numChoice,
@@ -270,6 +270,7 @@ export default class DialogueHUD implements IHUD {
 						character: pcName,
 						id: index,
 						text: choiceData.text,
+						condition: () => true
 					} as DialogueLine);
 					this.addExitEntry();
 					return;
@@ -280,6 +281,7 @@ export default class DialogueHUD implements IHUD {
 					character: pcName,
 					id: index,
 					text: choiceData.text,
+					condition: () => true
 				} as DialogueLine);
 				dmSystem.startDialogueNode(choiceData.destinationNode);
 			});
