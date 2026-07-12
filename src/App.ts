@@ -84,7 +84,7 @@ export class App {
 		this.dmSystem.update(deltaTime);
 		this.cmSystem.update(deltaTime, gameState);
 		this.rqeSystem.update(deltaTime, gameState);
-		this.ehSystem.update(deltaTime, gameState);
+		this.ehSystem.update(deltaTime);
 		this.uiSystem.update(deltaTime, gameState);
 	}
 
