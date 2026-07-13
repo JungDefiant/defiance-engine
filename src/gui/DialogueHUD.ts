@@ -203,7 +203,7 @@ export default class DialogueHUD implements IHUD {
 			buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
 		});
 		buttonUI.onPointerClickObservable.addOnce(() => {
-			dmSystem.endDialogue();
+			dmSystem.endDialogue(true);
 		});
 
 		this.optionsEntryStack.addControl(buttonUI);
@@ -329,13 +329,16 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryStack.paddingBottom = 6;
 		this.textEntryStack.adaptHeightToChildren = true;
 		this.textEntryStack.onControlAddedObservable.add(() => {
+			if(!this.textEntryStack || !this.textEntryScrollbar) {
+				return;
+			}
 			const textEntryStackSize =
-				this.textEntryStack!.children.length * sizePerEntry;
+				this.textEntryStack.children.length * sizePerEntry;
 			if (textEntryStackSize < textEntryArea.heightInPixels) {
 				this.showHideScrollbar(false);
 			} else {
 				this.showHideScrollbar(true);
-				this.textEntryScrollbar!.thumbWidth =
+				this.textEntryScrollbar.thumbWidth =
 					100 * (textEntryArea.heightInPixels / textEntryStackSize);
 			}
 		});
