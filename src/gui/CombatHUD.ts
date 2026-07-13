@@ -340,9 +340,9 @@ export default class CombatHUD implements IHUD {
 				return;
 			}
 
-			const textEntryStackSize =
+			const combatEntryStackSize =
 			this.combatLogStack.children.length * this.sizePerCombatLogEntry;
-			this.combatLogStack.topInPixels = (value / 100) * textEntryStackSize;
+			this.combatLogStack.topInPixels = (value / 100) * combatEntryStackSize;
 		});
 		this.combatLogScrollbar.value = 0;
 		this.combatLogScrollbar.background = Themes.primary3;
