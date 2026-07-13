@@ -15,7 +15,6 @@ import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import GameState from "src/states/GameState";
 import { ActorData } from "src/components/ActorData";
 import { getPublicRoot } from "src/Utils";
-import StackPanelImage from "./components/StackPanelImage";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -166,6 +165,16 @@ export default class CombatHUD implements IHUD {
 		rootContainer.addControl(entryUI);
 
 		this.combatLogStack.addControl(rootContainer);
+	}
+
+	
+	public clearCombatEntries() {
+		if(!this.combatLogStack) {
+			return;
+		}
+
+		this.combatLogStack.clearControls();
+		this.showHideScrollbar(true);
 	}
 
 	private createActionBar(): Container {

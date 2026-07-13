@@ -145,6 +145,8 @@ export default class CombatManagerSystem implements ISystem {
 			gameState.actionManager = null;
 		}
 
+		gameState.combatHud.clearCombatEntries();
+
 		gameState.enemyEIDs.forEach((eid) => {
 			removeEntity(gameState.world, eid);
 		});
