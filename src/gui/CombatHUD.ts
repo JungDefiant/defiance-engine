@@ -1,9 +1,10 @@
-import { Nullable } from "@babylonjs/core";
+import { Nullable, Rotate2dBlock } from "@babylonjs/core";
 import {
 	Container,
 	Control,
 	Grid,
 	Rectangle,
+	ScrollBar,
 	StackPanel,
 	TextBlock,
 } from "@babylonjs/gui";
@@ -14,6 +15,7 @@ import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import GameState from "src/states/GameState";
 import { ActorData } from "src/components/ActorData";
 import { getPublicRoot } from "src/Utils";
+import StackPanelImage from "./components/StackPanelImage";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -21,6 +23,8 @@ export default class CombatHUD implements IHUD {
 	private actionBarUI: Nullable<Container> = null;
 	private messageDisplayUI: Nullable<Container> = null;
 	private combatLogUI: Nullable<Container> = null;
+	private combatLogStack: Nullable<StackPanel> = null;
+	private combatLogScrollbar: Nullable<ScrollBar> = null;
 
 	private abilitySlots: ActionSlot[] = [];
 	private deviceSlots: ActionSlot[] = [];
@@ -28,6 +32,7 @@ export default class CombatHUD implements IHUD {
 
 	private readonly actionAbilityStackName = "ui_actionAbilityStack";
 	private readonly actionDeviceStackName = "ui_actionDeviceStack";
+	private readonly sizePerCombatLogEntry = 32;
 
 	public showHideHud(show: boolean): void {
 		if (!this.rootContainer) {
@@ -136,6 +141,31 @@ export default class CombatHUD implements IHUD {
 		if (show && message && this.messageDisplayText) {
 			this.messageDisplayText.text = message;
 		}
+	}
+
+	public addCombatLogEntry(source: string, text: string) {
+		if (!this.combatLogStack) {
+			return;
+		}
+
+		const rootContainer = new Rectangle("ui_combatLogNode");
+		rootContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		rootContainer.width = 1;
+		rootContainer.heightInPixels = this.sizePerCombatLogEntry;	
+		rootContainer.thickness = 0;
+
+		const entryUI = new TextBlock("ui_combatLogEntry", `${source}: ${text}`);
+		entryUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		entryUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+		entryUI.width = 1;
+		entryUI.color = Themes.neutral2;
+		entryUI.style = Themes.typography.caption;
+		entryUI.resizeToFit = true;
+		entryUI.textWrapping = 1;
+		rootContainer.addControl(entryUI);
+
+		this.combatLogStack.addControl(rootContainer);
 	}
 
 	private createActionBar(): Container {
@@ -249,6 +279,7 @@ export default class CombatHUD implements IHUD {
 		combatLogHeader.widthInPixels = 160;
 		combatLogHeader.heightInPixels = 20;
 		combatLogHeader.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		combatLogUI.addControl(combatLogHeader);
 
 		const combatLogLabel = new TextBlock("ui_combatLogLabel", "COMBAT LOG");
 		combatLogLabel.color = Themes.neutral2;
@@ -258,8 +289,75 @@ export default class CombatHUD implements IHUD {
 		combatLogLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		combatLogLabel.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		combatLogUI.addControl(combatLogHeader);
+		combatLogHeader.addControl(combatLogLabel);
+
+		const combatLogScroll = new Container("ui_combatLogScroll");
+		combatLogScroll.isPointerBlocker = true;
+		combatLogScroll.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		combatLogScroll.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		combatLogScroll.widthInPixels = 160;
+		combatLogScroll.heightInPixels = 160;
+		combatLogScroll.alpha = 1;
+		combatLogUI.addControl(combatLogScroll);
+
+
+
+		this.combatLogStack = new StackPanel("ui_combatLogStack");
+		this.combatLogStack.isPointerBlocker = true;
+		this.combatLogStack.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		this.combatLogStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.combatLogStack.width = 1;
+		this.combatLogStack.spacing = 4;
+		this.combatLogStack.adaptHeightToChildren = true;
+		this.combatLogStack.onControlAddedObservable.add(() => {
+			if(!this.combatLogStack || !this.combatLogScrollbar) {
+				return;
+			}
+			const textEntryStackSize =
+				(this.combatLogStack.children.length + 2) * this.sizePerCombatLogEntry;
+			if (textEntryStackSize < combatLogScroll.heightInPixels) {
+				this.showHideScrollbar(false);
+			} else {
+				this.showHideScrollbar(true);
+				this.combatLogScrollbar.thumbWidth =
+					100 * (combatLogScroll.heightInPixels / textEntryStackSize);
+			}
+		});
+		combatLogScroll.addControl(this.combatLogStack);
+
+		this.combatLogScrollbar = new ScrollBar("ui_textEntryScrollbar");
+		this.combatLogScrollbar.isPointerBlocker = true;
+		this.combatLogScrollbar.horizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_RIGHT;
+		this.combatLogScrollbar.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.combatLogScrollbar.isVertical = true;
+		this.combatLogScrollbar.isThumbClamped = true;
+		this.combatLogScrollbar.widthInPixels = 8;
+		this.combatLogScrollbar.paddingTopInPixels = 8;
+		this.combatLogScrollbar.paddingBottomInPixels = 8;
+		this.combatLogScrollbar.onValueChangedObservable.add((value) => {
+			if (!this.combatLogStack) {
+				return;
+			}
+
+			const textEntryStackSize =
+			this.combatLogStack.children.length * this.sizePerCombatLogEntry;
+			this.combatLogStack.topInPixels = (value / 100) * textEntryStackSize;
+		});
+		this.combatLogScrollbar.value = 0;
+		this.combatLogScrollbar.background = Themes.primary3;
+		this.combatLogScrollbar.color = Themes.neutral1;
+		this.showHideScrollbar(false);
+		combatLogScroll.addControl(this.combatLogScrollbar);
 
 		return combatLogUI;
+	}
+
+	public showHideScrollbar(show: boolean): void {
+		if(!this.combatLogScrollbar) {
+			return;
+		}
+		this.combatLogScrollbar.alpha = show ? 1 : 0;
+		this.combatLogScrollbar.isEnabled = show ? true : false;
 	}
 }

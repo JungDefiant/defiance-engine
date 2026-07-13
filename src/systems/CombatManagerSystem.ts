@@ -399,8 +399,7 @@ export default class CombatManagerSystem implements ISystem {
 			this.processAbilityEffects(
 				actorData,
 				targetData,
-				actionEffects,
-				actionToExecute.descriptors,
+				actionToExecute,
 			);
 		});
 
@@ -414,27 +413,29 @@ export default class CombatManagerSystem implements ISystem {
 	private processAbilityEffects(
 		sourceData: ActorData,
 		targetData: ActorData,
-		actionEffects: EffectData[],
-		descriptors: AbilityDescriptor[],
+		abilityData: AbilityData,
 		context?: { [index: string]: EffectVar },
 	) {
-		let ftText;
-		actionEffects.forEach((eff) => {
+		let effText;
+		const gs = container.resolve(GameState);
+		abilityData.effectData.forEach((eff) => {
 			switch (eff.id) {
 				case "damage":
-					ftText = this.applyDamageEffect(sourceData, targetData, descriptors, {
+					effText = this.applyDamageEffect(sourceData, targetData, abilityData.descriptors, {
 						...eff.variables,
 						...context,
 					});
 
-					this.addFloatingTextRQE(targetData.entityId, ftText, Themes.neutral2);
+					this.addFloatingTextRQE(targetData.entityId, effText, Themes.neutral2);
+					gs.combatHud.addCombatLogEntry(`${sourceData.name} (${abilityData.name})`, `Inflicts ${effText} Damage to ${targetData.name}!`);
 					break;
 				case "healing":
-					ftText = this.applyHealEffect(sourceData, targetData, descriptors, {
+					effText = this.applyHealEffect(sourceData, targetData, abilityData.descriptors, {
 						...eff.variables,
 						...context,
 					});
-					this.addFloatingTextRQE(targetData.entityId, ftText, Themes.success);
+					this.addFloatingTextRQE(targetData.entityId, effText, Themes.success);
+					gs.combatHud.addCombatLogEntry(`${sourceData.name} (${abilityData.name})`, `Restores ${effText} Life to ${targetData.name}.`);
 					break;
 				default:
 					return;
@@ -514,8 +515,7 @@ export default class CombatManagerSystem implements ISystem {
 			this.processAbilityEffects(
 				sourceData,
 				targetData,
-				feat.effectData,
-				feat.descriptors,
+				feat,
 				context,
 			);
 		});
