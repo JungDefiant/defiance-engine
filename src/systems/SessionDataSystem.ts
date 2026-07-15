@@ -3,7 +3,7 @@ import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
 import { ActorData } from "src/components/ActorData";
 import GameState from "src/states/GameState";
-import { getPublicRoot } from "src/Utils";
+import { getPublicRoot } from "src/helpers/Utils";
 
 @singleton()
 export default class SessionDataSystem implements ISystem {

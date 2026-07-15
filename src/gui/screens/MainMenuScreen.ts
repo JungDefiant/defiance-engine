@@ -11,7 +11,7 @@ import {
 import { CreateTypography, Themes } from "../Themes";
 import { Scene, Texture } from "@babylonjs/core";
 import { App } from "src/App";
-import { getPublicRoot } from "src/Utils";
+import { getPublicRoot } from "src/helpers/Utils";
 
 export class MainMenuScreen {
 	private root: AdvancedDynamicTexture;

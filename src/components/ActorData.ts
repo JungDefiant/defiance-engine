@@ -2,7 +2,7 @@ import { container } from "tsyringe";
 import GameState from "../states/GameState";
 import { EntityId } from "bitecs";
 import { Nullable } from "@babylonjs/core";
-import { getPublicRoot } from "src/Utils";
+import { getPublicRoot } from "src/helpers/Utils";
 
 const BASE_REGEN_TICKS: number = 4;
 
@@ -145,7 +145,8 @@ export interface EffectData {
 
 export interface TacticsData {
 	condition: TacticsCondition;
-	actionId: string;
+	actionType: AbilityDescriptor;
+	actionIndex: number;
 }
 
 export enum AbilityTrigger {
@@ -173,6 +174,7 @@ export enum AbilityDescriptor {
 	// Source Type
 	innate = "innate",
 	weapon = "weapon",
+	device = "device",
 	// Trigger
 	attack = "attack",
 	action = "action",
@@ -187,6 +189,6 @@ export enum AbilityTarget {
 }
 
 export enum TacticsCondition {
-	onChance50,
-	vsHighestLife,
+	random = "random",
+	lowestLife = "lowestLife",
 }

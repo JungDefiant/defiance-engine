@@ -14,7 +14,7 @@ import { ActionSlot } from "src/gui/components/ActionSlot";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import GameState from "src/states/GameState";
 import { ActorData } from "src/components/ActorData";
-import { getPublicRoot } from "src/Utils";
+import { getPublicRoot } from "src/helpers/Utils";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -86,7 +86,7 @@ export default class CombatHUD implements IHUD {
 			if (abData) {
 				abilitySlot.setActionSlotIcon(abData.iconURL as string);
 				abilitySlot.setOnClickEvent(() =>
-					cmSystem.startQueueAction(gameState, actorData.entityId, i),
+					cmSystem.startQueueActionPlayer(gameState, actorData.entityId, i),
 				);
 				abilitySlot.setActionLabelText(
 					String.fromCharCode(
@@ -95,7 +95,7 @@ export default class CombatHUD implements IHUD {
 				);
 			} else {
 				abilitySlot.setActionSlotIcon("");
-				abilitySlot.setOnClickEvent(() => {});
+				abilitySlot.setOnClickEvent(() => { });
 				abilitySlot.setActionLabelText("");
 			}
 		}
@@ -116,7 +116,7 @@ export default class CombatHUD implements IHUD {
 					`${getPublicRoot()}${devData.iconURL as string}`,
 				);
 				deviceSlot.setOnClickEvent(() =>
-					cmSystem.startQueueAction(gameState, actorData.entityId, i),
+					cmSystem.startQueueActionPlayer(gameState, actorData.entityId, i),
 				);
 				deviceSlot.setActionLabelText(
 					String.fromCharCode(
@@ -125,7 +125,7 @@ export default class CombatHUD implements IHUD {
 				);
 			} else {
 				deviceSlot.setActionSlotIcon("");
-				deviceSlot.setOnClickEvent(() => {});
+				deviceSlot.setOnClickEvent(() => { });
 				deviceSlot.setActionLabelText("");
 			}
 		}
@@ -151,7 +151,7 @@ export default class CombatHUD implements IHUD {
 		rootContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		rootContainer.width = 1;
-		rootContainer.heightInPixels = this.sizePerCombatLogEntry;	
+		rootContainer.heightInPixels = this.sizePerCombatLogEntry;
 		rootContainer.thickness = 0;
 
 		const entryUI = new TextBlock("ui_combatLogEntry", `${source}: ${text}`);
@@ -167,9 +167,9 @@ export default class CombatHUD implements IHUD {
 		this.combatLogStack.addControl(rootContainer);
 	}
 
-	
+
 	public clearCombatEntries() {
-		if(!this.combatLogStack) {
+		if (!this.combatLogStack) {
 			return;
 		}
 
@@ -225,7 +225,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionAbilityStack, 1, 0);
 
 		for (let i = 0; i < 8; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "", () => {});
+			const actionSlot = new ActionSlot(i.toString(), "", () => { });
 			actionAbilityStack.addControl(actionSlot.rootContainer);
 			this.abilitySlots.push(actionSlot);
 		}
@@ -238,7 +238,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionDeviceStack, 1, 1);
 
 		for (let i = 0; i < 4; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "", () => {});
+			const actionSlot = new ActionSlot(i.toString(), "", () => { });
 			actionDeviceStack.addControl(actionSlot.rootContainer);
 			this.deviceSlots.push(actionSlot);
 		}
@@ -319,7 +319,7 @@ export default class CombatHUD implements IHUD {
 		this.combatLogStack.spacing = 4;
 		this.combatLogStack.adaptHeightToChildren = true;
 		this.combatLogStack.onControlAddedObservable.add(() => {
-			if(!this.combatLogStack || !this.combatLogScrollbar) {
+			if (!this.combatLogStack || !this.combatLogScrollbar) {
 				return;
 			}
 			const textEntryStackSize =
@@ -350,7 +350,7 @@ export default class CombatHUD implements IHUD {
 			}
 
 			const combatEntryStackSize =
-			this.combatLogStack.children.length * this.sizePerCombatLogEntry;
+				this.combatLogStack.children.length * this.sizePerCombatLogEntry;
 			this.combatLogStack.topInPixels = (value / 100) * combatEntryStackSize;
 		});
 		this.combatLogScrollbar.value = 0;
@@ -363,7 +363,7 @@ export default class CombatHUD implements IHUD {
 	}
 
 	public showHideScrollbar(show: boolean): void {
-		if(!this.combatLogScrollbar) {
+		if (!this.combatLogScrollbar) {
 			return;
 		}
 		this.combatLogScrollbar.alpha = show ? 1 : 0;

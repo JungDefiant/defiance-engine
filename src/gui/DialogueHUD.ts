@@ -15,7 +15,7 @@ import { Themes } from "src/gui/Themes";
 import { type Nullable } from "@babylonjs/core";
 import StackPanelImage from "./components/StackPanelImage";
 import GameState from "src/states/GameState";
-import { getPublicRoot } from "src/Utils";
+import { getPublicRoot } from "src/helpers/Utils";
 import { DialogueLine, DialogueOptionLine } from "src/states/types/GameTypes";
 
 export default class DialogueHUD implements IHUD {

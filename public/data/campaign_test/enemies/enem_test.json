@@ -21,12 +21,16 @@
   ],
   "tactics": [
     {
-      "trigger": "onChance50",
-      "action": "it_grenadefrag"
+        "target": "single_en",
+        "condition": "random",
+        "actionType": "power",
+        "actionIndex": 1
     },
     {
-      "trigger": "vsHighestLife",
-      "action": "ab_brawl"
+        "target": "single_en",
+        "condition": "lowestLife",
+        "actionType": "power",
+        "actionIndex": 0
     }
-  ]
+]
 }

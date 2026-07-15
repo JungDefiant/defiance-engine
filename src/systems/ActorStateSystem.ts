@@ -16,10 +16,10 @@ export default class ActorStateSystem implements ISystem {
 			return;
 		}
 
-		this.processRecoveryRegen(gameState, deltaTime);
+		this.tickRecoveryAndRegen(gameState, deltaTime);
 	}
 
-	private processRecoveryRegen(gameState: GameState, deltaTime: number) {
+	private tickRecoveryAndRegen(gameState: GameState, deltaTime: number) {
 		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			if (actorData.isDefeated) {

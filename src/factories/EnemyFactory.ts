@@ -13,7 +13,7 @@ import {
 	Vector3,
 } from "@babylonjs/core";
 import { EnemyGUI } from "src/gui/components/EnemyGUI";
-import { getPublicRoot } from "src/Utils";
+import { getPublicRoot } from "src/helpers/Utils";
 
 @singleton()
 export class EnemyFactory implements IFactory {

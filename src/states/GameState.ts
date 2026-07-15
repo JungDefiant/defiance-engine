@@ -26,6 +26,7 @@ import type { DialogueNode, ModalData, SceneData, StoryVariable } from "src/stat
 import { VictoryScreen } from "../gui/screens/VictoryScreen";
 import { ModalScreen } from "../gui/screens/ModalScreen";
 import { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
+import { CombatState } from "src/systems/CombatManagerSystem";
 
 /*
 TO DO:
@@ -44,6 +45,7 @@ export default class GameState {
 	public enemyEIDs: number[] = [];
 	public lastExploreViewTarget: Vector3 = DEFAULT_CAM_TARGET;
 	public currentLocation: Nullable<LocationData> = null;
+	public combatState: CombatState = CombatState.Default;
 	// Dialogue state
 	public semantics: Nullable<DialogueSemantics> = null;
 	public activeDialogue: Nullable<DialogueNode> = null;
