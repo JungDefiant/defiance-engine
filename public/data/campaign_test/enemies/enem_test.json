@@ -28,7 +28,7 @@
     },
     {
         "target": "single_en",
-        "condition": "lowestLife",
+        "condition": "random",
         "actionType": "power",
         "actionIndex": 0
     }

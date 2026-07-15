@@ -8,6 +8,8 @@
     "hitSfxURL": "",
     "trigger": "onActionExecute",
     "descriptors": [
+        "power",
+        "single",
         "melee",
         "impact",
         "innate",

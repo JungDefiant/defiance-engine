@@ -18,36 +18,36 @@ export function setTacticalPause(isActive: boolean, gameState: GameState) {
     gameState.tacticalPauseScreen.showHide(isActive);
 }
 
-export function getTargetsBasedOnCondition(sourceData: ActorData, tacticEntry: TacticsData, gameState?: GameState, ): EntityId[] {
+export function getTargetsBasedOnCondition(actionData: AbilityData, tacticEntry: TacticsData, sourceEid: EntityId, gameState?: GameState, ): EntityId[] {
     if(!gameState) {
         gameState = container.resolve(GameState);
-    }
-    
-    // Check if action matches tactic
-    let actionData;
-    if (tacticEntry.actionType === AbilityDescriptor.device) {
-        actionData = sourceData.powerData[tacticEntry.actionIndex];
-    } else if (sourceData.itemData && tacticEntry.actionType === AbilityDescriptor.power) {
-        actionData = sourceData.itemData[tacticEntry.actionIndex];
-    } else {
-        return [];
     }
 
     // Check if ability condition is true
     switch (tacticEntry.condition) {
         case TacticsCondition.random:
             if (actionData.target === AbilityTarget.singleEnemy) {
-                if (gameState.playerEIDs.includes(sourceData.entityId)) {
-                    return [Math.round(RandomRange(0, gameState.enemyEIDs.length))]
+                let targetEid;
+                if (gameState.playerEIDs.includes(sourceEid)) {
+                    let rand = RandomRange(0, gameState.enemyEIDs.length-1);
+                    targetEid = gameState.enemyEIDs[Math.round(rand)];
+                    return (targetEid >= 0 && targetEid < gameState.enemyEIDs.length) ? [targetEid] : [];
                 } else {
-                    return [Math.round(RandomRange(0, gameState.playerEIDs.length))]
+                    let rand = RandomRange(0, gameState.playerEIDs.length-1);
+                    targetEid = gameState.playerEIDs[Math.round(rand)];
+                    return (targetEid >= 0 && targetEid < gameState.playerEIDs.length) ? [targetEid] : [];
                 }
             }
             else if (actionData.target === AbilityTarget.singleAlly) {
-                if (gameState.enemyEIDs.includes(sourceData.entityId)) {
-                    return [Math.round(RandomRange(0, gameState.enemyEIDs.length))]
+                let targetEid;
+                if (gameState.enemyEIDs.includes(sourceEid)) {
+                    let rand = RandomRange(0, gameState.enemyEIDs.length-1);
+                    targetEid = gameState.enemyEIDs[Math.round(rand)];
+                    return (targetEid >= 0 && targetEid < gameState.enemyEIDs.length) ? [targetEid] : [];
                 } else {
-                    return [Math.round(RandomRange(0, gameState.playerEIDs.length))]
+                    let rand = RandomRange(0, gameState.enemyEIDs.length-1);
+                    targetEid = gameState.enemyEIDs[Math.round(rand)];
+                    return (targetEid >= 0 && targetEid < gameState.enemyEIDs.length) ? [targetEid] : [];
                 }
             }
 

@@ -36,7 +36,11 @@ import {
 import { GameMode } from "src/states/types/GameTypes";
 import UserInterfaceSystem from "./UserInterfaceSystem";
 import EventHandlerSystem from "./EventHandlerSystem";
-import { getTargetsBasedOnCondition, resetTargeting as resetPlayerTargeting, setTacticalPause } from "src/helpers/CombatHelpers";
+import {
+	getTargetsBasedOnCondition,
+	resetTargeting as resetPlayerTargeting,
+	setTacticalPause,
+} from "src/helpers/CombatHelpers";
 import { processAbilityEffects } from "src/helpers/EffectHelpers";
 import { addAbilityRQEs } from "src/helpers/RenderHelpers";
 
@@ -47,7 +51,7 @@ export default class CombatManagerSystem implements ISystem {
 	private readonly BASE_SPAWN_POSITION = new Vector3(0, 0.28, 0);
 	private readonly SPAWN_OFFSET = 0.2;
 
-	public async start() { }
+	public async start() {}
 
 	public update(deltaTime: number, gameState?: GameState): void {
 		if (!gameState) {
@@ -72,7 +76,9 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
+		for (const eid of query(gameState.world, [
+			gameState.ActorDataComponent,
+		])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			const rcvyAttr = actorData.attributes.recovery;
 
@@ -82,7 +88,8 @@ export default class CombatManagerSystem implements ISystem {
 			) {
 				gameState.actionPauseSet.add(PAUSE_RENDERQUEUE);
 				this.executeQueuedAction(gameState, actorData);
-				if(gameState.enemyEIDs.includes(eid)) {
+				if (gameState.enemyEIDs.includes(eid)) {
+					console.log("DECIDE NPC ACTION");
 					this.decideNPCAction(actorData, gameState);
 				}
 			}
@@ -103,24 +110,28 @@ export default class CombatManagerSystem implements ISystem {
 			const offsetVector = new Vector3(
 				0,
 				0,
-				(encData.length - 1) * -this.SPAWN_OFFSET + i * this.SPAWN_OFFSET * 2,
+				(encData.length - 1) * -this.SPAWN_OFFSET +
+					i * this.SPAWN_OFFSET * 2
 			);
 			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
 			const newEnemy = await enFactory.createEntityFromFileAtPosition(
 				enId,
 				gameState.campaignId,
-				spawnPosition,
+				spawnPosition
 			);
 			gameState.enemyEIDs.push(newEnemy);
 			const enActorData = gameState.ActorDataComponent[newEnemy];
 			enActorData.name = enActorData.name.concat(
-				` ${String.fromCharCode(65 + i)}`,
+				` ${String.fromCharCode(65 + i)}`
 			);
+			this.decideNPCAction(enActorData, gameState);
 		}
 
 		await this.resetControls(gameState);
 
-		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
+		for (const eid of query(gameState.world, [
+			gameState.ActorDataComponent,
+		])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			const rcvyAttr = actorData.attributes.recovery;
 			const initRange = Math.random() * this.START_RECOVERY_RANGE;
@@ -173,7 +184,7 @@ export default class CombatManagerSystem implements ISystem {
 		gameState: GameState,
 		eid: EntityId,
 		actionInd: number,
-		isItem?: boolean,
+		isItem?: boolean
 	): Promise<void> {
 		const actorData = gameState.ActorDataComponent[eid];
 		const actionData = (await (isItem
@@ -188,7 +199,8 @@ export default class CombatManagerSystem implements ISystem {
 	}
 
 	public async resetControls(gameState: GameState) {
-		const actorData = gameState.ActorDataComponent[gameState.selectedPlayerEID];
+		const actorData =
+			gameState.ActorDataComponent[gameState.selectedPlayerEID];
 		await gameState.combatHud.setActionBar(actorData, this, gameState);
 
 		resetPlayerTargeting(gameState);
@@ -209,9 +221,13 @@ export default class CombatManagerSystem implements ISystem {
 					},
 					() => {
 						const cmSystem = container.resolve(CombatManagerSystem);
-						cmSystem.startQueueActionPlayer(gameState, actorData.entityId, i);
-					},
-				),
+						cmSystem.startQueueActionPlayer(
+							gameState,
+							actorData.entityId,
+							i
+						);
+					}
+				)
 			);
 		}
 
@@ -221,13 +237,19 @@ export default class CombatManagerSystem implements ISystem {
 					new ExecuteCodeAction(
 						{
 							trigger: ActionManager.OnKeyDownTrigger,
-							parameter: gameState.controlSettings.deviceActions[i],
+							parameter:
+								gameState.controlSettings.deviceActions[i],
 						},
 						() => {
-							const cmSystem = container.resolve(CombatManagerSystem);
-							cmSystem.startQueueActionPlayer(gameState, actorData.entityId, i);
-						},
-					),
+							const cmSystem =
+								container.resolve(CombatManagerSystem);
+							cmSystem.startQueueActionPlayer(
+								gameState,
+								actorData.entityId,
+								i
+							);
+						}
+					)
 				);
 			}
 		}
@@ -241,10 +263,10 @@ export default class CombatManagerSystem implements ISystem {
 				() => {
 					setTacticalPause(
 						!gameState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
-						gameState,
+						gameState
 					);
-				},
-			),
+				}
+			)
 		);
 
 		actionManager.registerAction(
@@ -260,17 +282,17 @@ export default class CombatManagerSystem implements ISystem {
 					}
 
 					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+						(x) => x === gameState.selectedPlayerEID
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex - 1;
 					if (newSelPlyEIDIndex < 0) {
 						newSelPlyEIDIndex = gameState.playerEIDs.length - 1;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameState.playerEIDs[newSelPlyEIDIndex]
 					);
-				},
-			),
+				}
+			)
 		);
 
 		actionManager.registerAction(
@@ -286,17 +308,17 @@ export default class CombatManagerSystem implements ISystem {
 					}
 
 					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+						(x) => x === gameState.selectedPlayerEID
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex + 1;
 					if (newSelPlyEIDIndex > gameState.playerEIDs.length - 1) {
 						newSelPlyEIDIndex = 0;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameState.playerEIDs[newSelPlyEIDIndex]
 					);
-				},
-			),
+				}
+			)
 		);
 
 		gameState.actionManager = actionManager;
@@ -306,7 +328,7 @@ export default class CombatManagerSystem implements ISystem {
 	private setPlayerActionTargeting(
 		gameState: GameState,
 		sourceEid: EntityId,
-		actionData: AbilityData,
+		actionData: AbilityData
 	): void {
 		switch (actionData.target) {
 			case AbilityTarget.singleEnemy:
@@ -316,9 +338,14 @@ export default class CombatManagerSystem implements ISystem {
 					const enemyGUI = gameState.EnemyGUIComponent[eid];
 					enemyGUI.setVisibleTargetingUI(true);
 					enemyGUI.setTargetingCallback(() => {
-						this.finishQueueAction(actionData, sourceEid, [eid], gameState.ActorDataComponent);
+						this.finishQueueAction(
+							actionData,
+							sourceEid,
+							[eid],
+							gameState.ActorDataComponent
+						);
 						gameState.EnemyGUIComponent.forEach((gui) =>
-							gui.setVisibleTargetingUI(false),
+							gui.setVisibleTargetingUI(false)
 						);
 					});
 				}
@@ -330,7 +357,7 @@ export default class CombatManagerSystem implements ISystem {
 
 	private async executeQueuedAction(
 		gameState: GameState,
-		actorData: ActorData,
+		actorData: ActorData
 	): Promise<void> {
 		const rqeSystem = container.resolve(RenderQueueSystem);
 		const actionToExecute = await actorData.queuedAction;
@@ -339,7 +366,6 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		const actionEffects = actionToExecute.effectData;
 		const actionTargetIds = actorData.currentTargetEIDs;
 
 		addAbilityRQEs(
@@ -347,16 +373,12 @@ export default class CombatManagerSystem implements ISystem {
 			actorData.entityId,
 			actionTargetIds,
 			actorData,
-			actionToExecute,
+			actionToExecute
 		);
 
 		actionTargetIds.forEach((eid) => {
 			const targetData = gameState.ActorDataComponent[eid];
-			processAbilityEffects(
-				actorData,
-				targetData,
-				actionToExecute,
-			);
+			processAbilityEffects(actorData, targetData, actionToExecute);
 		});
 
 		rqeSystem.startRenderQueue();
@@ -370,40 +392,70 @@ export default class CombatManagerSystem implements ISystem {
 		actionData: AbilityData,
 		sourceEid: EntityId,
 		targetEids: EntityId[],
-		actorDataComponent: ActorData[],
+		actorDataComponent: ActorData[]
 	): void {
+		console.log("QUEUE ACTION");
 		const actorData = actorDataComponent[sourceEid];
 		actorData.queuedAction = actionData;
 		actorData.currentTargetEIDs = targetEids;
 	}
 
-	private async decideNPCAction(
-
-		actorData: ActorData,
-		gameState?: GameState,
-	) {
-		if(!gameState) {
+	private async decideNPCAction(actorData: ActorData, gameState?: GameState) {
+		if (!gameState) {
 			gameState = container.resolve(GameState);
 		}
 		const tactics = actorData.tactics;
-	
+		console.log("TACTICS", tactics);
+
 		if (!tactics) {
 			return;
 		}
-	
+
 		let actionData;
-		const targetEids: EntityId[] = [];
-	
+		let targetEids: EntityId[] = [];
+
 		for (const entry of tactics) {
-			const targets = getTargetsBasedOnCondition(actorData, entry, gameState);
+			console.log("ENTRY", entry);
+
+			const newActionData = entry.actionType === AbilityDescriptor.device && actorData.itemData
+					? await actorData.itemData[entry.actionIndex]
+					: await actorData.powerData[entry.actionIndex];
+
+			if(!newActionData) {
+				continue;
+			}
+			console.log("ACTION DATA", newActionData);
+
+			const isActionValid = newActionData.descriptors.includes(
+				entry.actionType
+			);
+			if (!isActionValid) {
+				console.log("ACTION INVALID");
+				continue;
+			}
+
+			const targets = getTargetsBasedOnCondition(
+				newActionData,
+				entry,
+				actorData.entityId
+			);
+
+			console.log("TARGETS", targets);
 			if (targets.length > 0) {
-				targetEids.concat(targets);
+				targetEids = [...targets];
+				actionData = newActionData;
 				break;
 			}
 		}
-	
+
 		if (actionData) {
-			this.finishQueueAction(actionData, actorData.entityId, targetEids, gameState.ActorDataComponent);
+			console.log("READY TO QUEUE ACTION!");
+			this.finishQueueAction(
+				actionData,
+				actorData.entityId,
+				targetEids,
+				gameState.ActorDataComponent
+			);
 		}
 	}
 }
