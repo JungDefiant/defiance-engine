@@ -394,7 +394,6 @@ export default class CombatManagerSystem implements ISystem {
 		targetEids: EntityId[],
 		actorDataComponent: ActorData[]
 	): void {
-		console.log("QUEUE ACTION");
 		const actorData = actorDataComponent[sourceEid];
 		actorData.queuedAction = actionData;
 		actorData.currentTargetEIDs = targetEids;
@@ -405,7 +404,6 @@ export default class CombatManagerSystem implements ISystem {
 			gameState = container.resolve(GameState);
 		}
 		const tactics = actorData.tactics;
-		console.log("TACTICS", tactics);
 
 		if (!tactics) {
 			return;
@@ -415,22 +413,21 @@ export default class CombatManagerSystem implements ISystem {
 		let targetEids: EntityId[] = [];
 
 		for (const entry of tactics) {
-			console.log("ENTRY", entry);
+			const newActionData =
+				(entry.actionType === AbilityDescriptor.device &&
+					actorData.itemData &&
+					(await actorData.itemData[entry.actionIndex])) ||
+				(AbilityDescriptor.power &&
+					(await actorData.powerData[entry.actionIndex]));
 
-			const newActionData = entry.actionType === AbilityDescriptor.device && actorData.itemData
-					? await actorData.itemData[entry.actionIndex]
-					: await actorData.powerData[entry.actionIndex];
-
-			if(!newActionData) {
+			if (!newActionData) {
 				continue;
 			}
-			console.log("ACTION DATA", newActionData);
 
 			const isActionValid = newActionData.descriptors.includes(
 				entry.actionType
 			);
 			if (!isActionValid) {
-				console.log("ACTION INVALID");
 				continue;
 			}
 
@@ -440,7 +437,6 @@ export default class CombatManagerSystem implements ISystem {
 				actorData.entityId
 			);
 
-			console.log("TARGETS", targets);
 			if (targets.length > 0) {
 				targetEids = [...targets];
 				actionData = newActionData;
@@ -449,7 +445,6 @@ export default class CombatManagerSystem implements ISystem {
 		}
 
 		if (actionData) {
-			console.log("READY TO QUEUE ACTION!");
 			this.finishQueueAction(
 				actionData,
 				actorData.entityId,
