@@ -22,8 +22,16 @@
     ],
     "tactics": [
         {
-            "trigger": "",
-            "action": ""
+            "target": "single_en",
+            "condition": "random",
+            "actionType": "power",
+            "actionIndex": 1
+        },
+        {
+            "target": "single_en",
+            "condition": "lowestLife",
+            "actionType": "power",
+            "actionIndex": 0
         }
     ]
 }

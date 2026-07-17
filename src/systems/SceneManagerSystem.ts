@@ -47,7 +47,7 @@ import {
 	ModalData,
 	SceneData,
 } from "src/states/types/GameTypes";
-import { getPublicRoot } from "src/Utils";
+import { getPublicRoot } from "src/helpers/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { ModalScreen } from "src/gui/screens/ModalScreen";

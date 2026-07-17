@@ -4,7 +4,7 @@ import GameState from "src/states/GameState";
 import { IFactory } from "src/factories/IFactory";
 import { ActorData } from "src/components/ActorData";
 import { PlayerGUI } from "src/gui/components/PlayerGUI";
-import { getPublicRoot } from "src/Utils";
+import { getPublicRoot } from "src/helpers/Utils";
 
 @singleton()
 export class PlayerFactory implements IFactory {

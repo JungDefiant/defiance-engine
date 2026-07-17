@@ -17,9 +17,11 @@ import {
 	ActorData,
 	EffectData,
 	EffectVar,
+	TacticsCondition,
+	TacticsData,
 } from "src/components/ActorData";
 import { EnemyFactory } from "src/factories/EnemyFactory";
-import { clamp } from "src/Utils";
+import { clamp } from "src/helpers/Utils";
 import RenderQueueSystem, {
 	RenderQueueEntry,
 	RenderQueueType,
@@ -34,16 +36,20 @@ import {
 import { GameMode } from "src/states/types/GameTypes";
 import UserInterfaceSystem from "./UserInterfaceSystem";
 import EventHandlerSystem from "./EventHandlerSystem";
+import {
+	getTargetsBasedOnCondition,
+	resetTargeting as resetPlayerTargeting,
+	setTacticalPause,
+} from "src/helpers/CombatHelpers";
+import { processAbilityEffects } from "src/helpers/EffectHelpers";
+import { addAbilityRQEs } from "src/helpers/RenderHelpers";
 
 @singleton()
 export default class CombatManagerSystem implements ISystem {
 	private readonly START_RECOVERY = 3;
 	private readonly START_RECOVERY_RANGE = 2;
-	private readonly BASE_DEFENSE = 10;
 	private readonly BASE_SPAWN_POSITION = new Vector3(0, 0.28, 0);
 	private readonly SPAWN_OFFSET = 0.2;
-
-	private combatState: CombatState = CombatState.Default;
 
 	public async start() {}
 
@@ -60,26 +66,21 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		if (this.combatState === CombatState.Victory) {
+		if (gameState.combatState === CombatState.Victory) {
 			gameState.actionPauseSet.add(PAUSE_VICTORYSCREEN);
 			gameState.victoryScreen.showHide(true);
 			return;
-		} else if (this.combatState === CombatState.Gameover) {
+		} else if (gameState.combatState === CombatState.Gameover) {
 			gameState.actionPauseSet.add(PAUSE_GAMEOVER);
 			gameState.gameOverScreen.showHide(true);
 			return;
 		}
 
-		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
+		for (const eid of query(gameState.world, [
+			gameState.ActorDataComponent,
+		])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			const rcvyAttr = actorData.attributes.recovery;
-
-			if (!actorData.queuedAction && eid !== gameState.selectedPlayerEID) {
-				/* TEST */
-				const randomActionInd = Math.random() * actorData.powerData.length;
-				this.startQueueAction(gameState, eid, 0);
-				/* TEST */
-			}
 
 			if (
 				actorData.queuedAction &&
@@ -87,6 +88,10 @@ export default class CombatManagerSystem implements ISystem {
 			) {
 				gameState.actionPauseSet.add(PAUSE_RENDERQUEUE);
 				this.executeQueuedAction(gameState, actorData);
+				if (gameState.enemyEIDs.includes(eid)) {
+					this.decideNPCAction(actorData, gameState);
+				}
+				return;
 			}
 		}
 	}
@@ -105,24 +110,28 @@ export default class CombatManagerSystem implements ISystem {
 			const offsetVector = new Vector3(
 				0,
 				0,
-				(encData.length - 1) * -this.SPAWN_OFFSET + i * this.SPAWN_OFFSET * 2,
+				(encData.length - 1) * -this.SPAWN_OFFSET +
+					i * this.SPAWN_OFFSET * 2
 			);
 			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
 			const newEnemy = await enFactory.createEntityFromFileAtPosition(
 				enId,
 				gameState.campaignId,
-				spawnPosition,
+				spawnPosition
 			);
 			gameState.enemyEIDs.push(newEnemy);
 			const enActorData = gameState.ActorDataComponent[newEnemy];
 			enActorData.name = enActorData.name.concat(
-				` ${String.fromCharCode(65 + i)}`,
+				` ${String.fromCharCode(65 + i)}`
 			);
+			this.decideNPCAction(enActorData, gameState);
 		}
 
 		await this.resetControls(gameState);
 
-		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
+		for (const eid of query(gameState.world, [
+			gameState.ActorDataComponent,
+		])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			const rcvyAttr = actorData.attributes.recovery;
 			const initRange = Math.random() * this.START_RECOVERY_RANGE;
@@ -165,17 +174,17 @@ export default class CombatManagerSystem implements ISystem {
 		if (gameState.actionPauseSet.size > 0) {
 			gameState.actionPauseSet.clear();
 		}
-		this.combatState = CombatState.Default;
+		gameState.combatState = CombatState.Default;
 
 		const ehSystem = container.resolve(EventHandlerSystem);
 		ehSystem.checkEventByTrigger("OnCombatEnd");
 	}
 
-	public async startQueueAction(
+	public async startQueueActionPlayer(
 		gameState: GameState,
 		eid: EntityId,
 		actionInd: number,
-		isItem?: boolean,
+		isItem?: boolean
 	): Promise<void> {
 		const actorData = gameState.ActorDataComponent[eid];
 		const actionData = (await (isItem
@@ -186,16 +195,15 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		if (eid === gameState.selectedPlayerEID) {
-			this.setPlayerActionTargeting(gameState, eid, actionData);
-		} else {
-			this.setNPCActionTargeting(gameState, eid, actionData);
-		}
+		this.setPlayerActionTargeting(gameState, eid, actionData);
 	}
 
 	public async resetControls(gameState: GameState) {
-		const actorData = gameState.ActorDataComponent[gameState.selectedPlayerEID];
+		const actorData =
+			gameState.ActorDataComponent[gameState.selectedPlayerEID];
 		await gameState.combatHud.setActionBar(actorData, this, gameState);
+
+		resetPlayerTargeting(gameState);
 
 		if (gameState.actionManager) {
 			gameState.actionManager.dispose();
@@ -213,9 +221,13 @@ export default class CombatManagerSystem implements ISystem {
 					},
 					() => {
 						const cmSystem = container.resolve(CombatManagerSystem);
-						cmSystem.startQueueAction(gameState, actorData.entityId, i);
-					},
-				),
+						cmSystem.startQueueActionPlayer(
+							gameState,
+							actorData.entityId,
+							i
+						);
+					}
+				)
 			);
 		}
 
@@ -225,13 +237,19 @@ export default class CombatManagerSystem implements ISystem {
 					new ExecuteCodeAction(
 						{
 							trigger: ActionManager.OnKeyDownTrigger,
-							parameter: gameState.controlSettings.deviceActions[i],
+							parameter:
+								gameState.controlSettings.deviceActions[i],
 						},
 						() => {
-							const cmSystem = container.resolve(CombatManagerSystem);
-							cmSystem.startQueueAction(gameState, actorData.entityId, i);
-						},
-					),
+							const cmSystem =
+								container.resolve(CombatManagerSystem);
+							cmSystem.startQueueActionPlayer(
+								gameState,
+								actorData.entityId,
+								i
+							);
+						}
+					)
 				);
 			}
 		}
@@ -243,13 +261,12 @@ export default class CombatManagerSystem implements ISystem {
 					parameter: gameState.controlSettings.tacticalPause,
 				},
 				() => {
-					const cmSystem = container.resolve(CombatManagerSystem);
-					cmSystem.setTacticalPause(
+					setTacticalPause(
 						!gameState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
-						gameState,
+						gameState
 					);
-				},
-			),
+				}
+			)
 		);
 
 		actionManager.registerAction(
@@ -265,17 +282,17 @@ export default class CombatManagerSystem implements ISystem {
 					}
 
 					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+						(x) => x === gameState.selectedPlayerEID
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex - 1;
 					if (newSelPlyEIDIndex < 0) {
 						newSelPlyEIDIndex = gameState.playerEIDs.length - 1;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameState.playerEIDs[newSelPlyEIDIndex]
 					);
-				},
-			),
+				}
+			)
 		);
 
 		actionManager.registerAction(
@@ -291,39 +308,27 @@ export default class CombatManagerSystem implements ISystem {
 					}
 
 					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+						(x) => x === gameState.selectedPlayerEID
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex + 1;
 					if (newSelPlyEIDIndex > gameState.playerEIDs.length - 1) {
 						newSelPlyEIDIndex = 0;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameState.playerEIDs[newSelPlyEIDIndex]
 					);
-				},
-			),
+				}
+			)
 		);
 
 		gameState.actionManager = actionManager;
 		gameState.scene.actionManager = actionManager;
 	}
 
-	public setTacticalPause(isActive: boolean, gameState: GameState) {
-		if (isActive) {
-			gameState.actionPauseSet.add(PAUSE_TACTICALPAUSE);
-			gameState.renderPauseSet.add(PAUSE_TACTICALPAUSE);
-		} else {
-			gameState.actionPauseSet.delete(PAUSE_TACTICALPAUSE);
-			gameState.renderPauseSet.delete(PAUSE_TACTICALPAUSE);
-		}
-
-		gameState.tacticalPauseScreen.showHide(isActive);
-	}
-
 	private setPlayerActionTargeting(
 		gameState: GameState,
 		sourceEid: EntityId,
-		actionData: AbilityData,
+		actionData: AbilityData
 	): void {
 		switch (actionData.target) {
 			case AbilityTarget.singleEnemy:
@@ -333,9 +338,14 @@ export default class CombatManagerSystem implements ISystem {
 					const enemyGUI = gameState.EnemyGUIComponent[eid];
 					enemyGUI.setVisibleTargetingUI(true);
 					enemyGUI.setTargetingCallback(() => {
-						this.finishQueueAction(gameState, actionData, sourceEid, [eid]);
+						this.finishQueueAction(
+							actionData,
+							sourceEid,
+							[eid],
+							gameState.ActorDataComponent
+						);
 						gameState.EnemyGUIComponent.forEach((gui) =>
-							gui.setVisibleTargetingUI(false),
+							gui.setVisibleTargetingUI(false)
 						);
 					});
 				}
@@ -345,38 +355,9 @@ export default class CombatManagerSystem implements ISystem {
 		}
 	}
 
-	private async setNPCActionTargeting(
-		gameState: GameState,
-		sourceEid: EntityId,
-		actionData: AbilityData,
-	) {
-		switch (actionData.target) {
-			case AbilityTarget.singleEnemy:
-				/* TEST */
-				this.finishQueueAction(gameState, actionData, sourceEid, [
-					gameState.selectedPlayerEID,
-				]);
-				/* TEST */
-				return;
-			default:
-				return;
-		}
-	}
-
-	private finishQueueAction(
-		gameState: GameState,
-		actionData: AbilityData,
-		sourceEid: EntityId,
-		targetEids: EntityId[],
-	): void {
-		const actorData = gameState.ActorDataComponent[sourceEid];
-		actorData.queuedAction = actionData;
-		actorData.currentTargetEIDs = targetEids;
-	}
-
 	private async executeQueuedAction(
 		gameState: GameState,
-		actorData: ActorData,
+		actorData: ActorData
 	): Promise<void> {
 		const rqeSystem = container.resolve(RenderQueueSystem);
 		const actionToExecute = await actorData.queuedAction;
@@ -385,24 +366,19 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		const actionEffects = actionToExecute.effectData;
 		const actionTargetIds = actorData.currentTargetEIDs;
 
-		this.addActionRQEs(
+		addAbilityRQEs(
 			rqeSystem,
 			actorData.entityId,
 			actionTargetIds,
 			actorData,
-			actionToExecute,
+			actionToExecute
 		);
 
 		actionTargetIds.forEach((eid) => {
 			const targetData = gameState.ActorDataComponent[eid];
-			this.processAbilityEffects(
-				actorData,
-				targetData,
-				actionToExecute,
-			);
+			processAbilityEffects(actorData, targetData, actionToExecute);
 		});
 
 		rqeSystem.startRenderQueue();
@@ -412,232 +388,69 @@ export default class CombatManagerSystem implements ISystem {
 		rcvyAttr.currentValue = 0;
 	}
 
-	private processAbilityEffects(
-		sourceData: ActorData,
-		targetData: ActorData,
-		abilityData: AbilityData,
-		context?: { [index: string]: EffectVar },
-	) {
-		let effText;
-		const gs = container.resolve(GameState);
-		abilityData.effectData.forEach((eff) => {
-			switch (eff.id) {
-				case "damage":
-					effText = this.applyDamageEffect(sourceData, targetData, abilityData.descriptors, {
-						...eff.variables,
-						...context,
-					});
-
-					this.addFloatingTextRQE(targetData.entityId, effText, Themes.neutral2);
-					gs.combatHud.addCombatLogEntry(`${sourceData.name} (${abilityData.name})`, `Inflicts ${effText} Damage to ${targetData.name}!`);
-					break;
-				case "healing":
-					effText = this.applyHealEffect(sourceData, targetData, abilityData.descriptors, {
-						...eff.variables,
-						...context,
-					});
-					this.addFloatingTextRQE(targetData.entityId, effText, Themes.success);
-					gs.combatHud.addCombatLogEntry(`${sourceData.name} (${abilityData.name})`, `Restores ${effText} Life to ${targetData.name}.`);
-					break;
-				default:
-					return;
-			}
-		});
-	}
-
-	private addActionRQEs(
-		rqeSystem: RenderQueueSystem,
+	private finishQueueAction(
+		actionData: AbilityData,
 		sourceEid: EntityId,
 		targetEids: EntityId[],
-		sourceData: ActorData,
-		actionData: AbilityData,
-	) {
-		const msgRQE = new RenderQueueEntry(
-			RenderQueueType.MessageDisplay,
-			{
-				text: `${sourceData.name} : ${actionData.name}`,
-			},
-			false,
-			1.05,
-		);
-
-		// const castRQE = new RenderQueueEntry(
-		// 	RenderQueueType.SpecialFX,
-		// 	{
-		// 		targets: [sourceEid],
-		// 		vfxUrl: actionData.castVfxURL as string,
-		// 		audioUrl: actionData.castSfxURL as string,
-		// 	} as RenderQueueVarsSpecialFX,
-		// 	true,
-		// 	0.5,
-		// );
-
-		// const hitRQE = new RenderQueueEntry(
-		// 	RenderQueueType.SpecialFX,
-		// 	{
-		// 		targets: targetEids,
-		// 		vfxUrl: actionData.hitVfxURL as string,
-		// 		audioUrl: actionData.hitSfxURL as string,
-		// 	} as RenderQueueVarsSpecialFX,
-		// 	true,
-		// 	0.5,
-		// );
-
-		rqeSystem.addRenderQueueEntry(msgRQE);
-		// this.rqeSystem.addRenderQueueEntry(castRQE);
-		// this.rqeSystem.addRenderQueueEntry(hitRQE);
+		actorDataComponent: ActorData[]
+	): void {
+		const actorData = actorDataComponent[sourceEid];
+		actorData.queuedAction = actionData;
+		actorData.currentTargetEIDs = targetEids;
 	}
 
-	private addFloatingTextRQE(targetEid: number, text: string, color: string) {
-		const rqeSystem = container.resolve(RenderQueueSystem);
-		const ftRQE = new RenderQueueEntry(
-			RenderQueueType.FloatingText,
-			{
-				targets: [targetEid],
-				text,
-				color,
-			},
-			true,
-			1,
-		);
+	private async decideNPCAction(actorData: ActorData, gameState?: GameState) {
+		if (!gameState) {
+			gameState = container.resolve(GameState);
+		}
+		const tactics = actorData.tactics;
 
-		rqeSystem.addRenderQueueEntry(ftRQE);
-	}
-
-	private triggerFeatEffects(
-		sourceData: ActorData,
-		targetData: ActorData,
-		trigger: AbilityTrigger,
-		context?: { [index: string]: EffectVar },
-	) {
-		const triggeredFeats = sourceData.featData.filter(
-			(x) => x.trigger === trigger,
-		);
-		triggeredFeats.forEach((feat) => {
-			this.processAbilityEffects(
-				sourceData,
-				targetData,
-				feat,
-				context,
-			);
-		});
-	}
-
-	private applyDamageEffect(
-		source: ActorData,
-		target: ActorData,
-		descriptors: AbilityDescriptor[],
-		effVars: { [index: string]: EffectVar },
-	): string {
-		const targetLifeAttr = target.attributes.life;
-		const targetDefenseAttr = target.attributes.defense;
-
-		const minDamage = effVars["min"] as number;
-		const maxDamage = effVars["max"] as number;
-		const damageRoll = Math.round(RandomRange(minDamage, maxDamage));
-
-		const damageContext = {
-			effect: "damage",
-			damage: damageRoll,
-			damageMultiplier: 1,
-			targetDefense: targetDefenseAttr.currentValue,
-		};
-
-		this.triggerFeatEffects(
-			source,
-			target,
-			AbilityTrigger.onActorEffectInflicted,
-			damageContext,
-		);
-
-		const totalDamageMultiplier =
-			(this.BASE_DEFENSE / damageContext.targetDefense) *
-			damageContext.damageMultiplier;
-
-		const totalDamage = Math.floor(
-			damageContext.damage * totalDamageMultiplier,
-		);
-		targetLifeAttr.currentValue = clamp(
-			targetLifeAttr.currentValue - totalDamage,
-			0,
-			targetLifeAttr.maximumValue,
-		);
-
-		const damageTakenContext = {
-			effect: "damage",
-			totalDamage,
-		};
-
-		this.triggerFeatEffects(
-			source,
-			target,
-			AbilityTrigger.onActorEffectTaken,
-			damageTakenContext,
-		);
-
-		if (targetLifeAttr.currentValue === 0) {
-			this.defeatActor(target);
+		if (!tactics) {
+			return;
 		}
 
-		return totalDamage.toString();
-	}
+		let actionData;
+		let targetEids: EntityId[] = [];
 
-	private applyHealEffect(
-		source: ActorData,
-		target: ActorData,
-		descriptors: AbilityDescriptor[],
-		effVars: { [index: string]: EffectVar },
-	): string {
-		const targetLifeAttr = target.attributes.life;
-		const healing = effVars["healing"] as number;
+		for (const entry of tactics) {
+			const newActionData =
+				(entry.actionType === AbilityDescriptor.device &&
+					actorData.itemData &&
+					(await actorData.itemData[entry.actionIndex])) ||
+				(AbilityDescriptor.power &&
+					(await actorData.powerData[entry.actionIndex]));
 
-		const healingContext = {
-			effect: "healing",
-			healing,
-		};
-
-		this.triggerFeatEffects(
-			source,
-			target,
-			AbilityTrigger.onActorEffectTaken,
-			healingContext,
-		);
-
-		targetLifeAttr.currentValue = clamp(
-			targetLifeAttr.currentValue + healingContext.healing,
-			0,
-			targetLifeAttr.maximumValue,
-		);
-
-		return healing.toString();
-	}
-
-	private defeatActor(actor: ActorData) {
-		const gameState = container.resolve(GameState);
-		actor.isDefeated = true;
-
-		// TO DO: Add code for defeating actor
-
-		if (gameState.playerEIDs.includes(actor.entityId)) {
-			for (let i = 0; i < gameState.playerEIDs.length; i++) {
-				let eid = gameState.playerEIDs[i];
-				let playerData = gameState.ActorDataComponent[eid];
-				if (!playerData.isDefeated) {
-					return;
-				}
+			if (!newActionData) {
+				continue;
 			}
 
-			this.combatState = CombatState.Gameover;
-		} else {
-			for (let i = 0; i < gameState.enemyEIDs.length; i++) {
-				let eid = gameState.enemyEIDs[i];
-				let enemyData = gameState.ActorDataComponent[eid];
-				if (!enemyData.isDefeated) {
-					return;
-				}
+			const isActionValid = newActionData.descriptors.includes(
+				entry.actionType
+			);
+			if (!isActionValid) {
+				continue;
 			}
 
-			this.combatState = CombatState.Victory;
+			const targets = getTargetsBasedOnCondition(
+				newActionData,
+				entry,
+				actorData.entityId
+			);
+
+			if (targets.length > 0) {
+				targetEids = [...targets];
+				actionData = newActionData;
+				break;
+			}
+		}
+
+		if (actionData) {
+			this.finishQueueAction(
+				actionData,
+				actorData.entityId,
+				targetEids,
+				gameState.ActorDataComponent
+			);
 		}
 	}
 }
