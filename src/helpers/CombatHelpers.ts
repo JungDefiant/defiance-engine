@@ -58,8 +58,6 @@ export function defeatActor(actor: ActorData) {
 	const gameState = container.resolve(GameState);
 	actor.isDefeated = true;
 
-	// TO DO: Add code for defeating actor
-
 	if (gameState.playerEIDs.includes(actor.entityId)) {
 		for (let i = 0; i < gameState.playerEIDs.length; i++) {
 			let eid = gameState.playerEIDs[i];
