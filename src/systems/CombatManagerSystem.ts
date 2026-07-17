@@ -89,9 +89,9 @@ export default class CombatManagerSystem implements ISystem {
 				gameState.actionPauseSet.add(PAUSE_RENDERQUEUE);
 				this.executeQueuedAction(gameState, actorData);
 				if (gameState.enemyEIDs.includes(eid)) {
-					console.log("DECIDE NPC ACTION");
 					this.decideNPCAction(actorData, gameState);
 				}
+				return;
 			}
 		}
 	}
