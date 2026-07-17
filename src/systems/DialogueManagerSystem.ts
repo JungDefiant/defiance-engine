@@ -9,7 +9,7 @@ import { ConditionFunction, DialogueLine, DialogueNode, DialogueOptionLine, Game
 import type { TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";
-import { getPublicRoot } from "src/Utils";
+import { getPublicRoot } from "src/helpers/Utils";
 import EventHandlerSystem from "./EventHandlerSystem";
 
 @singleton()
@@ -364,7 +364,7 @@ export default class DialogueManagerSystem implements ISystem {
 
 		// Get dialogue HUD
 		if (!gs.activeDialogue) {
-			this.endDialogue();
+			this.endDialogue(true);
 			return;
 		}
 
@@ -372,7 +372,7 @@ export default class DialogueManagerSystem implements ISystem {
 		const line = gs.activeDialogue.lines[id];
 
 		if (!dlgHud) {
-			this.endDialogue();
+			this.endDialogue(true);
 			return;
 		}
 
@@ -406,12 +406,14 @@ export default class DialogueManagerSystem implements ISystem {
 		}
 	}
 
-	public endDialogue() {
+	public endDialogue(switchToExploreMode: boolean) {
 		const smSystem = container.resolve(SceneManagerSystem);
 		const gs = container.resolve(GameState);
 
 		gs.actionPauseSet.delete(PAUSE_DIALOGUE);
-		smSystem.setGameMode(GameMode.Explore);
+		if(switchToExploreMode) {
+			smSystem.setGameMode(GameMode.Explore);
+		}
 
 		const ehSystem = container.resolve(EventHandlerSystem);
 		ehSystem.checkEventByTrigger("OnDialogueEnd");
@@ -466,7 +468,7 @@ export default class DialogueManagerSystem implements ISystem {
 		const gs = container.resolve(GameState);
 
 		if (!gs || !line.cmd || !line.vars) {
-			this.endDialogue();
+			this.endDialogue(true);
 			return;
 		}
 
@@ -482,13 +484,14 @@ export default class DialogueManagerSystem implements ISystem {
 				break;
 			case "startcombat":
 				this.startCombat(line.vars[0] as string);
-				break;
+				return;
 		}
 
 		const nextLineId = id + 1;
 		const nextLine = gs.activeDialogue?.lines[nextLineId];
 		if (!nextLine) {
-			this.endDialogue();
+			console.log("NO NEXT LINE");
+			this.endDialogue(true);
 			return;
 		}
 
@@ -515,7 +518,7 @@ export default class DialogueManagerSystem implements ISystem {
 	private playSound(soundUrl: string) { }
 
 	private startCombat(encounterId: string) {
-		this.endDialogue();
+		this.endDialogue(false);
 		const cmSystem = container.resolve(CombatManagerSystem);
 		cmSystem.startCombat(encounterId);
 	}
