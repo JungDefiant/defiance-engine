@@ -23,6 +23,7 @@ import { DEFAULT_CAMPAIGN_ID } from "src/Constants";
 import { CampaignData } from "src/states/types/GameTypes";
 import { getPublicRoot } from "src/Utils";
 import EventHandlerSystem from "src/systems/EventHandlerSystem";
+import AudioState from "./states/AudioState";
 
 export class App {
 	private engine: Engine;
@@ -76,10 +77,8 @@ export class App {
 		);
 		const campaignData = (await response.json()) as CampaignData;
 		container.register("CampaignData", { useValue: campaignData });
+		container.registerSingleton(AudioState);
 
-		this.audioEngine = await CreateAudioEngineAsync();
-
-		await this.audioEngine.unlockAsync();
 		await this.startFactories();
 		await this.startSystems();
 		await this.smSystem.createScene(

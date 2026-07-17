@@ -70,13 +70,19 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
+		for (const eid of query(gameState.world, [
+			gameState.ActorDataComponent,
+		])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			const rcvyAttr = actorData.attributes.recovery;
 
-			if (!actorData.queuedAction && eid !== gameState.selectedPlayerEID) {
+			if (
+				!actorData.queuedAction &&
+				eid !== gameState.selectedPlayerEID
+			) {
 				/* TEST */
-				const randomActionInd = Math.random() * actorData.powerData.length;
+				const randomActionInd =
+					Math.random() * actorData.powerData.length;
 				this.startQueueAction(gameState, eid, 0);
 				/* TEST */
 			}
@@ -105,24 +111,27 @@ export default class CombatManagerSystem implements ISystem {
 			const offsetVector = new Vector3(
 				0,
 				0,
-				(encData.length - 1) * -this.SPAWN_OFFSET + i * this.SPAWN_OFFSET * 2,
+				(encData.length - 1) * -this.SPAWN_OFFSET +
+					i * this.SPAWN_OFFSET * 2
 			);
 			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
 			const newEnemy = await enFactory.createEntityFromFileAtPosition(
 				enId,
 				gameState.campaignId,
-				spawnPosition,
+				spawnPosition
 			);
 			gameState.enemyEIDs.push(newEnemy);
 			const enActorData = gameState.ActorDataComponent[newEnemy];
 			enActorData.name = enActorData.name.concat(
-				` ${String.fromCharCode(65 + i)}`,
+				` ${String.fromCharCode(65 + i)}`
 			);
 		}
 
 		await this.resetControls(gameState);
 
-		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
+		for (const eid of query(gameState.world, [
+			gameState.ActorDataComponent,
+		])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			const rcvyAttr = actorData.attributes.recovery;
 			const initRange = Math.random() * this.START_RECOVERY_RANGE;
@@ -173,7 +182,7 @@ export default class CombatManagerSystem implements ISystem {
 		gameState: GameState,
 		eid: EntityId,
 		actionInd: number,
-		isItem?: boolean,
+		isItem?: boolean
 	): Promise<void> {
 		const actorData = gameState.ActorDataComponent[eid];
 		const actionData = (await (isItem
@@ -192,7 +201,8 @@ export default class CombatManagerSystem implements ISystem {
 	}
 
 	public async resetControls(gameState: GameState) {
-		const actorData = gameState.ActorDataComponent[gameState.selectedPlayerEID];
+		const actorData =
+			gameState.ActorDataComponent[gameState.selectedPlayerEID];
 		await gameState.combatHud.setActionBar(actorData, this, gameState);
 
 		if (gameState.actionManager) {
@@ -211,9 +221,13 @@ export default class CombatManagerSystem implements ISystem {
 					},
 					() => {
 						const cmSystem = container.resolve(CombatManagerSystem);
-						cmSystem.startQueueAction(gameState, actorData.entityId, i);
-					},
-				),
+						cmSystem.startQueueAction(
+							gameState,
+							actorData.entityId,
+							i
+						);
+					}
+				)
 			);
 		}
 
@@ -223,13 +237,19 @@ export default class CombatManagerSystem implements ISystem {
 					new ExecuteCodeAction(
 						{
 							trigger: ActionManager.OnKeyDownTrigger,
-							parameter: gameState.controlSettings.deviceActions[i],
+							parameter:
+								gameState.controlSettings.deviceActions[i],
 						},
 						() => {
-							const cmSystem = container.resolve(CombatManagerSystem);
-							cmSystem.startQueueAction(gameState, actorData.entityId, i);
-						},
-					),
+							const cmSystem =
+								container.resolve(CombatManagerSystem);
+							cmSystem.startQueueAction(
+								gameState,
+								actorData.entityId,
+								i
+							);
+						}
+					)
 				);
 			}
 		}
@@ -244,10 +264,10 @@ export default class CombatManagerSystem implements ISystem {
 					const cmSystem = container.resolve(CombatManagerSystem);
 					cmSystem.setTacticalPause(
 						!gameState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
-						gameState,
+						gameState
 					);
-				},
-			),
+				}
+			)
 		);
 
 		actionManager.registerAction(
@@ -263,17 +283,17 @@ export default class CombatManagerSystem implements ISystem {
 					}
 
 					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+						(x) => x === gameState.selectedPlayerEID
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex - 1;
 					if (newSelPlyEIDIndex < 0) {
 						newSelPlyEIDIndex = gameState.playerEIDs.length - 1;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameState.playerEIDs[newSelPlyEIDIndex]
 					);
-				},
-			),
+				}
+			)
 		);
 
 		actionManager.registerAction(
@@ -289,17 +309,17 @@ export default class CombatManagerSystem implements ISystem {
 					}
 
 					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+						(x) => x === gameState.selectedPlayerEID
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex + 1;
 					if (newSelPlyEIDIndex > gameState.playerEIDs.length - 1) {
 						newSelPlyEIDIndex = 0;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameState.playerEIDs[newSelPlyEIDIndex]
 					);
-				},
-			),
+				}
+			)
 		);
 
 		gameState.actionManager = actionManager;
@@ -321,7 +341,7 @@ export default class CombatManagerSystem implements ISystem {
 	private setPlayerActionTargeting(
 		gameState: GameState,
 		sourceEid: EntityId,
-		actionData: AbilityData,
+		actionData: AbilityData
 	): void {
 		switch (actionData.target) {
 			case AbilityTarget.singleEnemy:
@@ -331,9 +351,14 @@ export default class CombatManagerSystem implements ISystem {
 					const enemyGUI = gameState.EnemyGUIComponent[eid];
 					enemyGUI.setVisibleTargetingUI(true);
 					enemyGUI.setTargetingCallback(() => {
-						this.finishQueueAction(gameState, actionData, sourceEid, [eid]);
+						this.finishQueueAction(
+							gameState,
+							actionData,
+							sourceEid,
+							[eid]
+						);
 						gameState.EnemyGUIComponent.forEach((gui) =>
-							gui.setVisibleTargetingUI(false),
+							gui.setVisibleTargetingUI(false)
 						);
 					});
 				}
@@ -346,7 +371,7 @@ export default class CombatManagerSystem implements ISystem {
 	private async setNPCActionTargeting(
 		gameState: GameState,
 		sourceEid: EntityId,
-		actionData: AbilityData,
+		actionData: AbilityData
 	) {
 		switch (actionData.target) {
 			case AbilityTarget.singleEnemy:
@@ -365,7 +390,7 @@ export default class CombatManagerSystem implements ISystem {
 		gameState: GameState,
 		actionData: AbilityData,
 		sourceEid: EntityId,
-		targetEids: EntityId[],
+		targetEids: EntityId[]
 	): void {
 		const actorData = gameState.ActorDataComponent[sourceEid];
 		actorData.queuedAction = actionData;
@@ -374,7 +399,7 @@ export default class CombatManagerSystem implements ISystem {
 
 	private async executeQueuedAction(
 		gameState: GameState,
-		actorData: ActorData,
+		actorData: ActorData
 	): Promise<void> {
 		const rqeSystem = container.resolve(RenderQueueSystem);
 		const actionToExecute = await actorData.queuedAction;
@@ -391,7 +416,7 @@ export default class CombatManagerSystem implements ISystem {
 			actorData.entityId,
 			actionTargetIds,
 			actorData,
-			actionToExecute,
+			actionToExecute
 		);
 
 		actionTargetIds.forEach((eid) => {
@@ -400,7 +425,7 @@ export default class CombatManagerSystem implements ISystem {
 				actorData,
 				targetData,
 				actionEffects,
-				actionToExecute.descriptors,
+				actionToExecute.descriptors
 			);
 		});
 
@@ -416,25 +441,43 @@ export default class CombatManagerSystem implements ISystem {
 		targetData: ActorData,
 		actionEffects: EffectData[],
 		descriptors: AbilityDescriptor[],
-		context?: { [index: string]: EffectVar },
+		context?: { [index: string]: EffectVar }
 	) {
 		let ftText;
 		actionEffects.forEach((eff) => {
 			switch (eff.id) {
 				case "damage":
-					ftText = this.applyDamageEffect(sourceData, targetData, descriptors, {
-						...eff.variables,
-						...context,
-					});
+					ftText = this.applyDamageEffect(
+						sourceData,
+						targetData,
+						descriptors,
+						{
+							...eff.variables,
+							...context,
+						}
+					);
 
-					this.addFloatingTextRQE(targetData.entityId, ftText, Themes.neutral2);
+					this.addFloatingTextRQE(
+						targetData.entityId,
+						ftText,
+						Themes.neutral2
+					);
 					break;
 				case "healing":
-					ftText = this.applyHealEffect(sourceData, targetData, descriptors, {
-						...eff.variables,
-						...context,
-					});
-					this.addFloatingTextRQE(targetData.entityId, ftText, Themes.success);
+					ftText = this.applyHealEffect(
+						sourceData,
+						targetData,
+						descriptors,
+						{
+							...eff.variables,
+							...context,
+						}
+					);
+					this.addFloatingTextRQE(
+						targetData.entityId,
+						ftText,
+						Themes.success
+					);
 					break;
 				default:
 					return;
@@ -447,7 +490,7 @@ export default class CombatManagerSystem implements ISystem {
 		sourceEid: EntityId,
 		targetEids: EntityId[],
 		sourceData: ActorData,
-		actionData: AbilityData,
+		actionData: AbilityData
 	) {
 		const msgRQE = new RenderQueueEntry(
 			RenderQueueType.MessageDisplay,
@@ -455,7 +498,7 @@ export default class CombatManagerSystem implements ISystem {
 				text: `${sourceData.name} : ${actionData.name}`,
 			},
 			false,
-			1.05,
+			1.05
 		);
 
 		// const castRQE = new RenderQueueEntry(
@@ -495,7 +538,7 @@ export default class CombatManagerSystem implements ISystem {
 				color,
 			},
 			true,
-			1,
+			1
 		);
 
 		rqeSystem.addRenderQueueEntry(ftRQE);
@@ -505,10 +548,10 @@ export default class CombatManagerSystem implements ISystem {
 		sourceData: ActorData,
 		targetData: ActorData,
 		trigger: AbilityTrigger,
-		context?: { [index: string]: EffectVar },
+		context?: { [index: string]: EffectVar }
 	) {
 		const triggeredFeats = sourceData.featData.filter(
-			(x) => x.trigger === trigger,
+			(x) => x.trigger === trigger
 		);
 		triggeredFeats.forEach((feat) => {
 			this.processAbilityEffects(
@@ -516,7 +559,7 @@ export default class CombatManagerSystem implements ISystem {
 				targetData,
 				feat.effectData,
 				feat.descriptors,
-				context,
+				context
 			);
 		});
 	}
@@ -525,7 +568,7 @@ export default class CombatManagerSystem implements ISystem {
 		source: ActorData,
 		target: ActorData,
 		descriptors: AbilityDescriptor[],
-		effVars: { [index: string]: EffectVar },
+		effVars: { [index: string]: EffectVar }
 	): string {
 		const targetLifeAttr = target.attributes.life;
 		const targetDefenseAttr = target.attributes.defense;
@@ -545,7 +588,7 @@ export default class CombatManagerSystem implements ISystem {
 			source,
 			target,
 			AbilityTrigger.onActorEffectInflicted,
-			damageContext,
+			damageContext
 		);
 
 		const totalDamageMultiplier =
@@ -553,12 +596,12 @@ export default class CombatManagerSystem implements ISystem {
 			damageContext.damageMultiplier;
 
 		const totalDamage = Math.floor(
-			damageContext.damage * totalDamageMultiplier,
+			damageContext.damage * totalDamageMultiplier
 		);
 		targetLifeAttr.currentValue = clamp(
 			targetLifeAttr.currentValue - totalDamage,
 			0,
-			targetLifeAttr.maximumValue,
+			targetLifeAttr.maximumValue
 		);
 
 		const damageTakenContext = {
@@ -570,7 +613,7 @@ export default class CombatManagerSystem implements ISystem {
 			source,
 			target,
 			AbilityTrigger.onActorEffectTaken,
-			damageTakenContext,
+			damageTakenContext
 		);
 
 		if (targetLifeAttr.currentValue === 0) {
@@ -584,7 +627,7 @@ export default class CombatManagerSystem implements ISystem {
 		source: ActorData,
 		target: ActorData,
 		descriptors: AbilityDescriptor[],
-		effVars: { [index: string]: EffectVar },
+		effVars: { [index: string]: EffectVar }
 	): string {
 		const targetLifeAttr = target.attributes.life;
 		const healing = effVars["healing"] as number;
@@ -598,13 +641,13 @@ export default class CombatManagerSystem implements ISystem {
 			source,
 			target,
 			AbilityTrigger.onActorEffectTaken,
-			healingContext,
+			healingContext
 		);
 
 		targetLifeAttr.currentValue = clamp(
 			targetLifeAttr.currentValue + healingContext.healing,
 			0,
-			targetLifeAttr.maximumValue,
+			targetLifeAttr.maximumValue
 		);
 
 		return healing.toString();

@@ -12,8 +12,11 @@ export default class AudioState {
 	public readonly sfxMap: Map<string, StaticSound> = new Map();
 
 	constructor() {
-		CreateAudioEngineAsync().then((newEngine) => {
-			this.audioEngine = newEngine;
-		});
+		CreateAudioEngineAsync()
+			.then((newEngine) => {
+				this.audioEngine = newEngine;
+				this.audioEngine.unlockAsync();
+			})
+			.then(() => {});
 	}
 }
