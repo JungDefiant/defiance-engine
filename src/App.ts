@@ -1,6 +1,14 @@
 import "reflect-metadata";
 import { container, inject } from "tsyringe";
-import { Engine, Scene, UniversalCamera, Vector3 } from "@babylonjs/core";
+import {
+	AudioEngineV2,
+	CreateAudioEngineAsync,
+	Engine,
+	Nullable,
+	Scene,
+	UniversalCamera,
+	Vector3,
+} from "@babylonjs/core";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
@@ -20,6 +28,8 @@ export class App {
 	private engine: Engine;
 	private mainMenuScene: Scene;
 
+	private audioEngine: Nullable<AudioEngineV2> = null;
+
 	constructor(
 		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
 		@inject(UserInterfaceSystem) private uiSystem: UserInterfaceSystem,
@@ -29,10 +39,10 @@ export class App {
 		@inject(ActorStateSystem) private asSystem: ActorStateSystem,
 		@inject(EventHandlerSystem) private ehSystem: EventHandlerSystem,
 		@inject(PlayerFactory) private playerFactory: PlayerFactory,
-		@inject(EnemyFactory) private enemyFactory: EnemyFactory,
+		@inject(EnemyFactory) private enemyFactory: EnemyFactory
 	) {
 		const canvas = document.getElementById(
-			"gameCanvas",
+			"gameCanvas"
 		)! as any as HTMLCanvasElement;
 
 		this.engine = new Engine(canvas);
@@ -47,7 +57,7 @@ export class App {
 		const uiCamera = new UniversalCamera(
 			"cam_gui",
 			Vector3.Zero(),
-			this.mainMenuScene,
+			this.mainMenuScene
 		);
 	}
 
@@ -62,18 +72,21 @@ export class App {
 		this.mainMenuScene.dispose();
 
 		const response = await fetch(
-			`${getPublicRoot()}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
+			`${getPublicRoot()}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`
 		);
 		const campaignData = (await response.json()) as CampaignData;
 		container.register("CampaignData", { useValue: campaignData });
 
+		this.audioEngine = await CreateAudioEngineAsync();
+
+		await this.audioEngine.unlockAsync();
 		await this.startFactories();
 		await this.startSystems();
 		await this.smSystem.createScene(
 			this.engine,
 			campaignData.startSceneId,
 			campaignData.id,
-			campaignData.startingPartyIds,
+			campaignData.startingPartyIds
 		);
 		await this.smSystem.runScene(this.engine, this);
 	}
