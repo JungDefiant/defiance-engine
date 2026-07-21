@@ -4,6 +4,7 @@
     "startLocationId": "loc0",
     "modelURL": "defiance_level.glb",
     "dialogueFile": "dlg_test",
+    "startingMusic": "darkstart_azureglitch.mp3",
     "encounters": {
         "enc_test": [
             "enem_test"
