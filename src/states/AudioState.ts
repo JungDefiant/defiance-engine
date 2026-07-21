@@ -1,6 +1,5 @@
 import {
 	AudioEngineV2,
-	CreateAudioEngineAsync,
 	Nullable,
 	StaticSound,
 	StreamingSound,
@@ -10,13 +9,11 @@ import { singleton } from "tsyringe";
 @singleton()
 export default class AudioState {
 	public audioEngine: Nullable<AudioEngineV2> = null;
+	public currentMusic: Nullable<StreamingSound> = null;
 	public readonly sfxMap: Map<string, StaticSound> = new Map();
 	public readonly musicMap: Map<string, StreamingSound> = new Map();
 
-	constructor() {
-		(async () => {
-			this.audioEngine = await CreateAudioEngineAsync();
-			this.audioEngine.unlockAsync();
-		})();
+	constructor(newAudioEngine: AudioEngineV2) {
+		this.audioEngine = newAudioEngine;
 	}
 }

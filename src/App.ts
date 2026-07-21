@@ -40,10 +40,10 @@ export class App {
 		@inject(ActorStateSystem) private asSystem: ActorStateSystem,
 		@inject(EventHandlerSystem) private ehSystem: EventHandlerSystem,
 		@inject(PlayerFactory) private playerFactory: PlayerFactory,
-		@inject(EnemyFactory) private enemyFactory: EnemyFactory
+		@inject(EnemyFactory) private enemyFactory: EnemyFactory,
 	) {
 		const canvas = document.getElementById(
-			"gameCanvas"
+			"gameCanvas",
 		)! as any as HTMLCanvasElement;
 
 		this.engine = new Engine(canvas);
@@ -58,7 +58,7 @@ export class App {
 		const uiCamera = new UniversalCamera(
 			"cam_gui",
 			Vector3.Zero(),
-			this.mainMenuScene
+			this.mainMenuScene,
 		);
 	}
 
@@ -73,11 +73,15 @@ export class App {
 		this.mainMenuScene.dispose();
 
 		const response = await fetch(
-			`${getPublicRoot()}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`
+			`${getPublicRoot()}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
 		);
 		const campaignData = (await response.json()) as CampaignData;
 		container.register("CampaignData", { useValue: campaignData });
-		container.registerSingleton(AudioState);
+
+		const audioEngine = await CreateAudioEngineAsync();
+		container.register(AudioState, {
+			useValue: new AudioState(audioEngine),
+		});
 
 		await this.startFactories();
 		await this.startSystems();
@@ -85,7 +89,7 @@ export class App {
 			this.engine,
 			campaignData.startSceneId,
 			campaignData.id,
-			campaignData.startingPartyIds
+			campaignData.startingPartyIds,
 		);
 		await this.smSystem.runScene(this.engine, this);
 	}

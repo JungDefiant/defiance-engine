@@ -53,6 +53,8 @@ import CombatManagerSystem from "./CombatManagerSystem";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import EventHandlerSystem from "./EventHandlerSystem";
 import { EventData } from "src/states/types/EventTypes";
+import { playMusic } from "src/helpers/AudioHelpers";
+import AudioState from "src/states/AudioState";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
@@ -155,7 +157,11 @@ export default class SceneManagerSystem implements ISystem {
 			)
 		).transformNodes;
 
-		const camera = new UniversalCamera("cam_explore", Vector3.Zero(), scene);
+		const camera = new UniversalCamera(
+			"cam_explore",
+			Vector3.Zero(),
+			scene,
+		);
 		camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
 		camera.setTarget(DEFAULT_CAM_TARGET);
 		camera.position = new Vector3(0, 0.4, 0);
@@ -178,7 +184,11 @@ export default class SceneManagerSystem implements ISystem {
 		skybox.material = skyboxMaterial;
 		skybox.infiniteDistance = true;
 
-		const light = new HemisphericLight("light", new Vector3(1, 1, 1), scene);
+		const light = new HemisphericLight(
+			"light",
+			new Vector3(1, 1, 1),
+			scene,
+		);
 		light.intensity = 1;
 
 		const mainUI = AdvancedDynamicTexture.CreateFullscreenUI(
@@ -199,7 +209,11 @@ export default class SceneManagerSystem implements ISystem {
 		sceneGUI.idealWidth = 800;
 		sceneGUI.idealHeight = 600;
 
-		const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
+		const uiCamera = new UniversalCamera(
+			"cam_gui",
+			Vector3.Zero(),
+			uiScene,
+		);
 
 		// Initialize UI and HUDs
 		CreateTypography(mainUI);
@@ -299,6 +313,8 @@ export default class SceneManagerSystem implements ISystem {
 
 		// Load Modal Data
 		await this.loadModalMap(sceneData.modalRefs);
+
+		await playMusic(sceneData.startMusic, newGameState);
 
 		this.setGameMode(GameMode.Explore);
 	}
@@ -487,7 +503,12 @@ export default class SceneManagerSystem implements ISystem {
 		});
 
 		locationData.doors.forEach(async (door) => {
-			await this.loadLocationDoor(door, sceneNodes, sceneGUI, exploreGuiArr);
+			await this.loadLocationDoor(
+				door,
+				sceneNodes,
+				sceneGUI,
+				exploreGuiArr,
+			);
 		});
 
 		this.filterLocationEvents(locationData);
@@ -554,17 +575,14 @@ export default class SceneManagerSystem implements ISystem {
 		button.linkWithMesh(interactableNode);
 	}
 
-	private async filterLocationEvents(
-		locationData: LocationData,
-	) {
+	private async filterLocationEvents(locationData: LocationData) {
 		const uniqueEvents = new Set<string>();
 		const eventIndsToRemove = new Array<number>();
 		locationData.events.forEach((evt, index) => {
-			const eventKey = `${evt.trigger}_${evt.type}_${evt.condition}`
-			if(uniqueEvents.has(eventKey)) {
+			const eventKey = `${evt.trigger}_${evt.type}_${evt.condition}`;
+			if (uniqueEvents.has(eventKey)) {
 				eventIndsToRemove.push(index);
-			}
-			else {
+			} else {
 				uniqueEvents.add(eventKey);
 			}
 		});
@@ -629,7 +647,7 @@ export default class SceneManagerSystem implements ISystem {
 			gameState.exploreHud.hideHighlightInfoUI();
 
 			const ehSystem = container.resolve(EventHandlerSystem);
-			ehSystem.checkEventByTrigger("OnLocationEnter");			
+			ehSystem.checkEventByTrigger("OnLocationEnter");
 		});
 		sceneGUI.addControl(button);
 		exploreGuiArr.push(button);
@@ -639,18 +657,17 @@ export default class SceneManagerSystem implements ISystem {
 	public async loadModalMap(modalRefs: string[]): Promise<void> {
 		const gs = container.resolve(GameState);
 
-        modalRefs.forEach(async (ref) => {
-            const response = await fetch(
-                `${getPublicRoot()}/data/${gs.campaignId}/modals/${ref}.json`,
-            );
-            const modalData = (await response.json()) as ModalData;
+		modalRefs.forEach(async (ref) => {
+			const response = await fetch(
+				`${getPublicRoot()}/data/${gs.campaignId}/modals/${ref}.json`,
+			);
+			const modalData = (await response.json()) as ModalData;
 
-            if (!modalData) {
-                return;
-            }
-    
-           gs.modalMap.set(modalData.id, modalData);
-        });
+			if (!modalData) {
+				return;
+			}
 
+			gs.modalMap.set(modalData.id, modalData);
+		});
 	}
 }

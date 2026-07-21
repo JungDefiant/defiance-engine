@@ -3,7 +3,7 @@ import AudioState from "src/states/AudioState";
 import GameState from "src/states/GameState";
 import { container } from "tsyringe";
 
-export async function PlaySFX(id: string) {
+export async function playSFX(id: string) {
 	const as = container.resolve(AudioState);
 	const gs = container.resolve(GameState);
 	if (!as.audioEngine || !gs) {
@@ -23,9 +23,10 @@ export async function PlaySFX(id: string) {
 	sound.play();
 }
 
-export async function PlayMusic(id: string) {
+export async function playMusic(id: string, gameState?: GameState) {
 	const as = container.resolve(AudioState);
-	const gs = container.resolve(GameState);
+	const gs = gameState || container.resolve(GameState);
+
 	if (!as.audioEngine || !gs) {
 		return;
 	}
@@ -43,5 +44,9 @@ export async function PlayMusic(id: string) {
 	}
 
 	await as.audioEngine.unlockAsync();
+	if (as.currentMusic) {
+		as.currentMusic.stop();
+	}
+	as.currentMusic = music;
 	music.play();
 }
