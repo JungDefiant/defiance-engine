@@ -78,7 +78,9 @@ export class App {
 		const campaignData = (await response.json()) as CampaignData;
 		container.register("CampaignData", { useValue: campaignData });
 
-		const audioEngine = await CreateAudioEngineAsync();
+		const audioEngine = await CreateAudioEngineAsync({
+			disableDefaultUI: true,
+		});
 		container.register(AudioState, {
 			useValue: new AudioState(audioEngine),
 		});
