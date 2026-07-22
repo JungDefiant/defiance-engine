@@ -1,6 +1,14 @@
 import "reflect-metadata";
 import { container, inject } from "tsyringe";
-import { Engine, Scene, UniversalCamera, Vector3 } from "@babylonjs/core";
+import {
+	AudioEngineV2,
+	CreateAudioEngineAsync,
+	Engine,
+	Nullable,
+	Scene,
+	UniversalCamera,
+	Vector3,
+} from "@babylonjs/core";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
@@ -15,10 +23,13 @@ import { DEFAULT_CAMPAIGN_ID } from "src/Constants";
 import { CampaignData } from "src/states/types/GameTypes";
 import { getPublicRoot } from "src/helpers/Utils";
 import EventHandlerSystem from "src/systems/EventHandlerSystem";
+import AudioState from "./states/AudioState";
 
 export class App {
 	private engine: Engine;
 	private mainMenuScene: Scene;
+
+	private audioEngine: Nullable<AudioEngineV2> = null;
 
 	constructor(
 		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
@@ -66,6 +77,13 @@ export class App {
 		);
 		const campaignData = (await response.json()) as CampaignData;
 		container.register("CampaignData", { useValue: campaignData });
+
+		const audioEngine = await CreateAudioEngineAsync({
+			disableDefaultUI: true,
+		});
+		container.register(AudioState, {
+			useValue: new AudioState(audioEngine),
+		});
 
 		await this.startFactories();
 		await this.startSystems();

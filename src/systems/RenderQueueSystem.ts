@@ -156,15 +156,6 @@ export default class RenderQueueSystem implements ISystem {
 				}
 
 				for (const eid of sxTargetEids) {
-					const targetSprite = gameState.CharacterSprite[eid];
-					const sps = new SolidParticleSystem(``, gameState.scene);
-
-					const sxEntity = addEntity(gameState.world);
-					addComponent(
-						gameState.world,
-						sxEntity,
-						set(gameState.SpecialFX, sps),
-					);
 				}
 
 				rqeState.init = true;
@@ -191,7 +182,8 @@ export default class RenderQueueSystem implements ISystem {
 					if (targetEid && gameState.playerEIDs.includes(targetEid)) {
 						ft.topInPixels = ft.topInPixels - 20 * deltaTime;
 					} else {
-						ft.linkOffsetYInPixels = ft.linkOffsetYInPixels - 20 * deltaTime;
+						ft.linkOffsetYInPixels =
+							ft.linkOffsetYInPixels - 20 * deltaTime;
 					}
 				}
 				return;

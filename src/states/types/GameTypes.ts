@@ -32,9 +32,10 @@ export interface CampaignData {
 
 export interface SceneData {
 	id: string;
+	startLocationId: string;
 	modelURL: string;
 	difficultyLevel: number;
-	startLocationId: string;
+	startMusic: string;
 	dialogueFile: string;
 	encounters: EncounterData;
 	locations: LocationData[];
@@ -92,7 +93,12 @@ export interface DialogueLine {
 	vars?: (string | number | Vector3)[];
 }
 
-export type DialogueLineType = "Line" | "Options" | "Cmd" | "Line_condition" | "Cmd_condition";
+export type DialogueLineType =
+	| "Line"
+	| "Options"
+	| "Cmd"
+	| "Line_condition"
+	| "Cmd_condition";
 
 export interface DialogueOptionLine {
 	text: string;

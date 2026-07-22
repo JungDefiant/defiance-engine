@@ -3,18 +3,27 @@ import {
 	Button,
 	Image,
 	Control,
-	Rectangle,
 	StackPanel,
 	TextBlock,
-	TextWrapping,
 } from "@babylonjs/gui";
 import { CreateTypography, Themes } from "../Themes";
-import { Scene, Texture } from "@babylonjs/core";
+import {
+	AudioEngineV2,
+	CreateAudioEngineAsync,
+	Nullable,
+	Scene,
+	StreamingSound,
+	Texture,
+} from "@babylonjs/core";
 import { App } from "src/App";
 import { getPublicRoot } from "src/helpers/Utils";
 
 export class MainMenuScreen {
 	private root: AdvancedDynamicTexture;
+	private audioEngine: Nullable<AudioEngineV2> = null;
+	private music: Nullable<StreamingSound> = null;
+
+	private isLoadingMusic = false;
 
 	public constructor(scene: Scene, app: App) {
 		const env = import.meta.env;
@@ -24,6 +33,18 @@ export class MainMenuScreen {
 			scene,
 			Texture.NEAREST_SAMPLINGMODE,
 		);
+
+		const thisMainMenu = this;
+
+		(async () => {
+			thisMainMenu.audioEngine = await CreateAudioEngineAsync();
+			thisMainMenu.music =
+				await thisMainMenu.audioEngine.createStreamingSoundAsync(
+					"mainmenu_music",
+					"data/campaign_test/audio/music/voidwalker_azureglitch.mp3",
+					{ loop: true, autoplay: true },
+				);
+		})();
 
 		CreateTypography(this.root);
 
@@ -72,9 +93,12 @@ export class MainMenuScreen {
 			newGameButton.textBlock.color = Themes.neutral2;
 			newGameButton.textBlock.style = Themes.typography.header2;
 		}
-		newGameButton.onPointerClickObservable.add(
-			async () => await app.startGame(),
-		);
+		newGameButton.onPointerClickObservable.add(async () => {
+			if (thisMainMenu.music) {
+				thisMainMenu.music.stop();
+			}
+			await app.startGame();
+		});
 		stackPanel.addControl(newGameButton);
 
 		// TO DO: Add Load Button
