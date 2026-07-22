@@ -17,6 +17,7 @@ import StackPanelImage from "./components/StackPanelImage";
 import GameState from "src/states/GameState";
 import { getPublicRoot } from "src/helpers/Utils";
 import { DialogueLine, DialogueOptionLine } from "src/states/types/GameTypes";
+import { playSFX } from "src/helpers/AudioHelpers";
 
 export default class DialogueHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -87,7 +88,8 @@ export default class DialogueHUD implements IHUD {
 				"ui_speaker_" + dlgData.character.trim().toLowerCase(),
 				dlgData.character,
 			);
-			speakerLabel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+			speakerLabel.horizontalAlignment =
+				Control.HORIZONTAL_ALIGNMENT_LEFT;
 			speakerLabel.style = Themes.typography.header4;
 			speakerLabel.color = Themes.primary3;
 			speakerLabel.paddingLeftInPixels = 16;
@@ -157,10 +159,15 @@ export default class DialogueHUD implements IHUD {
 		}
 
 		buttonUI.onPointerEnterObservable.add(() => {
-			buttonUI.background = Themes.primary3 + Themes.textButtonHighlightOpacity;
+			buttonUI.background =
+				Themes.primary3 + Themes.textButtonHighlightOpacity;
 		});
 		buttonUI.onPointerOutObservable.add(() => {
-			buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
+			buttonUI.background =
+				Themes.primary3 + Themes.textButtonDefaultOpacity;
+		});
+		buttonUI.onPointerClickObservable.add(() => {
+			playSFX("sfx_confirm.wav");
 		});
 		buttonUI.onPointerClickObservable.addOnce(() => {
 			dmSystem.runLine(nextDlgId);
@@ -181,7 +188,10 @@ export default class DialogueHUD implements IHUD {
 
 		this.optionsEntryStack.clearControls();
 
-		const buttonUI = Button.CreateSimpleButton("ui_line_exit", "End Dialogue");
+		const buttonUI = Button.CreateSimpleButton(
+			"ui_line_exit",
+			"End Dialogue",
+		);
 		buttonUI.width = 1;
 		buttonUI.heightInPixels = 40;
 		buttonUI.color = Themes.primary1;
@@ -197,10 +207,15 @@ export default class DialogueHUD implements IHUD {
 		}
 
 		buttonUI.onPointerEnterObservable.add(() => {
-			buttonUI.background = Themes.primary3 + Themes.textButtonHighlightOpacity;
+			buttonUI.background =
+				Themes.primary3 + Themes.textButtonHighlightOpacity;
 		});
 		buttonUI.onPointerOutObservable.add(() => {
-			buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
+			buttonUI.background =
+				Themes.primary3 + Themes.textButtonDefaultOpacity;
+		});
+		buttonUI.onPointerClickObservable.add(() => {
+			playSFX("sfx_confirm.wav");
 		});
 		buttonUI.onPointerClickObservable.addOnce(() => {
 			dmSystem.endDialogue(true);
@@ -254,7 +269,11 @@ export default class DialogueHUD implements IHUD {
 					Themes.primary3 + Themes.textButtonHighlightOpacity;
 			});
 			buttonUI.onPointerOutObservable.add(() => {
-				buttonUI.background = Themes.primary3 + Themes.textButtonDefaultOpacity;
+				buttonUI.background =
+					Themes.primary3 + Themes.textButtonDefaultOpacity;
+			});
+			buttonUI.onPointerClickObservable.add(() => {
+				playSFX("sfx_confirm.wav");
 			});
 			buttonUI.onPointerClickObservable.addOnce(() => {
 				const gameState = container.resolve(GameState);
@@ -270,7 +289,7 @@ export default class DialogueHUD implements IHUD {
 						character: pcName,
 						id: index,
 						text: choiceData.text,
-						condition: () => true
+						condition: () => true,
 					} as DialogueLine);
 					this.addExitEntry();
 					return;
@@ -281,7 +300,7 @@ export default class DialogueHUD implements IHUD {
 					character: pcName,
 					id: index,
 					text: choiceData.text,
-					condition: () => true
+					condition: () => true,
 				} as DialogueLine);
 				dmSystem.startDialogueNode(choiceData.destinationNode);
 			});
@@ -320,8 +339,10 @@ export default class DialogueHUD implements IHUD {
 
 		this.textEntryStack = new StackPanel("ui_textEntryStack");
 		this.textEntryStack.isPointerBlocker = true;
-		this.textEntryStack.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		this.textEntryStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.textEntryStack.horizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_LEFT;
+		this.textEntryStack.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.textEntryStack.width = 1;
 		this.textEntryStack.spacing = 8;
 		this.textEntryStack.paddingLeft = 6;
@@ -329,7 +350,7 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryStack.paddingBottom = 6;
 		this.textEntryStack.adaptHeightToChildren = true;
 		this.textEntryStack.onControlAddedObservable.add(() => {
-			if(!this.textEntryStack || !this.textEntryScrollbar) {
+			if (!this.textEntryStack || !this.textEntryScrollbar) {
 				return;
 			}
 			const textEntryStackSize =
@@ -348,7 +369,8 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryScrollbar.isPointerBlocker = true;
 		this.textEntryScrollbar.horizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_RIGHT;
-		this.textEntryScrollbar.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.textEntryScrollbar.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_TOP;
 		this.textEntryScrollbar.isVertical = true;
 		this.textEntryScrollbar.isThumbClamped = true;
 		this.textEntryScrollbar.widthInPixels = 8;
@@ -361,7 +383,8 @@ export default class DialogueHUD implements IHUD {
 
 			const textEntryStackSize =
 				(this.textEntryStack.children.length - 4) * sizePerEntry;
-			this.textEntryStack.topInPixels = (value / 100) * textEntryStackSize;
+			this.textEntryStack.topInPixels =
+				(value / 100) * textEntryStackSize;
 		});
 		this.textEntryScrollbar.value = 0;
 		this.textEntryScrollbar.background = Themes.primary3;
@@ -372,7 +395,8 @@ export default class DialogueHUD implements IHUD {
 		this.optionsEntryStack = new StackPanel(this.OPTION_ENTRY_STACK_NAME);
 		this.optionsEntryStack.horizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		this.optionsEntryStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.optionsEntryStack.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_TOP;
 		this.optionsEntryStack.widthInPixels = 285;
 		this.optionsEntryStack.adaptHeightToChildren = true;
 		dialogueFeedStack.addControl(this.optionsEntryStack);

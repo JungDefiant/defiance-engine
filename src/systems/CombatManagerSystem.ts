@@ -91,7 +91,7 @@ export default class CombatManagerSystem implements ISystem {
 				if (gameState.enemyEIDs.includes(eid)) {
 					this.decideNPCAction(actorData, gameState);
 				}
-				return;
+				break;
 			}
 		}
 	}
@@ -111,18 +111,18 @@ export default class CombatManagerSystem implements ISystem {
 				0,
 				0,
 				(encData.length - 1) * -this.SPAWN_OFFSET +
-					i * this.SPAWN_OFFSET * 2
+					i * this.SPAWN_OFFSET * 2,
 			);
 			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
 			const newEnemy = await enFactory.createEntityFromFileAtPosition(
 				enId,
 				gameState.campaignId,
-				spawnPosition
+				spawnPosition,
 			);
 			gameState.enemyEIDs.push(newEnemy);
 			const enActorData = gameState.ActorDataComponent[newEnemy];
 			enActorData.name = enActorData.name.concat(
-				` ${String.fromCharCode(65 + i)}`
+				` ${String.fromCharCode(65 + i)}`,
 			);
 			this.decideNPCAction(enActorData, gameState);
 		}
@@ -184,7 +184,7 @@ export default class CombatManagerSystem implements ISystem {
 		gameState: GameState,
 		eid: EntityId,
 		actionInd: number,
-		isItem?: boolean
+		isItem?: boolean,
 	): Promise<void> {
 		const actorData = gameState.ActorDataComponent[eid];
 		const actionData = (await (isItem
@@ -224,10 +224,10 @@ export default class CombatManagerSystem implements ISystem {
 						cmSystem.startQueueActionPlayer(
 							gameState,
 							actorData.entityId,
-							i
+							i,
 						);
-					}
-				)
+					},
+				),
 			);
 		}
 
@@ -246,10 +246,10 @@ export default class CombatManagerSystem implements ISystem {
 							cmSystem.startQueueActionPlayer(
 								gameState,
 								actorData.entityId,
-								i
+								i,
 							);
-						}
-					)
+						},
+					),
 				);
 			}
 		}
@@ -263,10 +263,10 @@ export default class CombatManagerSystem implements ISystem {
 				() => {
 					setTacticalPause(
 						!gameState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
-						gameState
+						gameState,
 					);
-				}
-			)
+				},
+			),
 		);
 
 		actionManager.registerAction(
@@ -282,17 +282,17 @@ export default class CombatManagerSystem implements ISystem {
 					}
 
 					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID
+						(x) => x === gameState.selectedPlayerEID,
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex - 1;
 					if (newSelPlyEIDIndex < 0) {
 						newSelPlyEIDIndex = gameState.playerEIDs.length - 1;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex]
+						gameState.playerEIDs[newSelPlyEIDIndex],
 					);
-				}
-			)
+				},
+			),
 		);
 
 		actionManager.registerAction(
@@ -308,17 +308,17 @@ export default class CombatManagerSystem implements ISystem {
 					}
 
 					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID
+						(x) => x === gameState.selectedPlayerEID,
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex + 1;
 					if (newSelPlyEIDIndex > gameState.playerEIDs.length - 1) {
 						newSelPlyEIDIndex = 0;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex]
+						gameState.playerEIDs[newSelPlyEIDIndex],
 					);
-				}
-			)
+				},
+			),
 		);
 
 		gameState.actionManager = actionManager;
@@ -328,7 +328,7 @@ export default class CombatManagerSystem implements ISystem {
 	private setPlayerActionTargeting(
 		gameState: GameState,
 		sourceEid: EntityId,
-		actionData: AbilityData
+		actionData: AbilityData,
 	): void {
 		switch (actionData.target) {
 			case AbilityTarget.singleEnemy:
@@ -342,10 +342,10 @@ export default class CombatManagerSystem implements ISystem {
 							actionData,
 							sourceEid,
 							[eid],
-							gameState.ActorDataComponent
+							gameState.ActorDataComponent,
 						);
 						gameState.EnemyGUIComponent.forEach((gui) =>
-							gui.setVisibleTargetingUI(false)
+							gui.setVisibleTargetingUI(false),
 						);
 					});
 				}
@@ -357,7 +357,7 @@ export default class CombatManagerSystem implements ISystem {
 
 	private async executeQueuedAction(
 		gameState: GameState,
-		actorData: ActorData
+		actorData: ActorData,
 	): Promise<void> {
 		const rqeSystem = container.resolve(RenderQueueSystem);
 		const actionToExecute = await actorData.queuedAction;
@@ -373,7 +373,7 @@ export default class CombatManagerSystem implements ISystem {
 			actorData.entityId,
 			actionTargetIds,
 			actorData,
-			actionToExecute
+			actionToExecute,
 		);
 
 		actionTargetIds.forEach((eid) => {
@@ -392,7 +392,7 @@ export default class CombatManagerSystem implements ISystem {
 		actionData: AbilityData,
 		sourceEid: EntityId,
 		targetEids: EntityId[],
-		actorDataComponent: ActorData[]
+		actorDataComponent: ActorData[],
 	): void {
 		const actorData = actorDataComponent[sourceEid];
 		actorData.queuedAction = actionData;
@@ -425,7 +425,7 @@ export default class CombatManagerSystem implements ISystem {
 			}
 
 			const isActionValid = newActionData.descriptors.includes(
-				entry.actionType
+				entry.actionType,
 			);
 			if (!isActionValid) {
 				continue;
@@ -434,7 +434,7 @@ export default class CombatManagerSystem implements ISystem {
 			const targets = getTargetsBasedOnCondition(
 				newActionData,
 				entry,
-				actorData.entityId
+				actorData.entityId,
 			);
 
 			if (targets.length > 0) {
@@ -449,7 +449,7 @@ export default class CombatManagerSystem implements ISystem {
 				actionData,
 				actorData.entityId,
 				targetEids,
-				gameState.ActorDataComponent
+				gameState.ActorDataComponent,
 			);
 		}
 	}
