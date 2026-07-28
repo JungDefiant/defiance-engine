@@ -74,7 +74,7 @@ interface StickerProps {
 	height: number;
 	top: number;
 	left: number;
-	sizeRange: 0;
-	rotationRange: 0;
-	isAnimated: false;
+	sizeRange: number;
+	rotationRange: number;
+	isAnimated: boolean;
 }
