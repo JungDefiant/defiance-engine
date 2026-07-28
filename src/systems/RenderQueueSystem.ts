@@ -7,6 +7,7 @@ import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, removeEntity, set } from "bitecs";
 import { PAUSE_RENDERQUEUE } from "src/Constants";
 import { Themes } from "src/gui/Themes";
+import { StickerFactory } from "src/factories/StickerFactory";
 
 @singleton()
 export default class RenderQueueSystem implements ISystem {
@@ -92,7 +93,9 @@ export default class RenderQueueSystem implements ISystem {
 		}
 	}
 
-	private initRenderQueueEntry(rqeState: RenderQueueState): void {
+	private async initRenderQueueEntry(
+		rqeState: RenderQueueState,
+	): Promise<void> {
 		const gameState = container.resolve(GameState);
 		switch (rqeState.rqe.type) {
 			case RenderQueueType.MessageDisplay:
@@ -156,6 +159,23 @@ export default class RenderQueueSystem implements ISystem {
 				}
 
 				for (const eid of sxTargetEids) {
+					const specialFXUI = container.resolve(StickerFactory);
+					const sxEntity = await specialFXUI.createEntityFromFile(
+						sxVfxUrl,
+						gameState.campaignId,
+					);
+					rqeState.entityIds.push(sxEntity);
+
+					const sxImage = gameState.StickerImage[eid];
+
+					if (gameState.playerEIDs.includes(eid)) {
+						const playerGUI = gameState.PlayerGUIComponent[eid];
+						playerGUI.getRoot().addControl(sxImage);
+					} else {
+						const targetSprite = gameState.CharacterSprite[eid];
+						gameState.sceneGUI.addControl(sxImage);
+						sxImage.linkWithMesh(targetSprite);
+					}
 				}
 
 				rqeState.init = true;
