@@ -2,7 +2,7 @@ import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { container, singleton } from "tsyringe";
 import GameState from "src/states/GameState";
 import { IFactory } from "src/factories/IFactory";
-import { ActorData } from "src/components/ActorData";
+import { ActorState } from "src/components/ActorState";
 import { PlayerGUI } from "src/gui/components/PlayerGUI";
 import { getPublicRoot } from "src/helpers/Utils";
 
@@ -25,7 +25,7 @@ export class PlayerFactory implements IFactory {
 		const gameState = container.resolve(GameState);
 		const newEntity = addEntity(gameState.world);
 
-		const newActorComp = new ActorData(newEntity, rawData);
+		const newActorComp = new ActorState(newEntity, rawData);
 		newActorComp.isPlayer = true;
 		addComponent(
 			gameState.world,
@@ -36,7 +36,7 @@ export class PlayerFactory implements IFactory {
 		const newPlayerGUI = new PlayerGUI(
 			newEntity,
 			newActorComp.name,
-			`sprites/enemies/${newActorComp.spriteUrl}`,
+			`sprites/characters/${newActorComp.spriteUrl}`,
 		);
 		addComponent(
 			gameState.world,

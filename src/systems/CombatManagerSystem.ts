@@ -14,12 +14,12 @@ import {
 	AbilityDescriptor,
 	AbilityTarget,
 	AbilityTrigger,
-	ActorData,
+	ActorState,
 	EffectData,
 	EffectVar,
 	TacticsCondition,
 	TacticsData,
-} from "src/components/ActorData";
+} from "src/components/ActorState";
 import { EnemyFactory } from "src/factories/EnemyFactory";
 import { clamp } from "src/helpers/Utils";
 import RenderQueueSystem, {
@@ -357,7 +357,7 @@ export default class CombatManagerSystem implements ISystem {
 
 	private async executeQueuedAction(
 		gameState: GameState,
-		actorData: ActorData,
+		actorData: ActorState,
 	): Promise<void> {
 		const rqeSystem = container.resolve(RenderQueueSystem);
 		const actionToExecute = await actorData.queuedAction;
@@ -392,14 +392,17 @@ export default class CombatManagerSystem implements ISystem {
 		actionData: AbilityData,
 		sourceEid: EntityId,
 		targetEids: EntityId[],
-		actorDataComponent: ActorData[],
+		actorDataComponent: ActorState[],
 	): void {
 		const actorData = actorDataComponent[sourceEid];
 		actorData.queuedAction = actionData;
 		actorData.currentTargetEIDs = targetEids;
 	}
 
-	private async decideNPCAction(actorData: ActorData, gameState?: GameState) {
+	private async decideNPCAction(
+		actorData: ActorState,
+		gameState?: GameState,
+	) {
 		if (!gameState) {
 			gameState = container.resolve(GameState);
 		}

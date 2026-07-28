@@ -189,8 +189,7 @@ export default class RenderQueueSystem implements ISystem {
 				return;
 			case RenderQueueType.SpecialFX:
 				for (const eid of rqeState.entityIds) {
-					const sx = gameState.SpecialFX[eid];
-					sx.setParticles();
+					const sx = gameState.StickerImage[eid];
 				}
 				return;
 			default:
@@ -214,7 +213,7 @@ export default class RenderQueueSystem implements ISystem {
 				return;
 			case RenderQueueType.SpecialFX:
 				for (const eid of rqeState.entityIds) {
-					const sx = gameState.SpecialFX[eid];
+					const sx = gameState.StickerImage[eid];
 					sx.dispose();
 					removeEntity(gameState.world, eid);
 				}

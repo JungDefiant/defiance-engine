@@ -5,10 +5,10 @@ import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTarget,
-	ActorData,
+	ActorState,
 	TacticsCondition,
 	TacticsData,
-} from "src/components/ActorData";
+} from "src/components/ActorState";
 import GameState from "src/states/GameState";
 import { CombatState } from "src/systems/CombatManagerSystem";
 import { container } from "tsyringe";
@@ -29,7 +29,7 @@ export function getTargetsBasedOnCondition(
 	actionData: AbilityData,
 	tacticEntry: TacticsData,
 	sourceEid: EntityId,
-	gameState?: GameState
+	gameState?: GameState,
 ): EntityId[] {
 	if (!gameState) {
 		gameState = container.resolve(GameState);
@@ -54,7 +54,7 @@ export function resetTargeting(gameState: GameState) {
 	}
 }
 
-export function defeatActor(actor: ActorData) {
+export function defeatActor(actor: ActorState) {
 	const gameState = container.resolve(GameState);
 	actor.isDefeated = true;
 
@@ -84,13 +84,13 @@ export function defeatActor(actor: ActorData) {
 export function getRandomTarget(
 	actionData: AbilityData,
 	sourceEid: EntityId,
-	gs: GameState
+	gs: GameState,
 ) {
 	let targetEids = getTargetEidsByActionTargetType(
 		actionData.target,
 		sourceEid,
 		gs,
-		true
+		true,
 	);
 	let rand = RandomRange(0, targetEids.length - 1);
 	const targetEid = targetEids[Math.round(rand)];
@@ -100,13 +100,13 @@ export function getRandomTarget(
 export function getLowestLifeTarget(
 	actionData: AbilityData,
 	sourceEid: EntityId,
-	gs: GameState
+	gs: GameState,
 ) {
 	let targetEids = getTargetEidsByActionTargetType(
 		actionData.target,
 		sourceEid,
 		gs,
-		true
+		true,
 	);
 	let lowestLifeEid = -1;
 	let lowestLifeValue = Infinity;
@@ -126,7 +126,7 @@ export function getTargetEidsByActionTargetType(
 	abilityTarget: AbilityTarget,
 	sourceEid: EntityId,
 	gs: GameState,
-	isSingleTarget: boolean = false
+	isSingleTarget: boolean = false,
 ) {
 	switch (abilityTarget) {
 		case AbilityTarget.self:

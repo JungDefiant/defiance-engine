@@ -2,11 +2,10 @@ import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import GameState from "../states/GameState";
 import { query } from "bitecs";
-import { ActorData } from "../components/ActorData";
+import { ActorState } from "../components/ActorState";
 
 @singleton()
 export default class ActorStateSystem implements ISystem {
-
 	public async start() {}
 
 	public update(deltaTime: number): void {
@@ -20,7 +19,9 @@ export default class ActorStateSystem implements ISystem {
 	}
 
 	private tickRecoveryAndRegen(gameState: GameState, deltaTime: number) {
-		for (const eid of query(gameState.world, [gameState.ActorDataComponent])) {
+		for (const eid of query(gameState.world, [
+			gameState.ActorDataComponent,
+		])) {
 			const actorData = gameState.ActorDataComponent[eid];
 			if (actorData.isDefeated) {
 				return;
@@ -30,18 +31,21 @@ export default class ActorStateSystem implements ISystem {
 		}
 	}
 
-	private tickRecovery(deltaTime: number, actorData: ActorData) {
+	private tickRecovery(deltaTime: number, actorData: ActorState) {
 		const spdAttr = actorData.attributes.speed;
 		const rcvyAttr = actorData.attributes.recovery;
 
 		if (rcvyAttr.currentValue < rcvyAttr.maximumValue) {
 			const amount = deltaTime * (10 / spdAttr.currentValue);
 			const newRcvyAttrVal = rcvyAttr.currentValue + amount;
-			rcvyAttr.currentValue = Math.min(newRcvyAttrVal, rcvyAttr.maximumValue);
+			rcvyAttr.currentValue = Math.min(
+				newRcvyAttrVal,
+				rcvyAttr.maximumValue,
+			);
 		}
 	}
 
-	private tickRegen(deltaTime: number, actorData: ActorData) {
+	private tickRegen(deltaTime: number, actorData: ActorState) {
 		const regnTimerAttr = actorData.attributes.regenTimer;
 		const lifeAttr = actorData.attributes.life;
 

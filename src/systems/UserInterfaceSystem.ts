@@ -4,7 +4,7 @@ import { Engine } from "@babylonjs/core";
 import GameState from "src/states/GameState";
 import { EntityId, query } from "bitecs";
 import { PlayerGUI } from "src/gui/components/PlayerGUI";
-import { ActorData } from "src/components/ActorData";
+import { ActorState } from "src/components/ActorState";
 import { EnemyGUI } from "src/gui/components/EnemyGUI";
 import { GameMode } from "src/states/types/GameTypes";
 import CombatManagerSystem from "./CombatManagerSystem";
@@ -75,9 +75,11 @@ export default class UserInterfaceSystem implements ISystem {
 
 	public createPlayerInput(inputMode: GameMode) {}
 
-	private updatePlayerGUI(actorData: ActorData, gui: PlayerGUI) {
+	private updatePlayerGUI(actorData: ActorState, gui: PlayerGUI) {
 		gui.setQueuedAction(
-			actorData.queuedAction ? (actorData.queuedAction.iconURL as string) : "",
+			actorData.queuedAction
+				? (actorData.queuedAction.iconURL as string)
+				: "",
 		);
 
 		gui.setActBarFill(
@@ -96,7 +98,7 @@ export default class UserInterfaceSystem implements ISystem {
 		);
 	}
 
-	private updateEnemyGUI(actorData: ActorData, gui: EnemyGUI) {
+	private updateEnemyGUI(actorData: ActorState, gui: EnemyGUI) {
 		gui.setActBarFill(
 			actorData.attributes.recovery.currentValue,
 			actorData.attributes.recovery.maximumValue,

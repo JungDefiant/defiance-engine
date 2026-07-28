@@ -3,15 +3,19 @@ import {
 	Mesh,
 	Nullable,
 	Scene,
-	SolidParticleSystem,
 	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Control, TextBlock } from "@babylonjs/gui";
+import {
+	AdvancedDynamicTexture,
+	Control,
+	TextBlock,
+	Image,
+} from "@babylonjs/gui";
 import { EntityId, observe, onGet, onRemove, onSet } from "bitecs";
 import type { World } from "bitecs";
 import { singleton } from "tsyringe";
-import { ActorData } from "src/components/ActorData";
+import { ActorState } from "src/components/ActorState";
 import { EnemyGUI } from "src/gui/components/EnemyGUI";
 import { PlayerGUI } from "src/gui/components/PlayerGUI";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
@@ -21,12 +25,22 @@ import CombatHUD from "src/gui/CombatHUD";
 import { DEFAULT_CAM_TARGET } from "../Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
-import { ControlSettings, GameMode, LocationData } from "src/states/types/GameTypes";
-import type { DialogueNode, ModalData, SceneData, StoryVariable } from "src/states/types/GameTypes";
+import {
+	ControlSettings,
+	GameMode,
+	LocationData,
+} from "src/states/types/GameTypes";
+import type {
+	DialogueNode,
+	ModalData,
+	SceneData,
+	StoryVariable,
+} from "src/states/types/GameTypes";
 import { VictoryScreen } from "../gui/screens/VictoryScreen";
 import { ModalScreen } from "../gui/screens/ModalScreen";
 import { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 import { CombatState } from "src/systems/CombatManagerSystem";
+import { ImageAnimation as ImageAnimation } from "src/components/ImageAnimation";
 
 /*
 TO DO:
@@ -76,12 +90,13 @@ export default class GameState {
 	public readonly gameOverScreen: GameOverScreen;
 	public readonly victoryScreen: VictoryScreen;
 	// Components state
-	public readonly ActorDataComponent: ActorData[] = [];
+	public readonly ActorDataComponent: ActorState[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
 	public readonly EnemyGUIComponent: EnemyGUI[] = [];
 	public readonly CharacterSprite: Mesh[] = [];
 	public readonly FloatingText: TextBlock[] = [];
-	public readonly SpecialFX: SolidParticleSystem[] = [];
+	public readonly StickerImage: Image[] = [];
+	public readonly ImageAnimation: ImageAnimation[] = [];
 
 	public constructor(
 		campaignId: string,
@@ -132,7 +147,7 @@ export default class GameState {
 		observe(
 			this.world,
 			onSet(this.ActorDataComponent),
-			(eid: EntityId, params: ActorData) => {
+			(eid: EntityId, params: ActorState) => {
 				this.ActorDataComponent[eid] = params;
 			},
 		);
@@ -141,9 +156,13 @@ export default class GameState {
 			return this.ActorDataComponent[eid];
 		});
 
-		observe(this.world, onRemove(this.ActorDataComponent), (eid: EntityId) => {
-			this.ActorDataComponent.splice(eid);
-		});
+		observe(
+			this.world,
+			onRemove(this.ActorDataComponent),
+			(eid: EntityId) => {
+				this.ActorDataComponent.splice(eid);
+			},
+		);
 
 		// Player GUI Component
 		observe(
@@ -158,10 +177,14 @@ export default class GameState {
 			return this.PlayerGUIComponent[eid];
 		});
 
-		observe(this.world, onRemove(this.PlayerGUIComponent), (eid: EntityId) => {
-			this.PlayerGUIComponent[eid].getRoot().dispose();
-			this.PlayerGUIComponent.splice(eid);
-		});
+		observe(
+			this.world,
+			onRemove(this.PlayerGUIComponent),
+			(eid: EntityId) => {
+				this.PlayerGUIComponent[eid].getRoot().dispose();
+				this.PlayerGUIComponent.splice(eid);
+			},
+		);
 
 		// Enemy GUI Component
 		observe(
@@ -176,10 +199,14 @@ export default class GameState {
 			return this.EnemyGUIComponent[eid];
 		});
 
-		observe(this.world, onRemove(this.EnemyGUIComponent), (eid: EntityId) => {
-			this.EnemyGUIComponent[eid].getRoot().dispose();
-			this.EnemyGUIComponent.splice(eid);
-		});
+		observe(
+			this.world,
+			onRemove(this.EnemyGUIComponent),
+			(eid: EntityId) => {
+				this.EnemyGUIComponent[eid].getRoot().dispose();
+				this.EnemyGUIComponent.splice(eid);
+			},
+		);
 
 		// Character Sprite
 		observe(
@@ -220,19 +247,19 @@ export default class GameState {
 		// Special FX
 		observe(
 			this.world,
-			onSet(this.SpecialFX),
-			(eid: EntityId, params: SolidParticleSystem) => {
-				this.SpecialFX[eid] = params;
+			onSet(this.StickerImage),
+			(eid: EntityId, params: Image) => {
+				this.StickerImage[eid] = params;
 			},
 		);
 
-		observe(this.world, onGet(this.SpecialFX), (eid: EntityId) => {
-			return this.SpecialFX[eid];
+		observe(this.world, onGet(this.StickerImage), (eid: EntityId) => {
+			return this.StickerImage[eid];
 		});
 
-		observe(this.world, onRemove(this.SpecialFX), (eid: EntityId) => {
-			this.SpecialFX[eid].dispose();
-			this.SpecialFX.splice(eid);
+		observe(this.world, onRemove(this.StickerImage), (eid: EntityId) => {
+			this.StickerImage[eid].dispose();
+			this.StickerImage.splice(eid);
 		});
 	}
 }
