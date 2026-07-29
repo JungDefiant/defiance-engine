@@ -2,7 +2,7 @@ import { container, singleton } from "tsyringe";
 import { IFactory } from "src/factories/IFactory";
 import { addComponent, addEntity, EntityId, query, set } from "bitecs";
 import GameState from "src/states/GameState";
-import { ActorData } from "src/components/ActorData";
+import { ActorState } from "src/components/ActorState";
 import {
 	Mesh,
 	MeshBuilder,
@@ -58,11 +58,11 @@ export class EnemyFactory implements IFactory {
 
 		const newEntity = addEntity(gameState.world);
 
-		const newActorComp = new ActorData(newEntity, rawData);
+		const newActorComp = new ActorState(newEntity, rawData);
 		addComponent(
 			gameState.world,
 			newEntity,
-			set(gameState.ActorDataComponent, newActorComp),
+			set(gameState.ActorState, newActorComp),
 		);
 
 		const newEnemySprite = this.createEnemySprite(
@@ -92,7 +92,7 @@ export class EnemyFactory implements IFactory {
 		gameState: GameState,
 		parentNode: TransformNode,
 	): Mesh {
-		const actorData = gameState.ActorDataComponent[eid];
+		const actorData = gameState.ActorState[eid];
 
 		const enActorSprite = MeshBuilder.CreatePlane(
 			`enBattlerSprite_${actorData.id}_${eid}`,
@@ -114,7 +114,7 @@ export class EnemyFactory implements IFactory {
 		// enActorSprite.locallyTranslate(positionOffset);
 
 		enActorSpriteMat.albedoTexture = new Texture(
-			`${getPublicRoot()}/sprites/enemies/${actorData.spriteUrl}`,
+			`${getPublicRoot()}/sprites/characters/${actorData.spriteUrl}`,
 			gameState.scene,
 		);
 		enActorSpriteMat.metallic = 0;

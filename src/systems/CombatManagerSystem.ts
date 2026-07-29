@@ -8,18 +8,18 @@ import {
 	Vector3,
 } from "@babylonjs/core";
 import GameState from "src/states/GameState";
-import { EntityId, query, removeEntity } from "bitecs";
+import { EntityId, IsA, query, removeEntity } from "bitecs";
 import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTarget,
 	AbilityTrigger,
-	ActorData,
+	ActorState,
 	EffectData,
 	EffectVar,
 	TacticsCondition,
 	TacticsData,
-} from "src/components/ActorData";
+} from "src/components/ActorState";
 import { EnemyFactory } from "src/factories/EnemyFactory";
 import { clamp } from "src/helpers/Utils";
 import RenderQueueSystem, {
@@ -76,10 +76,8 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		for (const eid of query(gameState.world, [
-			gameState.ActorDataComponent,
-		])) {
-			const actorData = gameState.ActorDataComponent[eid];
+		for (const eid of query(gameState.world, [gameState.ActorState])) {
+			const actorData = gameState.ActorState[eid];
 			const rcvyAttr = actorData.attributes.recovery;
 
 			if (
@@ -120,7 +118,7 @@ export default class CombatManagerSystem implements ISystem {
 				spawnPosition,
 			);
 			gameState.enemyEIDs.push(newEnemy);
-			const enActorData = gameState.ActorDataComponent[newEnemy];
+			const enActorData = gameState.ActorState[newEnemy];
 			enActorData.name = enActorData.name.concat(
 				` ${String.fromCharCode(65 + i)}`,
 			);
@@ -129,10 +127,8 @@ export default class CombatManagerSystem implements ISystem {
 
 		await this.resetControls(gameState);
 
-		for (const eid of query(gameState.world, [
-			gameState.ActorDataComponent,
-		])) {
-			const actorData = gameState.ActorDataComponent[eid];
+		for (const eid of query(gameState.world, [gameState.ActorState])) {
+			const actorData = gameState.ActorState[eid];
 			const rcvyAttr = actorData.attributes.recovery;
 			const initRange = Math.random() * this.START_RECOVERY_RANGE;
 			rcvyAttr.maximumValue = this.START_RECOVERY + initRange;
@@ -161,7 +157,7 @@ export default class CombatManagerSystem implements ISystem {
 		});
 
 		gameState.playerEIDs.forEach((eid) => {
-			const playerData = gameState.ActorDataComponent[eid];
+			const playerData = gameState.ActorState[eid];
 			const rcvyAttr = playerData.attributes.recovery;
 			rcvyAttr.maximumValue = 0;
 			playerData.queuedAction = null;
@@ -186,7 +182,7 @@ export default class CombatManagerSystem implements ISystem {
 		actionInd: number,
 		isItem?: boolean,
 	): Promise<void> {
-		const actorData = gameState.ActorDataComponent[eid];
+		const actorData = gameState.ActorState[eid];
 		const actionData = (await (isItem
 			? actorData.itemData && actorData.itemData[actionInd]
 			: actorData.powerData[actionInd])) as AbilityData;
@@ -199,8 +195,7 @@ export default class CombatManagerSystem implements ISystem {
 	}
 
 	public async resetControls(gameState: GameState) {
-		const actorData =
-			gameState.ActorDataComponent[gameState.selectedPlayerEID];
+		const actorData = gameState.ActorState[gameState.selectedPlayerEID];
 		await gameState.combatHud.setActionBar(actorData, this, gameState);
 
 		resetPlayerTargeting(gameState);
@@ -342,7 +337,7 @@ export default class CombatManagerSystem implements ISystem {
 							actionData,
 							sourceEid,
 							[eid],
-							gameState.ActorDataComponent,
+							gameState.ActorState,
 						);
 						gameState.EnemyGUIComponent.forEach((gui) =>
 							gui.setVisibleTargetingUI(false),
@@ -357,7 +352,7 @@ export default class CombatManagerSystem implements ISystem {
 
 	private async executeQueuedAction(
 		gameState: GameState,
-		actorData: ActorData,
+		actorData: ActorState,
 	): Promise<void> {
 		const rqeSystem = container.resolve(RenderQueueSystem);
 		const actionToExecute = await actorData.queuedAction;
@@ -377,7 +372,7 @@ export default class CombatManagerSystem implements ISystem {
 		);
 
 		actionTargetIds.forEach((eid) => {
-			const targetData = gameState.ActorDataComponent[eid];
+			const targetData = gameState.ActorState[eid];
 			processAbilityEffects(actorData, targetData, actionToExecute);
 		});
 
@@ -392,14 +387,17 @@ export default class CombatManagerSystem implements ISystem {
 		actionData: AbilityData,
 		sourceEid: EntityId,
 		targetEids: EntityId[],
-		actorDataComponent: ActorData[],
+		actorDataComponent: ActorState[],
 	): void {
 		const actorData = actorDataComponent[sourceEid];
 		actorData.queuedAction = actionData;
 		actorData.currentTargetEIDs = targetEids;
 	}
 
-	private async decideNPCAction(actorData: ActorData, gameState?: GameState) {
+	private async decideNPCAction(
+		actorData: ActorState,
+		gameState?: GameState,
+	) {
 		if (!gameState) {
 			gameState = container.resolve(GameState);
 		}
@@ -427,6 +425,7 @@ export default class CombatManagerSystem implements ISystem {
 			const isActionValid = newActionData.descriptors.includes(
 				entry.actionType,
 			);
+
 			if (!isActionValid) {
 				continue;
 			}
@@ -449,7 +448,7 @@ export default class CombatManagerSystem implements ISystem {
 				actionData,
 				actorData.entityId,
 				targetEids,
-				gameState.ActorDataComponent,
+				gameState.ActorState,
 			);
 		}
 	}

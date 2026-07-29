@@ -1,7 +1,7 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
-import { ActorData } from "src/components/ActorData";
+import { ActorState } from "src/components/ActorState";
 import GameState from "src/states/GameState";
 import { getPublicRoot } from "src/helpers/Utils";
 
@@ -27,5 +27,5 @@ export interface SaveData {
 	sceneId: string;
 	locationId: string;
 	flagIds: any[];
-	currentParty: ActorData[];
+	currentParty: ActorState[];
 }

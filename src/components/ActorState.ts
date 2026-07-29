@@ -6,7 +6,7 @@ import { getPublicRoot } from "src/helpers/Utils";
 
 const BASE_REGEN_TICKS: number = 4;
 
-export class ActorData {
+export class ActorState {
 	entityId: EntityId;
 	id: string = "";
 	name: string = "";
@@ -16,14 +16,14 @@ export class ActorData {
 	attributes: AttributeSet = {};
 	powerData: AbilityData[] = [];
 	featData: AbilityData[] = [];
-	affinityData?: AffinityData;
-	itemData?: AbilityData[];
-	tactics?: TacticsData[];
-	queuedAction?: Nullable<AbilityData>;
 	currentTargetEIDs: number[] = [];
 	currentStatuses: EffectData[] = [];
 	isPlayer: boolean = false;
 	isDefeated: boolean = false;
+	affinityData?: AffinityData;
+	itemData?: AbilityData[];
+	tactics?: TacticsData[];
+	queuedAction?: Nullable<AbilityData>;
 
 	public constructor(entityId: number, initData: any) {
 		this.entityId = entityId;

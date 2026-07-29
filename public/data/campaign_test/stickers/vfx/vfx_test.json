@@ -1,0 +1,16 @@
+{
+	"id": "vfx_test",
+	"source": "sprites/particles/vfx_hit.png",
+	"width": 128,
+	"height": 128,
+	"top": 0,
+	"left": 0,
+	"sizeRange": 0,
+	"rotationRange": 0,
+	"animation": {
+		"cellWidth": 1024,
+		"cellHeight": 1024,
+		"speed": 240,
+		"loop": true
+	}
+}

@@ -5,10 +5,10 @@ import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTarget,
-	ActorData,
+	ActorState,
 	TacticsCondition,
 	TacticsData,
-} from "src/components/ActorData";
+} from "src/components/ActorState";
 import GameState from "src/states/GameState";
 import { CombatState } from "src/systems/CombatManagerSystem";
 import { container } from "tsyringe";
@@ -29,7 +29,7 @@ export function getTargetsBasedOnCondition(
 	actionData: AbilityData,
 	tacticEntry: TacticsData,
 	sourceEid: EntityId,
-	gameState?: GameState
+	gameState?: GameState,
 ): EntityId[] {
 	if (!gameState) {
 		gameState = container.resolve(GameState);
@@ -54,14 +54,14 @@ export function resetTargeting(gameState: GameState) {
 	}
 }
 
-export function defeatActor(actor: ActorData) {
+export function defeatActor(actor: ActorState) {
 	const gameState = container.resolve(GameState);
 	actor.isDefeated = true;
 
 	if (gameState.playerEIDs.includes(actor.entityId)) {
 		for (let i = 0; i < gameState.playerEIDs.length; i++) {
 			let eid = gameState.playerEIDs[i];
-			let playerData = gameState.ActorDataComponent[eid];
+			let playerData = gameState.ActorState[eid];
 			if (!playerData.isDefeated) {
 				return;
 			}
@@ -71,7 +71,7 @@ export function defeatActor(actor: ActorData) {
 	} else {
 		for (let i = 0; i < gameState.enemyEIDs.length; i++) {
 			let eid = gameState.enemyEIDs[i];
-			let enemyData = gameState.ActorDataComponent[eid];
+			let enemyData = gameState.ActorState[eid];
 			if (!enemyData.isDefeated) {
 				return;
 			}
@@ -84,36 +84,35 @@ export function defeatActor(actor: ActorData) {
 export function getRandomTarget(
 	actionData: AbilityData,
 	sourceEid: EntityId,
-	gs: GameState
+	gs: GameState,
 ) {
 	let targetEids = getTargetEidsByActionTargetType(
 		actionData.target,
 		sourceEid,
 		gs,
-		true
+		true,
 	);
 	let rand = RandomRange(0, targetEids.length - 1);
 	const targetEid = targetEids[Math.round(rand)];
-	return targetEid >= 0 && targetEid < targetEids.length ? [targetEid] : [];
+	return [targetEid];
 }
 
 export function getLowestLifeTarget(
 	actionData: AbilityData,
 	sourceEid: EntityId,
-	gs: GameState
+	gs: GameState,
 ) {
 	let targetEids = getTargetEidsByActionTargetType(
 		actionData.target,
 		sourceEid,
 		gs,
-		true
+		true,
 	);
 	let lowestLifeEid = -1;
 	let lowestLifeValue = Infinity;
 
 	targetEids.forEach((eid) => {
-		const currLife =
-			gs.ActorDataComponent[eid].attributes.life.currentValue;
+		const currLife = gs.ActorState[eid].attributes.life.currentValue;
 		if (currLife < lowestLifeValue) {
 			lowestLifeEid = eid;
 			lowestLifeValue = currLife;
@@ -126,7 +125,7 @@ export function getTargetEidsByActionTargetType(
 	abilityTarget: AbilityTarget,
 	sourceEid: EntityId,
 	gs: GameState,
-	isSingleTarget: boolean = false
+	isSingleTarget: boolean = false,
 ) {
 	switch (abilityTarget) {
 		case AbilityTarget.self:
@@ -137,20 +136,20 @@ export function getTargetEidsByActionTargetType(
 				return [];
 			} else {
 				if (gs.playerEIDs.includes(sourceEid)) {
-					return gs.enemyEIDs;
-				} else if (gs.enemyEIDs.includes(sourceEid)) {
 					return gs.playerEIDs;
+				} else if (gs.enemyEIDs.includes(sourceEid)) {
+					return gs.enemyEIDs;
 				}
 			}
 		case AbilityTarget.groupEnemy:
 		case AbilityTarget.singleEnemy:
-			if (isSingleTarget && abilityTarget === AbilityTarget.groupAlly) {
+			if (isSingleTarget && abilityTarget === AbilityTarget.groupEnemy) {
 				return [];
 			} else {
 				if (gs.playerEIDs.includes(sourceEid)) {
-					return gs.playerEIDs;
-				} else if (gs.enemyEIDs.includes(sourceEid)) {
 					return gs.enemyEIDs;
+				} else if (gs.enemyEIDs.includes(sourceEid)) {
+					return gs.playerEIDs;
 				}
 			}
 		default:

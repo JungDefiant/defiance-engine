@@ -1,37 +1,27 @@
 {
-    "id": "",
-    "name": "Test",
-    "backstory": "",
-    "description": "",
-    "primaryColor": "",
-    "spriteUrl": "spr_sentineltest.png",
-    "attributes": {
-        "life": 40,
-        "will": 10,
-        "speed": 11,
-        "defense": 11,
-        "critical": 11,
-        "regen": 11
-    },
-    "affinityId": "",
-    "abilityIds": [
-        "ab_pulserifle"
-    ],
-    "itemIds": [
-        ""
-    ],
-    "tactics": [
-        {
-            "target": "single_en",
-            "condition": "random",
-            "actionType": "power",
-            "actionIndex": 1
-        },
-        {
-            "target": "single_en",
-            "condition": "lowestLife",
-            "actionType": "power",
-            "actionIndex": 0
-        }
-    ]
+	"id": "",
+	"name": "Test",
+	"backstory": "",
+	"description": "",
+	"primaryColor": "",
+	"spriteUrl": "spr_sentineltest.png",
+	"attributes": {
+		"life": 40,
+		"will": 10,
+		"speed": 11,
+		"defense": 11,
+		"critical": 11,
+		"regen": 11
+	},
+	"affinityId": "",
+	"abilityIds": ["ab_pulserifle"],
+	"itemIds": [""],
+	"tactics": [
+		{
+			"target": "single_en",
+			"condition": "lowestLife",
+			"actionType": "power",
+			"actionIndex": 0
+		}
+	]
 }

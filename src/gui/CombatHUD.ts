@@ -13,7 +13,7 @@ import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/components/ActionSlot";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import GameState from "src/states/GameState";
-import { ActorData } from "src/components/ActorData";
+import { ActorState } from "src/components/ActorState";
 import { getPublicRoot } from "src/helpers/Utils";
 
 export default class CombatHUD implements IHUD {
@@ -68,7 +68,7 @@ export default class CombatHUD implements IHUD {
 	}
 
 	public async setActionBar(
-		actorData: ActorData,
+		actorData: ActorState,
 		cmSystem: CombatManagerSystem,
 		gameState: GameState,
 	): Promise<void> {
@@ -86,7 +86,11 @@ export default class CombatHUD implements IHUD {
 			if (abData) {
 				abilitySlot.setActionSlotIcon(abData.iconURL as string);
 				abilitySlot.setOnClickEvent(() =>
-					cmSystem.startQueueActionPlayer(gameState, actorData.entityId, i),
+					cmSystem.startQueueActionPlayer(
+						gameState,
+						actorData.entityId,
+						i,
+					),
 				);
 				abilitySlot.setActionLabelText(
 					String.fromCharCode(
@@ -95,7 +99,7 @@ export default class CombatHUD implements IHUD {
 				);
 			} else {
 				abilitySlot.setActionSlotIcon("");
-				abilitySlot.setOnClickEvent(() => { });
+				abilitySlot.setOnClickEvent(() => {});
 				abilitySlot.setActionLabelText("");
 			}
 		}
@@ -116,7 +120,11 @@ export default class CombatHUD implements IHUD {
 					`${getPublicRoot()}${devData.iconURL as string}`,
 				);
 				deviceSlot.setOnClickEvent(() =>
-					cmSystem.startQueueActionPlayer(gameState, actorData.entityId, i),
+					cmSystem.startQueueActionPlayer(
+						gameState,
+						actorData.entityId,
+						i,
+					),
 				);
 				deviceSlot.setActionLabelText(
 					String.fromCharCode(
@@ -125,7 +133,7 @@ export default class CombatHUD implements IHUD {
 				);
 			} else {
 				deviceSlot.setActionSlotIcon("");
-				deviceSlot.setOnClickEvent(() => { });
+				deviceSlot.setOnClickEvent(() => {});
 				deviceSlot.setActionLabelText("");
 			}
 		}
@@ -154,7 +162,10 @@ export default class CombatHUD implements IHUD {
 		rootContainer.heightInPixels = this.sizePerCombatLogEntry;
 		rootContainer.thickness = 0;
 
-		const entryUI = new TextBlock("ui_combatLogEntry", `${source}: ${text}`);
+		const entryUI = new TextBlock(
+			"ui_combatLogEntry",
+			`${source}: ${text}`,
+		);
 		entryUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		entryUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		entryUI.width = 1;
@@ -166,7 +177,6 @@ export default class CombatHUD implements IHUD {
 
 		this.combatLogStack.addControl(rootContainer);
 	}
-
 
 	public clearCombatEntries() {
 		if (!this.combatLogStack) {
@@ -214,7 +224,8 @@ export default class CombatHUD implements IHUD {
 		devicesLabel.heightInPixels = 20;
 		devicesLabel.topInPixels = 1;
 		devicesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		devicesLabel.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		devicesLabel.textHorizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_CENTER;
 		actionGrid.addControl(devicesLabel, 0, 1);
 
 		const actionAbilityStack = new StackPanel(this.actionAbilityStackName);
@@ -225,7 +236,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionAbilityStack, 1, 0);
 
 		for (let i = 0; i < 8; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "", () => { });
+			const actionSlot = new ActionSlot(i.toString(), "", () => {});
 			actionAbilityStack.addControl(actionSlot.rootContainer);
 			this.abilitySlots.push(actionSlot);
 		}
@@ -238,7 +249,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionDeviceStack, 1, 1);
 
 		for (let i = 0; i < 4; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "", () => { });
+			const actionSlot = new ActionSlot(i.toString(), "", () => {});
 			actionDeviceStack.addControl(actionSlot.rootContainer);
 			this.deviceSlots.push(actionSlot);
 		}
@@ -255,7 +266,8 @@ export default class CombatHUD implements IHUD {
 		messageDisplayUI.heightInPixels = 48;
 		messageDisplayUI.top = 5;
 		messageDisplayUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		messageDisplayUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		messageDisplayUI.horizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_CENTER;
 
 		const messageDisplayText = new TextBlock("ui_messageDisplayText", "");
 		messageDisplayText.color = Themes.neutral2;
@@ -295,26 +307,28 @@ export default class CombatHUD implements IHUD {
 		combatLogLabel.style = Themes.typography.header4;
 		combatLogLabel.width = 100;
 		combatLogLabel.height = 100;
-		combatLogLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+		combatLogLabel.textVerticalAlignment =
+			Control.VERTICAL_ALIGNMENT_CENTER;
 		combatLogLabel.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
 		combatLogHeader.addControl(combatLogLabel);
 
 		const combatLogScroll = new Container("ui_combatLogScroll");
 		combatLogScroll.isPointerBlocker = true;
-		combatLogScroll.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		combatLogScroll.horizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_CENTER;
 		combatLogScroll.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		combatLogScroll.widthInPixels = 160;
 		combatLogScroll.heightInPixels = 160;
 		combatLogScroll.alpha = 1;
 		combatLogUI.addControl(combatLogScroll);
 
-
-
 		this.combatLogStack = new StackPanel("ui_combatLogStack");
 		this.combatLogStack.isPointerBlocker = true;
-		this.combatLogStack.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		this.combatLogStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.combatLogStack.horizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_CENTER;
+		this.combatLogStack.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.combatLogStack.width = 1;
 		this.combatLogStack.spacing = 4;
 		this.combatLogStack.adaptHeightToChildren = true;
@@ -323,7 +337,8 @@ export default class CombatHUD implements IHUD {
 				return;
 			}
 			const textEntryStackSize =
-				(this.combatLogStack.children.length + 2) * this.sizePerCombatLogEntry;
+				(this.combatLogStack.children.length + 2) *
+				this.sizePerCombatLogEntry;
 			if (textEntryStackSize < combatLogScroll.heightInPixels) {
 				this.showHideScrollbar(false);
 			} else {
@@ -338,7 +353,8 @@ export default class CombatHUD implements IHUD {
 		this.combatLogScrollbar.isPointerBlocker = true;
 		this.combatLogScrollbar.horizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_RIGHT;
-		this.combatLogScrollbar.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.combatLogScrollbar.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_TOP;
 		this.combatLogScrollbar.isVertical = true;
 		this.combatLogScrollbar.isThumbClamped = true;
 		this.combatLogScrollbar.widthInPixels = 8;
@@ -350,8 +366,10 @@ export default class CombatHUD implements IHUD {
 			}
 
 			const combatEntryStackSize =
-				this.combatLogStack.children.length * this.sizePerCombatLogEntry;
-			this.combatLogStack.topInPixels = (value / 100) * combatEntryStackSize;
+				this.combatLogStack.children.length *
+				this.sizePerCombatLogEntry;
+			this.combatLogStack.topInPixels =
+				(value / 100) * combatEntryStackSize;
 		});
 		this.combatLogScrollbar.value = 0;
 		this.combatLogScrollbar.background = Themes.primary3;

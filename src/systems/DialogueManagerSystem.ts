@@ -5,7 +5,13 @@ import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import GameState from "src/states/GameState";
 import DialogueHUD from "src/gui/DialogueHUD";
 import type ISystem from "src/systems/ISystem";
-import { ConditionFunction, DialogueLine, DialogueNode, DialogueOptionLine, GameMode } from "src/states/types/GameTypes";
+import {
+	ConditionFunction,
+	DialogueLine,
+	DialogueNode,
+	DialogueOptionLine,
+	GameMode,
+} from "src/states/types/GameTypes";
 import type { TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";
@@ -14,9 +20,9 @@ import EventHandlerSystem from "./EventHandlerSystem";
 
 @singleton()
 export default class DialogueManagerSystem implements ISystem {
-	public async start() { }
+	public async start() {}
 
-	public update(deltaTime: number) { }
+	public update(deltaTime: number) {}
 
 	public initSemantics() {
 		const gs = container.resolve(GameState);
@@ -56,7 +62,7 @@ export default class DialogueManagerSystem implements ISystem {
 					type: "Line",
 					character: char.getString(),
 					text: txt.getString(),
-					condition: () => true
+					condition: () => true,
 				} as DialogueLine;
 			},
 			Line_condition(cond, _, char, __, txt) {
@@ -65,7 +71,7 @@ export default class DialogueManagerSystem implements ISystem {
 					type: "Line",
 					character: char.getString(),
 					text: txt.getString(),
-					condition
+					condition,
 				} as DialogueLine;
 				return line;
 			},
@@ -74,24 +80,24 @@ export default class DialogueManagerSystem implements ISystem {
 					type: "Options",
 					options: options.children.map((choice) => {
 						if (choice.ctorName === "OptionLine_condition") {
-							const condition = choice.child(0).parseConditional();
+							const condition = choice
+								.child(0)
+								.parseConditional();
 							const text = choice.child(2).getString();
 							const moveto = choice.child(3).getString();
 
-							return { 
-								text, 
-								destinationNode: moveto, 
-								condition 
+							return {
+								text,
+								destinationNode: moveto,
+								condition,
+							} as DialogueOptionLine;
+						} else {
+							return {
+								text: choice.child(1).getString(),
+								destinationNode: choice.child(2).getString(),
+								condition: () => true,
 							} as DialogueOptionLine;
 						}
-						else {
-							return { 
-								text: choice.child(1).getString(), 
-								destinationNode: choice.child(2).getString(), 
-								condition: () => true 
-							} as DialogueOptionLine;
-						}
-
 					}),
 				} as DialogueLine;
 			},
@@ -111,16 +117,22 @@ export default class DialogueManagerSystem implements ISystem {
 				return {
 					type: "Cmd",
 					cmd: cmd.sourceString,
-					vars: [var1.child(1).getString(), var2.child(1).getString()],
-					condition: () => true
+					vars: [
+						var1.child(1).getString(),
+						var2.child(1).getString(),
+					],
+					condition: () => true,
 				};
 			},
 			SetNumberVar(cmd, var1, var2) {
 				return {
 					type: "Cmd",
 					cmd: cmd.sourceString,
-					vars: [var1.child(1).getString(), var2.child(1).getNumber()],
-					condition: () => true
+					vars: [
+						var1.child(1).getString(),
+						var2.child(1).getNumber(),
+					],
+					condition: () => true,
 				};
 			},
 			MoveCam(cmd, var1, var2) {
@@ -128,7 +140,7 @@ export default class DialogueManagerSystem implements ISystem {
 					type: "Cmd",
 					cmd: cmd.sourceString,
 					vars: [var1.getVector(), var2.getVector()],
-					condition: () => true
+					condition: () => true,
 				};
 			},
 			StartCombat(cmd, var1) {
@@ -136,7 +148,7 @@ export default class DialogueManagerSystem implements ISystem {
 					type: "Cmd",
 					cmd: cmd.sourceString,
 					vars: [var1.child(1).sourceString],
-					condition: () => true
+					condition: () => true,
 				};
 			},
 		});
@@ -180,7 +192,9 @@ export default class DialogueManagerSystem implements ISystem {
 					}
 
 					const stringTerm = term.sourceString;
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as string;
+					const storyVarValue = gs.storyVariableMap.get(
+						storyVarKey,
+					) as string;
 
 					return storyVarValue === stringTerm;
 				};
@@ -188,16 +202,18 @@ export default class DialogueManagerSystem implements ISystem {
 			NumberVarEq(varKey, _, __, term) {
 				return () => {
 					const storyVarKey = varKey.sourceString;
-	
+
 					if (!gs.storyVariableMap.has(storyVarKey)) {
 						return false;
 					}
-	
+
 					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
-	
+					const storyVarValue = gs.storyVariableMap.get(
+						storyVarKey,
+					) as number;
+
 					return storyVarValue === numberTerm;
-				}
+				};
 			},
 			StringVarNeq(varKey, _, term) {
 				return () => {
@@ -207,7 +223,9 @@ export default class DialogueManagerSystem implements ISystem {
 					}
 
 					const stringTerm = term.sourceString;
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as string;
+					const storyVarValue = gs.storyVariableMap.get(
+						storyVarKey,
+					) as string;
 
 					return storyVarValue !== stringTerm;
 				};
@@ -215,73 +233,83 @@ export default class DialogueManagerSystem implements ISystem {
 			NumberVarNeq(varKey, _, __, term) {
 				return () => {
 					const storyVarKey = varKey.sourceString;
-	
+
 					if (!gs.storyVariableMap.has(storyVarKey)) {
 						return false;
 					}
-	
+
 					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
-	
+					const storyVarValue = gs.storyVariableMap.get(
+						storyVarKey,
+					) as number;
+
 					return storyVarValue !== numberTerm;
-				}
+				};
 			},
 			VarLt(varKey, _, term) {
 				return () => {
 					const storyVarKey = varKey.sourceString;
-	
+
 					if (!gs.storyVariableMap.has(storyVarKey)) {
 						return false;
 					}
-	
+
 					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
-	
+					const storyVarValue = gs.storyVariableMap.get(
+						storyVarKey,
+					) as number;
+
 					return storyVarValue < numberTerm;
-				}
+				};
 			},
 			VarLte(varKey, _, term) {
 				return () => {
 					const storyVarKey = varKey.sourceString;
-	
+
 					if (!gs.storyVariableMap.has(storyVarKey)) {
 						return false;
 					}
-	
+
 					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
-	
+					const storyVarValue = gs.storyVariableMap.get(
+						storyVarKey,
+					) as number;
+
 					return storyVarValue <= numberTerm;
-				}
+				};
 			},
 			VarGt(varKey, _, term) {
 				return () => {
 					const storyVarKey = varKey.sourceString;
-	
+
 					if (!gs.storyVariableMap.has(storyVarKey)) {
 						return false;
 					}
-	
+
 					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
-	
+					const storyVarValue = gs.storyVariableMap.get(
+						storyVarKey,
+					) as number;
+
 					return storyVarValue > numberTerm;
-				}
+				};
 			},
 			VarGte(varKey, _, term) {
 				return () => {
 					const storyVarKey = varKey.sourceString;
-	
+
 					if (!gs.storyVariableMap.has(storyVarKey)) {
 						return false;
 					}
-	
+
 					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(storyVarKey) as number;
-	
+					const storyVarValue = gs.storyVariableMap.get(
+						storyVarKey,
+					) as number;
+
 					return storyVarValue >= numberTerm;
-				}
-			}
+				};
+			},
 		});
 	}
 
@@ -304,9 +332,9 @@ export default class DialogueManagerSystem implements ISystem {
 		if (matchResult.failed()) {
 			console.error("Match Result failed", matchResult.message);
 		} else if (matchResult.succeeded()) {
-			const dialogueNodes = gs.semantics(
-				matchResult,
-			).eval() as DialogueNode[];
+			const dialogueNodes = gs
+				.semantics(matchResult)
+				.eval() as DialogueNode[];
 			dialogueNodes.forEach((node) => {
 				gs.dialogueMap.set(node.name, node);
 			});
@@ -383,10 +411,9 @@ export default class DialogueManagerSystem implements ISystem {
 
 		switch (line.type) {
 			case "Line":
-				if(line.condition()) {
+				if (line.condition()) {
 					this.displayTextLine(id, line, dlgHud);
-				}
-				else {
+				} else {
 					const nextLineId = id + 1;
 					this.runLine(nextLineId);
 				}
@@ -395,10 +422,9 @@ export default class DialogueManagerSystem implements ISystem {
 				this.displayOptionsLine(line, dlgHud);
 				break;
 			case "Cmd":
-				if(line.condition()) {
+				if (line.condition()) {
 					this.runCommand(id, line);
-				}
-				else {
+				} else {
 					const nextLineId = id + 1;
 					this.runLine(nextLineId);
 				}
@@ -411,7 +437,7 @@ export default class DialogueManagerSystem implements ISystem {
 		const gs = container.resolve(GameState);
 
 		gs.actionPauseSet.delete(PAUSE_DIALOGUE);
-		if(switchToExploreMode) {
+		if (switchToExploreMode) {
 			smSystem.setGameMode(GameMode.Explore);
 		}
 
@@ -419,7 +445,11 @@ export default class DialogueManagerSystem implements ISystem {
 		ehSystem.checkEventByTrigger("OnDialogueEnd");
 	}
 
-	private displayTextLine(id: number, line: DialogueLine, dlgHud: DialogueHUD) {
+	private displayTextLine(
+		id: number,
+		line: DialogueLine,
+		dlgHud: DialogueHUD,
+	) {
 		const gs = container.resolve(GameState);
 
 		if (!line.text) {
@@ -474,13 +504,22 @@ export default class DialogueManagerSystem implements ISystem {
 
 		switch (line.cmd) {
 			case "setnumbervar":
-				this.setNumberVariable(line.vars[0] as string, line.vars[1] as number);
+				this.setNumberVariable(
+					line.vars[0] as string,
+					line.vars[1] as number,
+				);
 				break;
 			case "setstringvar":
-				this.setStringVariable(line.vars[0] as string, line.vars[1] as string);
+				this.setStringVariable(
+					line.vars[0] as string,
+					line.vars[1] as string,
+				);
 				break;
 			case "movecam":
-				this.moveCamera(line.vars[0] as Vector3, line.vars[1] as Vector3);
+				this.moveCamera(
+					line.vars[0] as Vector3,
+					line.vars[1] as Vector3,
+				);
 				break;
 			case "startcombat":
 				this.startCombat(line.vars[0] as string);
@@ -490,7 +529,6 @@ export default class DialogueManagerSystem implements ISystem {
 		const nextLineId = id + 1;
 		const nextLine = gs.activeDialogue?.lines[nextLineId];
 		if (!nextLine) {
-			console.log("NO NEXT LINE");
 			this.endDialogue(true);
 			return;
 		}
@@ -499,7 +537,7 @@ export default class DialogueManagerSystem implements ISystem {
 	}
 
 	// COMMANDS
-	private setFlag(flag: string) { }
+	private setFlag(flag: string) {}
 
 	private setStringVariable(name: string, value: string) {
 		const gs = container.resolve(GameState);
@@ -511,11 +549,11 @@ export default class DialogueManagerSystem implements ISystem {
 		gs.storyVariableMap.set(name, value);
 	}
 
-	private moveCamera(position: Vector3, target: Vector3) { }
+	private moveCamera(position: Vector3, target: Vector3) {}
 
-	private setSpeaker(charId: string) { }
+	private setSpeaker(charId: string) {}
 
-	private playSound(soundUrl: string) { }
+	private playSound(soundUrl: string) {}
 
 	private startCombat(encounterId: string) {
 		this.endDialogue(false);
@@ -523,5 +561,3 @@ export default class DialogueManagerSystem implements ISystem {
 		cmSystem.startCombat(encounterId);
 	}
 }
-
-

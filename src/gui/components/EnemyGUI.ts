@@ -26,7 +26,7 @@ export class EnemyGUI implements ActorGUI {
 	private statusIcons: Map<string, Rectangle> = new Map<string, Rectangle>();
 
 	public constructor(eid: EntityId, gameState: GameState, sprite: Mesh) {
-		const enActorData = gameState.ActorDataComponent[eid];
+		const enActorData = gameState.ActorState[eid];
 
 		this.rootContainer = new StackPanel(
 			`ui_enBattlerUI_${enActorData.id}_${eid}`,
@@ -129,7 +129,9 @@ export class EnemyGUI implements ActorGUI {
 
 	public addStatusIcon(id: string, iconSrc: string): void {
 		if (this.statusIcons.has(id)) {
-			this.statusIconsUI.removeControl(this.statusIcons.get(id) as Rectangle);
+			this.statusIconsUI.removeControl(
+				this.statusIcons.get(id) as Rectangle,
+			);
 			this.statusIcons.delete(id);
 		}
 
@@ -153,7 +155,9 @@ export class EnemyGUI implements ActorGUI {
 
 	public removeStatusIcon(id: string): void {
 		if (this.statusIcons.has(id)) {
-			this.statusIconsUI.removeControl(this.statusIcons.get(id) as Rectangle);
+			this.statusIconsUI.removeControl(
+				this.statusIcons.get(id) as Rectangle,
+			);
 			this.statusIcons.delete(id);
 		}
 	}
@@ -203,7 +207,8 @@ export class EnemyGUI implements ActorGUI {
 	) {
 		const barValueUI = new TextBlock(`ui_${name}BarUIValue_${eid}`);
 		barValueUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
-		barValueUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		barValueUI.textHorizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		barValueUI.widthInPixels = 30;
 		barValueUI.heightInPixels = 14;

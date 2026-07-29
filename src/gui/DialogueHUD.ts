@@ -278,7 +278,7 @@ export default class DialogueHUD implements IHUD {
 			buttonUI.onPointerClickObservable.addOnce(() => {
 				const gameState = container.resolve(GameState);
 				const pcName =
-					gameState.ActorDataComponent[gameState.playerEIDs[0]].name;
+					gameState.ActorState[gameState.playerEIDs[0]].name;
 
 				if (
 					!choiceData.destinationNode ||
