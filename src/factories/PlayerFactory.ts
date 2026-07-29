@@ -30,7 +30,7 @@ export class PlayerFactory implements IFactory {
 		addComponent(
 			gameState.world,
 			newEntity,
-			set(gameState.ActorDataComponent, newActorComp),
+			set(gameState.ActorState, newActorComp),
 		);
 
 		const newPlayerGUI = new PlayerGUI(

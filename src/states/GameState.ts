@@ -90,7 +90,7 @@ export default class GameState {
 	public readonly gameOverScreen: GameOverScreen;
 	public readonly victoryScreen: VictoryScreen;
 	// Components state
-	public readonly ActorDataComponent: ActorState[] = [];
+	public readonly ActorState: ActorState[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
 	public readonly EnemyGUIComponent: EnemyGUI[] = [];
 	public readonly CharacterSprite: Mesh[] = [];
@@ -146,23 +146,19 @@ export default class GameState {
 		// Actor Data Component
 		observe(
 			this.world,
-			onSet(this.ActorDataComponent),
+			onSet(this.ActorState),
 			(eid: EntityId, params: ActorState) => {
-				this.ActorDataComponent[eid] = params;
+				this.ActorState[eid] = params;
 			},
 		);
 
-		observe(this.world, onGet(this.ActorDataComponent), (eid: EntityId) => {
-			return this.ActorDataComponent[eid];
+		observe(this.world, onGet(this.ActorState), (eid: EntityId) => {
+			return this.ActorState[eid];
 		});
 
-		observe(
-			this.world,
-			onRemove(this.ActorDataComponent),
-			(eid: EntityId) => {
-				this.ActorDataComponent.splice(eid);
-			},
-		);
+		observe(this.world, onRemove(this.ActorState), (eid: EntityId) => {
+			this.ActorState.splice(eid);
+		});
 
 		// Player GUI Component
 		observe(
@@ -244,7 +240,7 @@ export default class GameState {
 			this.FloatingText.splice(eid);
 		});
 
-		// Special FX
+		// Sticker Image
 		observe(
 			this.world,
 			onSet(this.StickerImage),
@@ -260,6 +256,23 @@ export default class GameState {
 		observe(this.world, onRemove(this.StickerImage), (eid: EntityId) => {
 			this.StickerImage[eid].dispose();
 			this.StickerImage.splice(eid);
+		});
+
+		// Image Animation
+		observe(
+			this.world,
+			onSet(this.ImageAnimation),
+			(eid: EntityId, params: ImageAnimation) => {
+				this.ImageAnimation[eid] = params;
+			},
+		);
+
+		observe(this.world, onGet(this.ImageAnimation), (eid: EntityId) => {
+			return this.ImageAnimation[eid];
+		});
+
+		observe(this.world, onRemove(this.ImageAnimation), (eid: EntityId) => {
+			this.ImageAnimation.splice(eid);
 		});
 	}
 }

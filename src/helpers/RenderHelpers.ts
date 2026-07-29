@@ -3,6 +3,7 @@ import { AbilityData, ActorState } from "src/components/ActorState";
 import RenderQueueSystem, {
 	RenderQueueEntry,
 	RenderQueueType,
+	RenderQueueVarsSpecialFX,
 } from "src/systems/RenderQueueSystem";
 import { container } from "tsyringe";
 
@@ -53,18 +54,18 @@ export function addAbilityRQEs(
 	// 	0.5,
 	// );
 
-	// const hitRQE = new RenderQueueEntry(
-	// 	RenderQueueType.SpecialFX,
-	// 	{
-	// 		targets: targetEids,
-	// 		vfxUrl: actionData.hitVfxURL as string,
-	// 		audioUrl: actionData.hitSfxURL as string,
-	// 	} as RenderQueueVarsSpecialFX,
-	// 	true,
-	// 	0.5,
-	// );
+	const hitRQE = new RenderQueueEntry(
+		RenderQueueType.SpecialFX,
+		{
+			targets: targetEids,
+			vfxUrl: actionData.hitVfxURL as string,
+			audioUrl: actionData.hitSfxURL as string,
+		} as RenderQueueVarsSpecialFX,
+		false,
+		1,
+	);
 
 	rqeSystem.addRenderQueueEntry(msgRQE);
-	// this.rqeSystem.addRenderQueueEntry(castRQE);
-	// this.rqeSystem.addRenderQueueEntry(hitRQE);
+	// rqeSystem.addRenderQueueEntry(castRQE);
+	rqeSystem.addRenderQueueEntry(hitRQE);
 }

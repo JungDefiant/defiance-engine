@@ -14,9 +14,13 @@ export class ImageAnimation {
 		this.spriteSheet.topInPixels = _animProps.imageTop;
 		this.spriteSheet.leftInPixels = _animProps.imageLeft;
 
-		const sourceWidth = this.spriteSheet.sourceWidth;
+		const sourceWidth = this.spriteSheet.domImage.width;
+		const sourceHeight = this.spriteSheet.domImage.height;
 		const cellWidth = this.spriteSheet.cellWidth;
-		this.maximumCells = Math.floor(sourceWidth / cellWidth);
+		const cellHeight = this.spriteSheet.cellHeight;
+		this.maximumCells =
+			Math.floor(sourceWidth / cellWidth) *
+			Math.floor(sourceHeight / cellHeight);
 		this.timePerCell = this.maximumCells / _animProps.animationSpeed;
 		this.accumulatedTime = 0;
 	}
@@ -28,4 +32,5 @@ export interface SpriteAnimationProps {
 	imageTop: number;
 	imageLeft: number;
 	animationSpeed: number;
+	loop: boolean;
 }

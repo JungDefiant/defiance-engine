@@ -47,7 +47,8 @@ export class PlayerGUI implements ActorGUI {
 		this.rootContainer.widthInPixels = 200;
 		this.rootContainer.heightInPixels = 200;
 		this.rootContainer.top = -5;
-		this.rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.rootContainer.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_BOTTOM;
 
 		this.backgroundUI = new Rectangle("ui_playerBgUI_" + eid);
 		this.backgroundUI.width = 1;
@@ -56,7 +57,6 @@ export class PlayerGUI implements ActorGUI {
 		this.backgroundUI.color = Themes.primary1;
 		this.backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.backgroundUI.onPointerClickObservable.add(() => {
-			console.log("SELECTED CHAR", eid);
 			const uiSystem = container.resolve(UserInterfaceSystem);
 			uiSystem.setSelectedCharacter(eid);
 		});
@@ -71,7 +71,6 @@ export class PlayerGUI implements ActorGUI {
 		portraitUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		portraitUI.detectPointerOnOpaqueOnly = true;
 		portraitUI.onPointerClickObservable.add(() => {
-			console.log("SELECTED CHAR", eid);
 			const uiSystem = container.resolve(UserInterfaceSystem);
 			uiSystem.setSelectedCharacter(eid);
 		});
@@ -84,7 +83,6 @@ export class PlayerGUI implements ActorGUI {
 		rootStackPanel.isVertical = true;
 		rootStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		rootStackPanel.onPointerClickObservable.add(() => {
-			console.log("SELECTED CHAR", eid);
 			const uiSystem = container.resolve(UserInterfaceSystem);
 			uiSystem.setSelectedCharacter(eid);
 		});
@@ -109,7 +107,8 @@ export class PlayerGUI implements ActorGUI {
 		this.statusIconsUI = new Grid(`ui_playerStatusIcons_${eid}`);
 		this.statusIconsUI.widthInPixels = 60;
 		this.statusIconsUI.heightInPixels = 60;
-		this.statusIconsUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+		this.statusIconsUI.horizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_LEFT;
 		for (let i = 0; i < 4; i++) {
 			this.statusIconsUI.addColumnDefinition(12, true);
 			this.statusIconsUI.addRowDefinition(12, true);
@@ -124,7 +123,8 @@ export class PlayerGUI implements ActorGUI {
 		this.queueActionBgUI.background = Themes.primary3;
 		this.queueActionBgUI.horizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_RIGHT;
-		this.queueActionBgUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.queueActionBgUI.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_BOTTOM;
 		iconStackPanel.addControl(this.queueActionBgUI);
 
 		this.queueActionUI = new Image(`ui_playerQueueAction_${eid}`);
@@ -149,7 +149,8 @@ export class PlayerGUI implements ActorGUI {
 		this.charNameUI.style = Themes.typography.header4;
 		this.charNameUI.color = Themes.neutral2;
 		this.charNameUI.topInPixels = 0;
-		this.charNameUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+		this.charNameUI.textVerticalAlignment =
+			Control.VERTICAL_ALIGNMENT_CENTER;
 		this.charNameBgUI.addControl(this.charNameUI);
 
 		// ACT BAR
@@ -211,7 +212,11 @@ export class PlayerGUI implements ActorGUI {
 		);
 		lifeStackUI.addControl(this.lifeBarBgUI);
 
-		this.lifeBarFillUI = this.createBarFillUI(eid, "life", Themes.secondary3);
+		this.lifeBarFillUI = this.createBarFillUI(
+			eid,
+			"life",
+			Themes.secondary3,
+		);
 		this.lifeBarBgUI.addControl(this.lifeBarFillUI);
 
 		this.lifeBarValueUI = this.createBarValueUI(
@@ -250,7 +255,11 @@ export class PlayerGUI implements ActorGUI {
 		);
 		willStackUI.addControl(this.willBarBgUI);
 
-		this.willBarFillUI = this.createBarFillUI(eid, "will", Themes.secondary1);
+		this.willBarFillUI = this.createBarFillUI(
+			eid,
+			"will",
+			Themes.secondary1,
+		);
 		this.willBarBgUI.addControl(this.willBarFillUI);
 
 		this.willBarValueUI = this.createBarValueUI(
@@ -297,7 +306,9 @@ export class PlayerGUI implements ActorGUI {
 
 	public addStatusIcon(id: string, iconSrc: string): void {
 		if (this.statusIcons.has(id)) {
-			this.statusIconsUI.removeControl(this.statusIcons.get(id) as Rectangle);
+			this.statusIconsUI.removeControl(
+				this.statusIcons.get(id) as Rectangle,
+			);
 			this.statusIcons.delete(id);
 		}
 
@@ -321,7 +332,9 @@ export class PlayerGUI implements ActorGUI {
 
 	public removeStatusIcon(id: string): void {
 		if (this.statusIcons.has(id)) {
-			this.statusIconsUI.removeControl(this.statusIcons.get(id) as Rectangle);
+			this.statusIconsUI.removeControl(
+				this.statusIcons.get(id) as Rectangle,
+			);
 			this.statusIcons.delete(id);
 		}
 	}
@@ -406,7 +419,8 @@ export class PlayerGUI implements ActorGUI {
 	) {
 		const barValueUI = new TextBlock(`ui_${name}BarUIValue_${eid}`);
 		barValueUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		barValueUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		barValueUI.textHorizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		barValueUI.widthInPixels = 24;
 		barValueUI.heightInPixels = 12;

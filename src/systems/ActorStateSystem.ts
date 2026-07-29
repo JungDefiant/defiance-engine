@@ -19,10 +19,8 @@ export default class ActorStateSystem implements ISystem {
 	}
 
 	private tickRecoveryAndRegen(gameState: GameState, deltaTime: number) {
-		for (const eid of query(gameState.world, [
-			gameState.ActorDataComponent,
-		])) {
-			const actorData = gameState.ActorDataComponent[eid];
+		for (const eid of query(gameState.world, [gameState.ActorState])) {
+			const actorData = gameState.ActorState[eid];
 			if (actorData.isDefeated) {
 				return;
 			}

@@ -62,7 +62,7 @@ export class EnemyFactory implements IFactory {
 		addComponent(
 			gameState.world,
 			newEntity,
-			set(gameState.ActorDataComponent, newActorComp),
+			set(gameState.ActorState, newActorComp),
 		);
 
 		const newEnemySprite = this.createEnemySprite(
@@ -92,7 +92,7 @@ export class EnemyFactory implements IFactory {
 		gameState: GameState,
 		parentNode: TransformNode,
 	): Mesh {
-		const actorData = gameState.ActorDataComponent[eid];
+		const actorData = gameState.ActorState[eid];
 
 		const enActorSprite = MeshBuilder.CreatePlane(
 			`enBattlerSprite_${actorData.id}_${eid}`,

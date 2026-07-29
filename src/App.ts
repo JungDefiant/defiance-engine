@@ -24,17 +24,18 @@ import { CampaignData } from "src/states/types/GameTypes";
 import { getPublicRoot } from "src/helpers/Utils";
 import EventHandlerSystem from "src/systems/EventHandlerSystem";
 import AudioState from "./states/AudioState";
+import ImageAnimationSystem from "./systems/ImageAnimationSystem";
 
 export class App {
 	private engine: Engine;
 	private mainMenuScene: Scene;
 
-	private audioEngine: Nullable<AudioEngineV2> = null;
-
 	constructor(
 		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
 		@inject(UserInterfaceSystem) private uiSystem: UserInterfaceSystem,
 		@inject(RenderQueueSystem) private rqeSystem: RenderQueueSystem,
+		@inject(ImageAnimationSystem)
+		private imageAnimationSystem: ImageAnimationSystem,
 		@inject(DialogueManagerSystem) private dmSystem: DialogueManagerSystem,
 		@inject(CombatManagerSystem) private cmSystem: CombatManagerSystem,
 		@inject(ActorStateSystem) private asSystem: ActorStateSystem,
@@ -102,6 +103,7 @@ export class App {
 		this.dmSystem.update(deltaTime);
 		this.cmSystem.update(deltaTime, gameState);
 		this.rqeSystem.update(deltaTime, gameState);
+		this.imageAnimationSystem.update(deltaTime, gameState);
 		this.ehSystem.update(deltaTime);
 		this.uiSystem.update(deltaTime, gameState);
 	}
@@ -113,6 +115,7 @@ export class App {
 		await this.dmSystem.start();
 		await this.cmSystem.start();
 		await this.rqeSystem.start();
+		await this.imageAnimationSystem.start();
 		await this.ehSystem.start();
 	}
 

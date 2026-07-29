@@ -61,7 +61,7 @@ export function defeatActor(actor: ActorState) {
 	if (gameState.playerEIDs.includes(actor.entityId)) {
 		for (let i = 0; i < gameState.playerEIDs.length; i++) {
 			let eid = gameState.playerEIDs[i];
-			let playerData = gameState.ActorDataComponent[eid];
+			let playerData = gameState.ActorState[eid];
 			if (!playerData.isDefeated) {
 				return;
 			}
@@ -71,7 +71,7 @@ export function defeatActor(actor: ActorState) {
 	} else {
 		for (let i = 0; i < gameState.enemyEIDs.length; i++) {
 			let eid = gameState.enemyEIDs[i];
-			let enemyData = gameState.ActorDataComponent[eid];
+			let enemyData = gameState.ActorState[eid];
 			if (!enemyData.isDefeated) {
 				return;
 			}
@@ -94,7 +94,7 @@ export function getRandomTarget(
 	);
 	let rand = RandomRange(0, targetEids.length - 1);
 	const targetEid = targetEids[Math.round(rand)];
-	return targetEid >= 0 && targetEid < targetEids.length ? [targetEid] : [];
+	return [targetEid];
 }
 
 export function getLowestLifeTarget(
@@ -112,8 +112,7 @@ export function getLowestLifeTarget(
 	let lowestLifeValue = Infinity;
 
 	targetEids.forEach((eid) => {
-		const currLife =
-			gs.ActorDataComponent[eid].attributes.life.currentValue;
+		const currLife = gs.ActorState[eid].attributes.life.currentValue;
 		if (currLife < lowestLifeValue) {
 			lowestLifeEid = eid;
 			lowestLifeValue = currLife;
@@ -137,20 +136,20 @@ export function getTargetEidsByActionTargetType(
 				return [];
 			} else {
 				if (gs.playerEIDs.includes(sourceEid)) {
-					return gs.enemyEIDs;
-				} else if (gs.enemyEIDs.includes(sourceEid)) {
 					return gs.playerEIDs;
+				} else if (gs.enemyEIDs.includes(sourceEid)) {
+					return gs.enemyEIDs;
 				}
 			}
 		case AbilityTarget.groupEnemy:
 		case AbilityTarget.singleEnemy:
-			if (isSingleTarget && abilityTarget === AbilityTarget.groupAlly) {
+			if (isSingleTarget && abilityTarget === AbilityTarget.groupEnemy) {
 				return [];
 			} else {
 				if (gs.playerEIDs.includes(sourceEid)) {
-					return gs.playerEIDs;
-				} else if (gs.enemyEIDs.includes(sourceEid)) {
 					return gs.enemyEIDs;
+				} else if (gs.enemyEIDs.includes(sourceEid)) {
+					return gs.playerEIDs;
 				}
 			}
 		default:

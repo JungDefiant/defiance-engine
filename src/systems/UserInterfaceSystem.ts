@@ -21,19 +21,19 @@ export default class UserInterfaceSystem implements ISystem {
 		gameState.uiScene.render();
 
 		for (const eid of query(gameState.world, [
-			gameState.ActorDataComponent,
+			gameState.ActorState,
 			gameState.PlayerGUIComponent,
 		])) {
-			const actorData = gameState.ActorDataComponent[eid];
+			const actorData = gameState.ActorState[eid];
 			const playerGUI = gameState.PlayerGUIComponent[eid];
 			this.updatePlayerGUI(actorData, playerGUI);
 		}
 
 		for (const eid of query(gameState.world, [
-			gameState.ActorDataComponent,
+			gameState.ActorState,
 			gameState.EnemyGUIComponent,
 		])) {
-			const actorData = gameState.ActorDataComponent[eid];
+			const actorData = gameState.ActorState[eid];
 			const enemyGUI = gameState.EnemyGUIComponent[eid];
 			this.updateEnemyGUI(actorData, enemyGUI);
 		}

@@ -39,7 +39,17 @@ export default class RenderQueueSystem implements ISystem {
 			this.renderQueueStates.push(new RenderQueueState(nextRqe));
 		}
 
-		this.processRenderQueueStates(deltaTime);
+		for (let rqeState of this.renderQueueStates) {
+			this.processRenderQueueState(deltaTime, rqeState);
+		}
+
+		if (this.renderQueueStates.length === 0) {
+			const gameState = container.resolve(GameState);
+			if (gameState && gameState.actionPauseSet.has(PAUSE_RENDERQUEUE)) {
+				gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
+			}
+			this.isStarted = false;
+		}
 	}
 
 	public startRenderQueue(): void {
@@ -56,40 +66,30 @@ export default class RenderQueueSystem implements ISystem {
 		this.currentRenderQueue.enqueue(rqe);
 	}
 
-	private processRenderQueueStates(deltaTime: number): void {
-		this.renderQueueStates = this.renderQueueStates.filter((state) => {
-			if (state.rqe.duration) {
-				let isActive = true;
-
-				if (!state.init) {
-					this.initRenderQueueEntry(state);
-				}
-
-				this.tickRenderQueueEntry(state, deltaTime);
-
-				state.timeAccumulated += deltaTime;
-
-				if (state.timeAccumulated >= state.rqe.duration) {
-					state.timeAccumulated = state.rqe.duration;
-					isActive = false;
-					this.clearRenderQueueState(state);
-				}
-
-				return isActive;
-			} else {
-				if (!state.init) {
-					this.initRenderQueueEntry(state);
-				}
-				return false;
+	private processRenderQueueState(
+		deltaTime: number,
+		rqeState: RenderQueueState,
+	): void {
+		if (rqeState.rqe.duration) {
+			if (!rqeState.init) {
+				this.initRenderQueueEntry(rqeState);
 			}
-		});
 
-		if (this.renderQueueStates.length === 0) {
-			const gameState = container.resolve(GameState);
-			if (gameState && gameState.actionPauseSet.has(PAUSE_RENDERQUEUE)) {
-				gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
+			this.tickRenderQueueEntry(rqeState, deltaTime);
+
+			rqeState.timeAccumulated += deltaTime;
+
+			if (rqeState.timeAccumulated >= rqeState.rqe.duration) {
+				rqeState.timeAccumulated = rqeState.rqe.duration;
+				this.clearRenderQueueState(rqeState);
+				this.renderQueueStates = this.renderQueueStates.filter(
+					(x) => x !== rqeState,
+				);
 			}
-			this.isStarted = false;
+		} else {
+			if (!rqeState.init) {
+				this.initRenderQueueEntry(rqeState);
+			}
 		}
 	}
 
@@ -154,28 +154,33 @@ export default class RenderQueueSystem implements ISystem {
 				const sxAudioUrl = rqeState.rqe.vars["audioUrl"] as string;
 				const sxVfxUrl = rqeState.rqe.vars["vfxUrl"] as string;
 				const sxTargetEids = rqeState.rqe.vars["targets"] as number[];
-				if (!sxTargetEids || !sxVfxUrl || !sxAudioUrl) {
+				if (!sxTargetEids || !sxVfxUrl) {
 					return;
 				}
 
+				const stickerFactory = container.resolve(StickerFactory);
+
 				for (const eid of sxTargetEids) {
-					const specialFXUI = container.resolve(StickerFactory);
-					const sxEntity = await specialFXUI.createEntityFromFile(
-						sxVfxUrl,
-						gameState.campaignId,
-					);
-					rqeState.entityIds.push(sxEntity);
+					stickerFactory
+						.createEntityFromFile(sxVfxUrl, gameState.campaignId)
+						.then((entityId) => {
+							rqeState.entityIds.push(entityId);
 
-					const sxImage = gameState.StickerImage[eid];
-
-					if (gameState.playerEIDs.includes(eid)) {
-						const playerGUI = gameState.PlayerGUIComponent[eid];
-						playerGUI.getRoot().addControl(sxImage);
-					} else {
-						const targetSprite = gameState.CharacterSprite[eid];
-						gameState.sceneGUI.addControl(sxImage);
-						sxImage.linkWithMesh(targetSprite);
-					}
+							Promise.resolve(
+								gameState.StickerImage[entityId],
+							).then((sxImage) => {
+								if (gameState.playerEIDs.includes(eid)) {
+									const playerGUI =
+										gameState.PlayerGUIComponent[eid];
+									playerGUI.getRoot().addControl(sxImage);
+								} else {
+									const targetSprite =
+										gameState.CharacterSprite[eid];
+									gameState.sceneGUI.addControl(sxImage);
+									sxImage.linkWithMesh(targetSprite);
+								}
+							});
+						});
 				}
 
 				rqeState.init = true;
@@ -208,10 +213,6 @@ export default class RenderQueueSystem implements ISystem {
 				}
 				return;
 			case RenderQueueType.SpecialFX:
-				for (const eid of rqeState.entityIds) {
-					const sx = gameState.StickerImage[eid];
-				}
-				return;
 			default:
 				return;
 		}
@@ -226,6 +227,9 @@ export default class RenderQueueSystem implements ISystem {
 			case RenderQueueType.FloatingText:
 				for (const eid of rqeState.entityIds) {
 					const ft = gameState.FloatingText[eid];
+					if (!ft) {
+						continue;
+					}
 					gameState.sceneGUI.removeControl(ft);
 					ft.dispose();
 					removeEntity(gameState.world, eid);
@@ -233,9 +237,12 @@ export default class RenderQueueSystem implements ISystem {
 				return;
 			case RenderQueueType.SpecialFX:
 				for (const eid of rqeState.entityIds) {
-					const sx = gameState.StickerImage[eid];
-					sx.dispose();
-					removeEntity(gameState.world, eid);
+					Promise.resolve(gameState.StickerImage[eid]).then((sx) => {
+						if (sx) {
+							sx.dispose();
+						}
+						removeEntity(gameState.world, eid);
+					});
 				}
 				return;
 			case RenderQueueType.WaitUntilDone:
@@ -256,6 +263,7 @@ class RenderQueueState {
 	}
 }
 
+// Rework into different interfaces that extend the same base interface
 export class RenderQueueEntry {
 	public readonly type: RenderQueueType;
 	public readonly vars: RenderQueueVars;

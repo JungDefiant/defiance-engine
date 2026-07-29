@@ -8,10 +8,6 @@ import {
 } from "src/components/ActorState";
 import { Themes } from "src/gui/Themes";
 import GameState from "src/states/GameState";
-import RenderQueueSystem, {
-	RenderQueueEntry,
-	RenderQueueType,
-} from "src/systems/RenderQueueSystem";
 import { container } from "tsyringe";
 import { clamp } from "./Utils";
 import { addFloatingTextRQE } from "./RenderHelpers";

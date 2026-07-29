@@ -1,36 +1,26 @@
 {
-  "id": "en_sc_test",
-  "name": "Enemy",
-  "backstory": "",
-  "description": "",
-  "primaryColor": "",
-  "spriteUrl": "spr_sentineltest.png",
-  "attributes": {
-    "life": 40,
-    "will": 10,
-    "speed": 10,
-    "defense": 13,
-    "critical": 11,
-    "regen": 10
-  },
-  "abilityIds": [
-    "ab_brawl"
-  ],
-  "itemIds": [
-    "it_grenadefrag"
-  ],
-  "tactics": [
-    {
-        "target": "single_en",
-        "condition": "random",
-        "actionType": "power",
-        "actionIndex": 1
-    },
-    {
-        "target": "single_en",
-        "condition": "random",
-        "actionType": "power",
-        "actionIndex": 0
-    }
-]
+	"id": "en_sc_test",
+	"name": "Enemy",
+	"backstory": "",
+	"description": "",
+	"primaryColor": "",
+	"spriteUrl": "spr_sentineltest.png",
+	"attributes": {
+		"life": 40,
+		"will": 10,
+		"speed": 10,
+		"defense": 13,
+		"critical": 11,
+		"regen": 10
+	},
+	"abilityIds": ["ab_brawl"],
+	"itemIds": [],
+	"tactics": [
+		{
+			"target": "single_en",
+			"condition": "random",
+			"actionType": "power",
+			"actionIndex": 0
+		}
+	]
 }

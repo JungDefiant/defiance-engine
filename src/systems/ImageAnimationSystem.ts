@@ -7,7 +7,7 @@ import { ImageAnimation } from "src/components/ImageAnimation";
 
 @singleton()
 export default class ImageAnimationSystem implements ISystem {
-	public async start(engine: Engine): Promise<void> {}
+	public async start(): Promise<void> {}
 
 	public update(deltaTime: number, gameState?: GameState): void {
 		if (!gameState) {
@@ -16,7 +16,11 @@ export default class ImageAnimationSystem implements ISystem {
 
 		for (const eid of query(gameState.world, [gameState.ImageAnimation])) {
 			const imageAnimationComponent = gameState.ImageAnimation[eid];
-			this.incrementAnimationCell(deltaTime, imageAnimationComponent);
+			(async () => {
+				Promise.resolve(imageAnimationComponent).then((component) => {
+					this.incrementAnimationCell(deltaTime, component);
+				});
+			})();
 		}
 	}
 

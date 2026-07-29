@@ -18,7 +18,7 @@ export class StickerFactory implements IFactory {
 		campaignId: string,
 	): Promise<EntityId> {
 		const response = await fetch(
-			`${getPublicRoot()}/data/${campaignId}/stickers/${fileName}.json`,
+			`${getPublicRoot()}/data/${campaignId}/${fileName}`,
 		);
 		const rawData = await response.json();
 		if (!rawData) {
@@ -30,21 +30,30 @@ export class StickerFactory implements IFactory {
 
 		const stickerProps = rawData as StickerProps;
 
-		const imageProperties = rawData as StickerProps;
-		const newSticker = await this.createStickerImage(imageProperties);
-		addComponent(gameState.world, newEntity, set(gameState, newSticker));
+		const newSticker = await this.createStickerImage(stickerProps);
+		addComponent(
+			gameState.world,
+			newEntity,
+			set(gameState.StickerImage, newSticker),
+		);
 
-		if (imageProperties.isAnimated) {
+		if (stickerProps.animation) {
 			const newAnim = this.createImageAnimation(newSticker, stickerProps);
-			addComponent(gameState.world, newEntity, set(gameState, newAnim));
+			addComponent(
+				gameState.world,
+				newEntity,
+				set(gameState.ImageAnimation, newAnim),
+			);
 		}
 
 		return newEntity;
 	}
 
 	private async createStickerImage(props: StickerProps) {
-		const newSticker = new Image();
-		newSticker.source = props.source;
+		const newSticker = new Image(
+			"stk_image",
+			`${getPublicRoot()}/${props.source}`,
+		);
 		newSticker.widthInPixels = props.width;
 		newSticker.heightInPixels = props.height;
 		newSticker.topInPixels = props.top;
@@ -57,12 +66,19 @@ export class StickerFactory implements IFactory {
 		spriteSheet: Image,
 		props: StickerProps,
 	) {
+		const stickerAnimProps = props.animation;
+		if (!stickerAnimProps) {
+			return;
+		}
 		const newAnimProps = {
-			cellWidth: props.width,
-			cellHeight: props.height,
+			cellWidth: stickerAnimProps.cellWidth,
+			cellHeight: stickerAnimProps.cellHeight,
 			imageTop: props.top,
 			imageLeft: props.left,
+			animationSpeed: stickerAnimProps.speed || 0,
+			loop: stickerAnimProps.loop || false,
 		} as SpriteAnimationProps;
+
 		const newAnim = new ImageAnimation(spriteSheet, newAnimProps);
 		return newAnim;
 	}
@@ -76,5 +92,10 @@ interface StickerProps {
 	left: number;
 	sizeRange: number;
 	rotationRange: number;
-	isAnimated: boolean;
+	animation?: {
+		cellWidth: number;
+		cellHeight: number;
+		loop: boolean;
+		speed: number;
+	};
 }
