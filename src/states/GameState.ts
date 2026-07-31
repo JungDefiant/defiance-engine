@@ -41,6 +41,7 @@ import { ModalScreen } from "../gui/screens/ModalScreen";
 import { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 import { CombatState } from "src/systems/CombatManagerSystem";
 import { ImageAnimation as ImageAnimation } from "src/components/ImageAnimation";
+import { EntityMovement } from "src/components/EntityMovement";
 
 /*
 TO DO:
@@ -97,6 +98,7 @@ export default class GameState {
 	public readonly FloatingText: TextBlock[] = [];
 	public readonly StickerImage: Image[] = [];
 	public readonly ImageAnimation: ImageAnimation[] = [];
+	public readonly EntityMovement: EntityMovement[] = [];
 
 	public constructor(
 		campaignId: string,
@@ -273,6 +275,23 @@ export default class GameState {
 
 		observe(this.world, onRemove(this.ImageAnimation), (eid: EntityId) => {
 			this.ImageAnimation.splice(eid);
+		});
+
+		// Entity Movement
+		observe(
+			this.world,
+			onSet(this.EntityMovement),
+			(eid: EntityId, params: EntityMovement) => {
+				this.EntityMovement[eid] = params;
+			},
+		);
+
+		observe(this.world, onGet(this.EntityMovement), (eid: EntityId) => {
+			return this.EntityMovement[eid];
+		});
+
+		observe(this.world, onRemove(this.EntityMovement), (eid: EntityId) => {
+			this.EntityMovement.splice(eid);
 		});
 	}
 }
