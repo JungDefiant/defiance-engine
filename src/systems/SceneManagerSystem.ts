@@ -1,6 +1,15 @@
 import { container, singleton } from "tsyringe";
 import ISystem from "src/systems/ISystem";
-import { createWorld, deleteWorld, EntityId, query } from "bitecs";
+import {
+	addComponent,
+	addEntity,
+	createWorld,
+	deleteWorld,
+	EntityId,
+	getComponent,
+	query,
+	set,
+} from "bitecs";
 import {
 	Engine,
 	HemisphericLight,
@@ -49,16 +58,16 @@ import {
 } from "src/states/types/GameTypes";
 import { getPublicRoot } from "src/helpers/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
-import CombatManagerSystem from "./CombatManagerSystem";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import EventHandlerSystem from "./EventHandlerSystem";
-import { EventData } from "src/states/types/EventTypes";
 import { playMusic } from "src/helpers/AudioHelpers";
-import AudioState from "src/states/AudioState";
+import { EntityMovement } from "src/components/EntityMovement";
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
+
+	private readonly BASE_MOVEMENT_SPEED = 3;
 
 	public async start() {
 		this.gameCanvas = document.getElementById(
@@ -175,6 +184,8 @@ export default class SceneManagerSystem implements ISystem {
 			// For blocking out horizontal rotation, simply use y instead of x
 			camera.cameraRotation.x = 0;
 		});
+		const cameraEid = addEntity(world);
+		addComponent(world, cameraEid, camera);
 
 		const skybox = MeshBuilder.CreateBox("skybox", { size: 100.0 }, scene);
 		const skyboxMaterial = new StandardMaterial("skyBox", scene);
@@ -262,6 +273,7 @@ export default class SceneManagerSystem implements ISystem {
 			campaignId,
 			GameMode.Explore,
 			-1,
+			cameraEid,
 			[],
 			world,
 			scene,
@@ -385,8 +397,13 @@ export default class SceneManagerSystem implements ISystem {
 
 		const viewNode = gameState.sceneNodes.find((x) => x.id === viewNodeId);
 		if (camera && viewNode) {
-			camera.position = viewNode.absolutePosition;
-			camera.setTarget(camTarget);
+			const camParent = camera.parent as TransformNode;
+			if (camParent) {
+				camParent.position = viewNode.absolutePosition;
+			} else {
+				camera.position = viewNode.absolutePosition;
+			}
+			// camera.setTarget(camTarget);
 		}
 	}
 
@@ -642,12 +659,41 @@ export default class SceneManagerSystem implements ISystem {
 			if (currCamera) {
 				gameState.lastExploreViewTarget = sceneNode.absolutePosition;
 			}
-			gameState.currentLocation = newLoc;
-			smSystem.resetViewPosition(gameState);
-			gameState.exploreHud.hideHighlightInfoUI();
 
-			const ehSystem = container.resolve(EventHandlerSystem);
-			ehSystem.checkEventByTrigger("OnLocationEnter");
+			gameState.currentLocation = newLoc;
+
+			let cameraTransformNode = currCamera.parent;
+			if (!cameraTransformNode) {
+				const newTransformNode = new TransformNode("activeCamNode");
+				newTransformNode.setAbsolutePosition(currCamera.position);
+				currCamera.parent = newTransformNode;
+				currCamera.position = newTransformNode.position;
+				cameraTransformNode = newTransformNode;
+			}
+
+			const viewNode = gameState.sceneNodes.find(
+				(x) => x.id === newLoc.exploreViewNodeId,
+			) as TransformNode;
+			const entityMovement = new EntityMovement(
+				cameraTransformNode as TransformNode,
+				viewNode.position,
+				this.BASE_MOVEMENT_SPEED,
+				() => {
+					const smSystem = container.resolve(SceneManagerSystem);
+					const ehSystem = container.resolve(EventHandlerSystem);
+					const gameState = container.resolve(GameState);
+
+					smSystem.resetViewPosition(gameState);
+					gameState.exploreHud.hideHighlightInfoUI();
+					ehSystem.checkEventByTrigger("OnLocationEnter");
+					console.log("CURR LOC", gameState.currentLocation);
+				},
+			);
+			addComponent(
+				gameState.world,
+				gameState.cameraEID,
+				set(gameState.EntityMovement, entityMovement),
+			);
 		});
 		sceneGUI.addControl(button);
 		exploreGuiArr.push(button);

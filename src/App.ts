@@ -25,6 +25,7 @@ import { getPublicRoot } from "src/helpers/Utils";
 import EventHandlerSystem from "src/systems/EventHandlerSystem";
 import AudioState from "./states/AudioState";
 import ImageAnimationSystem from "./systems/ImageAnimationSystem";
+import EntityMovementSystem from "./systems/EntityMovementSystem";
 
 export class App {
 	private engine: Engine;
@@ -38,6 +39,8 @@ export class App {
 		private imageAnimationSystem: ImageAnimationSystem,
 		@inject(DialogueManagerSystem) private dmSystem: DialogueManagerSystem,
 		@inject(CombatManagerSystem) private cmSystem: CombatManagerSystem,
+		@inject(EntityMovementSystem)
+		private entityMovementSystem: EntityMovementSystem,
 		@inject(ActorStateSystem) private asSystem: ActorStateSystem,
 		@inject(EventHandlerSystem) private ehSystem: EventHandlerSystem,
 		@inject(PlayerFactory) private playerFactory: PlayerFactory,
@@ -100,6 +103,7 @@ export class App {
 	public updateSystems(deltaTime: number, gameState: GameState) {
 		this.smSystem.update(deltaTime);
 		this.asSystem.update(deltaTime);
+		this.entityMovementSystem.update(deltaTime, gameState);
 		this.dmSystem.update(deltaTime);
 		this.cmSystem.update(deltaTime, gameState);
 		this.rqeSystem.update(deltaTime, gameState);

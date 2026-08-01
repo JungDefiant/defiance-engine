@@ -55,6 +55,7 @@ export default class GameState {
 	public readonly storyVariableMap: Map<string, StoryVariable> = new Map();
 	// Gameplay state
 	public gameMode: GameMode;
+	public cameraEID: number;
 	public playerEIDs: number[];
 	public selectedPlayerEID: number;
 	public enemyEIDs: number[] = [];
@@ -104,6 +105,7 @@ export default class GameState {
 		campaignId: string,
 		gameMode: GameMode,
 		selectedPlayerEID: number,
+		cameraEID: number,
 		playerEIDs: number[],
 		world: World,
 		scene: Scene,
@@ -123,6 +125,7 @@ export default class GameState {
 	) {
 		this.campaignId = campaignId;
 		this.gameMode = gameMode;
+		this.cameraEID = cameraEID;
 		this.selectedPlayerEID = selectedPlayerEID;
 		this.playerEIDs = playerEIDs;
 		this.world = world;
@@ -282,6 +285,7 @@ export default class GameState {
 			this.world,
 			onSet(this.EntityMovement),
 			(eid: EntityId, params: EntityMovement) => {
+				console.log("ENTITY MOVEMENT SET", eid);
 				this.EntityMovement[eid] = params;
 			},
 		);

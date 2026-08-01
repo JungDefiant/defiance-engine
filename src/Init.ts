@@ -11,6 +11,7 @@ import { App } from "src/App";
 import RenderQueueSystem from "src/systems/RenderQueueSystem";
 import EventHandlerSystem from "./systems/EventHandlerSystem";
 import ImageAnimationSystem from "./systems/ImageAnimationSystem";
+import EntityMovementSystem from "./systems/EntityMovementSystem";
 
 // Source - https://stackoverflow.com/a/77970818
 // Posted by Helto, modified by community. See post 'Timeline' for change history
@@ -24,6 +25,7 @@ const uiSystem = container.resolve(UserInterfaceSystem);
 const dmSystem = container.resolve(DialogueManagerSystem);
 const cmSystem = container.resolve(CombatManagerSystem);
 const asSystem = container.resolve(ActorStateSystem);
+const entityMovementSystem = container.resolve(EntityMovementSystem);
 const ehSystem = container.resolve(EventHandlerSystem);
 const rqeSystem = container.resolve(RenderQueueSystem);
 const imageAnimationSystem = container.resolve(ImageAnimationSystem);
@@ -37,6 +39,7 @@ const app = new App(
 	imageAnimationSystem,
 	dmSystem,
 	cmSystem,
+	entityMovementSystem,
 	asSystem,
 	ehSystem,
 	plyrFactory,

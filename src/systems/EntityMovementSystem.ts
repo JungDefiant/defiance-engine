@@ -14,6 +14,7 @@ export default class EntityMovementSystem implements ISystem {
 			const entityMovement = gameState.EntityMovement[eid];
 			this.moveEntityTowardsDestination(deltaTime, entityMovement);
 			if (this.checkIfEntityAtDestination(eid, gameState)) {
+				entityMovement.onDestinationReachedEvent();
 				removeComponent(gameState.world, eid, gameState.EntityMovement);
 			}
 		}
@@ -41,7 +42,7 @@ export default class EntityMovementSystem implements ISystem {
 			entityMovement.destination,
 			lerpAmount,
 		);
-		transform.position = moveTowardsVector;
+		transform.setPositionWithLocalVector(moveTowardsVector);
 	}
 
 	private checkIfEntityAtDestination(
@@ -54,7 +55,7 @@ export default class EntityMovementSystem implements ISystem {
 			entityMovement.destination,
 		);
 
-		if (distanceLeft <= 0.5) {
+		if (distanceLeft <= 0.1) {
 			return true;
 		}
 
