@@ -102,6 +102,8 @@ export class ActorState implements Component {
 	public getValue(): ActorState {
 		return this;
 	}
+
+	public dispose(): void {}
 }
 
 export interface AttributeSet {
