@@ -10,7 +10,7 @@ import {
 } from "@babylonjs/gui";
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
-import { ActionSlot } from "src/gui/components/ActionSlot";
+import { ActionSlot } from "src/gui/premades/ActionSlot";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import GameState from "src/states/GameState";
 import { ActorState } from "src/components/ActorState";

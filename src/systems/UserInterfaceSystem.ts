@@ -3,9 +3,9 @@ import ISystem from "src/systems/ISystem";
 import { Engine } from "@babylonjs/core";
 import GameState from "src/states/GameState";
 import { EntityId, query } from "bitecs";
-import { PlayerGUI } from "src/gui/components/PlayerGUI";
+import { PlayerGUI } from "src/gui/premades/PlayerGUI";
 import { ActorState } from "src/components/ActorState";
-import { EnemyGUI } from "src/gui/components/EnemyGUI";
+import { EnemyGUI } from "src/gui/premades/EnemyGUI";
 import { GameMode } from "src/types/GameTypes";
 import CombatManagerSystem from "./CombatManagerSystem";
 

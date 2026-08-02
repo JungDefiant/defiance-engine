@@ -98,6 +98,10 @@ export class ActorState implements Component {
 		// });
 		this.tactics = initData.tactics;
 	}
+
+	public getValue(): ActorState {
+		return this;
+	}
 }
 
 export interface AttributeSet {

@@ -3,7 +3,7 @@ import { container, singleton } from "tsyringe";
 import GameState from "src/states/GameState";
 import { IFactory } from "src/factories/IFactory";
 import { ActorState } from "src/components/ActorState";
-import { PlayerGUI } from "src/gui/components/PlayerGUI";
+import { PlayerGUI } from "src/gui/premades/PlayerGUI";
 import { getPublicRoot } from "src/helpers/Utils";
 
 @singleton()

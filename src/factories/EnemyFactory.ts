@@ -12,7 +12,7 @@ import {
 	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
-import { EnemyGUI } from "src/gui/components/EnemyGUI";
+import { EnemyGUI } from "src/gui/premades/EnemyGUI";
 import { getPublicRoot } from "src/helpers/Utils";
 
 @singleton()
