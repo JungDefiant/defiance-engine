@@ -67,7 +67,7 @@ import { EntityMovement } from "src/components/EntityMovement";
 export default class SceneManagerSystem implements ISystem {
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
 
-	private readonly BASE_MOVEMENT_SPEED = 3;
+	private readonly BASE_MOVEMENT_SPEED = 4.5;
 
 	public async start() {
 		this.gameCanvas = document.getElementById(
@@ -642,6 +642,7 @@ export default class SceneManagerSystem implements ISystem {
 		button.onPointerClickObservable.add(async () => {
 			const gameState = container.resolve(GameState);
 			const smSystem = container.resolve(SceneManagerSystem);
+			const doorNode = sceneNode;
 			const newLoc = await smSystem.loadLocation(
 				doorData.destination,
 				gameState.scene,
@@ -667,8 +668,14 @@ export default class SceneManagerSystem implements ISystem {
 				const newTransformNode = new TransformNode("activeCamNode");
 				newTransformNode.setAbsolutePosition(currCamera.position);
 				currCamera.parent = newTransformNode;
-				currCamera.position = newTransformNode.position;
+				currCamera.position = Vector3.Zero();
 				cameraTransformNode = newTransformNode;
+			}
+
+			const sceneGUIChildren = gameState.sceneGUI.getChildren();
+			for (let i = 0; i < sceneGUIChildren.length; i++) {
+				const sceneGUIObject = sceneGUIChildren[i];
+				sceneGUIObject.isVisible = false;
 			}
 
 			const viewNode = gameState.sceneNodes.find(
@@ -687,6 +694,11 @@ export default class SceneManagerSystem implements ISystem {
 					gameState.exploreHud.hideHighlightInfoUI();
 					ehSystem.checkEventByTrigger("OnLocationEnter");
 					console.log("CURR LOC", gameState.currentLocation);
+					const sceneGUIChildren = gameState.sceneGUI.getChildren();
+					for (let i = 0; i < sceneGUIChildren.length; i++) {
+						const sceneGUIObject = sceneGUIChildren[i];
+						sceneGUIObject.isVisible = true;
+					}
 				},
 			);
 			addComponent(
