@@ -33,7 +33,7 @@ import {
 	PAUSE_TACTICALPAUSE,
 	PAUSE_VICTORYSCREEN,
 } from "src/Constants";
-import { GameMode } from "src/states/types/GameTypes";
+import { GameMode } from "src/types/GameTypes";
 import UserInterfaceSystem from "./UserInterfaceSystem";
 import EventHandlerSystem from "./EventHandlerSystem";
 import {

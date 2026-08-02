@@ -55,19 +55,26 @@ import {
 	LocationData,
 	ModalData,
 	SceneData,
-} from "src/states/types/GameTypes";
+} from "src/types/GameTypes";
 import { getPublicRoot } from "src/helpers/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import EventHandlerSystem from "./EventHandlerSystem";
 import { playMusic } from "src/helpers/AudioHelpers";
 import { EntityMovement } from "src/components/EntityMovement";
+import { loadLocation } from "src/helpers/LocationHelpers";
+
+export interface NewLocationSceneParams {
+	scene: Scene;
+	sceneData: SceneData;
+	sceneNodes: TransformNode[];
+	sceneGUI: AdvancedDynamicTexture;
+	exploreGUIControls: Control[];
+}
 
 @singleton()
 export default class SceneManagerSystem implements ISystem {
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
-
-	private readonly BASE_MOVEMENT_SPEED = 4.5;
 
 	public async start() {
 		this.gameCanvas = document.getElementById(
@@ -140,15 +147,29 @@ export default class SceneManagerSystem implements ISystem {
 		}
 	}
 
+	async loadPlayerParty(gameState: GameState, partyCharacterIds: string[]) {
+		const playerEids: number[] = [];
+		for (let i = 0; i < partyCharacterIds.length; i++) {
+			playerEids.push(
+				await this.loadPlayerCharacter(
+					partyCharacterIds[i],
+					gameState.campaignId,
+				),
+			);
+		}
+
+		gameState.playerEIDs = playerEids;
+		gameState.selectedPlayerEID = playerEids[0];
+		gameState.partyInfoHud.setPartyInfoEntryStack();
+	}
+
 	public async createScene(
 		engine: Engine,
 		fileName: string,
 		campaignId: string,
 		characterIds: string[],
 	) {
-		const response = await fetch(
-			`${getPublicRoot()}/data/${campaignId}/scenes/${fileName}.json`,
-		);
+		const response = await fetch(`${getPublicRoot()}/data//scenes/.json`);
 		const sceneData = (await response.json()) as SceneData;
 		if (!sceneData) {
 			return;
@@ -268,7 +289,6 @@ export default class SceneManagerSystem implements ISystem {
 		mainUI.addControl(victoryScreen.getRoot());
 		victoryScreen.showHide(false);
 
-		// Initialize GameState
 		const newGameState = new GameState(
 			campaignId,
 			GameMode.Explore,
@@ -295,35 +315,25 @@ export default class SceneManagerSystem implements ISystem {
 
 		newGameState.lastExploreViewTarget = DEFAULT_CAM_TARGET;
 
-		// Load Player Party
-		const playerEids: number[] = [];
-		for (let i = 0; i < characterIds.length; i++) {
-			playerEids.push(
-				await this.loadPlayerCharacter(characterIds[i], campaignId),
-			);
-		}
+		this.loadPlayerParty(newGameState, characterIds);
 
-		newGameState.playerEIDs = playerEids;
-		newGameState.selectedPlayerEID = playerEids[0];
-		newGameState.partyInfoHud.setPartyInfoEntryStack();
-
-		// Load Location
-		const locationData = await this.loadLocation(
-			sceneData.startLocationId,
+		const newLocationSceneParams = {
 			scene,
 			sceneData,
-			sceneNodes,
 			sceneGUI,
-			newGameState.exploreGUIControls,
+			sceneNodes,
+			exploreGUIControls: newGameState.exploreGUIControls,
+		} as NewLocationSceneParams;
+		const locationData = await loadLocation(
+			sceneData.startLocationId,
+			newLocationSceneParams,
 		);
 		newGameState.currentLocation = locationData;
 
-		// Load Dialogue
 		const dmSystem = container.resolve(DialogueManagerSystem);
 		await dmSystem.initSemantics();
 		await dmSystem.loadDialogueMap(sceneData.dialogueFile);
 
-		// Load Modal Data
 		await this.loadModalMap(sceneData.modalRefs);
 
 		await playMusic(sceneData.startMusic, newGameState);
@@ -482,234 +492,6 @@ export default class SceneManagerSystem implements ISystem {
 		);
 
 		return plyerEID;
-	}
-
-	private async clearSceneGUI() {
-		const gameState = container.resolve(GameState);
-		gameState.sceneGUI.getChildren().forEach((control) => {
-			control.dispose();
-		});
-	}
-
-	private async loadLocation(
-		locationId: string,
-		scene: Scene,
-		sceneData: SceneData,
-		sceneNodes: TransformNode[],
-		sceneGUI: AdvancedDynamicTexture,
-		exploreGuiArr: Control[],
-	): Promise<Nullable<LocationData>> {
-		await this.clearSceneGUI();
-		exploreGuiArr.length = 0;
-
-		const locationData = sceneData.locations.find(
-			(loc) => loc.id === locationId,
-		);
-
-		if (!locationData || !scene || !sceneData || !sceneNodes) {
-			return null;
-		}
-
-		locationData.interactables.forEach(async (itr) => {
-			await this.loadLocationInteractable(
-				itr,
-				sceneNodes,
-				sceneGUI,
-				exploreGuiArr,
-			);
-		});
-
-		locationData.doors.forEach(async (door) => {
-			await this.loadLocationDoor(
-				door,
-				sceneNodes,
-				sceneGUI,
-				exploreGuiArr,
-			);
-		});
-
-		this.filterLocationEvents(locationData);
-
-		return locationData;
-	}
-
-	private async loadLocationInteractable(
-		interactableData: InteractableData,
-		sceneNodes: TransformNode[],
-		sceneGUI: AdvancedDynamicTexture,
-		exploreGuiArr: Control[],
-	) {
-		const interactableNode = sceneNodes.find(
-			(x) => x.id == interactableData.interactableNodeId,
-		);
-
-		if (!interactableNode) {
-			return;
-		}
-
-		const button = Button.CreateImageOnlyButton(
-			interactableData.id,
-			`${getPublicRoot()}/sprites/gui/icons/icon_interact.png`,
-		);
-		button.width = 0.075;
-		button.height = 0.1125;
-		button.thickness = 0;
-		button.onPointerEnterObservable.add(() => {
-			const gameState = container.resolve(GameState);
-			gameState.exploreHud.updateHighlightInfoUI(
-				interactableData.name,
-				interactableData.description,
-			);
-		});
-		button.onPointerOutObservable.add(() => {
-			const gameState = container.resolve(GameState);
-			gameState.exploreHud.hideHighlightInfoUI();
-		});
-		button.onPointerClickObservable.add(() => {
-			// Loads and runs dialogue based on dialogueId in interactableData
-			const gameState = container.resolve(GameState);
-			const viewNode = gameState.sceneNodes.find(
-				(x) => x.id === interactableData.viewPositionNodeId,
-			);
-
-			if (!viewNode) {
-				return;
-			}
-
-			const currCamera = gameState.scene.activeCamera as UniversalCamera;
-			if (currCamera) {
-				gameState.lastExploreViewTarget = currCamera.getTarget();
-			}
-
-			const dmSystem = container.resolve(DialogueManagerSystem);
-			dmSystem.startDialogue(interactableData.dialogueNodeId, {
-				itrNode: interactableNode,
-				viewNode: viewNode,
-			});
-		});
-		sceneGUI.addControl(button);
-		exploreGuiArr.push(button);
-		button.linkWithMesh(interactableNode);
-	}
-
-	private async filterLocationEvents(locationData: LocationData) {
-		const uniqueEvents = new Set<string>();
-		const eventIndsToRemove = new Array<number>();
-		locationData.events.forEach((evt, index) => {
-			const eventKey = `${evt.trigger}_${evt.type}_${evt.condition}`;
-			if (uniqueEvents.has(eventKey)) {
-				eventIndsToRemove.push(index);
-			} else {
-				uniqueEvents.add(eventKey);
-			}
-		});
-
-		eventIndsToRemove.forEach((index) => {
-			locationData.events.splice(index);
-		});
-	}
-
-	private async loadLocationDoor(
-		doorData: DoorData,
-		sceneNodes: TransformNode[],
-		sceneGUI: AdvancedDynamicTexture,
-		exploreGuiArr: Control[],
-	) {
-		const sceneNode = sceneNodes.find((x) => x.id == doorData.id);
-
-		if (!sceneNode) {
-			return;
-		}
-
-		const button = Button.CreateImageOnlyButton(
-			doorData.id,
-			`${getPublicRoot()}/sprites/gui/icons/icon_door.png`,
-		);
-		button.width = 0.1;
-		button.height = 0.1;
-		button.thickness = 0;
-		button.onPointerEnterObservable.add(() => {
-			const gameState = container.resolve(GameState);
-			gameState.exploreHud.updateHighlightInfoUI(
-				`Head To ${doorData.destination}`,
-				doorData.destination,
-			);
-		});
-		button.onPointerOutObservable.add(() => {
-			const gameState = container.resolve(GameState);
-			gameState.exploreHud.hideHighlightInfoUI();
-		});
-		button.onPointerClickObservable.add(async () => {
-			const gameState = container.resolve(GameState);
-			const smSystem = container.resolve(SceneManagerSystem);
-			const doorNode = sceneNode;
-			const newLoc = await smSystem.loadLocation(
-				doorData.destination,
-				gameState.scene,
-				gameState.sceneData,
-				gameState.sceneNodes,
-				gameState.sceneGUI,
-				gameState.exploreGUIControls,
-			);
-
-			if (!newLoc) {
-				return;
-			}
-
-			const currCamera = gameState.scene.activeCamera as UniversalCamera;
-			if (currCamera) {
-				gameState.lastExploreViewTarget = sceneNode.absolutePosition;
-			}
-
-			gameState.currentLocation = newLoc;
-
-			let cameraTransformNode = currCamera.parent;
-			if (!cameraTransformNode) {
-				const newTransformNode = new TransformNode("activeCamNode");
-				newTransformNode.setAbsolutePosition(currCamera.position);
-				currCamera.parent = newTransformNode;
-				currCamera.position = Vector3.Zero();
-				cameraTransformNode = newTransformNode;
-			}
-
-			const sceneGUIChildren = gameState.sceneGUI.getChildren();
-			for (let i = 0; i < sceneGUIChildren.length; i++) {
-				const sceneGUIObject = sceneGUIChildren[i];
-				sceneGUIObject.isVisible = false;
-			}
-
-			const viewNode = gameState.sceneNodes.find(
-				(x) => x.id === newLoc.exploreViewNodeId,
-			) as TransformNode;
-			const entityMovement = new EntityMovement(
-				cameraTransformNode as TransformNode,
-				viewNode.position,
-				this.BASE_MOVEMENT_SPEED,
-				() => {
-					const smSystem = container.resolve(SceneManagerSystem);
-					const ehSystem = container.resolve(EventHandlerSystem);
-					const gameState = container.resolve(GameState);
-
-					smSystem.resetViewPosition(gameState);
-					gameState.exploreHud.hideHighlightInfoUI();
-					ehSystem.checkEventByTrigger("OnLocationEnter");
-					console.log("CURR LOC", gameState.currentLocation);
-					const sceneGUIChildren = gameState.sceneGUI.getChildren();
-					for (let i = 0; i < sceneGUIChildren.length; i++) {
-						const sceneGUIObject = sceneGUIChildren[i];
-						sceneGUIObject.isVisible = true;
-					}
-				},
-			);
-			addComponent(
-				gameState.world,
-				gameState.cameraEID,
-				set(gameState.EntityMovement, entityMovement),
-			);
-		});
-		sceneGUI.addControl(button);
-		exploreGuiArr.push(button);
-		button.linkWithMesh(sceneNode);
 	}
 
 	public async loadModalMap(modalRefs: string[]): Promise<void> {

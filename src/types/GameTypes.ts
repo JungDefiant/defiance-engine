@@ -1,5 +1,5 @@
 import { Vector3 } from "@babylonjs/core";
-import { EventData } from "src/states/types/EventTypes";
+import { EventData } from "src/types/EventTypes";
 
 export class ControlSettings {
 	powerActions: number[] = [

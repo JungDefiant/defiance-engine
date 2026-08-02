@@ -3,10 +3,11 @@ import GameState from "../states/GameState";
 import { EntityId } from "bitecs";
 import { Nullable } from "@babylonjs/core";
 import { getPublicRoot } from "src/helpers/Utils";
+import { Component } from "src/states/registries/ComponentRegistry";
 
 const BASE_REGEN_TICKS: number = 4;
 
-export class ActorState {
+export class ActorState implements Component {
 	entityId: EntityId;
 	id: string = "";
 	name: string = "";

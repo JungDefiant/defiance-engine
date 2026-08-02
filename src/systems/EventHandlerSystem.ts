@@ -1,6 +1,6 @@
 import { container, singleton } from "tsyringe";
 import GameState from "src/states/GameState";
-import { EventData, EventTrigger } from "src/states/types/EventTypes";
+import { EventData, EventTrigger } from "src/types/EventTypes";
 import ISystem from "./ISystem";
 import DialogueManagerSystem from "./DialogueManagerSystem";
 import CombatManagerSystem from "./CombatManagerSystem";

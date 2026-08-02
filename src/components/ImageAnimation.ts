@@ -1,6 +1,7 @@
 import { Image } from "@babylonjs/gui";
+import { Component } from "src/states/registries/ComponentRegistry";
 
-export class ImageAnimation {
+export class ImageAnimation implements Component {
 	spriteSheet: Image;
 	maximumCells: number;
 	timePerCell: number;

@@ -25,17 +25,13 @@ import CombatHUD from "src/gui/CombatHUD";
 import { DEFAULT_CAM_TARGET } from "../Constants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
-import {
-	ControlSettings,
-	GameMode,
-	LocationData,
-} from "src/states/types/GameTypes";
+import { ControlSettings, GameMode, LocationData } from "src/types/GameTypes";
 import type {
 	DialogueNode,
 	ModalData,
 	SceneData,
 	StoryVariable,
-} from "src/states/types/GameTypes";
+} from "src/types/GameTypes";
 import { VictoryScreen } from "../gui/screens/VictoryScreen";
 import { ModalScreen } from "../gui/screens/ModalScreen";
 import { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";

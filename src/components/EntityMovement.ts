@@ -1,6 +1,7 @@
 import { TransformNode, Vector3 } from "@babylonjs/core";
+import { Component } from "src/states/registries/ComponentRegistry";
 
-export class EntityMovement {
+export class EntityMovement implements Component {
 	transform: TransformNode;
 	destination: Vector3;
 	speed: number;

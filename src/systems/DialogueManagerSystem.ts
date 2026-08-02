@@ -11,7 +11,7 @@ import {
 	DialogueNode,
 	DialogueOptionLine,
 	GameMode,
-} from "src/states/types/GameTypes";
+} from "src/types/GameTypes";
 import type { TransformNode } from "@babylonjs/core";
 import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";
