@@ -15,7 +15,7 @@ import {
 import { EntityId, observe, onGet, onRemove, onSet } from "bitecs";
 import type { World } from "bitecs";
 import { singleton } from "tsyringe";
-import { ActorState } from "src/components/ActorState";
+import { ActorStateComponent } from "src/components/ActorStateComponent";
 import { EnemyGUI } from "src/gui/premades/EnemyGUI";
 import { PlayerGUI } from "src/gui/premades/PlayerGUI";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
@@ -36,8 +36,8 @@ import { VictoryScreen } from "../gui/screens/VictoryScreen";
 import { ModalScreen } from "../gui/screens/ModalScreen";
 import { DialogueSemantics } from "src/parser/DialogueParser.ohm-bundle";
 import { CombatState } from "src/systems/CombatManagerSystem";
-import { ImageAnimation as ImageAnimation } from "src/components/ImageAnimation";
-import { EntityMovement } from "src/components/EntityMovement";
+import { ImageAnimationComponent as ImageAnimationComponent } from "src/components/ImageAnimation";
+import { EntityMovementComponent } from "src/components/EntityMovementComponent";
 
 /*
 TO DO:
@@ -88,14 +88,14 @@ export default class GameState {
 	public readonly gameOverScreen: GameOverScreen;
 	public readonly victoryScreen: VictoryScreen;
 	// Components state
-	public readonly ActorState: ActorState[] = [];
+	public readonly ActorState: ActorStateComponent[] = [];
 	public readonly PlayerGUIComponent: PlayerGUI[] = [];
 	public readonly EnemyGUIComponent: EnemyGUI[] = [];
 	public readonly CharacterSprite: Mesh[] = [];
 	public readonly FloatingText: TextBlock[] = [];
 	public readonly StickerImage: Image[] = [];
-	public readonly ImageAnimation: ImageAnimation[] = [];
-	public readonly EntityMovement: EntityMovement[] = [];
+	public readonly ImageAnimation: ImageAnimationComponent[] = [];
+	public readonly EntityMovement: EntityMovementComponent[] = [];
 
 	public constructor(
 		campaignId: string,
@@ -148,7 +148,7 @@ export default class GameState {
 		observe(
 			this.world,
 			onSet(this.ActorState),
-			(eid: EntityId, params: ActorState) => {
+			(eid: EntityId, params: ActorStateComponent) => {
 				this.ActorState[eid] = params;
 			},
 		);
@@ -263,7 +263,7 @@ export default class GameState {
 		observe(
 			this.world,
 			onSet(this.ImageAnimation),
-			(eid: EntityId, params: ImageAnimation) => {
+			(eid: EntityId, params: ImageAnimationComponent) => {
 				this.ImageAnimation[eid] = params;
 			},
 		);
@@ -280,7 +280,7 @@ export default class GameState {
 		observe(
 			this.world,
 			onSet(this.EntityMovement),
-			(eid: EntityId, params: EntityMovement) => {
+			(eid: EntityId, params: EntityMovementComponent) => {
 				console.log("ENTITY MOVEMENT SET", eid);
 				this.EntityMovement[eid] = params;
 			},

@@ -2,7 +2,7 @@ import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { container, singleton } from "tsyringe";
 import GameState from "src/states/GameState";
 import { IFactory } from "src/factories/IFactory";
-import { ActorState } from "src/components/ActorState";
+import { ActorStateComponent } from "src/components/ActorStateComponent";
 import { PlayerGUI } from "src/gui/premades/PlayerGUI";
 import { getPublicRoot } from "src/helpers/Utils";
 
@@ -25,7 +25,7 @@ export class PlayerFactory implements IFactory {
 		const gameState = container.resolve(GameState);
 		const newEntity = addEntity(gameState.world);
 
-		const newActorComp = new ActorState(newEntity, rawData);
+		const newActorComp = new ActorStateComponent(newEntity, rawData);
 		newActorComp.isPlayer = true;
 		addComponent(
 			gameState.world,

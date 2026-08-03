@@ -5,10 +5,10 @@ import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTarget,
-	ActorState,
+	ActorStateComponent,
 	TacticsCondition,
 	TacticsData,
-} from "src/components/ActorState";
+} from "src/components/ActorStateComponent";
 import GameState from "src/states/GameState";
 import { CombatState } from "src/systems/CombatManagerSystem";
 import { container } from "tsyringe";
@@ -54,7 +54,7 @@ export function resetTargeting(gameState: GameState) {
 	}
 }
 
-export function defeatActor(actor: ActorState) {
+export function defeatActor(actor: ActorStateComponent) {
 	const gameState = container.resolve(GameState);
 	actor.isDefeated = true;
 

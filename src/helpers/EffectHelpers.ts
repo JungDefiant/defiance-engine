@@ -3,9 +3,9 @@ import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTrigger,
-	ActorState,
+	ActorStateComponent,
 	EffectVar,
-} from "src/components/ActorState";
+} from "src/components/ActorStateComponent";
 import { Themes } from "src/gui/Themes";
 import GameState from "src/states/GameState";
 import { container } from "tsyringe";
@@ -16,8 +16,8 @@ import { defeatActor } from "./CombatHelpers";
 export const BASE_DEFENSE = 10;
 
 export function processAbilityEffects(
-	sourceData: ActorState,
-	targetData: ActorState,
+	sourceData: ActorStateComponent,
+	targetData: ActorStateComponent,
 	abilityData: AbilityData,
 	context?: { [index: string]: EffectVar },
 ) {
@@ -73,8 +73,8 @@ export function processAbilityEffects(
 }
 
 export function triggerFeatEffects(
-	sourceData: ActorState,
-	targetData: ActorState,
+	sourceData: ActorStateComponent,
+	targetData: ActorStateComponent,
 	trigger: AbilityTrigger,
 	context?: { [index: string]: EffectVar },
 ) {
@@ -87,8 +87,8 @@ export function triggerFeatEffects(
 }
 
 export function applyDamageEffect(
-	source: ActorState,
-	target: ActorState,
+	source: ActorStateComponent,
+	target: ActorStateComponent,
 	descriptors: AbilityDescriptor[],
 	effVars: { [index: string]: EffectVar },
 ): string {
@@ -146,8 +146,8 @@ export function applyDamageEffect(
 }
 
 export function applyHealEffect(
-	source: ActorState,
-	target: ActorState,
+	source: ActorStateComponent,
+	target: ActorStateComponent,
 	descriptors: AbilityDescriptor[],
 	effVars: { [index: string]: EffectVar },
 ): string {

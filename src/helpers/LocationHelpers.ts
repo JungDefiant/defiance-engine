@@ -15,7 +15,7 @@ import { container } from "tsyringe";
 import GameState from "src/states/GameState";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import EventHandlerSystem from "src/systems/EventHandlerSystem";
-import { EntityMovement } from "src/components/EntityMovement";
+import { EntityMovementComponent } from "src/components/EntityMovementComponent";
 import { BASE_MOVEMENT_SPEED } from "src/Constants";
 import { addComponent, set } from "bitecs";
 
@@ -186,7 +186,7 @@ export async function transitionToNewLocation(
 	const viewNode = gameState.sceneNodes.find(
 		(x) => x.id === newLoc.exploreViewNodeId,
 	) as TransformNode;
-	const entityMovement = new EntityMovement(
+	const entityMovement = new EntityMovementComponent(
 		cameraTransformNode as TransformNode,
 		viewNode.position,
 		BASE_MOVEMENT_SPEED,

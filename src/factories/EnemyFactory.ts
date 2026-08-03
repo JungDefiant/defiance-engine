@@ -2,7 +2,7 @@ import { container, singleton } from "tsyringe";
 import { IFactory } from "src/factories/IFactory";
 import { addComponent, addEntity, EntityId, query, set } from "bitecs";
 import GameState from "src/states/GameState";
-import { ActorState } from "src/components/ActorState";
+import { ActorStateComponent } from "src/components/ActorStateComponent";
 import {
 	Mesh,
 	MeshBuilder,
@@ -58,7 +58,7 @@ export class EnemyFactory implements IFactory {
 
 		const newEntity = addEntity(gameState.world);
 
-		const newActorComp = new ActorState(newEntity, rawData);
+		const newActorComp = new ActorStateComponent(newEntity, rawData);
 		addComponent(
 			gameState.world,
 			newEntity,

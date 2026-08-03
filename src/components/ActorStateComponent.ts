@@ -7,7 +7,7 @@ import { Component } from "src/states/registries/ComponentRegistry";
 
 const BASE_REGEN_TICKS: number = 4;
 
-export class ActorState implements Component {
+export class ActorStateComponent implements Component {
 	entityId: EntityId;
 	id: string = "";
 	name: string = "";
@@ -99,7 +99,7 @@ export class ActorState implements Component {
 		this.tactics = initData.tactics;
 	}
 
-	public getValue(): ActorState {
+	public getValue(): ActorStateComponent {
 		return this;
 	}
 

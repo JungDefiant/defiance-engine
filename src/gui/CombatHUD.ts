@@ -13,7 +13,7 @@ import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/premades/ActionSlot";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import GameState from "src/states/GameState";
-import { ActorState } from "src/components/ActorState";
+import { ActorStateComponent } from "src/components/ActorStateComponent";
 import { getPublicRoot } from "src/helpers/Utils";
 
 export default class CombatHUD implements IHUD {
@@ -68,7 +68,7 @@ export default class CombatHUD implements IHUD {
 	}
 
 	public async setActionBar(
-		actorData: ActorState,
+		actorData: ActorStateComponent,
 		cmSystem: CombatManagerSystem,
 		gameState: GameState,
 	): Promise<void> {

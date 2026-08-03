@@ -3,7 +3,7 @@ import ISystem from "./ISystem";
 import { singleton } from "tsyringe";
 import GameState from "src/states/GameState";
 import { query } from "bitecs";
-import { ImageAnimation } from "src/components/ImageAnimation";
+import { ImageAnimationComponent } from "src/components/ImageAnimation";
 
 @singleton()
 export default class ImageAnimationSystem implements ISystem {
@@ -26,7 +26,7 @@ export default class ImageAnimationSystem implements ISystem {
 
 	private incrementAnimationCell(
 		deltaTime: number,
-		imageAnimation: ImageAnimation,
+		imageAnimation: ImageAnimationComponent,
 	) {
 		const spriteSheet = imageAnimation.spriteSheet;
 		imageAnimation.accumulatedTime += deltaTime;

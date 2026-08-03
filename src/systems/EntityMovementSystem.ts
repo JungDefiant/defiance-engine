@@ -3,7 +3,7 @@ import ISystem from "./ISystem";
 import { Engine, Vector3 } from "@babylonjs/core";
 import GameState from "src/states/GameState";
 import { EntityId, query, removeComponent } from "bitecs";
-import { EntityMovement } from "src/components/EntityMovement";
+import { EntityMovementComponent } from "src/components/EntityMovementComponent";
 
 @singleton()
 export default class EntityMovementSystem implements ISystem {
@@ -22,7 +22,7 @@ export default class EntityMovementSystem implements ISystem {
 
 	private moveEntityTowardsDestination(
 		deltaTime: number,
-		entityMovement: EntityMovement,
+		entityMovement: EntityMovementComponent,
 	) {
 		const transform = entityMovement.transform;
 		const distanceLeft = Vector3.Distance(

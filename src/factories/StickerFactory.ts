@@ -5,7 +5,7 @@ import { getPublicRoot } from "src/helpers/Utils";
 import GameState from "src/states/GameState";
 import { IFactory } from "./IFactory";
 import {
-	ImageAnimation,
+	ImageAnimationComponent,
 	SpriteAnimationProps,
 } from "src/components/ImageAnimation";
 
@@ -79,7 +79,7 @@ export class StickerFactory implements IFactory {
 			loop: stickerAnimProps.loop || false,
 		} as SpriteAnimationProps;
 
-		const newAnim = new ImageAnimation(spriteSheet, newAnimProps);
+		const newAnim = new ImageAnimationComponent(spriteSheet, newAnimProps);
 		return newAnim;
 	}
 }

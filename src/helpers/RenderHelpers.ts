@@ -1,5 +1,8 @@
 import { EntityId } from "bitecs";
-import { AbilityData, ActorState } from "src/components/ActorState";
+import {
+	AbilityData,
+	ActorStateComponent,
+} from "src/components/ActorStateComponent";
 import RenderQueueSystem, {
 	RenderQueueEntry,
 	RenderQueueType,
@@ -31,7 +34,7 @@ export function addAbilityRQEs(
 	rqeSystem: RenderQueueSystem,
 	sourceEid: EntityId,
 	targetEids: EntityId[],
-	sourceData: ActorState,
+	sourceData: ActorStateComponent,
 	actionData: AbilityData,
 ) {
 	const msgRQE = new RenderQueueEntry(

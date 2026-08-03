@@ -61,7 +61,7 @@ import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import EventHandlerSystem from "./EventHandlerSystem";
 import { playMusic } from "src/helpers/AudioHelpers";
-import { EntityMovement } from "src/components/EntityMovement";
+import { EntityMovementComponent } from "src/components/EntityMovementComponent";
 import { loadLocation } from "src/helpers/LocationHelpers";
 
 export interface NewLocationSceneParams {

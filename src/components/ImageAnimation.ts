@@ -1,7 +1,7 @@
 import { Image } from "@babylonjs/gui";
 import { Component } from "src/states/registries/ComponentRegistry";
 
-export class ImageAnimation implements Component {
+export class ImageAnimationComponent implements Component {
 	spriteSheet: Image;
 	maximumCells: number;
 	timePerCell: number;
@@ -24,6 +24,14 @@ export class ImageAnimation implements Component {
 			Math.floor(sourceHeight / cellHeight);
 		this.timePerCell = this.maximumCells / _animProps.animationSpeed;
 		this.accumulatedTime = 0;
+	}
+
+	getValue(): ImageAnimationComponent {
+		return this;
+	}
+
+	dispose(): void {
+		this.spriteSheet.dispose();
 	}
 }
 

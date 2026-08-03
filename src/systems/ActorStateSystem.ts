@@ -2,7 +2,7 @@ import { container, singleton } from "tsyringe";
 import ISystem from "./ISystem";
 import GameState from "../states/GameState";
 import { query } from "bitecs";
-import { ActorState } from "../components/ActorState";
+import { ActorStateComponent } from "../components/ActorStateComponent";
 
 @singleton()
 export default class ActorStateSystem implements ISystem {
@@ -29,7 +29,7 @@ export default class ActorStateSystem implements ISystem {
 		}
 	}
 
-	private tickRecovery(deltaTime: number, actorData: ActorState) {
+	private tickRecovery(deltaTime: number, actorData: ActorStateComponent) {
 		const spdAttr = actorData.attributes.speed;
 		const rcvyAttr = actorData.attributes.recovery;
 
@@ -43,7 +43,7 @@ export default class ActorStateSystem implements ISystem {
 		}
 	}
 
-	private tickRegen(deltaTime: number, actorData: ActorState) {
+	private tickRegen(deltaTime: number, actorData: ActorStateComponent) {
 		const regnTimerAttr = actorData.attributes.regenTimer;
 		const lifeAttr = actorData.attributes.life;
 
