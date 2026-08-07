@@ -14,7 +14,6 @@ import { container } from "tsyringe";
 import { Themes } from "src/gui/Themes";
 import { type Nullable } from "@babylonjs/core";
 import StackPanelImage from "./premades/StackPanelImage";
-import GameState from "src/states/GameState";
 import { getPublicRoot } from "src/helpers/Utils";
 import { DialogueLine, DialogueOptionLine } from "src/types/GameTypes";
 import { playSFX } from "src/helpers/AudioHelpers";

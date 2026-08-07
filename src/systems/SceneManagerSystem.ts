@@ -1,5 +1,5 @@
-import { container, singleton } from "tsyringe";
-import ISystem from "src/systems/ISystem";
+import { container, inject, singleton } from "tsyringe";
+import GameSystem from "src/systems/GameSystem";
 import {
 	addComponent,
 	addEntity,
@@ -63,6 +63,9 @@ import EventHandlerSystem from "./EventHandlerSystem";
 import { playMusic } from "src/helpers/AudioHelpers";
 import { EntityMovementComponent } from "src/components/EntityMovementComponent";
 import { loadLocation } from "src/helpers/LocationHelpers";
+import { SystemRegistry } from "src/states/registries/SystemRegistry";
+
+export const SYSTEM_ID_SCENEMANAGER = "SceneManager";
 
 export interface NewLocationSceneParams {
 	scene: Scene;
@@ -72,9 +75,12 @@ export interface NewLocationSceneParams {
 	exploreGUIControls: Control[];
 }
 
-@singleton()
-export default class SceneManagerSystem implements ISystem {
+export default class SceneManagerSystem implements GameSystem {
 	private gameCanvas: Nullable<HTMLCanvasElement> = null;
+
+	public constructor(
+		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+	) {}
 
 	public async start() {
 		this.gameCanvas = document.getElementById(

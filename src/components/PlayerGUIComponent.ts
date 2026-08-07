@@ -8,19 +8,16 @@ import {
 	Container,
 	Style,
 } from "@babylonjs/gui";
-import { Themes } from "../Themes";
+import { Themes } from "../gui/Themes";
 import { EntityId } from "bitecs";
 import { container } from "tsyringe";
-import GameState from "src/states/GameState";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
+import { Component } from "src/states/registries/ComponentRegistry";
+import { ActorGUI } from "./interfaces/ActorGUI";
 
-export interface ActorGUI {
-	setActBarFill(currValue: number, maxValue: number): void;
-	addStatusIcon(id: string, iconSrc: string): void;
-	removeStatusIcon(id: string): void;
-}
+export const COMPONENT_ID_PLAYERGUI = "PlayerGUI";
 
-export class PlayerGUI implements ActorGUI {
+export class PlayerGUIComponent implements ActorGUI, Component {
 	private rootContainer: Container;
 	private backgroundUI: Rectangle;
 	private charNameBgUI: Rectangle;
@@ -269,6 +266,14 @@ export class PlayerGUI implements ActorGUI {
 			Themes.typography.bodyText,
 		);
 		willStackUI.addControl(this.willBarValueUI);
+	}
+
+	public getValue(): PlayerGUIComponent {
+		return this;
+	}
+
+	public dispose(): void {
+		this.getRoot().dispose();
 	}
 
 	public setSelected(isSelected: boolean): void {

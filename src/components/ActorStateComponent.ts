@@ -1,9 +1,11 @@
 import { container } from "tsyringe";
-import GameState from "../states/GameState";
 import { EntityId } from "bitecs";
 import { Nullable } from "@babylonjs/core";
 import { getPublicRoot } from "src/helpers/Utils";
-import { Component } from "src/states/registries/ComponentRegistry";
+import CampaignState from "src/states/CampaignState";
+import { Component } from "src/registries/ComponentRegistry";
+
+export const COMPONENT_ID_ACTORSTATE = "ActorState";
 
 const BASE_REGEN_TICKS: number = 4;
 
@@ -82,12 +84,12 @@ export class ActorStateComponent implements Component {
 			} as ActorAttribute,
 		};
 
-		const gameState = container.resolve(GameState);
+		const campaignState = container.resolve(CampaignState);
 		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
 
 		this.powerData = initData.abilityIds.map(async (el: string) => {
 			const response = await fetch(
-				`${getPublicRoot()}/data/${gameState.campaignId}/abilities/powers/${el}.json`,
+				`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${el}.json`,
 			);
 			const abData = (await response.json()) as AbilityData;
 

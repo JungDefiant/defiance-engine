@@ -1,12 +1,17 @@
-import { container, singleton } from "tsyringe";
-import ISystem from "src/systems/ISystem";
+import { container, inject, singleton } from "tsyringe";
+import GameSystem from "src/systems/GameSystem";
 import { Engine } from "@babylonjs/core";
 import { ActorStateComponent } from "src/components/ActorStateComponent";
-import GameState from "src/states/GameState";
 import { getPublicRoot } from "src/helpers/Utils";
+import { SystemRegistry } from "src/states/registries/SystemRegistry";
 
-@singleton()
-export default class SessionDataSystem implements ISystem {
+//Convert this into a helper file
+
+export default class SessionDataSystem implements GameSystem {
+	public constructor(
+		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+	) {}
+
 	public async start(engine: Engine): Promise<void> {}
 
 	public update(deltaTime: number): void {}

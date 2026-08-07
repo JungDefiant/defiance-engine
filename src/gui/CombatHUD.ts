@@ -12,7 +12,6 @@ import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/premades/ActionSlot";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
-import GameState from "src/states/GameState";
 import { ActorStateComponent } from "src/components/ActorStateComponent";
 import { getPublicRoot } from "src/helpers/Utils";
 
@@ -70,7 +69,6 @@ export default class CombatHUD implements IHUD {
 	public async setActionBar(
 		actorData: ActorStateComponent,
 		cmSystem: CombatManagerSystem,
-		gameState: GameState,
 	): Promise<void> {
 		if (!actorData) {
 			return;

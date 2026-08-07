@@ -1,12 +1,18 @@
-import { container, singleton } from "tsyringe";
+import { container, inject, singleton } from "tsyringe";
 import GameState from "src/states/GameState";
 import { EventData, EventTrigger } from "src/types/EventTypes";
-import ISystem from "./ISystem";
+import GameSystem from "./GameSystem";
 import DialogueManagerSystem from "./DialogueManagerSystem";
 import CombatManagerSystem from "./CombatManagerSystem";
+import { SystemRegistry } from "src/states/registries/SystemRegistry";
 
-@singleton()
-export default class SessionDataSystem implements ISystem {
+export const SYSTEM_ID_EVENTHANDLER = "EventHandler";
+
+export default class EventHandlerSystem implements GameSystem {
+	public constructor(
+		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+	) {}
+
 	public async start(): Promise<void> {}
 
 	public update(deltaTime: number): void {}

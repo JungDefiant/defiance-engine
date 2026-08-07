@@ -1,8 +1,10 @@
 import { container, singleton } from "tsyringe";
-import { IFactory } from "src/factories/IFactory";
+import { EntityFactory } from "src/factories/EntityFactory";
 import { addComponent, addEntity, EntityId, query, set } from "bitecs";
-import GameState from "src/states/GameState";
-import { ActorStateComponent } from "src/components/ActorStateComponent";
+import {
+	ActorStateComponent,
+	COMPONENT_ID_ACTORSTATE,
+} from "src/components/ActorStateComponent";
 import {
 	Mesh,
 	MeshBuilder,
@@ -12,11 +14,19 @@ import {
 	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
-import { EnemyGUI } from "src/gui/premades/EnemyGUI";
+import {
+	COMPONENT_ID_ENEMYGUI,
+	EnemyGUIComponent,
+} from "src/components/EnemyGUIComponent";
 import { getPublicRoot } from "src/helpers/Utils";
+import { ComponentRegistry } from "src/states/registries/ComponentRegistry";
+import SceneState from "src/states/SceneState";
+import UserInterfaceState from "src/states/UserInterfaceState";
+import { COMPONENT_ID_CHARACTERSPRITE } from "src/components/CharacterSpriteComponent";
 
-@singleton()
-export class EnemyFactory implements IFactory {
+export const FACTORY_ID_ENEMY = "EnemyFactory";
+
+export class EnemyFactory implements EntityFactory {
 	public start() {}
 
 	public async createEntityFromFileAtPosition(
@@ -24,24 +34,39 @@ export class EnemyFactory implements IFactory {
 		campaignId: string,
 		position: Vector3,
 	): Promise<EntityId> {
-		const newEntity = await this.createEntityFromFile(fileName, campaignId);
-		const gameState = container.resolve(GameState);
-		gameState.CharacterSprite[newEntity].locallyTranslate(position);
-		return newEntity;
+		const newEntityId = await this.createEntityFromFile(
+			fileName,
+			campaignId,
+		);
+		const componentRegistry = container.resolve(ComponentRegistry);
+		const characterSprite = componentRegistry.getComponentByEntityId<Mesh>(
+			COMPONENT_ID_CHARACTERSPRITE,
+			newEntityId,
+		);
+		characterSprite.locallyTranslate(position);
+		return newEntityId;
 	}
 
 	public async createEntityFromFile(
 		fileName: string,
 		campaignId: string,
 	): Promise<EntityId> {
-		const gameState = container.resolve(GameState);
-		const loc = gameState.currentLocation;
-		if (!gameState || !loc) {
+		const sceneState = container.resolve(SceneState);
+		const userInterfaceState = container.resolve(UserInterfaceState);
+		const componentRegistry = container.resolve(ComponentRegistry);
+		const currentLocation = sceneState.currentLocation;
+
+		if (
+			!sceneState ||
+			!userInterfaceState ||
+			!componentRegistry ||
+			!currentLocation
+		) {
 			return -1;
 		}
 
-		const spawnNode = gameState.sceneNodes.find(
-			(node) => node.id === loc.combatSpawnNodeId,
+		const spawnNode = sceneState.sceneNodes.find(
+			(node) => node.id === currentLocation.combatSpawnNodeId,
 		);
 
 		if (!spawnNode) {
@@ -56,43 +81,60 @@ export class EnemyFactory implements IFactory {
 			return -1;
 		}
 
-		const newEntity = addEntity(gameState.world);
+		const newEntity = addEntity(sceneState.world);
 
 		const newActorComp = new ActorStateComponent(newEntity, rawData);
 		addComponent(
-			gameState.world,
+			sceneState.world,
 			newEntity,
-			set(gameState.ActorState, newActorComp),
+			set(
+				componentRegistry.getComponentArrayByComponentId(
+					COMPONENT_ID_ACTORSTATE,
+				),
+				newActorComp,
+			),
 		);
 
-		const newEnemySprite = this.createEnemySprite(
-			newEntity,
-			gameState,
-			spawnNode,
-		);
+		const newEnemySprite = this.createEnemySprite(newEntity, spawnNode);
 
 		addComponent(
-			gameState.world,
+			sceneState.world,
 			newEntity,
-			set(gameState.CharacterSprite, newEnemySprite),
+			set(
+				componentRegistry.getComponentArrayByComponentId(
+					COMPONENT_ID_CHARACTERSPRITE,
+				),
+				newEnemySprite,
+			),
 		);
 
-		const newEnemyGUI = new EnemyGUI(newEntity, gameState, newEnemySprite);
-		addComponent(
-			gameState.world,
+		const newEnemyGUI = new EnemyGUIComponent(
 			newEntity,
-			set(gameState.EnemyGUIComponent, newEnemyGUI),
+			userInterfaceState.sceneGUI,
+		);
+		addComponent(
+			sceneState.world,
+			newEntity,
+			set(
+				componentRegistry.getComponentArrayByComponentId(
+					COMPONENT_ID_ENEMYGUI,
+				),
+				newEnemyGUI,
+			),
 		);
 
 		return newEntity;
 	}
 
-	private createEnemySprite(
-		eid: EntityId,
-		gameState: GameState,
-		parentNode: TransformNode,
-	): Mesh {
-		const actorData = gameState.ActorState[eid];
+	private createEnemySprite(eid: EntityId, parentNode: TransformNode): Mesh {
+		const sceneState = container.resolve(SceneState);
+		const componentRegistry = container.resolve(ComponentRegistry);
+
+		const actorData =
+			componentRegistry.getComponentByEntityId<ActorStateComponent>(
+				COMPONENT_ID_ACTORSTATE,
+				eid,
+			);
 
 		const enActorSprite = MeshBuilder.CreatePlane(
 			`enBattlerSprite_${actorData.id}_${eid}`,
@@ -100,22 +142,21 @@ export class EnemyFactory implements IFactory {
 				width: 0.4,
 				height: 0.8,
 			},
-			gameState.scene,
+			sceneState.currentScene,
 		);
 
 		const enActorSpriteMat = new PBRMaterial(
 			`mat_enBattlerSprite_${actorData.id}_${eid}`,
-			gameState.scene,
+			sceneState.currentScene,
 		);
 		enActorSprite.parent = parentNode;
 		enActorSprite.billboardMode = 7;
 		enActorSprite.rotate(Vector3.Forward(), Math.PI, Space.WORLD);
 		enActorSprite.setAbsolutePosition(parentNode.absolutePosition);
-		// enActorSprite.locallyTranslate(positionOffset);
 
 		enActorSpriteMat.albedoTexture = new Texture(
 			`${getPublicRoot()}/sprites/characters/${actorData.spriteUrl}`,
-			gameState.scene,
+			sceneState.currentScene,
 		);
 		enActorSpriteMat.metallic = 0;
 		enActorSpriteMat.roughness = 0;

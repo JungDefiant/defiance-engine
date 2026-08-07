@@ -1,13 +1,21 @@
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { container, singleton } from "tsyringe";
-import GameState from "src/states/GameState";
-import { IFactory } from "src/factories/IFactory";
-import { ActorStateComponent } from "src/components/ActorStateComponent";
-import { PlayerGUI } from "src/gui/premades/PlayerGUI";
+import { EntityFactory } from "src/factories/EntityFactory";
+import {
+	ActorStateComponent,
+	COMPONENT_ID_ACTORSTATE,
+} from "src/components/ActorStateComponent";
+import {
+	COMPONENT_ID_PLAYERGUI,
+	PlayerGUIComponent,
+} from "src/components/PlayerGUIComponent";
 import { getPublicRoot } from "src/helpers/Utils";
+import SceneState from "src/states/SceneState";
+import { ComponentRegistry } from "src/states/registries/ComponentRegistry";
 
-@singleton()
-export class PlayerFactory implements IFactory {
+export const FACTORY_ID_PLAYER = "PlayerFactory";
+
+export class PlayerFactory implements EntityFactory {
 	public start() {}
 
 	public async createEntityFromFile(
@@ -22,26 +30,38 @@ export class PlayerFactory implements IFactory {
 			return -1;
 		}
 
-		const gameState = container.resolve(GameState);
-		const newEntity = addEntity(gameState.world);
+		const sceneState = container.resolve(SceneState);
+		const componentRegistry = container.resolve(ComponentRegistry);
+
+		const newEntity = addEntity(sceneState.world);
 
 		const newActorComp = new ActorStateComponent(newEntity, rawData);
 		newActorComp.isPlayer = true;
 		addComponent(
-			gameState.world,
+			sceneState.world,
 			newEntity,
-			set(gameState.ActorState, newActorComp),
+			set(
+				componentRegistry.getComponentArrayByComponentId(
+					COMPONENT_ID_ACTORSTATE,
+				),
+				newActorComp,
+			),
 		);
 
-		const newPlayerGUI = new PlayerGUI(
+		const newPlayerGUI = new PlayerGUIComponent(
 			newEntity,
 			newActorComp.name,
 			`sprites/characters/${newActorComp.spriteUrl}`,
 		);
 		addComponent(
-			gameState.world,
+			sceneState.world,
 			newEntity,
-			set(gameState.PlayerGUIComponent, newPlayerGUI),
+			set(
+				componentRegistry.getComponentArrayByComponentId(
+					COMPONENT_ID_PLAYERGUI,
+				),
+				newPlayerGUI,
+			),
 		);
 
 		return newEntity;

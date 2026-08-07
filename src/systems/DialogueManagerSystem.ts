@@ -1,10 +1,10 @@
-import { container, singleton } from "tsyringe";
+import { container, inject, singleton } from "tsyringe";
 import { UniversalCamera, Vector3 } from "@babylonjs/core";
 import grammar from "src/parser/DialogueParser.ohm-bundle";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
 import GameState from "src/states/GameState";
 import DialogueHUD from "src/gui/DialogueHUD";
-import type ISystem from "src/systems/ISystem";
+import type GameSystem from "src/systems/GameSystem";
 import {
 	ConditionFunction,
 	DialogueLine,
@@ -17,9 +17,15 @@ import { PAUSE_DIALOGUE } from "src/Constants";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { getPublicRoot } from "src/helpers/Utils";
 import EventHandlerSystem from "./EventHandlerSystem";
+import { SystemRegistry } from "src/registries/SystemRegistry";
 
-@singleton()
-export default class DialogueManagerSystem implements ISystem {
+export const SYSTEM_ID_DIALOGUEMANAGER = "DialogueManager";
+
+export default class DialogueManagerSystem implements GameSystem {
+	public constructor(
+		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+	) {}
+
 	public async start() {}
 
 	public update(deltaTime: number) {}

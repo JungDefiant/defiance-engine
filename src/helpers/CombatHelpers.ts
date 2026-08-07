@@ -3,93 +3,110 @@ import { EntityId, query } from "bitecs";
 import { PAUSE_TACTICALPAUSE } from "src/Constants";
 import {
 	AbilityData,
-	AbilityDescriptor,
 	AbilityTarget,
 	ActorStateComponent,
+	COMPONENT_ID_ACTORSTATE,
 	TacticsCondition,
 	TacticsData,
 } from "src/components/ActorStateComponent";
-import GameState from "src/states/GameState";
+import {
+	COMPONENT_ID_ENEMYGUI,
+	EnemyGUIComponent,
+} from "src/components/EnemyGUIComponent";
+import ControlState from "src/states/ControlState";
+import GameplayState from "src/states/GameplayState";
+import SceneState from "src/states/SceneState";
+import UserInterfaceState from "src/states/UserInterfaceState";
+import { ComponentRegistry } from "src/states/registries/ComponentRegistry";
 import { CombatState } from "src/systems/CombatManagerSystem";
 import { container } from "tsyringe";
 
-export function setTacticalPause(isActive: boolean, gameState: GameState) {
+export function setTacticalPause(isActive: boolean) {
+	const controlState = container.resolve(ControlState);
+	const userInterfaceState = container.resolve(UserInterfaceState);
+
 	if (isActive) {
-		gameState.actionPauseSet.add(PAUSE_TACTICALPAUSE);
-		gameState.renderPauseSet.add(PAUSE_TACTICALPAUSE);
+		controlState.actionPauseSet.add(PAUSE_TACTICALPAUSE);
+		controlState.renderPauseSet.add(PAUSE_TACTICALPAUSE);
 	} else {
-		gameState.actionPauseSet.delete(PAUSE_TACTICALPAUSE);
-		gameState.renderPauseSet.delete(PAUSE_TACTICALPAUSE);
+		controlState.actionPauseSet.delete(PAUSE_TACTICALPAUSE);
+		controlState.renderPauseSet.delete(PAUSE_TACTICALPAUSE);
 	}
 
-	gameState.tacticalPauseScreen.showHide(isActive);
+	userInterfaceState.tacticalPauseScreen.showHide(isActive);
 }
 
 export function getTargetsBasedOnCondition(
 	actionData: AbilityData,
 	tacticEntry: TacticsData,
 	sourceEid: EntityId,
-	gameState?: GameState,
 ): EntityId[] {
-	if (!gameState) {
-		gameState = container.resolve(GameState);
-	}
-
 	// Check if ability condition is true
 	switch (tacticEntry.condition) {
 		case TacticsCondition.random:
-			return getRandomTarget(actionData, sourceEid, gameState);
+			return getRandomTarget(actionData, sourceEid);
 		case TacticsCondition.lowestLife:
-			return getLowestLifeTarget(actionData, sourceEid, gameState);
+			return getLowestLifeTarget(actionData, sourceEid);
 		default:
 			return [];
 	}
 }
 
-export function resetTargeting(gameState: GameState) {
-	for (const eid of query(gameState.world, [gameState.EnemyGUIComponent])) {
-		const enemyGUI = gameState.EnemyGUIComponent[eid];
+export function resetTargeting() {
+	const sceneState = container.resolve(SceneState);
+	const componentRegistry = container.resolve(ComponentRegistry);
+	const enemyGuiComponentArray =
+		componentRegistry.getComponentArrayByComponentId(
+			COMPONENT_ID_ENEMYGUI,
+		) as EnemyGUIComponent[];
+	for (const eid of query(sceneState.world, [enemyGuiComponentArray])) {
+		const enemyGUI = enemyGuiComponentArray[eid];
 		enemyGUI.setVisibleTargetingUI(false);
 		enemyGUI.setTargetingCallback(() => {});
 	}
 }
 
 export function defeatActor(actor: ActorStateComponent) {
-	const gameState = container.resolve(GameState);
+	const gameplayState = container.resolve(GameplayState);
+	const componentRegistry = container.resolve(ComponentRegistry);
+
 	actor.isDefeated = true;
 
-	if (gameState.playerEIDs.includes(actor.entityId)) {
-		for (let i = 0; i < gameState.playerEIDs.length; i++) {
-			let eid = gameState.playerEIDs[i];
-			let playerData = gameState.ActorState[eid];
+	if (gameplayState.playerEIDs.includes(actor.entityId)) {
+		for (let i = 0; i < gameplayState.playerEIDs.length; i++) {
+			let eid = gameplayState.playerEIDs[i];
+			let playerData =
+				componentRegistry.getComponentByEntityId<ActorStateComponent>(
+					COMPONENT_ID_ACTORSTATE,
+					eid,
+				);
 			if (!playerData.isDefeated) {
 				return;
 			}
 		}
 
-		gameState.combatState = CombatState.Gameover;
+		gameplayState.combatState = CombatState.Gameover;
 	} else {
-		for (let i = 0; i < gameState.enemyEIDs.length; i++) {
-			let eid = gameState.enemyEIDs[i];
-			let enemyData = gameState.ActorState[eid];
+		for (let i = 0; i < gameplayState.enemyEIDs.length; i++) {
+			let eid = gameplayState.enemyEIDs[i];
+			let enemyData =
+				componentRegistry.getComponentByEntityId<ActorStateComponent>(
+					COMPONENT_ID_ACTORSTATE,
+					eid,
+				);
 			if (!enemyData.isDefeated) {
 				return;
 			}
 		}
 
-		gameState.combatState = CombatState.Victory;
+		gameplayState.combatState = CombatState.Victory;
 	}
 }
 
-export function getRandomTarget(
-	actionData: AbilityData,
-	sourceEid: EntityId,
-	gs: GameState,
-) {
+export function getRandomTarget(actionData: AbilityData, sourceEid: EntityId) {
 	let targetEids = getTargetEidsByActionTargetType(
 		actionData.target,
 		sourceEid,
-		gs,
 		true,
 	);
 	let rand = RandomRange(0, targetEids.length - 1);
@@ -100,19 +117,24 @@ export function getRandomTarget(
 export function getLowestLifeTarget(
 	actionData: AbilityData,
 	sourceEid: EntityId,
-	gs: GameState,
 ) {
 	let targetEids = getTargetEidsByActionTargetType(
 		actionData.target,
 		sourceEid,
-		gs,
 		true,
 	);
 	let lowestLifeEid = -1;
 	let lowestLifeValue = Infinity;
 
-	targetEids.forEach((eid) => {
-		const currLife = gs.ActorState[eid].attributes.life.currentValue;
+	const componentRegistry = container.resolve(ComponentRegistry);
+	const actorStateComponentArray =
+		componentRegistry.getComponentArrayByComponentId(
+			COMPONENT_ID_ACTORSTATE,
+		) as ActorStateComponent[];
+
+	targetEids.forEach((eid: EntityId) => {
+		const currLife =
+			actorStateComponentArray[eid].attributes.life.currentValue;
 		if (currLife < lowestLifeValue) {
 			lowestLifeEid = eid;
 			lowestLifeValue = currLife;
@@ -124,9 +146,11 @@ export function getLowestLifeTarget(
 export function getTargetEidsByActionTargetType(
 	abilityTarget: AbilityTarget,
 	sourceEid: EntityId,
-	gs: GameState,
 	isSingleTarget: boolean = false,
 ) {
+	const gameplayState = container.resolve(GameplayState);
+
+	// Create different classes for different kinds of ability targets
 	switch (abilityTarget) {
 		case AbilityTarget.self:
 			return [sourceEid];
@@ -135,10 +159,10 @@ export function getTargetEidsByActionTargetType(
 			if (isSingleTarget && abilityTarget === AbilityTarget.groupAlly) {
 				return [];
 			} else {
-				if (gs.playerEIDs.includes(sourceEid)) {
-					return gs.playerEIDs;
-				} else if (gs.enemyEIDs.includes(sourceEid)) {
-					return gs.enemyEIDs;
+				if (gameplayState.playerEIDs.includes(sourceEid)) {
+					return gameplayState.playerEIDs;
+				} else if (gameplayState.enemyEIDs.includes(sourceEid)) {
+					return gameplayState.enemyEIDs;
 				}
 			}
 		case AbilityTarget.groupEnemy:
@@ -146,10 +170,10 @@ export function getTargetEidsByActionTargetType(
 			if (isSingleTarget && abilityTarget === AbilityTarget.groupEnemy) {
 				return [];
 			} else {
-				if (gs.playerEIDs.includes(sourceEid)) {
-					return gs.enemyEIDs;
-				} else if (gs.enemyEIDs.includes(sourceEid)) {
-					return gs.playerEIDs;
+				if (gameplayState.playerEIDs.includes(sourceEid)) {
+					return gameplayState.enemyEIDs;
+				} else if (gameplayState.enemyEIDs.includes(sourceEid)) {
+					return gameplayState.playerEIDs;
 				}
 			}
 		default:

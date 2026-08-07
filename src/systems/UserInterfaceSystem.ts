@@ -1,19 +1,24 @@
-import { container, singleton } from "tsyringe";
-import ISystem from "src/systems/ISystem";
+import { container, inject, singleton } from "tsyringe";
+import GameSystem from "src/systems/GameSystem";
 import { Engine } from "@babylonjs/core";
-import GameState from "src/states/GameState";
 import { EntityId, query } from "bitecs";
-import { PlayerGUI } from "src/gui/premades/PlayerGUI";
+import { PlayerGUIComponent } from "src/components/PlayerGUIComponent";
 import { ActorStateComponent } from "src/components/ActorStateComponent";
-import { EnemyGUI } from "src/gui/premades/EnemyGUI";
+import { EnemyGUIComponent } from "src/components/EnemyGUIComponent";
 import { GameMode } from "src/types/GameTypes";
 import CombatManagerSystem from "./CombatManagerSystem";
+import { SystemRegistry } from "src/states/registries/SystemRegistry";
 
-@singleton()
-export default class UserInterfaceSystem implements ISystem {
+export const SYSTEM_ID_USERINTERFACE = "UserInterface";
+
+export default class UserInterfaceSystem implements GameSystem {
+	public constructor(
+		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+	) {}
+
 	public async start(engine: Engine) {}
 
-	public update(deltaTime: number, gameState?: GameState) {
+	public update(deltaTime: number) {
 		if (!gameState) {
 			return;
 		}
@@ -75,7 +80,10 @@ export default class UserInterfaceSystem implements ISystem {
 
 	public createPlayerInput(inputMode: GameMode) {}
 
-	private updatePlayerGUI(actorData: ActorStateComponent, gui: PlayerGUI) {
+	private updatePlayerGUI(
+		actorData: ActorStateComponent,
+		gui: PlayerGUIComponent,
+	) {
 		gui.setQueuedAction(
 			actorData.queuedAction
 				? (actorData.queuedAction.iconURL as string)
@@ -98,7 +106,10 @@ export default class UserInterfaceSystem implements ISystem {
 		);
 	}
 
-	private updateEnemyGUI(actorData: ActorStateComponent, gui: EnemyGUI) {
+	private updateEnemyGUI(
+		actorData: ActorStateComponent,
+		gui: EnemyGUIComponent,
+	) {
 		gui.setActBarFill(
 			actorData.attributes.recovery.currentValue,
 			actorData.attributes.recovery.maximumValue,

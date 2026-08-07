@@ -3,7 +3,6 @@ import { Container, Control, Rectangle, StackPanel } from "@babylonjs/gui";
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
 import { container } from "tsyringe";
-import GameState from "src/states/GameState";
 
 export default class PartyInfoHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -16,7 +15,8 @@ export default class PartyInfoHUD implements IHUD {
 
 	public createHudRoot(): Container {
 		this.rootContainer = new Container("ui_partyInfoHud");
-		this.rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.rootContainer.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.rootContainer.width = 1;
 		this.rootContainer.heightInPixels = 300;
 		this.rootContainer.topInPixels = -50;

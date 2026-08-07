@@ -1,25 +1,27 @@
 import { CreateSoundAsync, CreateStreamingSoundAsync } from "@babylonjs/core";
 import AudioState from "src/states/AudioState";
-import GameState from "src/states/GameState";
+import CampaignState from "src/states/CampaignState";
+import { SystemRegistry } from "src/states/registries/SystemRegistry";
 import { container } from "tsyringe";
 
 export async function playSFX(id: string) {
-	const as = container.resolve(AudioState);
-	const gs = container.resolve(GameState);
-	if (!as.audioEngine || !gs) {
+	const systemRegistry = container.resolve(SystemRegistry);
+	const audioState = systemRegistry.getGameSystemBySystemId();
+	const campaignState = container.resolve(CampaignState);
+	if (!audioState.audioEngine || !campaignState) {
 		return;
 	}
 
-	let sound = as.sfxMap.get(id);
+	let sound = audioState.sfxMap.get(id);
 	if (!sound) {
 		sound = await CreateSoundAsync(
 			id,
-			`data/${gs.campaignId}/audio/sfx/${id}`,
+			`data/${campaignState.campaignId}/audio/sfx/${id}`,
 		);
-		as.sfxMap.set(id, sound);
+		audioState.sfxMap.set(id, sound);
 	}
 
-	await as.audioEngine.unlockAsync();
+	await audioState.audioEngine.unlockAsync();
 	sound.play();
 }
 

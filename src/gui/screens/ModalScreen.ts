@@ -10,8 +10,9 @@ import {
 import { Themes } from "../Themes";
 import { getPublicRoot } from "src/helpers/Utils";
 import { container } from "tsyringe";
-import GameState from "src/states/GameState";
 import { ModalPage } from "src/types/GameTypes";
+import GameplayState from "src/states/GameplayState";
+import ControlState from "src/states/ControlState";
 
 export class ModalScreen {
 	private rootContainer: Rectangle;
@@ -160,13 +161,13 @@ export class ModalScreen {
 	}
 
 	public showHide(show: boolean) {
-		const gameState = container.resolve(GameState);
+		const controlState = container.resolve(ControlState);
 		if (show) {
-			gameState.actionPauseSet.add("PAUSE_MODAL");
-			gameState.renderPauseSet.add("PAUSE_MODAL");
+			controlState.actionPauseSet.add("PAUSE_MODAL");
+			controlState.renderPauseSet.add("PAUSE_MODAL");
 		} else {
-			gameState.actionPauseSet.delete("PAUSE_MODAL");
-			gameState.renderPauseSet.add("PAUSE_MODAL");
+			controlState.actionPauseSet.delete("PAUSE_MODAL");
+			controlState.renderPauseSet.add("PAUSE_MODAL");
 		}
 		this.rootContainer.isVisible = show;
 	}

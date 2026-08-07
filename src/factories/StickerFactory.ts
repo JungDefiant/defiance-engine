@@ -2,15 +2,19 @@ import { container, singleton } from "tsyringe";
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { Image } from "@babylonjs/gui";
 import { getPublicRoot } from "src/helpers/Utils";
-import GameState from "src/states/GameState";
-import { IFactory } from "./IFactory";
 import {
+	COMPONENT_ID_IMAGEANIMATION,
 	ImageAnimationComponent,
 	SpriteAnimationProps,
-} from "src/components/ImageAnimation";
+} from "src/components/ImageAnimationComponent";
+import SceneState from "src/states/SceneState";
+import { ComponentRegistry } from "src/states/registries/ComponentRegistry";
+import { COMPONENT_ID_STICKERIMAGE } from "src/components/StickerImageComponent";
+import { EntityFactory } from "./EntityFactory";
 
-@singleton()
-export class StickerFactory implements IFactory {
+export const FACTORY_ID_STICKER = "StickerFactory";
+
+export class StickerFactory implements EntityFactory {
 	public start(): void {}
 
 	public async createEntityFromFile(
@@ -25,24 +29,36 @@ export class StickerFactory implements IFactory {
 			return -1;
 		}
 
-		const gameState = container.resolve(GameState);
-		const newEntity = addEntity(gameState.world);
+		const sceneState = container.resolve(SceneState);
+		const componentRegistry = container.resolve(ComponentRegistry);
+
+		const newEntity = addEntity(sceneState.world);
 
 		const stickerProps = rawData as StickerProps;
 
 		const newSticker = await this.createStickerImage(stickerProps);
 		addComponent(
-			gameState.world,
+			sceneState.world,
 			newEntity,
-			set(gameState.StickerImage, newSticker),
+			set(
+				componentRegistry.getComponentArrayByComponentId(
+					COMPONENT_ID_STICKERIMAGE,
+				),
+				newSticker,
+			),
 		);
 
 		if (stickerProps.animation) {
 			const newAnim = this.createImageAnimation(newSticker, stickerProps);
 			addComponent(
-				gameState.world,
+				sceneState.world,
 				newEntity,
-				set(gameState.ImageAnimation, newAnim),
+				set(
+					componentRegistry.getComponentArrayByComponentId(
+						COMPONENT_ID_IMAGEANIMATION,
+					),
+					newAnim,
+				),
 			);
 		}
 

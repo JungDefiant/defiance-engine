@@ -1,5 +1,5 @@
-import { container, singleton } from "tsyringe";
-import ISystem from "src/systems/ISystem";
+import { container, inject, singleton } from "tsyringe";
+import GameSystem from "src/systems/GameSystem";
 import { SolidParticleSystem } from "@babylonjs/core";
 import { Queue } from "queue-typescript";
 import GameState from "src/states/GameState";
@@ -8,19 +8,23 @@ import { addComponent, addEntity, removeEntity, set } from "bitecs";
 import { PAUSE_RENDERQUEUE } from "src/Constants";
 import { Themes } from "src/gui/Themes";
 import { StickerFactory } from "src/factories/StickerFactory";
+import { SystemRegistry } from "src/states/registries/SystemRegistry";
 
-@singleton()
-export default class RenderQueueSystem implements ISystem {
+export const SYSTEM_ID_RENDERQUEUE = "RenderQueue";
+
+export default class RenderQueueSystem implements GameSystem {
 	private currentRenderQueue: Queue<RenderQueueEntry> =
 		new Queue<RenderQueueEntry>();
 	private renderQueueStates: RenderQueueState[] = [];
 	private isStarted: boolean = false;
 
-	public constructor() {}
+	public constructor(
+		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+	) {}
 
 	public async start(): Promise<void> {}
 
-	public update(deltaTime: number, gameState?: GameState): void {
+	public update(deltaTime: number): void {
 		if (!this.isStarted) {
 			return;
 		}

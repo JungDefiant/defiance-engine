@@ -7,14 +7,22 @@ import {
 	TextBlock,
 	Style,
 	Container,
+	AdvancedDynamicTexture,
 } from "@babylonjs/gui";
+import { container } from "tsyringe";
 import { EntityId } from "bitecs";
-import GameState from "../../states/GameState";
 import { Mesh } from "@babylonjs/core";
-import { Themes } from "../Themes";
-import { ActorGUI } from "./PlayerGUI";
+import { Themes } from "../gui/Themes";
+import {
+	Component,
+	ComponentRegistry,
+} from "src/states/registries/ComponentRegistry";
+import { ActorStateComponent } from "./ActorStateComponent";
+import { ActorGUI } from "./interfaces/ActorGUI";
 
-export class EnemyGUI implements ActorGUI {
+export const COMPONENT_ID_ENEMYGUI = "EnemyGUI";
+
+export class EnemyGUIComponent implements ActorGUI, Component {
 	private rootContainer: StackPanel;
 	private targetingUI: Image;
 	private actBarBGUI: Rectangle;
@@ -25,15 +33,23 @@ export class EnemyGUI implements ActorGUI {
 	private statusIconsUI: Grid;
 	private statusIcons: Map<string, Rectangle> = new Map<string, Rectangle>();
 
-	public constructor(eid: EntityId, gameState: GameState, sprite: Mesh) {
-		const enActorData = gameState.ActorState[eid];
+	public constructor(eid: EntityId, sceneGUI: AdvancedDynamicTexture) {
+		const componentRegistry = container.resolve(ComponentRegistry);
+		const enemyActorData = componentRegistry.getComponentByEntityId(
+			"ActorState",
+			eid,
+		) as ActorStateComponent;
+		const enemySprite = componentRegistry.getComponentByEntityId(
+			"CharacterSprite",
+			eid,
+		) as Mesh;
 
 		this.rootContainer = new StackPanel(
-			`ui_enBattlerUI_${enActorData.id}_${eid}`,
+			`ui_enBattlerUI_${enemyActorData.id}_${eid}`,
 		);
 		this.rootContainer.widthInPixels = 120;
 		this.rootContainer.heightInPixels = 240;
-		gameState.sceneGUI.addControl(this.rootContainer);
+		sceneGUI.addControl(this.rootContainer);
 
 		this.targetingUI = new Image(
 			`ui_enBattlerTargetings_${eid}`,
@@ -102,8 +118,16 @@ export class EnemyGUI implements ActorGUI {
 		);
 		this.lifeBarBGUI.addControl(this.lifeBarValueUI);
 
-		this.rootContainer.linkWithMesh(sprite);
+		this.rootContainer.linkWithMesh(enemySprite);
 		this.rootContainer.linkOffsetY = 40;
+	}
+
+	public getValue(): EnemyGUIComponent {
+		return this;
+	}
+
+	public dispose(): void {
+		this.rootContainer.dispose();
 	}
 
 	public getRoot(): Container {

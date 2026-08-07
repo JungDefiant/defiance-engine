@@ -1,31 +1,54 @@
-import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
-import GameState from "../states/GameState";
+import { inject } from "tsyringe";
+import GameSystem from "./GameSystem";
 import { query } from "bitecs";
-import { ActorStateComponent } from "../components/ActorStateComponent";
+import {
+	ActorStateComponent,
+	COMPONENT_ID_ACTORSTATE,
+} from "../components/ActorStateComponent";
+import ControlState, { STATE_ID_CONTROLSTATE } from "src/states/ControlState";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import SceneState, { STATE_ID_SCENESTATE } from "src/states/SceneState";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
 
-@singleton()
-export default class ActorStateSystem implements ISystem {
+export const SYSTEM_ID_ACTORSTATE = "ActorState";
+
+export default class ActorStateSystem implements GameSystem {
+	public constructor(
+		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
+		@inject(ComponentRegistry) private componentRegistry: ComponentRegistry,
+	) {}
+
 	public async start() {}
 
 	public update(deltaTime: number): void {
-		const gameState = container.resolve(GameState);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				STATE_ID_CONTROLSTATE,
+			);
 
-		if (gameState.actionPauseSet.size > 0) {
+		if (controlState.actionPauseSet.size > 0) {
 			return;
 		}
 
-		this.tickRecoveryAndRegen(gameState, deltaTime);
+		this.tickRecoveryRegenOnAllActors(deltaTime);
 	}
 
-	private tickRecoveryAndRegen(gameState: GameState, deltaTime: number) {
-		for (const eid of query(gameState.world, [gameState.ActorState])) {
-			const actorData = gameState.ActorState[eid];
-			if (actorData.isDefeated) {
+	private tickRecoveryRegenOnAllActors(deltaTime: number) {
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		const actorStateComponentArray =
+			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				COMPONENT_ID_ACTORSTATE,
+			);
+		for (const eid of query(sceneState.world, [actorStateComponentArray])) {
+			const actorState = actorStateComponentArray[eid];
+			if (actorState.isDefeated) {
 				return;
 			}
-			this.tickRecovery(deltaTime, actorData);
-			this.tickRegen(deltaTime, actorData);
+			this.tickRecovery(deltaTime, actorState);
+			this.tickRegen(deltaTime, actorState);
 		}
 	}
 

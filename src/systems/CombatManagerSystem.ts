@@ -1,13 +1,14 @@
 import { container, delay, inject, singleton } from "tsyringe";
-import ISystem from "src/systems/ISystem";
-import SceneManagerSystem from "src/systems/SceneManagerSystem";
+import GameSystem from "src/systems/GameSystem";
+import SceneManagerSystem, {
+	SYSTEM_ID_SCENEMANAGER,
+} from "src/systems/SceneManagerSystem";
 import {
 	ActionManager,
 	ExecuteCodeAction,
 	RandomRange,
 	Vector3,
 } from "@babylonjs/core";
-import GameState from "src/states/GameState";
 import { EntityId, IsA, query, removeEntity } from "bitecs";
 import {
 	AbilityData,
@@ -15,16 +16,18 @@ import {
 	AbilityTarget,
 	AbilityTrigger,
 	ActorStateComponent,
+	COMPONENT_ID_ACTORSTATE,
 	EffectData,
 	EffectVar,
 	TacticsCondition,
 	TacticsData,
 } from "src/components/ActorStateComponent";
-import { EnemyFactory } from "src/factories/EnemyFactory";
+import { EnemyFactory, FACTORY_ID_ENEMY } from "src/factories/EnemyFactory";
 import { clamp } from "src/helpers/Utils";
 import RenderQueueSystem, {
 	RenderQueueEntry,
 	RenderQueueType,
+	SYSTEM_ID_RENDERQUEUE,
 } from "./RenderQueueSystem";
 import { Themes } from "src/gui/Themes";
 import {
@@ -35,7 +38,9 @@ import {
 } from "src/Constants";
 import { GameMode } from "src/types/GameTypes";
 import UserInterfaceSystem from "./UserInterfaceSystem";
-import EventHandlerSystem from "./EventHandlerSystem";
+import EventHandlerSystem, {
+	SYSTEM_ID_EVENTHANDLER,
+} from "./EventHandlerSystem";
 import {
 	getTargetsBasedOnCondition,
 	resetTargeting as resetPlayerTargeting,
@@ -43,51 +48,97 @@ import {
 } from "src/helpers/CombatHelpers";
 import { processAbilityEffects } from "src/helpers/EffectHelpers";
 import { addAbilityRQEs } from "src/helpers/RenderHelpers";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import GameplayState, {
+	STATE_ID_GAMEPLAYSTATE,
+} from "src/states/GameplayState";
+import ControlState, { STATE_ID_CONTROLSTATE } from "src/states/ControlState";
+import UserInterfaceState, {
+	STATE_ID_USERINTERFACE,
+} from "src/states/UserInterfaceState";
+import SceneState, { STATE_ID_SCENESTATE } from "src/states/SceneState";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import { SystemRegistry } from "src/registries/SystemRegistry";
+import CampaignState, {
+	STATE_ID_CAMPAIGNSTATE,
+} from "src/states/CampaignState";
+import { Control } from "@babylonjs/gui";
+import { FactoryRegistry } from "src/registries/FactoryRegistry";
+import {
+	COMPONENT_ID_ENEMYGUI,
+	EnemyGUIComponent,
+} from "src/components/EnemyGUIComponent";
 
-@singleton()
-export default class CombatManagerSystem implements ISystem {
+export const SYSTEM_ID_COMBATMANAGER = "CombatManager";
+
+export default class CombatManagerSystem implements GameSystem {
 	private readonly START_RECOVERY = 3;
 	private readonly START_RECOVERY_RANGE = 2;
 	private readonly BASE_SPAWN_POSITION = new Vector3(0, 0.28, 0);
 	private readonly SPAWN_OFFSET = 0.2;
 
+	public constructor(
+		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+		@inject(FactoryRegistry) private factoryRegistry: FactoryRegistry,
+		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
+		@inject(ComponentRegistry) private componentRegistry: ComponentRegistry,
+	) {}
+
 	public async start() {}
 
-	public update(deltaTime: number, gameState?: GameState): void {
-		if (!gameState) {
+	public update(deltaTime: number): void {
+		const gameplayState =
+			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
+				STATE_ID_GAMEPLAYSTATE,
+			);
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				STATE_ID_CONTROLSTATE,
+			);
+		const userInterfaceState =
+			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				STATE_ID_USERINTERFACE,
+			);
+
+		if (gameplayState.gameMode !== GameMode.Combat) {
 			return;
 		}
 
-		if (gameState.gameMode !== GameMode.Combat) {
+		if (controlState.actionPauseSet.size > 0) {
 			return;
 		}
 
-		if (gameState.actionPauseSet.size > 0) {
+		if (gameplayState.combatState === CombatState.Victory) {
+			controlState.actionPauseSet.add(PAUSE_VICTORYSCREEN);
+			userInterfaceState.victoryScreen.showHide(true);
+			return;
+		} else if (gameplayState.combatState === CombatState.Gameover) {
+			controlState.actionPauseSet.add(PAUSE_GAMEOVER);
+			userInterfaceState.gameOverScreen.showHide(true);
 			return;
 		}
 
-		if (gameState.combatState === CombatState.Victory) {
-			gameState.actionPauseSet.add(PAUSE_VICTORYSCREEN);
-			gameState.victoryScreen.showHide(true);
-			return;
-		} else if (gameState.combatState === CombatState.Gameover) {
-			gameState.actionPauseSet.add(PAUSE_GAMEOVER);
-			gameState.gameOverScreen.showHide(true);
-			return;
-		}
+		const actorStateComponents =
+			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				COMPONENT_ID_ACTORSTATE,
+			);
 
-		for (const eid of query(gameState.world, [gameState.ActorState])) {
-			const actorData = gameState.ActorState[eid];
+		for (const eid of query(sceneState.world, [actorStateComponents])) {
+			const actorData = actorStateComponents[eid];
 			const rcvyAttr = actorData.attributes.recovery;
 
 			if (
 				actorData.queuedAction &&
 				rcvyAttr.currentValue === rcvyAttr.maximumValue
 			) {
-				gameState.actionPauseSet.add(PAUSE_RENDERQUEUE);
-				this.executeQueuedAction(gameState, actorData);
-				if (gameState.enemyEIDs.includes(eid)) {
-					this.decideNPCAction(actorData, gameState);
+				controlState.actionPauseSet.add(PAUSE_RENDERQUEUE);
+				this.executeQueuedAction(actorData);
+				if (gameplayState.enemyEIDs.includes(eid)) {
+					this.decideNPCAction(actorData);
 				}
 				break;
 			}
@@ -95,13 +146,42 @@ export default class CombatManagerSystem implements ISystem {
 	}
 
 	public async startCombat(encId: string): Promise<void> {
-		const gameState = container.resolve(GameState);
-		const smSystem = container.resolve(SceneManagerSystem);
-		const enFactory = container.resolve(EnemyFactory);
+		const sceneManagerSystem =
+			this.systemRegistry.getGameSystemBySystemId<SceneManagerSystem>(
+				SYSTEM_ID_SCENEMANAGER,
+			);
+		const eventHandlerSystem =
+			this.systemRegistry.getGameSystemBySystemId<EventHandlerSystem>(
+				SYSTEM_ID_EVENTHANDLER,
+			);
+		const enemyFactory =
+			this.factoryRegistry.getEntityFactoryByFactoryId<EnemyFactory>(
+				FACTORY_ID_ENEMY,
+			);
+		const campaignState =
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
+				STATE_ID_CAMPAIGNSTATE,
+			);
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				STATE_ID_CONTROLSTATE,
+			);
+		const gameplayState =
+			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
+				STATE_ID_GAMEPLAYSTATE,
+			);
+		const actorStateComponentArray =
+			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				COMPONENT_ID_ACTORSTATE,
+			);
 
-		smSystem.setGameMode(GameMode.Combat);
+		sceneManagerSystem.setGameMode(GameMode.Combat);
 
-		const encData = gameState.sceneData.encounters[encId];
+		const encData = sceneState.sceneData.encounters[encId];
 
 		for (let i = 0; i < encData.length; i++) {
 			const enId = encData[i];
@@ -112,52 +192,77 @@ export default class CombatManagerSystem implements ISystem {
 					i * this.SPAWN_OFFSET * 2,
 			);
 			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
-			const newEnemy = await enFactory.createEntityFromFileAtPosition(
+			const newEnemy = await enemyFactory.createEntityFromFileAtPosition(
 				enId,
-				gameState.campaignId,
+				campaignState.campaignId,
 				spawnPosition,
 			);
-			gameState.enemyEIDs.push(newEnemy);
-			const enActorData = gameState.ActorState[newEnemy];
+			gameplayState.enemyEIDs.push(newEnemy);
+			const enActorData = actorStateComponentArray[newEnemy];
 			enActorData.name = enActorData.name.concat(
 				` ${String.fromCharCode(65 + i)}`,
 			);
-			this.decideNPCAction(enActorData, gameState);
+			this.decideNPCAction(enActorData);
 		}
 
-		await this.resetControls(gameState);
+		await this.resetControls();
 
-		for (const eid of query(gameState.world, [gameState.ActorState])) {
-			const actorData = gameState.ActorState[eid];
+		for (const eid of query(sceneState.world, [actorStateComponentArray])) {
+			const actorData = actorStateComponentArray[eid];
 			const rcvyAttr = actorData.attributes.recovery;
 			const initRange = Math.random() * this.START_RECOVERY_RANGE;
 			rcvyAttr.maximumValue = this.START_RECOVERY + initRange;
 			rcvyAttr.currentValue = 0;
 		}
 
-		gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
+		controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 
-		const ehSystem = container.resolve(EventHandlerSystem);
-		ehSystem.checkEventByTrigger("OnCombatStart");
+		eventHandlerSystem.checkEventByTrigger("OnCombatStart");
 	}
 
 	public endCombat() {
-		const gameState = container.resolve(GameState);
-		const smSystem = container.resolve(SceneManagerSystem);
+		const sceneManagerSystem =
+			this.systemRegistry.getGameSystemBySystemId<SceneManagerSystem>(
+				SYSTEM_ID_SCENEMANAGER,
+			);
+		const eventHandlerSystem =
+			this.systemRegistry.getGameSystemBySystemId<EventHandlerSystem>(
+				SYSTEM_ID_EVENTHANDLER,
+			);
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				STATE_ID_CONTROLSTATE,
+			);
+		const gameplayState =
+			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
+				STATE_ID_GAMEPLAYSTATE,
+			);
+		const userInterfaceState =
+			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				STATE_ID_USERINTERFACE,
+			);
+		const actorStateComponentArray =
+			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				COMPONENT_ID_ACTORSTATE,
+			);
 
-		if (gameState.actionManager) {
-			gameState.actionManager.dispose();
-			gameState.actionManager = null;
+		if (controlState.actionManager) {
+			controlState.actionManager.dispose();
+			controlState.actionManager = null;
 		}
 
-		gameState.combatHud.clearCombatEntries();
+		userInterfaceState.combatHud.clearCombatEntries();
 
-		gameState.enemyEIDs.forEach((eid) => {
-			removeEntity(gameState.world, eid);
+		gameplayState.enemyEIDs.forEach((eid) => {
+			removeEntity(sceneState.world, eid);
 		});
 
-		gameState.playerEIDs.forEach((eid) => {
-			const playerData = gameState.ActorState[eid];
+		gameplayState.playerEIDs.forEach((eid) => {
+			const playerData = actorStateComponentArray[eid];
 			const rcvyAttr = playerData.attributes.recovery;
 			rcvyAttr.maximumValue = 0;
 			playerData.queuedAction = null;
@@ -166,23 +271,25 @@ export default class CombatManagerSystem implements ISystem {
 		// Clear inscene UI
 		// Show rest of inscene UI
 
-		smSystem.setGameMode(GameMode.Explore);
-		if (gameState.actionPauseSet.size > 0) {
-			gameState.actionPauseSet.clear();
+		sceneManagerSystem.setGameMode(GameMode.Explore);
+		if (controlState.actionPauseSet.size > 0) {
+			controlState.actionPauseSet.clear();
 		}
-		gameState.combatState = CombatState.Default;
+		gameplayState.combatState = CombatState.Default;
 
-		const ehSystem = container.resolve(EventHandlerSystem);
-		ehSystem.checkEventByTrigger("OnCombatEnd");
+		eventHandlerSystem.checkEventByTrigger("OnCombatEnd");
 	}
 
 	public async startQueueActionPlayer(
-		gameState: GameState,
 		eid: EntityId,
 		actionInd: number,
 		isItem?: boolean,
 	): Promise<void> {
-		const actorData = gameState.ActorState[eid];
+		const actorData =
+			this.componentRegistry.getComponentByEntityId<ActorStateComponent>(
+				COMPONENT_ID_ACTORSTATE,
+				eid,
+			);
 		const actionData = (await (isItem
 			? actorData.itemData && actorData.itemData[actionInd]
 			: actorData.powerData[actionInd])) as AbilityData;
@@ -191,36 +298,52 @@ export default class CombatManagerSystem implements ISystem {
 			return;
 		}
 
-		this.setPlayerActionTargeting(gameState, eid, actionData);
+		this.setPlayerActionTargeting(eid, actionData);
 	}
 
-	public async resetControls(gameState: GameState) {
-		const actorData = gameState.ActorState[gameState.selectedPlayerEID];
-		await gameState.combatHud.setActionBar(actorData, this, gameState);
+	public async resetControls() {
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		const gameplayState =
+			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
+				STATE_ID_GAMEPLAYSTATE,
+			);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				STATE_ID_CONTROLSTATE,
+			);
+		const userInterfaceState =
+			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				STATE_ID_USERINTERFACE,
+			);
+		const actorData =
+			this.componentRegistry.getComponentByEntityId<ActorStateComponent>(
+				COMPONENT_ID_ACTORSTATE,
+				gameplayState.selectedPlayerEID,
+			);
+		await userInterfaceState.combatHud.setActionBar(actorData, this);
 
-		resetPlayerTargeting(gameState);
+		resetPlayerTargeting();
 
-		if (gameState.actionManager) {
-			gameState.actionManager.dispose();
-			gameState.actionManager = null;
+		if (controlState.actionManager) {
+			controlState.actionManager.dispose();
+			controlState.actionManager = null;
 		}
 
-		const actionManager = new ActionManager(gameState.scene);
+		const actionManager = new ActionManager(sceneState.currentScene);
 
 		for (let i = 0; i < actorData.powerData.length; i++) {
 			actionManager.registerAction(
 				new ExecuteCodeAction(
 					{
 						trigger: ActionManager.OnKeyDownTrigger,
-						parameter: gameState.controlSettings.powerActions[i],
+						parameter: controlState.controlSettings.powerActions[i],
 					},
 					() => {
 						const cmSystem = container.resolve(CombatManagerSystem);
-						cmSystem.startQueueActionPlayer(
-							gameState,
-							actorData.entityId,
-							i,
-						);
+						cmSystem.startQueueActionPlayer(actorData.entityId, i);
 					},
 				),
 			);
@@ -233,13 +356,12 @@ export default class CombatManagerSystem implements ISystem {
 						{
 							trigger: ActionManager.OnKeyDownTrigger,
 							parameter:
-								gameState.controlSettings.deviceActions[i],
+								controlState.controlSettings.deviceActions[i],
 						},
 						() => {
 							const cmSystem =
 								container.resolve(CombatManagerSystem);
 							cmSystem.startQueueActionPlayer(
-								gameState,
 								actorData.entityId,
 								i,
 							);
@@ -253,12 +375,11 @@ export default class CombatManagerSystem implements ISystem {
 			new ExecuteCodeAction(
 				{
 					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: gameState.controlSettings.tacticalPause,
+					parameter: controlState.controlSettings.tacticalPause,
 				},
 				() => {
 					setTacticalPause(
-						!gameState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
-						gameState,
+						!controlState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
 					);
 				},
 			),
@@ -268,7 +389,7 @@ export default class CombatManagerSystem implements ISystem {
 			new ExecuteCodeAction(
 				{
 					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: gameState.controlSettings.switchPlayerLeft,
+					parameter: controlState.controlSettings.switchPlayerLeft,
 				},
 				() => {
 					const uiSystem = container.resolve(UserInterfaceSystem);
@@ -276,15 +397,15 @@ export default class CombatManagerSystem implements ISystem {
 						return;
 					}
 
-					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+					let selPlyEidIndex = gameplayState.playerEIDs.findIndex(
+						(x) => x === gameplayState.selectedPlayerEID,
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex - 1;
 					if (newSelPlyEIDIndex < 0) {
-						newSelPlyEIDIndex = gameState.playerEIDs.length - 1;
+						newSelPlyEIDIndex = gameplayState.playerEIDs.length - 1;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameplayState.playerEIDs[newSelPlyEIDIndex],
 					);
 				},
 			),
@@ -294,7 +415,7 @@ export default class CombatManagerSystem implements ISystem {
 			new ExecuteCodeAction(
 				{
 					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: gameState.controlSettings.switchPlayerRight,
+					parameter: controlState.controlSettings.switchPlayerRight,
 				},
 				() => {
 					const uiSystem = container.resolve(UserInterfaceSystem);
@@ -302,44 +423,49 @@ export default class CombatManagerSystem implements ISystem {
 						return;
 					}
 
-					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+					let selPlyEidIndex = gameplayState.playerEIDs.findIndex(
+						(x) => x === gameplayState.selectedPlayerEID,
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex + 1;
-					if (newSelPlyEIDIndex > gameState.playerEIDs.length - 1) {
+					if (
+						newSelPlyEIDIndex >
+						gameplayState.playerEIDs.length - 1
+					) {
 						newSelPlyEIDIndex = 0;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameplayState.playerEIDs[newSelPlyEIDIndex],
 					);
 				},
 			),
 		);
 
-		gameState.actionManager = actionManager;
-		gameState.scene.actionManager = actionManager;
+		controlState.actionManager = actionManager;
+		sceneState.currentScene.actionManager = actionManager;
 	}
 
 	private setPlayerActionTargeting(
-		gameState: GameState,
 		sourceEid: EntityId,
 		actionData: AbilityData,
 	): void {
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		const enemyGuiComponentArray =
+			this.componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
+				COMPONENT_ID_ENEMYGUI,
+			);
 		switch (actionData.target) {
 			case AbilityTarget.singleEnemy:
-				for (const eid of query(gameState.world, [
-					gameState.EnemyGUIComponent,
+				for (const eid of query(sceneState.world, [
+					enemyGuiComponentArray,
 				])) {
-					const enemyGUI = gameState.EnemyGUIComponent[eid];
+					const enemyGUI = enemyGuiComponentArray[eid];
 					enemyGUI.setVisibleTargetingUI(true);
 					enemyGUI.setTargetingCallback(() => {
-						this.finishQueueAction(
-							actionData,
-							sourceEid,
-							[eid],
-							gameState.ActorState,
-						);
-						gameState.EnemyGUIComponent.forEach((gui) =>
+						this.finishQueueAction(actionData, sourceEid, [eid]);
+						enemyGuiComponentArray.forEach((gui) =>
 							gui.setVisibleTargetingUI(false),
 						);
 					});
@@ -351,34 +477,47 @@ export default class CombatManagerSystem implements ISystem {
 	}
 
 	private async executeQueuedAction(
-		gameState: GameState,
-		actorData: ActorStateComponent,
+		sourceActorState: ActorStateComponent,
 	): Promise<void> {
-		const rqeSystem = container.resolve(RenderQueueSystem);
-		const actionToExecute = await actorData.queuedAction;
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				STATE_ID_CONTROLSTATE,
+			);
+		const renderQueueSystem =
+			this.systemRegistry.getGameSystemBySystemId<RenderQueueSystem>(
+				SYSTEM_ID_RENDERQUEUE,
+			);
+		const actorStateComponentArray =
+			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				COMPONENT_ID_ACTORSTATE,
+			);
+		const actionToExecute = await sourceActorState.queuedAction;
 		if (!actionToExecute) {
-			gameState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
+			controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 			return;
 		}
 
-		const actionTargetIds = actorData.currentTargetEIDs;
+		const actionTargetIds = sourceActorState.currentTargetEIDs;
 
 		addAbilityRQEs(
-			rqeSystem,
-			actorData.entityId,
+			sourceActorState.entityId,
 			actionTargetIds,
-			actorData,
+			sourceActorState,
 			actionToExecute,
 		);
 
 		actionTargetIds.forEach((eid) => {
-			const targetData = gameState.ActorState[eid];
-			processAbilityEffects(actorData, targetData, actionToExecute);
+			const targetActorState = actorStateComponentArray[eid];
+			processAbilityEffects(
+				sourceActorState,
+				targetActorState,
+				actionToExecute,
+			);
 		});
 
-		rqeSystem.startRenderQueue();
+		renderQueueSystem.startRenderQueue();
 
-		const rcvyAttr = actorData.attributes.recovery;
+		const rcvyAttr = sourceActorState.attributes.recovery;
 		rcvyAttr.maximumValue = actionToExecute.recovery || 0.5;
 		rcvyAttr.currentValue = 0;
 	}
@@ -387,20 +526,17 @@ export default class CombatManagerSystem implements ISystem {
 		actionData: AbilityData,
 		sourceEid: EntityId,
 		targetEids: EntityId[],
-		actorDataComponent: ActorStateComponent[],
 	): void {
-		const actorData = actorDataComponent[sourceEid];
-		actorData.queuedAction = actionData;
-		actorData.currentTargetEIDs = targetEids;
+		const sourceActorState =
+			this.componentRegistry.getComponentByEntityId<ActorStateComponent>(
+				COMPONENT_ID_ACTORSTATE,
+				sourceEid,
+			);
+		sourceActorState.queuedAction = actionData;
+		sourceActorState.currentTargetEIDs = targetEids;
 	}
 
-	private async decideNPCAction(
-		actorData: ActorStateComponent,
-		gameState?: GameState,
-	) {
-		if (!gameState) {
-			gameState = container.resolve(GameState);
-		}
+	private async decideNPCAction(actorData: ActorStateComponent) {
 		const tactics = actorData.tactics;
 
 		if (!tactics) {
@@ -444,12 +580,7 @@ export default class CombatManagerSystem implements ISystem {
 		}
 
 		if (actionData) {
-			this.finishQueueAction(
-				actionData,
-				actorData.entityId,
-				targetEids,
-				gameState.ActorState,
-			);
+			this.finishQueueAction(actionData, actorData.entityId, targetEids);
 		}
 	}
 }

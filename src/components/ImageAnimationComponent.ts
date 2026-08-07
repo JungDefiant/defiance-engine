@@ -1,6 +1,8 @@
 import { Image } from "@babylonjs/gui";
 import { Component } from "src/states/registries/ComponentRegistry";
 
+export const COMPONENT_ID_IMAGEANIMATION = "ImageAnimation";
+
 export class ImageAnimationComponent implements Component {
 	spriteSheet: Image;
 	maximumCells: number;
@@ -26,11 +28,11 @@ export class ImageAnimationComponent implements Component {
 		this.accumulatedTime = 0;
 	}
 
-	getValue(): ImageAnimationComponent {
+	public getValue(): ImageAnimationComponent {
 		return this;
 	}
 
-	dispose(): void {
+	public dispose(): void {
 		this.spriteSheet.dispose();
 	}
 }

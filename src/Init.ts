@@ -12,6 +12,7 @@ import RenderQueueSystem from "src/systems/RenderQueueSystem";
 import EventHandlerSystem from "./systems/EventHandlerSystem";
 import ImageAnimationSystem from "./systems/ImageAnimationSystem";
 import EntityMovementSystem from "./systems/EntityMovementSystem";
+import { SystemRegistry } from "./states/registries/SystemRegistry";
 
 // Source - https://stackoverflow.com/a/77970818
 // Posted by Helto, modified by community. See post 'Timeline' for change history
@@ -20,29 +21,31 @@ window.addEventListener("vite:preloadError", () => {
 	window.location.reload();
 });
 
-const smSystem = container.resolve(SceneManagerSystem);
-const uiSystem = container.resolve(UserInterfaceSystem);
-const dmSystem = container.resolve(DialogueManagerSystem);
-const cmSystem = container.resolve(CombatManagerSystem);
-const asSystem = container.resolve(ActorStateSystem);
+const systemRegistry = container.resolve(SystemRegistry);
+// systemRegistry.registerNewGameSystem()
+const sceneManagerSystem = container.resolve(SceneManagerSystem);
+const userInterfaceSystem = container.resolve(UserInterfaceSystem);
+const dialogueManagerSystem = container.resolve(DialogueManagerSystem);
+const combatManagerSystem = container.resolve(CombatManagerSystem);
+const actorStateSystem = container.resolve(ActorStateSystem);
 const entityMovementSystem = container.resolve(EntityMovementSystem);
-const ehSystem = container.resolve(EventHandlerSystem);
-const rqeSystem = container.resolve(RenderQueueSystem);
+const eventHandlerSystem = container.resolve(EventHandlerSystem);
+const renderQueueSystem = container.resolve(RenderQueueSystem);
 const imageAnimationSystem = container.resolve(ImageAnimationSystem);
-const plyrFactory = container.resolve(PlayerFactory);
-const enFactory = container.resolve(EnemyFactory);
+const playerFactory = container.resolve(PlayerFactory);
+const enemyFactory = container.resolve(EnemyFactory);
 
 const app = new App(
-	smSystem,
-	uiSystem,
-	rqeSystem,
+	sceneManagerSystem,
+	userInterfaceSystem,
+	renderQueueSystem,
 	imageAnimationSystem,
-	dmSystem,
-	cmSystem,
+	dialogueManagerSystem,
+	combatManagerSystem,
 	entityMovementSystem,
-	asSystem,
-	ehSystem,
-	plyrFactory,
-	enFactory,
+	actorStateSystem,
+	eventHandlerSystem,
+	playerFactory,
+	enemyFactory,
 );
 app.gotoMainMenu();

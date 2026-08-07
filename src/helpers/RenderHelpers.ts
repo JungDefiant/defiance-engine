@@ -3,10 +3,12 @@ import {
 	AbilityData,
 	ActorStateComponent,
 } from "src/components/ActorStateComponent";
+import { SystemRegistry } from "src/registries/SystemRegistry";
 import RenderQueueSystem, {
 	RenderQueueEntry,
 	RenderQueueType,
 	RenderQueueVarsSpecialFX,
+	SYSTEM_ID_RENDERQUEUE,
 } from "src/systems/RenderQueueSystem";
 import { container } from "tsyringe";
 
@@ -31,13 +33,15 @@ export function addFloatingTextRQE(
 }
 
 export function addAbilityRQEs(
-	rqeSystem: RenderQueueSystem,
 	sourceEid: EntityId,
 	targetEids: EntityId[],
 	sourceData: ActorStateComponent,
 	actionData: AbilityData,
 ) {
-	const msgRQE = new RenderQueueEntry(
+	const renderQueueSystem = container
+		.resolve(SystemRegistry)
+		.getGameSystemBySystemId<RenderQueueSystem>(SYSTEM_ID_RENDERQUEUE);
+	const messageDisplayRenderQueueEntry = new RenderQueueEntry(
 		RenderQueueType.MessageDisplay,
 		{
 			text: `${sourceData.name} : ${actionData.name}`,
@@ -46,18 +50,18 @@ export function addAbilityRQEs(
 		1.05,
 	);
 
-	// const castRQE = new RenderQueueEntry(
-	// 	RenderQueueType.SpecialFX,
-	// 	{
-	// 		targets: [sourceEid],
-	// 		vfxUrl: actionData.castVfxURL as string,
-	// 		audioUrl: actionData.castSfxURL as string,
-	// 	} as RenderQueueVarsSpecialFX,
-	// 	true,
-	// 	0.5,
-	// );
+	const castAbilitySpecialFxRenderQueueEntry = new RenderQueueEntry(
+		RenderQueueType.SpecialFX,
+		{
+			targets: [sourceEid],
+			vfxUrl: actionData.castVfxURL as string,
+			audioUrl: actionData.castSfxURL as string,
+		} as RenderQueueVarsSpecialFX,
+		true,
+		0.5,
+	);
 
-	const hitRQE = new RenderQueueEntry(
+	const hitAbilitySpecialFxRenderQueueEntry = new RenderQueueEntry(
 		RenderQueueType.SpecialFX,
 		{
 			targets: targetEids,
@@ -68,7 +72,7 @@ export function addAbilityRQEs(
 		1,
 	);
 
-	rqeSystem.addRenderQueueEntry(msgRQE);
-	// rqeSystem.addRenderQueueEntry(castRQE);
-	rqeSystem.addRenderQueueEntry(hitRQE);
+	renderQueueSystem.addRenderQueueEntry(messageDisplayRenderQueueEntry);
+	renderQueueSystem.addRenderQueueEntry(castAbilitySpecialFxRenderQueueEntry);
+	renderQueueSystem.addRenderQueueEntry(hitAbilitySpecialFxRenderQueueEntry);
 }

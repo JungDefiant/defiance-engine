@@ -4,9 +4,9 @@ import {
 	StaticSound,
 	StreamingSound,
 } from "@babylonjs/core";
-import { singleton } from "tsyringe";
 
-@singleton()
+export const STATE_ID_AUDIOSTATE = "AudioState";
+
 export default class AudioState {
 	public audioEngine: Nullable<AudioEngineV2> = null;
 	public currentMusic: Nullable<StreamingSound> = null;
