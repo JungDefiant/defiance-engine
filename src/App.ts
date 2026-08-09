@@ -1,25 +1,32 @@
 import "reflect-metadata";
 import { container } from "tsyringe";
-import { CreateAudioEngineAsync, Engine } from "@babylonjs/core";
-import { DEFAULT_CAMPAIGN_ID } from "src/constants/GeneralConstants";
-import { CampaignData } from "src/types/GameTypes";
+import { CreateAudioEngineAsync, Engine, Nullable } from "@babylonjs/core";
+import {
+	DEFAULT_CAMPAIGN_ID,
+	DELTATIME_MS,
+} from "src/constants/GeneralConstants";
+import { CampaignData as CampaignLoadedJson } from "src/types/GameTypes";
 import { getPublicRoot } from "src/helpers/Utils";
 import AudioState from "./states/AudioState";
 import { SystemRegistry } from "./registries/SystemRegistry";
 import { FactoryRegistry } from "./registries/FactoryRegistry";
-import {
-	COMPONENT_TOKENS,
-	FACTORY_TOKENS,
-	STATE_TOKENS,
-	SYSTEM_TOKENS,
-} from "./constants/TokenConstants";
+import { FACTORY_TOKENS, SYSTEM_TOKENS } from "./constants/TokenConstants";
 import { GameStateRegistry } from "./registries/GameStateRegistry";
-import { ComponentRegistry } from "./registries/ComponentRegistry";
-import { stat } from "fs";
 import GameSystem from "./systems/GameSystem";
 import { EntityFactory } from "./factories/EntityFactory";
+import MainMenuScene from "./objects/MainMenuScene";
+import CampaignState from "./states/CampaignState";
+import SceneManagerSystem from "./systems/SceneManagerSystem";
+import SceneState from "./states/SceneState";
+import UserInterfaceState, {
+	UserInterfaceStateProps,
+} from "./states/UserInterfaceState";
+import DialogueState from "./states/DialogueState";
+import ControlState from "./states/ControlState";
 
 export class App {
+	public mainMenuScene: Nullable<MainMenuScene> = null;
+
 	private systemRegistry: SystemRegistry;
 	private factoryRegistry: FactoryRegistry;
 	private gameStateRegistry: GameStateRegistry;
@@ -31,29 +38,106 @@ export class App {
 	}
 
 	public async startGame() {
-		const engine = container.resolve(Engine);
-		engine.stopRenderLoop();
-		this.mainMenuScene.dispose();
-
-		const response = await fetch(
-			`${getPublicRoot()}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
-		);
-		const campaignData = (await response.json()) as CampaignData;
-		container.register("CampaignData", { useValue: campaignData });
-
-		const audioEngine = await CreateAudioEngineAsync({
-			disableDefaultUI: true,
-		});
-		container.register(AudioState, {
-			useValue: new AudioState(audioEngine),
-		});
-
+		this.stopEngineRenderLoop();
+		this.closeMainMenu();
+		await this.initGameStates();
 		this.registerFactories();
 		this.registerSystems();
 		await this.startFactories();
-		await this.startSystems(engine);
-		await smSystem.createNewScene(this.engine, campaignData);
-		await smSystem.runScene(this.engine, this);
+		await this.startSystems();
+		await this.createStartingScene();
+		this.runScene();
+	}
+
+	private async createStartingScene() {
+		const sceneManagerSystem =
+			this.systemRegistry.getGameSystemBySystemId<SceneManagerSystem>(
+				SceneManagerSystem.toString(),
+			);
+		const campaignState =
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
+				CampaignState.toString(),
+			);
+		await sceneManagerSystem.createNewScene(campaignState.startSceneId);
+	}
+
+	private runScene() {
+		const app = this;
+		const engine = container.resolve(Engine);
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				SceneState.toString(),
+			);
+		engine.runRenderLoop(() => {
+			sceneState.currentScene.render();
+			const deltaTime = sceneState.currentScene.deltaTime / DELTATIME_MS;
+			app.updateSystems(deltaTime);
+		});
+	}
+
+	private stopEngineRenderLoop() {
+		const engine = container.resolve(Engine);
+		engine.stopRenderLoop();
+	}
+
+	public gotoMainMenu() {
+		if (!this.mainMenuScene) {
+			return;
+		}
+		const mainMenuScene = this.mainMenuScene;
+		const engine = container.resolve(Engine);
+		engine.runRenderLoop(() => {
+			mainMenuScene.render();
+		});
+	}
+
+	public closeMainMenu() {
+		if (this.mainMenuScene) {
+			this.mainMenuScene.dispose();
+		}
+	}
+
+	private async initGameStates() {
+		await this.initCampaignState();
+		await this.initAudioState();
+		this.initControlState();
+		this.initDialogueState();
+	}
+
+	private async initCampaignState() {
+		const response = await fetch(
+			`${getPublicRoot()}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
+		);
+		const campaignLoadedJson =
+			(await response.json()) as CampaignLoadedJson;
+		this.gameStateRegistry.registerNewGameState(
+			CampaignState.toString(),
+			new CampaignState(campaignLoadedJson),
+		);
+	}
+
+	private async initAudioState() {
+		const audioEngine = await CreateAudioEngineAsync({
+			disableDefaultUI: true,
+		});
+		this.gameStateRegistry.registerNewGameState(
+			AudioState.toString(),
+			new AudioState(audioEngine),
+		);
+	}
+
+	private initDialogueState() {
+		this.gameStateRegistry.registerNewGameState(
+			DialogueState.toString(),
+			new DialogueState(),
+		);
+	}
+
+	private initControlState() {
+		this.gameStateRegistry.registerNewGameState(
+			ControlState.toString(),
+			new ControlState(),
+		);
 	}
 
 	private registerFactories() {
@@ -69,18 +153,9 @@ export class App {
 		for (const systemToken of SYSTEM_TOKENS) {
 			this.systemRegistry.registerNewGameSystem(
 				systemToken.toString(),
+				// Refactor systems to not need constructor params
 				new systemToken(),
 			);
-		}
-	}
-
-	private async startSystems(engine: Engine) {
-		for (const systemToken of SYSTEM_TOKENS) {
-			const system =
-				this.systemRegistry.getGameSystemBySystemId<GameSystem>(
-					systemToken.toString(),
-				);
-			await system.start(engine);
 		}
 	}
 
@@ -94,15 +169,24 @@ export class App {
 		}
 	}
 
+	private async startSystems() {
+		const engine = container.resolve(Engine);
+		for (const systemToken of SYSTEM_TOKENS) {
+			const system =
+				this.systemRegistry.getGameSystemBySystemId<GameSystem>(
+					systemToken.toString(),
+				);
+			await system.start(engine);
+		}
+	}
+
 	private updateSystems(deltaTime: number) {
-		this.smSystem.update(deltaTime);
-		this.asSystem.update(deltaTime);
-		this.entityMovementSystem.update(deltaTime);
-		this.dmSystem.update(deltaTime);
-		this.cmSystem.update(deltaTime);
-		this.rqeSystem.update(deltaTime);
-		this.imageAnimationSystem.update(deltaTime);
-		this.ehSystem.update(deltaTime);
-		this.uiSystem.update(deltaTime);
+		for (const systemToken of SYSTEM_TOKENS) {
+			const system =
+				this.systemRegistry.getGameSystemBySystemId<GameSystem>(
+					systemToken.toString(),
+				);
+			system.update(deltaTime);
+		}
 	}
 }

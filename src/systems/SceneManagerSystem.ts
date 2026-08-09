@@ -9,6 +9,7 @@ import {
 	getComponent,
 	query,
 	set,
+	World,
 } from "bitecs";
 import {
 	Engine,
@@ -53,34 +54,28 @@ import {
 	CampaignData,
 	DoorData,
 	GameMode,
-	InteractableData,
-	LocationData,
+	Interactable,
+	Location,
 	ModalData,
-	SceneData,
+	SceneData as LoadedSceneJson,
 } from "src/types/GameTypes";
 import { getPublicRoot } from "src/helpers/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import { playMusic } from "src/helpers/AudioHelpers";
-import { loadLocation } from "src/helpers/LocationHelpers";
+import { loadLocation as createLocation } from "src/helpers/LocationHelpers";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import GameplayState, {
-	STATE_ID_GAMEPLAYSTATE,
-} from "src/states/GameplayState";
-import SceneState, { STATE_ID_SCENESTATE } from "src/states/SceneState";
+import SceneState, { SceneStateProps } from "src/states/SceneState";
+import CampaignState from "src/states/CampaignState";
 import UserInterfaceState, {
-	STATE_ID_USERINTERFACE,
+	UserInterfaceStateProps,
 } from "src/states/UserInterfaceState";
-import ControlState, { STATE_ID_CONTROLSTATE } from "src/states/ControlState";
-import CampaignState, {
-	STATE_ID_CAMPAIGNSTATE,
-} from "src/states/CampaignState";
+import GameplayState, { GameplayStateProps } from "src/states/GameplayState";
+import ControlState from "src/states/ControlState";
 
 export interface NewLocationSceneParams {
-	scene: Scene;
-	sceneData: SceneData;
-	sceneNodes: TransformNode[];
+	sceneState: SceneState;
 	sceneGUI: AdvancedDynamicTexture;
 	exploreGUIControls: Control[];
 }
@@ -104,7 +99,7 @@ export default class SceneManagerSystem implements GameSystem {
 	public debug(debugOn: boolean = true) {
 		const sceneState =
 			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
+				SceneState.toString(),
 			);
 
 		if (debugOn) {
@@ -189,15 +184,15 @@ export default class SceneManagerSystem implements GameSystem {
 	async loadPlayerParty(partyCharacterIds: string[]) {
 		const campaignState =
 			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
-				STATE_ID_CAMPAIGNSTATE,
+				CampaignState.toString(),
 			);
 		const gameplayState =
 			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
-				STATE_ID_GAMEPLAYSTATE,
+				GameplayState.toString(),
 			);
 		const userInterfaceState =
 			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				STATE_ID_USERINTERFACE,
+				UserInterfaceState.toString(),
 			);
 
 		const playerEids: number[] = [];
@@ -215,31 +210,257 @@ export default class SceneManagerSystem implements GameSystem {
 		userInterfaceState.partyInfoHud.setPartyInfoEntryStack();
 	}
 
-	public async createNewScene(sceneId: string, engine: Engine) {
+	private async loadSceneJson(sceneId: string): Promise<LoadedSceneJson> {
 		const campaignState =
 			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
-				STATE_ID_CAMPAIGNSTATE,
+				CampaignState.toString(),
 			);
 		const response = await fetch(
 			`${getPublicRoot()}/data/${campaignState.campaignId}/scenes/${sceneId}.json`,
 		);
-		const sceneData = (await response.json()) as SceneData;
-		if (!sceneData) {
-			return;
-		}
+		const sceneJson = (await response.json()) as LoadedSceneJson;
+		return sceneJson;
+	}
 
+	public async createNewScene(sceneId: string) {
+		const engine = container.resolve(Engine);
+		const sceneState = await this.initSceneState(sceneId, engine);
+		this.initUserInterfaceState(sceneState.currentScene);
+		this.initGameplayState(sceneState.cameraEntityId);
+		this.loadPlayerParty(characterIds);
+		await this.createStartingLocation(sceneState);
+		await this.initDialogueSystem(sceneState.dialogueFileId);
+		await this.loadModalMap(sceneState.modalIds);
+		await playMusic(sceneState.startMusicId);
+		this.setGameMode(GameMode.Explore);
+	}
+
+	private async createStartingLocation(sceneState: SceneState) {
+		const userInterfaceState =
+			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				UserInterfaceState.toString(),
+			);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				ControlState.toString(),
+			);
+		const newLocationSceneParams = {
+			sceneState,
+			sceneGUI: userInterfaceState.sceneGUI,
+			exploreGUIControls: controlState.exploreGUIControls,
+		} as NewLocationSceneParams;
+		const location = await createLocation(
+			sceneState.startLocationId,
+			newLocationSceneParams,
+		);
+		sceneState.currentLocation = location;
+	}
+
+	private async initDialogueSystem(dialogueFileId: string) {
+		const dmSystem = container.resolve(DialogueManagerSystem);
+		await dmSystem.initSemantics();
+		await dmSystem.loadDialogueMap(dialogueFileId);
+	}
+
+	private initGameplayState(cameraEntityId: EntityId) {
+		const newGameplayState = new GameplayState({
+			gameMode: GameMode.Explore,
+			cameraEID: cameraEntityId,
+			selectedPlayerEID: 0,
+		} as GameplayStateProps);
+		this.gameStateRegistry.registerNewGameState(
+			GameplayState.toString(),
+			newGameplayState,
+		);
+	}
+
+	private async initSceneState(sceneId: string, engine: Engine) {
+		const sceneJson = await this.loadSceneJson(sceneId);
 		const world = createWorld();
 		const scene = new Scene(engine);
+		const sceneNodes = await this.getSceneNodes(
+			sceneJson.mapModelId,
+			scene,
+		);
+		const newCameraEntityId = this.createSceneCamera(scene, world);
+		this.createSkybox(scene);
+		this.createSceneLight(scene);
+		const newSceneState = new SceneState({
+			engine,
+			world,
+			scene,
+			sceneNodes,
+			cameraEntityId: newCameraEntityId,
+			startLocationId: sceneJson.startLocationId,
+			mapModelId: sceneJson.mapModelId,
+			difficultyLevel: sceneJson.difficultyLevel,
+			startMusicId: sceneJson.startMusicId,
+			dialogueFileId: sceneJson.dialogueFileId,
+			encounters: sceneJson.encounters,
+			locations: sceneJson.locations,
+			modalIds: sceneJson.modalIds,
+		} as SceneStateProps);
+		newSceneState.lastExploreViewTarget = DEFAULT_CAM_TARGET;
+		return newSceneState;
+	}
+
+	private initUserInterfaceState(scene: Scene) {
+		const engine = container.resolve(Engine);
+		const sceneUI = this.createSceneUI(scene);
+		const uiScene = this.createUIScene(engine);
+		const mainUI = this.createMainUI(uiScene);
+		this.CreateUICamera(uiScene);
+		CreateTypography(mainUI);
+		document.fonts.ready.then(() => {
+			mainUI.markAsDirty();
+		});
+		document.fonts.ready.then(() => {
+			sceneUI.markAsDirty();
+		});
+		const exploreHud = this.createExploreHUD(mainUI);
+		const combatHud = this.createCombatHUD(mainUI);
+		const tacticalPauseScreen = this.createTacticalPauseScreen(mainUI);
+		const partyInfoHud = this.createPartyInfoHUD(mainUI);
+		const dialogueHud = this.createDialogueHUD(mainUI);
+		const modalScreen = this.createModalScreen(mainUI);
+		const gameOverScreen = this.createGameOverScreen(mainUI);
+		const victoryScreen = this.createVictoryScreen(mainUI);
+		const newUserInterfaceState = new UserInterfaceState({
+			mainUI,
+			sceneUI,
+			exploreHud,
+			combatHud,
+			tacticalPauseScreen,
+			partyInfoHud,
+			dialogueHud,
+			modalScreen,
+			gameOverScreen,
+			victoryScreen,
+		} as UserInterfaceStateProps);
+		this.gameStateRegistry.registerNewGameState(
+			UserInterfaceState.toString(),
+			newUserInterfaceState,
+		);
+		return newUserInterfaceState;
+	}
+
+	private createVictoryScreen(mainUI: AdvancedDynamicTexture) {
+		const victoryScreen = new VictoryScreen();
+		mainUI.addControl(victoryScreen.getRoot());
+		victoryScreen.showHide(false);
+		return victoryScreen;
+	}
+
+	private createGameOverScreen(mainUI: AdvancedDynamicTexture) {
+		const gameOverScreen = new GameOverScreen();
+		mainUI.addControl(gameOverScreen.getRoot());
+		gameOverScreen.showHide(false);
+		return gameOverScreen;
+	}
+
+	private createModalScreen(mainUI: AdvancedDynamicTexture) {
+		const modalScreen = new ModalScreen();
+		mainUI.addControl(modalScreen.getRoot());
+		return modalScreen;
+	}
+
+	private createDialogueHUD(mainUI: AdvancedDynamicTexture) {
+		const dialogueHud = new DialogueHUD();
+		mainUI.addControl(dialogueHud.createHudRoot());
+		dialogueHud.showHideHud(false);
+		return dialogueHud;
+	}
+
+	private createPartyInfoHUD(mainUI: AdvancedDynamicTexture) {
+		const partyInfoHud = new PartyInfoHUD();
+		mainUI.addControl(partyInfoHud.createHudRoot());
+		return partyInfoHud;
+	}
+
+	private createTacticalPauseScreen(mainUI: AdvancedDynamicTexture) {
+		const tacticalPauseScreen = new TacticalPauseScreen();
+		mainUI.addControl(tacticalPauseScreen.getRoot());
+		tacticalPauseScreen.showHide(false);
+		return tacticalPauseScreen;
+	}
+
+	private createCombatHUD(mainUI: AdvancedDynamicTexture) {
+		const combatHud = new CombatHUD();
+		mainUI.addControl(combatHud.createHudRoot());
+		combatHud.showHideHud(false);
+		return combatHud;
+	}
+
+	private createExploreHUD(mainUI: AdvancedDynamicTexture) {
+		const exploreHud = new ExploreHUD();
+		mainUI.addControl(exploreHud.createHudRoot());
+		exploreHud.showHideHud(false);
+		return exploreHud;
+	}
+
+	private createUIScene(engine: Engine) {
 		const uiScene = new Scene(engine);
 		uiScene.autoClear = false;
+		return uiScene;
+	}
 
-		const sceneNodes = (
+	private async getSceneNodes(mapModelId: string, scene: Scene) {
+		return (
 			await ImportMeshAsync(
-				`${getPublicRoot()}/models/maps/${sceneData.modelURL}`,
+				`${getPublicRoot()}/models/maps/${mapModelId}`,
 				scene,
 			)
 		).transformNodes;
+	}
 
+	private CreateUICamera(uiScene: Scene) {
+		return new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
+	}
+
+	private createSceneUI(scene: Scene) {
+		const sceneGUI = AdvancedDynamicTexture.CreateFullscreenUI(
+			"ui_scene",
+			true,
+			scene,
+			Texture.NEAREST_SAMPLINGMODE,
+		);
+		sceneGUI.idealWidth = 800;
+		sceneGUI.idealHeight = 600;
+		return sceneGUI;
+	}
+
+	private createMainUI(uiScene: Scene) {
+		const mainUI = AdvancedDynamicTexture.CreateFullscreenUI(
+			"ui_main",
+			true,
+			uiScene,
+			Texture.NEAREST_SAMPLINGMODE,
+		);
+		mainUI.idealWidth = 800;
+		mainUI.idealHeight = 600;
+		return mainUI;
+	}
+
+	private createSceneLight(scene: Scene) {
+		const light = new HemisphericLight(
+			"light",
+			new Vector3(1, 1, 1),
+			scene,
+		);
+		light.intensity = 1;
+	}
+
+	private createSkybox(scene: Scene) {
+		const skybox = MeshBuilder.CreateBox("skybox", { size: 100.0 }, scene);
+		const skyboxMaterial = new StandardMaterial("skyBox", scene);
+		skyboxMaterial.emissiveColor = Color3.FromHexString(Themes.primary3);
+		skyboxMaterial.backFaceCulling = true;
+		skyboxMaterial.disableLighting = true;
+		skybox.material = skyboxMaterial;
+		skybox.infiniteDistance = true;
+	}
+
+	private createSceneCamera(scene: Scene, world: World<{}>) {
 		const camera = new UniversalCamera(
 			"cam_explore",
 			Vector3.Zero(),
@@ -258,152 +479,9 @@ export default class SceneManagerSystem implements GameSystem {
 			// For blocking out horizontal rotation, simply use y instead of x
 			camera.cameraRotation.x = 0;
 		});
-		const cameraEid = addEntity(world);
-		addComponent(world, cameraEid, camera);
-
-		const skybox = MeshBuilder.CreateBox("skybox", { size: 100.0 }, scene);
-		const skyboxMaterial = new StandardMaterial("skyBox", scene);
-		skyboxMaterial.emissiveColor = Color3.FromHexString(Themes.primary3);
-		skyboxMaterial.backFaceCulling = true;
-		skyboxMaterial.disableLighting = true;
-		skybox.material = skyboxMaterial;
-		skybox.infiniteDistance = true;
-
-		const light = new HemisphericLight(
-			"light",
-			new Vector3(1, 1, 1),
-			scene,
-		);
-		light.intensity = 1;
-
-		const mainUI = AdvancedDynamicTexture.CreateFullscreenUI(
-			"ui_main",
-			true,
-			uiScene,
-			Texture.NEAREST_SAMPLINGMODE,
-		);
-		mainUI.idealWidth = 800;
-		mainUI.idealHeight = 600;
-
-		const sceneGUI = AdvancedDynamicTexture.CreateFullscreenUI(
-			"ui_scene",
-			true,
-			scene,
-			Texture.NEAREST_SAMPLINGMODE,
-		);
-		sceneGUI.idealWidth = 800;
-		sceneGUI.idealHeight = 600;
-
-		const uiCamera = new UniversalCamera(
-			"cam_gui",
-			Vector3.Zero(),
-			uiScene,
-		);
-
-		// Initialize UI and HUDs
-		CreateTypography(mainUI);
-
-		document.fonts.ready.then(() => {
-			mainUI.markAsDirty();
-		});
-
-		document.fonts.ready.then(() => {
-			sceneGUI.markAsDirty();
-		});
-
-		// NOTE: Order of the HUDs matter!
-		const exploreHud = new ExploreHUD();
-		mainUI.addControl(exploreHud.createHudRoot());
-		exploreHud.showHideHud(false);
-
-		const combatHud = new CombatHUD();
-		mainUI.addControl(combatHud.createHudRoot());
-		combatHud.showHideHud(false);
-
-		const tacticalPauseScreen = new TacticalPauseScreen();
-		mainUI.addControl(tacticalPauseScreen.getRoot());
-		tacticalPauseScreen.showHide(false);
-
-		const partyInfoHud = new PartyInfoHUD();
-		mainUI.addControl(partyInfoHud.createHudRoot());
-
-		const dialogueHud = new DialogueHUD();
-		mainUI.addControl(dialogueHud.createHudRoot());
-		dialogueHud.showHideHud(false);
-
-		const modalScreen = new ModalScreen();
-		mainUI.addControl(modalScreen.getRoot());
-
-		const gameOverScreen = new GameOverScreen();
-		mainUI.addControl(gameOverScreen.getRoot());
-		gameOverScreen.showHide(false);
-
-		const victoryScreen = new VictoryScreen();
-		mainUI.addControl(victoryScreen.getRoot());
-		victoryScreen.showHide(false);
-
-		const newGameState = new GameState(
-			campaignId,
-			GameMode.Explore,
-			-1,
-			cameraEid,
-			[],
-			world,
-			scene,
-			uiScene,
-			sceneData,
-			sceneNodes,
-			mainUI,
-			sceneGUI,
-			partyInfoHud,
-			exploreHud,
-			dialogueHud,
-			combatHud,
-			tacticalPauseScreen,
-			modalScreen,
-			gameOverScreen,
-			victoryScreen,
-		);
-		container.register(GameState, { useValue: newGameState });
-
-		newGameState.lastExploreViewTarget = DEFAULT_CAM_TARGET;
-
-		this.loadPlayerParty(characterIds);
-
-		const newLocationSceneParams = {
-			scene,
-			sceneData,
-			sceneGUI,
-			sceneNodes,
-			exploreGUIControls: newGameState.exploreGUIControls,
-		} as NewLocationSceneParams;
-		const locationData = await loadLocation(
-			sceneData.startLocationId,
-			newLocationSceneParams,
-		);
-		newGameState.currentLocation = locationData;
-
-		const dmSystem = container.resolve(DialogueManagerSystem);
-		await dmSystem.initSemantics();
-		await dmSystem.loadDialogueMap(sceneData.dialogueFile);
-
-		await this.loadModalMap(sceneData.modalRefs);
-
-		await playMusic(sceneData.startMusic, newGameState);
-
-		this.setGameMode(GameMode.Explore);
-	}
-
-	public async runScene(engine: Engine, app: App) {
-		const sceneState =
-			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
-			);
-		engine.runRenderLoop(() => {
-			sceneState.currentScene.render();
-			const deltaTime = sceneState.currentScene.deltaTime / DELTATIME_MS;
-			app.updateSystems(deltaTime);
-		});
+		const newCameraEntityId = addEntity(world);
+		addComponent(world, newCameraEntityId, camera);
+		return newCameraEntityId;
 	}
 
 	public async disposeScene() {

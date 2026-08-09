@@ -348,10 +348,10 @@ export default class DialogueManagerSystem implements GameSystem {
 	}
 
 	public async startDialogue(
-		node: string,
-		itr?: {
-			itrNode: TransformNode;
-			viewNode: TransformNode;
+		dialogueNodeId: string,
+		startDialogueProps?: {
+			interactablePositionNode: TransformNode;
+			viewPositionNode: TransformNode;
 		},
 	): Promise<void> {
 		const gs = container.resolve(GameState);
@@ -363,22 +363,25 @@ export default class DialogueManagerSystem implements GameSystem {
 			return;
 		}
 
-		if (!gs.dialogueMap.has(node)) {
+		if (!gs.dialogueMap.has(dialogueNodeId)) {
 			return;
 		}
 
 		gs.actionPauseSet.add(PAUSE_DIALOGUE);
 
-		if (itr) {
-			camera.position = itr.viewNode.absolutePosition;
+		if (startDialogueProps) {
+			camera.position =
+				startDialogueProps.viewPositionNode.absolutePosition;
 			// TO DO: Implement moving camera to target over time
-			camera.setTarget(itr.itrNode.absolutePosition);
+			camera.setTarget(
+				startDialogueProps.interactablePositionNode.absolutePosition,
+			);
 		}
 
 		smSystem.setGameMode(GameMode.Dialogue);
 		dlgHud.clearEntryStacks();
 
-		this.startDialogueNode(node);
+		this.startDialogueNode(dialogueNodeId);
 	}
 
 	public startDialogueNode(node: string) {

@@ -10,7 +10,7 @@ export class TacticalPauseScreen {
 		this.rootContainer.height = "100%";
 		this.rootContainer.thickness = 0;
 		this.rootContainer.background = `${Themes.primary3}${Themes.tacticalPauseOpacity}`;
-		this.rootContainer.zIndex = -100;
+		this.rootContainer.zIndex = 1000;
 		this.rootContainer.isVisible = false;
 
 		const tacticalPauseLabel = new TextBlock(
@@ -22,7 +22,8 @@ export class TacticalPauseScreen {
 		tacticalPauseLabel.outlineWidth = 2;
 		tacticalPauseLabel.outlineColor = Themes.primary3;
 		tacticalPauseLabel.heightInPixels = 64;
-		tacticalPauseLabel.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+		tacticalPauseLabel.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_CENTER;
 		tacticalPauseLabel.horizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
 		tacticalPauseLabel.topInPixels = 16;

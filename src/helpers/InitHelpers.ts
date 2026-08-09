@@ -25,9 +25,4 @@ export function registerNewEngine(): Engine {
 	return newEngine;
 }
 
-export function gotoMainMenu(mainMenuScene: MainMenuScene) {
-	const engine = container.resolve(Engine);
-	engine.runRenderLoop(() => {
-		mainMenuScene.render();
-	});
-}
+

@@ -3,9 +3,8 @@ import { container } from "tsyringe";
 import { App } from "src/App";
 import { SystemRegistry } from "./registries/SystemRegistry";
 import { GameStateRegistry } from "./registries/GameStateRegistry";
-import { ComponentRegistry } from "./registries/ComponentRegistry";
 import { FactoryRegistry } from "./registries/FactoryRegistry";
-import { gotoMainMenu, registerNewEngine } from "./helpers/InitHelpers";
+import { registerNewEngine } from "./helpers/InitHelpers";
 import MainMenuScene from "./objects/MainMenuScene";
 
 // Source - https://stackoverflow.com/a/77970818
@@ -20,6 +19,9 @@ container.resolve(FactoryRegistry);
 container.resolve(GameStateRegistry);
 
 const app = new App();
+
 const engine = registerNewEngine();
 const mainMenuScene = new MainMenuScene(engine);
-gotoMainMenu(mainMenuScene);
+app.mainMenuScene = mainMenuScene;
+
+app.gotoMainMenu();

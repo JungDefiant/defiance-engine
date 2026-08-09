@@ -2,14 +2,19 @@ import SceneManagerSystem, {
 	NewLocationSceneParams,
 } from "src/systems/SceneManagerSystem";
 import { clearSceneGUI } from "./UserInterfaceHelpers";
-import { DoorData, InteractableData, LocationData } from "src/types/GameTypes";
 import {
+	DoorData,
+	Interactable as Interactable,
+	Location,
+} from "src/types/GameTypes";
+import {
+	EventState,
 	Nullable,
 	TransformNode,
 	UniversalCamera,
 	Vector3,
 } from "@babylonjs/core";
-import { Button } from "@babylonjs/gui";
+import { Button, Control, Vector2WithInfo } from "@babylonjs/gui";
 import { getPublicRoot } from "./Utils";
 import { container } from "tsyringe";
 import GameState from "src/states/GameState";
@@ -18,29 +23,29 @@ import EventHandlerSystem from "src/systems/EventHandlerSystem";
 import { EntityMovementComponent } from "src/components/EntityMovementComponent";
 import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
 import { addComponent, set } from "bitecs";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import UserInterfaceState from "src/states/UserInterfaceState";
+import SceneState from "src/states/SceneState";
+import { SystemRegistry } from "src/registries/SystemRegistry";
+import { getViewPositionNode } from "./SceneHelpers";
 
 export async function loadLocation(
 	locationId: string,
 	newLocationSceneParams: NewLocationSceneParams,
-): Promise<Nullable<LocationData>> {
+): Promise<Nullable<Location>> {
 	await clearSceneGUI();
 	newLocationSceneParams.exploreGUIControls.length = 0;
 
-	const locationData = newLocationSceneParams.sceneData.locations.find(
+	const locationData = newLocationSceneParams.sceneState.locations.find(
 		(loc) => loc.id === locationId,
 	);
 
-	if (
-		!locationData ||
-		!newLocationSceneParams ||
-		!newLocationSceneParams.sceneData ||
-		!newLocationSceneParams.sceneNodes
-	) {
+	if (!locationData) {
 		return null;
 	}
 
 	locationData.interactables.forEach(async (itr) => {
-		await loadLocationInteractable(itr, newLocationSceneParams);
+		await createLocationInteractable(itr, newLocationSceneParams);
 	});
 
 	locationData.doors.forEach(async (door) => {
@@ -52,12 +57,12 @@ export async function loadLocation(
 	return locationData;
 }
 
-export async function loadLocationInteractable(
-	interactableData: InteractableData,
+export async function createLocationInteractable(
+	interactable: Interactable,
 	newLocationSceneParams: NewLocationSceneParams,
 ) {
-	const interactableNode = newLocationSceneParams.sceneNodes.find(
-		(x) => x.id == interactableData.interactableNodeId,
+	const interactableNode = newLocationSceneParams.sceneState.sceneNodes.find(
+		(x) => x.id == interactable.interactableNodeId,
 	);
 
 	if (!interactableNode) {
@@ -65,51 +70,90 @@ export async function loadLocationInteractable(
 	}
 
 	const button = Button.CreateImageOnlyButton(
-		interactableData.id,
+		interactable.id,
 		`${getPublicRoot()}/sprites/gui/icons/icon_interact.png`,
 	);
 	button.width = 0.075;
 	button.height = 0.1125;
 	button.thickness = 0;
-	button.onPointerEnterObservable.add(() => {
-		const gameState = container.resolve(GameState);
-		gameState.exploreHud.updateHighlightInfoUI(
-			interactableData.name,
-			interactableData.description,
-		);
-	});
-	button.onPointerOutObservable.add(() => {
-		const gameState = container.resolve(GameState);
-		gameState.exploreHud.hideHighlightInfoUI();
-	});
-	button.onPointerClickObservable.add(() => {
-		// Loads and runs dialogue based on dialogueId in interactableData
-		const gameState = container.resolve(GameState);
-		const viewNode = gameState.sceneNodes.find(
-			(x) => x.id === interactableData.viewPositionNodeId,
-		);
-
-		if (!viewNode) {
-			return;
-		}
-
-		const currCamera = gameState.scene.activeCamera as UniversalCamera;
-		if (currCamera) {
-			gameState.lastExploreViewTarget = currCamera.getTarget();
-		}
-
-		const dmSystem = container.resolve(DialogueManagerSystem);
-		dmSystem.startDialogue(interactableData.dialogueNodeId, {
-			itrNode: interactableNode,
-			viewNode: viewNode,
-		});
-	});
+	button.onPointerEnterObservable.add(
+		enableHighlightInfoUIFunction(interactable),
+	);
+	button.onPointerOutObservable.add(disableHighlightInfoUIFunction());
+	button.onPointerClickObservable.add(
+		startDialogueFromInteractableFunction(interactable, interactableNode),
+	);
 	newLocationSceneParams.sceneGUI.addControl(button);
 	newLocationSceneParams.exploreGUIControls.push(button);
 	button.linkWithMesh(interactableNode);
 }
 
-export async function filterLocationEvents(locationData: LocationData) {
+function startDialogueFromInteractableFunction(
+	interactable: Interactable,
+	interactableNode: TransformNode,
+): (eventData: Vector2WithInfo, eventState: EventState) => void {
+	return () => {
+		setLastExploreViewTarget();
+		const viewPositionNode = getViewPositionNode(
+			interactable.viewPositionNodeId,
+		);
+
+		if (viewPositionNode) {
+			const systemRegistry = container.resolve(SystemRegistry);
+			const dialogueManagerSystem =
+				systemRegistry.getGameSystemBySystemId<DialogueManagerSystem>(
+					DialogueManagerSystem.toString(),
+				);
+			dialogueManagerSystem.startDialogue(interactable.dialogueNodeId, {
+				interactablePositionNode: interactableNode,
+				viewPositionNode: viewPositionNode,
+			});
+		}
+	};
+}
+
+function setLastExploreViewTarget() {
+	const gameStateRegistry = container.resolve(GameStateRegistry);
+	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+		SceneState.toString(),
+	);
+	const currCamera = sceneState.currentScene.activeCamera as UniversalCamera;
+	if (currCamera) {
+		sceneState.lastExploreViewTarget = currCamera.getTarget();
+	}
+}
+
+function enableHighlightInfoUIFunction(
+	interactable: Interactable,
+): (eventData: Control, eventState: EventState) => void {
+	return () => {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const userInterfaceState =
+			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				UserInterfaceState.toString(),
+			);
+		userInterfaceState.exploreHud.updateHighlightInfoUI(
+			interactable.name,
+			interactable.description,
+		);
+	};
+}
+
+function disableHighlightInfoUIFunction(): (
+	eventData: Control,
+	eventState: EventState,
+) => void {
+	return () => {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const userInterfaceState =
+			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				UserInterfaceState.toString(),
+			);
+		userInterfaceState.exploreHud.hideHighlightInfoUI();
+	};
+}
+
+export async function filterLocationEvents(locationData: Location) {
 	const uniqueEvents = new Set<string>();
 	const eventIndsToRemove = new Array<number>();
 	locationData.events.forEach((evt, index) => {

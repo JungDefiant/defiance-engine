@@ -33,26 +33,26 @@ export interface CampaignData {
 export interface SceneData {
 	id: string;
 	startLocationId: string;
-	modelURL: string;
+	mapModelId: string;
 	difficultyLevel: number;
-	startMusic: string;
-	dialogueFile: string;
-	encounters: EncounterData;
-	locations: LocationData[];
-	modalRefs: string[];
+	startMusicId: string;
+	dialogueFileId: string;
+	encounters: EncounterMap;
+	locations: Location[];
+	modalIds: string[];
 }
 
-export interface LocationData {
+export interface Location {
 	id: string;
 	exploreViewNodeId: string;
 	combatViewNodeId: string;
 	combatSpawnNodeId: string;
-	interactables: InteractableData[];
+	interactables: Interactable[];
 	events: EventData[];
 	doors: DoorData[];
 }
 
-export interface InteractableData {
+export interface Interactable {
 	id: string;
 	name: string;
 	description: string;
@@ -67,7 +67,7 @@ export interface DoorData {
 	destination: string;
 }
 
-export interface EncounterData {
+export interface EncounterMap {
 	[index: string]: string[];
 }
 

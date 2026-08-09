@@ -24,7 +24,7 @@ export default class UserInterfaceState {
 
 	public constructor(newProps: UserInterfaceStateProps) {
 		this.mainUI = newProps.mainUI;
-		this.sceneGUI = newProps.sceneGUI;
+		this.sceneGUI = newProps.sceneUI;
 		this.partyInfoHud = newProps.partyInfoHud;
 		this.exploreHud = newProps.exploreHud;
 		this.dialogueHud = newProps.dialogueHud;
@@ -38,7 +38,7 @@ export default class UserInterfaceState {
 
 export interface UserInterfaceStateProps {
 	readonly mainUI: AdvancedDynamicTexture;
-	readonly sceneGUI: AdvancedDynamicTexture;
+	readonly sceneUI: AdvancedDynamicTexture;
 	readonly partyInfoHud: PartyInfoHUD;
 	readonly exploreHud: ExploreHUD;
 	readonly dialogueHud: DialogueHUD;

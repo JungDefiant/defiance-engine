@@ -1,16 +1,18 @@
 import { CreateSoundAsync, CreateStreamingSoundAsync } from "@babylonjs/core";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import AudioState from "src/states/AudioState";
 import CampaignState from "src/states/CampaignState";
-import { SystemRegistry } from "src/states/registries/SystemRegistry";
 import { container } from "tsyringe";
 
 export async function playSFX(id: string) {
-	const systemRegistry = container.resolve(SystemRegistry);
-	const audioState = systemRegistry.getGameSystemBySystemId();
-	const campaignState = container.resolve(CampaignState);
-	if (!audioState.audioEngine || !campaignState) {
-		return;
-	}
+	const gameStateRegistry = container.resolve(GameStateRegistry);
+	const audioState = gameStateRegistry.getGameStateByStateId<AudioState>(
+		AudioState.toString(),
+	);
+	const campaignState =
+		gameStateRegistry.getGameStateByStateId<CampaignState>(
+			CampaignState.toString(),
+		);
 
 	let sound = audioState.sfxMap.get(id);
 	if (!sound) {
@@ -25,30 +27,32 @@ export async function playSFX(id: string) {
 	sound.play();
 }
 
-export async function playMusic(id: string, gameState?: GameState) {
-	const as = container.resolve(AudioState);
-	const gs = gameState || container.resolve(GameState);
+export async function playMusic(musicId: string) {
+	const gameStateRegistry = container.resolve(GameStateRegistry);
+	const audioState = gameStateRegistry.getGameStateByStateId<AudioState>(
+		AudioState.toString(),
+	);
+	const campaignState =
+		gameStateRegistry.getGameStateByStateId<CampaignState>(
+			CampaignState.toString(),
+		);
 
-	if (!as.audioEngine || !gs) {
-		return;
-	}
-
-	let music = as.musicMap.get(id);
+	let music = audioState.musicMap.get(musicId);
 	if (!music) {
 		music = await CreateStreamingSoundAsync(
-			id,
-			`data/${gs.campaignId}/audio/music/${id}`,
+			musicId,
+			`data/${campaignState.campaignId}/audio/music/${musicId}`,
 			{
 				loop: true,
 			},
 		);
-		as.musicMap.set(id, music);
+		audioState.musicMap.set(musicId, music);
 	}
 
-	await as.audioEngine.unlockAsync();
-	if (as.currentMusic) {
-		as.currentMusic.stop();
+	await audioState.audioEngine.unlockAsync();
+	if (audioState.currentMusic) {
+		audioState.currentMusic.stop();
 	}
-	as.currentMusic = music;
+	audioState.currentMusic = music;
 	music.play();
 }
