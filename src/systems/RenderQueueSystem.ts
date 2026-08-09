@@ -5,12 +5,10 @@ import { Queue } from "queue-typescript";
 import GameState from "src/states/GameState";
 import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, removeEntity, set } from "bitecs";
-import { PAUSE_RENDERQUEUE } from "src/Constants";
+import { PAUSE_RENDERQUEUE } from "src/constants/GeneralConstants";
 import { Themes } from "src/gui/Themes";
 import { StickerFactory } from "src/factories/StickerFactory";
 import { SystemRegistry } from "src/states/registries/SystemRegistry";
-
-export const SYSTEM_ID_RENDERQUEUE = "RenderQueue";
 
 export default class RenderQueueSystem implements GameSystem {
 	private currentRenderQueue: Queue<RenderQueueEntry> =

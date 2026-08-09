@@ -31,7 +31,9 @@ import {
 import { AdvancedDynamicTexture, Button, Control } from "@babylonjs/gui";
 import "@babylonjs/loaders";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
-import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
+import UserInterfaceSystem, {
+	SYSTEM_ID_USERINTERFACE,
+} from "src/systems/UserInterfaceSystem";
 import { CreateTypography, Themes } from "src/gui/Themes";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import CombatHUD from "src/gui/CombatHUD";
@@ -42,13 +44,13 @@ import {
 	DEFAULT_CAM_TARGET,
 	DELTATIME_MS,
 	PAUSE_TACTICALPAUSE,
-} from "src/Constants";
+} from "src/constants/GeneralConstants";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { PlayerFactory } from "src/factories/PlayerFactory";
 import { App } from "src/App";
-import GameState from "src/states/GameState";
 import {
+	CampaignData,
 	DoorData,
 	GameMode,
 	InteractableData,
@@ -59,13 +61,21 @@ import {
 import { getPublicRoot } from "src/helpers/Utils";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
-import EventHandlerSystem from "./EventHandlerSystem";
 import { playMusic } from "src/helpers/AudioHelpers";
-import { EntityMovementComponent } from "src/components/EntityMovementComponent";
 import { loadLocation } from "src/helpers/LocationHelpers";
-import { SystemRegistry } from "src/states/registries/SystemRegistry";
-
-export const SYSTEM_ID_SCENEMANAGER = "SceneManager";
+import { SystemRegistry } from "src/registries/SystemRegistry";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import GameplayState, {
+	STATE_ID_GAMEPLAYSTATE,
+} from "src/states/GameplayState";
+import SceneState, { STATE_ID_SCENESTATE } from "src/states/SceneState";
+import UserInterfaceState, {
+	STATE_ID_USERINTERFACE,
+} from "src/states/UserInterfaceState";
+import ControlState, { STATE_ID_CONTROLSTATE } from "src/states/ControlState";
+import CampaignState, {
+	STATE_ID_CAMPAIGNSTATE,
+} from "src/states/CampaignState";
 
 export interface NewLocationSceneParams {
 	scene: Scene;
@@ -80,6 +90,7 @@ export default class SceneManagerSystem implements GameSystem {
 
 	public constructor(
 		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
 	) {}
 
 	public async start() {
@@ -91,91 +102,127 @@ export default class SceneManagerSystem implements GameSystem {
 	public update(deltaTime: number) {}
 
 	public debug(debugOn: boolean = true) {
-		const gameState = container.resolve(GameState);
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
 
 		if (debugOn) {
-			gameState.scene.debugLayer.show({ overlay: true });
+			sceneState.currentScene.debugLayer.show({ overlay: true });
 		} else {
-			gameState.scene.debugLayer.hide();
+			sceneState.currentScene.debugLayer.hide();
 		}
 	}
 
 	public setGameMode(newMode: GameMode) {
-		const gameState = container.resolve(GameState);
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		const gameplayState =
+			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
+				STATE_ID_GAMEPLAYSTATE,
+			);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				STATE_ID_CONTROLSTATE,
+			);
+		const userInterfaceState =
+			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				STATE_ID_USERINTERFACE,
+			);
+		const userInterfaceSystem =
+			this.systemRegistry.getGameSystemBySystemId<UserInterfaceSystem>(
+				SYSTEM_ID_USERINTERFACE,
+			);
 
-		const uiSystem = container.resolve(UserInterfaceSystem);
-		uiSystem.setGameMode(newMode);
-		gameState.gameMode = newMode;
+		userInterfaceSystem.setGameMode(newMode);
+		gameplayState.gameMode = newMode;
 
 		if (newMode == GameMode.MainMenu) {
 			// X
 		} else if (newMode == GameMode.Explore) {
-			const camera = gameState.scene.activeCamera as UniversalCamera;
+			const camera = sceneState.currentScene
+				.activeCamera as UniversalCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.attachControl(this.gameCanvas);
-			gameState.scene.onPointerObservable.add(() => {
+			sceneState.currentScene.onPointerObservable.add(() => {
 				// This will block out vertical rotation
 				// For blocking out horizontal rotation, simply use y instead of x
 				camera.cameraRotation.x = 0;
 			});
-			gameState.sceneGUI.rootContainer.isVisible = true;
-			gameState.exploreGUIControls.forEach((child) => {
+			userInterfaceState.sceneGUI.rootContainer.isVisible = true;
+			controlState.exploreGUIControls.forEach((child) => {
 				child.isVisible = true;
 			});
-			this.resetViewPosition(gameState);
-			this.resetControls(gameState);
+			this.resetViewPosition();
+			this.resetControls();
 		} else if (newMode == GameMode.Dialogue) {
-			const camera = gameState.scene.activeCamera;
+			const camera = sceneState.currentScene.activeCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.detachControl();
-			gameState.sceneGUI.rootContainer.isVisible = false;
+			userInterfaceState.sceneGUI.rootContainer.isVisible = false;
 		} else if (newMode == GameMode.Combat) {
-			const camera = gameState.scene.activeCamera;
+			const camera = sceneState.currentScene.activeCamera;
 
 			if (!camera) {
 				return;
 			}
 
 			camera.detachControl();
-			gameState.sceneGUI.rootContainer.isVisible = true;
-			gameState.exploreGUIControls.forEach((child) => {
+			userInterfaceState.sceneGUI.rootContainer.isVisible = true;
+			controlState.exploreGUIControls.forEach((child) => {
 				child.isVisible = false;
 			});
-			this.resetViewPosition(gameState);
+			this.resetViewPosition();
 		}
 	}
 
-	async loadPlayerParty(gameState: GameState, partyCharacterIds: string[]) {
+	async loadPlayerParty(partyCharacterIds: string[]) {
+		const campaignState =
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
+				STATE_ID_CAMPAIGNSTATE,
+			);
+		const gameplayState =
+			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
+				STATE_ID_GAMEPLAYSTATE,
+			);
+		const userInterfaceState =
+			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				STATE_ID_USERINTERFACE,
+			);
+
 		const playerEids: number[] = [];
 		for (let i = 0; i < partyCharacterIds.length; i++) {
 			playerEids.push(
 				await this.loadPlayerCharacter(
 					partyCharacterIds[i],
-					gameState.campaignId,
+					campaignState.campaignId,
 				),
 			);
 		}
 
-		gameState.playerEIDs = playerEids;
-		gameState.selectedPlayerEID = playerEids[0];
-		gameState.partyInfoHud.setPartyInfoEntryStack();
+		gameplayState.playerEIDs = playerEids;
+		gameplayState.selectedPlayerEID = playerEids[0];
+		userInterfaceState.partyInfoHud.setPartyInfoEntryStack();
 	}
 
-	public async createScene(
-		engine: Engine,
-		fileName: string,
-		campaignId: string,
-		characterIds: string[],
-	) {
-		const response = await fetch(`${getPublicRoot()}/data//scenes/.json`);
+	public async createNewScene(sceneId: string, engine: Engine) {
+		const campaignState =
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
+				STATE_ID_CAMPAIGNSTATE,
+			);
+		const response = await fetch(
+			`${getPublicRoot()}/data/${campaignState.campaignId}/scenes/${sceneId}.json`,
+		);
 		const sceneData = (await response.json()) as SceneData;
 		if (!sceneData) {
 			return;
@@ -321,7 +368,7 @@ export default class SceneManagerSystem implements GameSystem {
 
 		newGameState.lastExploreViewTarget = DEFAULT_CAM_TARGET;
 
-		this.loadPlayerParty(newGameState, characterIds);
+		this.loadPlayerParty(characterIds);
 
 		const newLocationSceneParams = {
 			scene,
@@ -348,44 +395,55 @@ export default class SceneManagerSystem implements GameSystem {
 	}
 
 	public async runScene(engine: Engine, app: App) {
-		const gameState = container.resolve(GameState);
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
 		engine.runRenderLoop(() => {
-			gameState.scene.render();
-			const deltaTime = gameState.scene.deltaTime / DELTATIME_MS;
-			app.updateSystems(deltaTime, gameState);
+			sceneState.currentScene.render();
+			const deltaTime = sceneState.currentScene.deltaTime / DELTATIME_MS;
+			app.updateSystems(deltaTime);
 		});
 	}
 
 	public async disposeScene() {
-		const gameState = container.resolve(GameState);
-		gameState.scene.dispose();
-		gameState.uiScene.dispose();
-		deleteWorld(gameState.world);
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		sceneState.currentScene.dispose();
+		sceneState.uiScene.dispose();
+		deleteWorld(sceneState.world);
 	}
 
 	public checkEventTriggers() {}
 
-	public resetViewPosition(gameState?: GameState) {
-		if (!gameState) {
-			gameState = container.resolve(GameState);
-		}
+	public resetViewPosition() {
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		const gameplayState =
+			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
+				STATE_ID_GAMEPLAYSTATE,
+			);
 
-		if (!gameState.currentLocation) {
+		if (!sceneState.currentLocation) {
 			console.warn("NO LOCATION DATA");
 			return;
 		}
 
-		const camera = gameState.scene.activeCamera as UniversalCamera;
-		const locData = gameState.currentLocation;
-		const sceneNodes = gameState.sceneNodes;
+		const camera = sceneState.currentScene.activeCamera as UniversalCamera;
+		const locData = sceneState.currentLocation;
+		const sceneNodes = sceneState.sceneNodes;
 
 		let viewNodeId = "";
 		let camTarget = DEFAULT_CAM_TARGET;
-		switch (gameState.gameMode) {
+		switch (gameplayState.gameMode) {
 			case GameMode.Explore:
 				viewNodeId = locData.exploreViewNodeId;
-				if (gameState.lastExploreViewTarget !== Vector3.Zero()) {
-					camTarget = gameState.lastExploreViewTarget;
+				if (sceneState.lastExploreViewTarget !== Vector3.Zero()) {
+					camTarget = sceneState.lastExploreViewTarget;
 					camTarget.y = DEFAULT_CAM_TARGET.y;
 				}
 				break;
@@ -411,7 +469,7 @@ export default class SceneManagerSystem implements GameSystem {
 			return;
 		}
 
-		const viewNode = gameState.sceneNodes.find((x) => x.id === viewNodeId);
+		const viewNode = sceneState.sceneNodes.find((x) => x.id === viewNodeId);
 		if (camera && viewNode) {
 			const camParent = camera.parent as TransformNode;
 			if (camParent) {
@@ -419,23 +477,35 @@ export default class SceneManagerSystem implements GameSystem {
 			} else {
 				camera.position = viewNode.absolutePosition;
 			}
-			// camera.setTarget(camTarget);
 		}
 	}
 
-	public async resetControls(gameState: GameState) {
-		if (gameState.actionManager) {
-			gameState.actionManager.dispose();
-			gameState.actionManager = null;
+	public async resetControls() {
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				STATE_ID_SCENESTATE,
+			);
+		const gameplayState =
+			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
+				STATE_ID_GAMEPLAYSTATE,
+			);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				STATE_ID_CONTROLSTATE,
+			);
+
+		if (controlState.actionManager) {
+			controlState.actionManager.dispose();
+			controlState.actionManager = null;
 		}
 
-		const actionManager = new ActionManager(gameState.scene);
+		const actionManager = new ActionManager(sceneState.currentScene);
 
 		actionManager.registerAction(
 			new ExecuteCodeAction(
 				{
 					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: gameState.controlSettings.switchPlayerLeft,
+					parameter: controlState.controlSettings.switchPlayerLeft,
 				},
 				() => {
 					const uiSystem = container.resolve(UserInterfaceSystem);
@@ -443,15 +513,15 @@ export default class SceneManagerSystem implements GameSystem {
 						return;
 					}
 
-					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+					let selPlyEidIndex = gameplayState.playerEIDs.findIndex(
+						(x) => x === gameplayState.selectedPlayerEID,
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex - 1;
 					if (newSelPlyEIDIndex < 0) {
-						newSelPlyEIDIndex = gameState.playerEIDs.length - 1;
+						newSelPlyEIDIndex = gameplayState.playerEIDs.length - 1;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameplayState.playerEIDs[newSelPlyEIDIndex],
 					);
 				},
 			),
@@ -461,7 +531,7 @@ export default class SceneManagerSystem implements GameSystem {
 			new ExecuteCodeAction(
 				{
 					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: gameState.controlSettings.switchPlayerRight,
+					parameter: controlState.controlSettings.switchPlayerRight,
 				},
 				() => {
 					const uiSystem = container.resolve(UserInterfaceSystem);
@@ -469,22 +539,25 @@ export default class SceneManagerSystem implements GameSystem {
 						return;
 					}
 
-					let selPlyEidIndex = gameState.playerEIDs.findIndex(
-						(x) => x === gameState.selectedPlayerEID,
+					let selPlyEidIndex = gameplayState.playerEIDs.findIndex(
+						(x) => x === gameplayState.selectedPlayerEID,
 					);
 					let newSelPlyEIDIndex = selPlyEidIndex + 1;
-					if (newSelPlyEIDIndex > gameState.playerEIDs.length - 1) {
+					if (
+						newSelPlyEIDIndex >
+						gameplayState.playerEIDs.length - 1
+					) {
 						newSelPlyEIDIndex = 0;
 					}
 					uiSystem.setSelectedCharacter(
-						gameState.playerEIDs[newSelPlyEIDIndex],
+						gameplayState.playerEIDs[newSelPlyEIDIndex],
 					);
 				},
 			),
 		);
 
-		gameState.actionManager = actionManager;
-		gameState.scene.actionManager = actionManager;
+		controlState.actionManager = actionManager;
+		sceneState.currentScene.actionManager = actionManager;
 	}
 
 	private async loadPlayerCharacter(
@@ -501,11 +574,18 @@ export default class SceneManagerSystem implements GameSystem {
 	}
 
 	public async loadModalMap(modalRefs: string[]): Promise<void> {
-		const gs = container.resolve(GameState);
+		const campaignState =
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
+				STATE_ID_CAMPAIGNSTATE,
+			);
+		const userInterfaceState =
+			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				STATE_ID_USERINTERFACE,
+			);
 
 		modalRefs.forEach(async (ref) => {
 			const response = await fetch(
-				`${getPublicRoot()}/data/${gs.campaignId}/modals/${ref}.json`,
+				`${getPublicRoot()}/data/${campaignState.campaignId}/modals/${ref}.json`,
 			);
 			const modalData = (await response.json()) as ModalData;
 
@@ -513,7 +593,7 @@ export default class SceneManagerSystem implements GameSystem {
 				return;
 			}
 
-			gs.modalMap.set(modalData.id, modalData);
+			userInterfaceState.modalMap.set(modalData.id, modalData);
 		});
 	}
 }

@@ -16,7 +16,7 @@ import GameState from "src/states/GameState";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import EventHandlerSystem from "src/systems/EventHandlerSystem";
 import { EntityMovementComponent } from "src/components/EntityMovementComponent";
-import { BASE_MOVEMENT_SPEED } from "src/Constants";
+import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
 import { addComponent, set } from "bitecs";
 
 export async function loadLocation(

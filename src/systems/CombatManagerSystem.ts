@@ -1,46 +1,26 @@
-import { container, delay, inject, singleton } from "tsyringe";
+import { container, inject } from "tsyringe";
 import GameSystem from "src/systems/GameSystem";
-import SceneManagerSystem, {
-	SYSTEM_ID_SCENEMANAGER,
-} from "src/systems/SceneManagerSystem";
-import {
-	ActionManager,
-	ExecuteCodeAction,
-	RandomRange,
-	Vector3,
-} from "@babylonjs/core";
-import { EntityId, IsA, query, removeEntity } from "bitecs";
+import SceneManagerSystem from "src/systems/SceneManagerSystem";
+import { ActionManager, ExecuteCodeAction, Vector3 } from "@babylonjs/core";
+import { EntityId, query, removeEntity } from "bitecs";
 import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTarget,
 	AbilityTrigger,
 	ActorStateComponent,
-	COMPONENT_ID_ACTORSTATE,
-	EffectData,
-	EffectVar,
-	TacticsCondition,
-	TacticsData,
 } from "src/components/ActorStateComponent";
-import { EnemyFactory, FACTORY_ID_ENEMY } from "src/factories/EnemyFactory";
-import { clamp } from "src/helpers/Utils";
-import RenderQueueSystem, {
-	RenderQueueEntry,
-	RenderQueueType,
-	SYSTEM_ID_RENDERQUEUE,
-} from "./RenderQueueSystem";
-import { Themes } from "src/gui/Themes";
+import { EnemyFactory } from "src/factories/EnemyFactory";
+import RenderQueueSystem from "./RenderQueueSystem";
 import {
 	PAUSE_GAMEOVER,
 	PAUSE_RENDERQUEUE,
 	PAUSE_TACTICALPAUSE,
 	PAUSE_VICTORYSCREEN,
-} from "src/Constants";
+} from "src/constants/GeneralConstants";
 import { GameMode } from "src/types/GameTypes";
 import UserInterfaceSystem from "./UserInterfaceSystem";
-import EventHandlerSystem, {
-	SYSTEM_ID_EVENTHANDLER,
-} from "./EventHandlerSystem";
+import EventHandlerSystem from "./EventHandlerSystem";
 import {
 	getTargetsBasedOnCondition,
 	resetTargeting as resetPlayerTargeting,
@@ -49,25 +29,15 @@ import {
 import { processAbilityEffects } from "src/helpers/EffectHelpers";
 import { addAbilityRQEs } from "src/helpers/RenderHelpers";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import GameplayState, {
-	STATE_ID_GAMEPLAYSTATE,
-} from "src/states/GameplayState";
-import ControlState, { STATE_ID_CONTROLSTATE } from "src/states/ControlState";
-import UserInterfaceState, {
-	STATE_ID_USERINTERFACE,
-} from "src/states/UserInterfaceState";
-import SceneState, { STATE_ID_SCENESTATE } from "src/states/SceneState";
-import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import ControlState from "src/states/ControlState";
+import SceneState from "src/states/SceneState";
 import { SystemRegistry } from "src/registries/SystemRegistry";
-import CampaignState, {
-	STATE_ID_CAMPAIGNSTATE,
-} from "src/states/CampaignState";
-import { Control } from "@babylonjs/gui";
 import { FactoryRegistry } from "src/registries/FactoryRegistry";
-import {
-	COMPONENT_ID_ENEMYGUI,
-	EnemyGUIComponent,
-} from "src/components/EnemyGUIComponent";
+import { EnemyGUIComponent } from "src/components/EnemyGUIComponent";
+import GameplayState from "src/states/GameplayState";
+import UserInterfaceState from "src/states/UserInterfaceState";
+import CampaignState from "src/states/CampaignState";
+import { getComponentRegistry } from "src/helpers/RegistryHelpers";
 
 export const SYSTEM_ID_COMBATMANAGER = "CombatManager";
 
@@ -80,28 +50,28 @@ export default class CombatManagerSystem implements GameSystem {
 	public constructor(
 		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
 		@inject(FactoryRegistry) private factoryRegistry: FactoryRegistry,
-		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
-		@inject(ComponentRegistry) private componentRegistry: ComponentRegistry,
 	) {}
 
 	public async start() {}
 
 	public update(deltaTime: number): void {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const componentRegistry = getComponentRegistry();
+
 		const gameplayState =
-			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
-				STATE_ID_GAMEPLAYSTATE,
+			gameStateRegistry.getGameStateByStateId<GameplayState>(
+				GameplayState.toString(),
 			);
-		const sceneState =
-			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
-			);
+		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+			SceneState.toString(),
+		);
 		const controlState =
-			this.gameStateRegistry.getGameStateByStateId<ControlState>(
-				STATE_ID_CONTROLSTATE,
+			gameStateRegistry.getGameStateByStateId<ControlState>(
+				ControlState.toString(),
 			);
 		const userInterfaceState =
-			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				STATE_ID_USERINTERFACE,
+			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				UserInterfaceState.toString(),
 			);
 
 		if (gameplayState.gameMode !== GameMode.Combat) {
@@ -123,8 +93,8 @@ export default class CombatManagerSystem implements GameSystem {
 		}
 
 		const actorStateComponents =
-			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
+			componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				ActorStateComponent.toString(),
 			);
 
 		for (const eid of query(sceneState.world, [actorStateComponents])) {
@@ -146,37 +116,41 @@ export default class CombatManagerSystem implements GameSystem {
 	}
 
 	public async startCombat(encId: string): Promise<void> {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+
+		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+			SceneState.toString(),
+		);
+		const componentRegistry = sceneState.componentRegistry;
+
 		const sceneManagerSystem =
 			this.systemRegistry.getGameSystemBySystemId<SceneManagerSystem>(
-				SYSTEM_ID_SCENEMANAGER,
+				SceneManagerSystem.toString(),
 			);
 		const eventHandlerSystem =
 			this.systemRegistry.getGameSystemBySystemId<EventHandlerSystem>(
-				SYSTEM_ID_EVENTHANDLER,
+				EventHandlerSystem.toString(),
 			);
 		const enemyFactory =
 			this.factoryRegistry.getEntityFactoryByFactoryId<EnemyFactory>(
-				FACTORY_ID_ENEMY,
+				EnemyFactory.toString(),
 			);
 		const campaignState =
-			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
-				STATE_ID_CAMPAIGNSTATE,
+			gameStateRegistry.getGameStateByStateId<CampaignState>(
+				CampaignState.toString(),
 			);
-		const sceneState =
-			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
-			);
+
 		const controlState =
-			this.gameStateRegistry.getGameStateByStateId<ControlState>(
-				STATE_ID_CONTROLSTATE,
+			gameStateRegistry.getGameStateByStateId<ControlState>(
+				ControlState.toString(),
 			);
 		const gameplayState =
-			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
-				STATE_ID_GAMEPLAYSTATE,
+			gameStateRegistry.getGameStateByStateId<GameplayState>(
+				GameplayState.toString(),
 			);
 		const actorStateComponentArray =
-			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
+			componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				ActorStateComponent.toString(),
 			);
 
 		sceneManagerSystem.setGameMode(GameMode.Combat);
@@ -221,62 +195,100 @@ export default class CombatManagerSystem implements GameSystem {
 	}
 
 	public endCombat() {
+		this.disposeActionManager();
+		this.clearCombatHudEntries();
+		this.disposeEnemyEntities();
+		this.resetPlayerActorState();
+		// Clear inscene UI & show rest of inscene UI
+		this.clearControlActionPause();
+		this.resetCombatStateToDefault();
 		const sceneManagerSystem =
 			this.systemRegistry.getGameSystemBySystemId<SceneManagerSystem>(
-				SYSTEM_ID_SCENEMANAGER,
+				SceneManagerSystem.toString(),
 			);
-		const eventHandlerSystem =
-			this.systemRegistry.getGameSystemBySystemId<EventHandlerSystem>(
-				SYSTEM_ID_EVENTHANDLER,
-			);
-		const sceneState =
-			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
-			);
-		const controlState =
-			this.gameStateRegistry.getGameStateByStateId<ControlState>(
-				STATE_ID_CONTROLSTATE,
-			);
-		const gameplayState =
-			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
-				STATE_ID_GAMEPLAYSTATE,
-			);
-		const userInterfaceState =
-			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				STATE_ID_USERINTERFACE,
-			);
-		const actorStateComponentArray =
-			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
-			);
+		sceneManagerSystem.setGameMode(GameMode.Explore);
+		this.checkEventTriggersOnCombatEnd();
+	}
 
+	private resetCombatStateToDefault() {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const gameplayState =
+			gameStateRegistry.getGameStateByStateId<GameplayState>(
+				GameplayState.toString(),
+			);
+		gameplayState.combatState = CombatState.Default;
+	}
+
+	private disposeActionManager() {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const controlState =
+			gameStateRegistry.getGameStateByStateId<ControlState>(
+				ControlState.toString(),
+			);
 		if (controlState.actionManager) {
 			controlState.actionManager.dispose();
 			controlState.actionManager = null;
 		}
+	}
 
-		userInterfaceState.combatHud.clearCombatEntries();
-
+	private disposeEnemyEntities() {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const gameplayState =
+			gameStateRegistry.getGameStateByStateId<GameplayState>(
+				GameplayState.toString(),
+			);
+		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+			SceneState.toString(),
+		);
 		gameplayState.enemyEIDs.forEach((eid) => {
 			removeEntity(sceneState.world, eid);
 		});
+	}
 
+	private resetPlayerActorState() {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const componentRegistry = getComponentRegistry();
+		const gameplayState =
+			gameStateRegistry.getGameStateByStateId<GameplayState>(
+				GameplayState.toString(),
+			);
+		const actorStateComponentArray =
+			componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				ActorStateComponent.toString(),
+			);
 		gameplayState.playerEIDs.forEach((eid) => {
 			const playerData = actorStateComponentArray[eid];
 			const rcvyAttr = playerData.attributes.recovery;
 			rcvyAttr.maximumValue = 0;
 			playerData.queuedAction = null;
 		});
+	}
 
-		// Clear inscene UI
-		// Show rest of inscene UI
-
-		sceneManagerSystem.setGameMode(GameMode.Explore);
+	private clearControlActionPause() {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const controlState =
+			gameStateRegistry.getGameStateByStateId<ControlState>(
+				ControlState.toString(),
+			);
 		if (controlState.actionPauseSet.size > 0) {
 			controlState.actionPauseSet.clear();
 		}
-		gameplayState.combatState = CombatState.Default;
+	}
 
+	private clearCombatHudEntries() {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const userInterfaceState =
+			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				UserInterfaceState.toString(),
+			);
+		userInterfaceState.combatHud.clearCombatEntries();
+	}
+
+	private checkEventTriggersOnCombatEnd() {
+		const eventHandlerSystem =
+			this.systemRegistry.getGameSystemBySystemId<EventHandlerSystem>(
+				EventHandlerSystem.toString(),
+			);
 		eventHandlerSystem.checkEventByTrigger("OnCombatEnd");
 	}
 
@@ -285,9 +297,11 @@ export default class CombatManagerSystem implements GameSystem {
 		actionInd: number,
 		isItem?: boolean,
 	): Promise<void> {
+		const componentRegistry = getComponentRegistry();
+
 		const actorData =
-			this.componentRegistry.getComponentByEntityId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
+			componentRegistry.getComponentByEntityId<ActorStateComponent>(
+				ActorStateComponent.toString(),
 				eid,
 			);
 		const actionData = (await (isItem
@@ -302,25 +316,27 @@ export default class CombatManagerSystem implements GameSystem {
 	}
 
 	public async resetControls() {
-		const sceneState =
-			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
-			);
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+			SceneState.toString(),
+		);
+		const componentRegistry = sceneState.componentRegistry;
+
 		const gameplayState =
-			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
-				STATE_ID_GAMEPLAYSTATE,
+			gameStateRegistry.getGameStateByStateId<GameplayState>(
+				GameplayState.toString(),
 			);
 		const controlState =
-			this.gameStateRegistry.getGameStateByStateId<ControlState>(
-				STATE_ID_CONTROLSTATE,
+			gameStateRegistry.getGameStateByStateId<ControlState>(
+				ControlState.toString(),
 			);
 		const userInterfaceState =
-			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				STATE_ID_USERINTERFACE,
+			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				UserInterfaceState.toString(),
 			);
 		const actorData =
-			this.componentRegistry.getComponentByEntityId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
+			componentRegistry.getComponentByEntityId<ActorStateComponent>(
+				ActorStateComponent.toString(),
 				gameplayState.selectedPlayerEID,
 			);
 		await userInterfaceState.combatHud.setActionBar(actorData, this);
@@ -448,13 +464,15 @@ export default class CombatManagerSystem implements GameSystem {
 		sourceEid: EntityId,
 		actionData: AbilityData,
 	): void {
-		const sceneState =
-			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
-			);
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+			SceneState.toString(),
+		);
+		const componentRegistry = sceneState.componentRegistry;
+
 		const enemyGuiComponentArray =
-			this.componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
-				COMPONENT_ID_ENEMYGUI,
+			componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
+				EnemyGUIComponent.toString(),
 			);
 		switch (actionData.target) {
 			case AbilityTarget.singleEnemy:
@@ -479,17 +497,20 @@ export default class CombatManagerSystem implements GameSystem {
 	private async executeQueuedAction(
 		sourceActorState: ActorStateComponent,
 	): Promise<void> {
-		const controlState =
-			this.gameStateRegistry.getGameStateByStateId<ControlState>(
-				STATE_ID_CONTROLSTATE,
-			);
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const componentRegistry = getComponentRegistry();
+
 		const renderQueueSystem =
 			this.systemRegistry.getGameSystemBySystemId<RenderQueueSystem>(
-				SYSTEM_ID_RENDERQUEUE,
+				RenderQueueSystem.toString(),
+			);
+		const controlState =
+			gameStateRegistry.getGameStateByStateId<ControlState>(
+				ControlState.toString(),
 			);
 		const actorStateComponentArray =
-			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
+			componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				ActorStateComponent.toString(),
 			);
 		const actionToExecute = await sourceActorState.queuedAction;
 		if (!actionToExecute) {
@@ -527,8 +548,9 @@ export default class CombatManagerSystem implements GameSystem {
 		sourceEid: EntityId,
 		targetEids: EntityId[],
 	): void {
+		const componentRegistry = getComponentRegistry();
 		const sourceActorState =
-			this.componentRegistry.getComponentByEntityId<ActorStateComponent>(
+			componentRegistry.getComponentByEntityId<ActorStateComponent>(
 				COMPONENT_ID_ACTORSTATE,
 				sourceEid,
 			);

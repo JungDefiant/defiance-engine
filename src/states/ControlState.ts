@@ -1,9 +1,6 @@
 import { ActionManager, Nullable } from "@babylonjs/core";
 import { Control } from "@babylonjs/gui";
 import { ControlSettings } from "src/types/GameTypes";
-import { singleton } from "tsyringe";
-
-export const STATE_ID_CONTROLSTATE = "ControlState";
 
 export default class ControlState {
 	public actionManager: Nullable<ActionManager> = null;
@@ -12,4 +9,6 @@ export default class ControlState {
 	public readonly actionPauseSet: Set<string> = new Set();
 	public readonly renderPauseSet: Set<string> = new Set();
 	public readonly controlPauseSet: Set<string> = new Set();
+
+	public constructor() {}
 }

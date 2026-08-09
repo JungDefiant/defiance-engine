@@ -13,7 +13,7 @@ import {
 	GameMode,
 } from "src/types/GameTypes";
 import type { TransformNode } from "@babylonjs/core";
-import { PAUSE_DIALOGUE } from "src/Constants";
+import { PAUSE_DIALOGUE } from "src/constants/GeneralConstants";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { getPublicRoot } from "src/helpers/Utils";
 import EventHandlerSystem from "./EventHandlerSystem";

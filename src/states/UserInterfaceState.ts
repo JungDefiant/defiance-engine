@@ -1,5 +1,4 @@
 import { AdvancedDynamicTexture } from "@babylonjs/gui";
-import { singleton } from "tsyringe";
 import CombatHUD from "src/gui/CombatHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
@@ -9,8 +8,6 @@ import { ModalScreen } from "src/gui/screens/ModalScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import { ModalData } from "src/types/GameTypes";
-
-export const STATE_ID_USERINTERFACE = "UserInterfaceState";
 
 export default class UserInterfaceState {
 	public readonly mainUI: AdvancedDynamicTexture;

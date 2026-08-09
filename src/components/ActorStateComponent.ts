@@ -3,9 +3,7 @@ import { EntityId } from "bitecs";
 import { Nullable } from "@babylonjs/core";
 import { getPublicRoot } from "src/helpers/Utils";
 import CampaignState from "src/states/CampaignState";
-import { Component } from "src/registries/ComponentRegistry";
-
-export const COMPONENT_ID_ACTORSTATE = "ActorState";
+import { Component } from "./Component";
 
 const BASE_REGEN_TICKS: number = 4;
 

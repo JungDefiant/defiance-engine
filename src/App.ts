@@ -1,79 +1,38 @@
 import "reflect-metadata";
-import { container, inject } from "tsyringe";
-import {
-	AudioEngineV2,
-	CreateAudioEngineAsync,
-	Engine,
-	Nullable,
-	Scene,
-	UniversalCamera,
-	Vector3,
-} from "@babylonjs/core";
-import SceneManagerSystem from "src/systems/SceneManagerSystem";
-import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
-import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
-import CombatManagerSystem from "src/systems/CombatManagerSystem";
-import ActorStateSystem from "src/systems/ActorStateSystem";
-import GameState from "src/states/GameState";
-import { PlayerFactory } from "src/factories/PlayerFactory";
-import { EnemyFactory } from "src/factories/EnemyFactory";
-import RenderQueueSystem from "src/systems/RenderQueueSystem";
-import { MainMenuScreen } from "src/gui/screens/MainMenuScreen";
-import { DEFAULT_CAMPAIGN_ID } from "src/Constants";
+import { container } from "tsyringe";
+import { CreateAudioEngineAsync, Engine } from "@babylonjs/core";
+import { DEFAULT_CAMPAIGN_ID } from "src/constants/GeneralConstants";
 import { CampaignData } from "src/types/GameTypes";
 import { getPublicRoot } from "src/helpers/Utils";
-import EventHandlerSystem from "src/systems/EventHandlerSystem";
 import AudioState from "./states/AudioState";
-import ImageAnimationSystem from "./systems/ImageAnimationSystem";
-import EntityMovementSystem from "./systems/EntityMovementSystem";
+import { SystemRegistry } from "./registries/SystemRegistry";
+import { FactoryRegistry } from "./registries/FactoryRegistry";
+import {
+	COMPONENT_TOKENS,
+	FACTORY_TOKENS,
+	STATE_TOKENS,
+	SYSTEM_TOKENS,
+} from "./constants/TokenConstants";
+import { GameStateRegistry } from "./registries/GameStateRegistry";
+import { ComponentRegistry } from "./registries/ComponentRegistry";
+import { stat } from "fs";
+import GameSystem from "./systems/GameSystem";
+import { EntityFactory } from "./factories/EntityFactory";
 
 export class App {
-	private engine: Engine;
-	private mainMenuScene: Scene;
+	private systemRegistry: SystemRegistry;
+	private factoryRegistry: FactoryRegistry;
+	private gameStateRegistry: GameStateRegistry;
 
-	constructor(
-		@inject(SceneManagerSystem) private smSystem: SceneManagerSystem,
-		@inject(UserInterfaceSystem) private uiSystem: UserInterfaceSystem,
-		@inject(RenderQueueSystem) private rqeSystem: RenderQueueSystem,
-		@inject(ImageAnimationSystem)
-		private imageAnimationSystem: ImageAnimationSystem,
-		@inject(DialogueManagerSystem) private dmSystem: DialogueManagerSystem,
-		@inject(CombatManagerSystem) private cmSystem: CombatManagerSystem,
-		@inject(EntityMovementSystem)
-		private entityMovementSystem: EntityMovementSystem,
-		@inject(ActorStateSystem) private asSystem: ActorStateSystem,
-		@inject(EventHandlerSystem) private ehSystem: EventHandlerSystem,
-		@inject(PlayerFactory) private playerFactory: PlayerFactory,
-		@inject(EnemyFactory) private enemyFactory: EnemyFactory,
-	) {
-		const canvas = document.getElementById(
-			"gameCanvas",
-		)! as any as HTMLCanvasElement;
-
-		this.engine = new Engine(canvas);
-		window.addEventListener("resize", () => {
-			this.engine.resize();
-		});
-
-		this.mainMenuScene = new Scene(this.engine);
-		this.mainMenuScene.autoClear = false;
-
-		const mainMenuScreen = new MainMenuScreen(this.mainMenuScene, this);
-		const uiCamera = new UniversalCamera(
-			"cam_gui",
-			Vector3.Zero(),
-			this.mainMenuScene,
-		);
-	}
-
-	public gotoMainMenu() {
-		this.engine.runRenderLoop(() => {
-			this.mainMenuScene.render();
-		});
+	constructor() {
+		this.systemRegistry = container.resolve(SystemRegistry);
+		this.factoryRegistry = container.resolve(FactoryRegistry);
+		this.gameStateRegistry = container.resolve(GameStateRegistry);
 	}
 
 	public async startGame() {
-		this.engine.stopRenderLoop();
+		const engine = container.resolve(Engine);
+		engine.stopRenderLoop();
 		this.mainMenuScene.dispose();
 
 		const response = await fetch(
@@ -89,42 +48,61 @@ export class App {
 			useValue: new AudioState(audioEngine),
 		});
 
+		this.registerFactories();
+		this.registerSystems();
 		await this.startFactories();
-		await this.startSystems();
-		await this.smSystem.createScene(
-			this.engine,
-			campaignData.startSceneId,
-			campaignData.id,
-			campaignData.startingPartyIds,
-		);
-		await this.smSystem.runScene(this.engine, this);
+		await this.startSystems(engine);
+		await smSystem.createNewScene(this.engine, campaignData);
+		await smSystem.runScene(this.engine, this);
 	}
 
-	public updateSystems(deltaTime: number, gameState: GameState) {
-		this.smSystem.update(deltaTime);
-		this.asSystem.update(deltaTime);
-		this.entityMovementSystem.update(deltaTime, gameState);
-		this.dmSystem.update(deltaTime);
-		this.cmSystem.update(deltaTime, gameState);
-		this.rqeSystem.update(deltaTime, gameState);
-		this.imageAnimationSystem.update(deltaTime, gameState);
-		this.ehSystem.update(deltaTime);
-		this.uiSystem.update(deltaTime, gameState);
+	private registerFactories() {
+		for (const factoryToken of FACTORY_TOKENS) {
+			this.factoryRegistry.registerNewEntityFactory(
+				factoryToken.toString(),
+				new factoryToken(),
+			);
+		}
 	}
 
-	private async startSystems() {
-		await this.smSystem.start();
-		await this.uiSystem.start(this.engine);
-		await this.asSystem.start();
-		await this.dmSystem.start();
-		await this.cmSystem.start();
-		await this.rqeSystem.start();
-		await this.imageAnimationSystem.start();
-		await this.ehSystem.start();
+	private registerSystems() {
+		for (const systemToken of SYSTEM_TOKENS) {
+			this.systemRegistry.registerNewGameSystem(
+				systemToken.toString(),
+				new systemToken(),
+			);
+		}
+	}
+
+	private async startSystems(engine: Engine) {
+		for (const systemToken of SYSTEM_TOKENS) {
+			const system =
+				this.systemRegistry.getGameSystemBySystemId<GameSystem>(
+					systemToken.toString(),
+				);
+			await system.start(engine);
+		}
 	}
 
 	private async startFactories() {
-		await this.playerFactory.start();
-		await this.enemyFactory.start();
+		for (const factoryToken of FACTORY_TOKENS) {
+			const factory =
+				this.factoryRegistry.getEntityFactoryByFactoryId<EntityFactory>(
+					factoryToken.toString(),
+				);
+			await factory.start();
+		}
+	}
+
+	private updateSystems(deltaTime: number) {
+		this.smSystem.update(deltaTime);
+		this.asSystem.update(deltaTime);
+		this.entityMovementSystem.update(deltaTime);
+		this.dmSystem.update(deltaTime);
+		this.cmSystem.update(deltaTime);
+		this.rqeSystem.update(deltaTime);
+		this.imageAnimationSystem.update(deltaTime);
+		this.ehSystem.update(deltaTime);
+		this.uiSystem.update(deltaTime);
 	}
 }

@@ -1,47 +1,44 @@
 import { EntityId, observe, onGet, onRemove, onSet } from "bitecs";
-import { container, inject, singleton } from "tsyringe";
-import { ActorStateComponent } from "src/components/ActorStateComponent";
-import { GameStateRegistry } from "./GameStateRegistry";
-import SceneState, { STATE_ID_SCENESTATE } from "src/states/SceneState";
+import SceneState from "src/states/SceneState";
+import { Component } from "src/components/Component";
 
-singleton();
 export class ComponentRegistry {
+	private sceneState: SceneState;
 	private componentArrays: Map<string, Array<Component>> = new Map();
 
-	public constructor(
-		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
-	) {}
+	public constructor(sceneState: SceneState) {
+		this.sceneState = sceneState;
+	}
 
-	public registerNewComponent(componentId: string, newComponent: Component) {
-		const sceneState =
-			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
-			);
+	public registerNewComponentArray<T extends Component>(componentId: string) {
+		const componentArray = new Array<T>();
 
-		if (!this.componentArrays.has(componentId)) {
-			this.componentArrays.set(componentId, new Array());
-		}
-
-		const componentArray = this.componentArrays.get(
-			componentId,
-		) as Array<Component>;
+		this.componentArrays.set(componentId, componentArray as Array<T>);
 
 		observe(
-			sceneState.world,
+			this.sceneState.world,
 			onSet(componentArray),
-			(eid: EntityId, params: ActorStateComponent) => {
+			(eid: EntityId, params: T) => {
 				componentArray[eid] = params;
 			},
 		);
 
-		observe(sceneState.world, onGet(componentArray), (eid: EntityId) => {
-			return componentArray[eid];
-		});
+		observe(
+			this.sceneState.world,
+			onGet(componentArray),
+			(eid: EntityId) => {
+				return componentArray[eid];
+			},
+		);
 
-		observe(sceneState.world, onRemove(componentArray), (eid: EntityId) => {
-			componentArray[eid].dispose();
-			componentArray.splice(eid);
-		});
+		observe(
+			this.sceneState.world,
+			onRemove(componentArray),
+			(eid: EntityId) => {
+				componentArray[eid].dispose();
+				componentArray.splice(eid);
+			},
+		);
 	}
 
 	public getComponentArrayByComponentId<T>(componentId: string): Array<T> {
@@ -51,15 +48,13 @@ export class ComponentRegistry {
 		);
 	}
 
-	public getComponentByEntityId<T>(componentId: string, entityId: EntityId) {
+	public getComponentByEntityId<T extends Component>(
+		componentId: string,
+		entityId: EntityId,
+	) {
 		const componentArray = this.componentArrays.get(
 			componentId,
-		) as Component[];
-		return componentArray[entityId].getValue() as T;
+		) as Array<T>;
+		return componentArray[entityId].getValue();
 	}
-}
-
-export interface Component {
-	getValue(): any;
-	dispose(): void;
 }

@@ -1,6 +1,6 @@
 import { RandomRange } from "@babylonjs/core";
 import { EntityId, query } from "bitecs";
-import { PAUSE_TACTICALPAUSE } from "src/Constants";
+import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
 import {
 	AbilityData,
 	AbilityTarget,
