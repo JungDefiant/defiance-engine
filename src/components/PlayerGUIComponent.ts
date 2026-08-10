@@ -17,7 +17,7 @@ import { ActorGUI } from "./interfaces/ActorGUI";
 
 export const COMPONENT_ID_PLAYERGUI = "PlayerGUI";
 
-export class PlayerGUIComponent implements ActorGUI, Component {
+export default class PlayerGUIComponent implements ActorGUI, Component {
 	private rootContainer: Container;
 	private backgroundUI: Rectangle;
 	private charNameBgUI: Rectangle;

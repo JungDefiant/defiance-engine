@@ -7,7 +7,7 @@ import { Component } from "./Component";
 
 const BASE_REGEN_TICKS: number = 4;
 
-export class ActorStateComponent implements Component {
+export default class ActorStateComponent implements Component {
 	entityId: EntityId;
 	id: string = "";
 	name: string = "";

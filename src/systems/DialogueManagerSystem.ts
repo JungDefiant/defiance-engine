@@ -2,7 +2,6 @@ import { container, inject, singleton } from "tsyringe";
 import { UniversalCamera, Vector3 } from "@babylonjs/core";
 import grammar from "src/parser/DialogueParser.ohm-bundle";
 import SceneManagerSystem from "src/systems/SceneManagerSystem";
-import GameState from "src/states/GameState";
 import DialogueHUD from "src/gui/DialogueHUD";
 import type GameSystem from "src/systems/GameSystem";
 import {
@@ -18,12 +17,14 @@ import CombatManagerSystem from "./CombatManagerSystem";
 import { getPublicRoot } from "src/helpers/Utils";
 import EventHandlerSystem from "./EventHandlerSystem";
 import { SystemRegistry } from "src/registries/SystemRegistry";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
 
 export const SYSTEM_ID_DIALOGUEMANAGER = "DialogueManager";
 
 export default class DialogueManagerSystem implements GameSystem {
 	public constructor(
 		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
 	) {}
 
 	public async start() {}

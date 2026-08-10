@@ -3,7 +3,10 @@ import { Component } from "src/states/registries/ComponentRegistry";
 
 export const COMPONENT_ID_CHARACTERSPRITE = "CharacterSprite";
 
-export class CharacterSpriteComponent extends Mesh implements Component {
+export default class CharacterSpriteComponent
+	extends Mesh
+	implements Component
+{
 	constructor(
 		name: string,
 		scene?: Nullable<Scene>,

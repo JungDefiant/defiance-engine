@@ -2,14 +2,8 @@ import { container, inject, singleton } from "tsyringe";
 import GameSystem from "src/systems/GameSystem";
 import { Engine } from "@babylonjs/core";
 import { EntityId, query } from "bitecs";
-import {
-	COMPONENT_ID_PLAYERGUI,
-	PlayerGUIComponent,
-} from "src/components/PlayerGUIComponent";
-import {
-	ActorStateComponent,
-	COMPONENT_ID_ACTORSTATE,
-} from "src/components/ActorStateComponent";
+import PlayerGUIComponent from "src/components/PlayerGUIComponent";
+import ActorStateComponent from "src/components/ActorStateComponent";
 import {
 	COMPONENT_ID_ENEMYGUI,
 	EnemyGUIComponent,
@@ -17,14 +11,9 @@ import {
 import { GameMode } from "src/types/GameTypes";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import UserInterfaceState, {
-	STATE_ID_USERINTERFACE,
-} from "src/states/UserInterfaceState";
-import SceneState, { STATE_ID_SCENESTATE } from "src/states/SceneState";
-import { ComponentRegistry } from "src/registries/ComponentRegistry";
-import GameplayState, {
-	STATE_ID_GAMEPLAYSTATE,
-} from "src/states/GameplayState";
+import UserInterfaceState from "src/states/UserInterfaceState";
+import SceneState from "src/states/SceneState";
+import GameplayState from "src/states/GameplayState";
 import CombatManagerSystem, {
 	SYSTEM_ID_COMBATMANAGER,
 } from "./CombatManagerSystem";
@@ -35,7 +24,6 @@ export default class UserInterfaceSystem implements GameSystem {
 	public constructor(
 		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
 		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
-		@inject(ComponentRegistry) private componentRegistry: ComponentRegistry,
 	) {}
 
 	public async start(engine: Engine) {}
@@ -46,15 +34,15 @@ export default class UserInterfaceSystem implements GameSystem {
 				STATE_ID_SCENESTATE,
 			);
 		const actorStateComponentArray =
-			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+			sceneState.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
 				COMPONENT_ID_ACTORSTATE,
 			);
 		const playerGuiComponentArray =
-			this.componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
+			sceneState.componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
 				COMPONENT_ID_PLAYERGUI,
 			);
 		const enemyGuiComponentArray =
-			this.componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
+			sceneState.componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
 				COMPONENT_ID_ENEMYGUI,
 			);
 

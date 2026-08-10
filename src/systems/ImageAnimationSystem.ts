@@ -1,16 +1,16 @@
-import { Engine } from "@babylonjs/core";
 import GameSystem from "./GameSystem";
-import { inject, singleton } from "tsyringe";
-import GameState from "src/states/GameState";
+import { inject } from "tsyringe";
 import { query } from "bitecs";
 import { ImageAnimationComponent } from "src/components/ImageAnimationComponent";
-import { SystemRegistry } from "src/states/registries/SystemRegistry";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import { SystemRegistry } from "src/registries/SystemRegistry";
 
 export const SYSTEM_ID_IMAGEANIMATION = "ImageAnimation";
 
 export default class ImageAnimationSystem implements GameSystem {
 	public constructor(
 		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
 	) {}
 
 	public async start(): Promise<void> {}

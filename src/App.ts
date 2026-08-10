@@ -18,9 +18,6 @@ import MainMenuScene from "./objects/MainMenuScene";
 import CampaignState from "./states/CampaignState";
 import SceneManagerSystem from "./systems/SceneManagerSystem";
 import SceneState from "./states/SceneState";
-import UserInterfaceState, {
-	UserInterfaceStateProps,
-} from "./states/UserInterfaceState";
 import DialogueState from "./states/DialogueState";
 import ControlState from "./states/ControlState";
 
@@ -153,8 +150,7 @@ export class App {
 		for (const systemToken of SYSTEM_TOKENS) {
 			this.systemRegistry.registerNewGameSystem(
 				systemToken.toString(),
-				// Refactor systems to not need constructor params
-				new systemToken(),
+				new systemToken(this.systemRegistry, this.gameStateRegistry),
 			);
 		}
 	}

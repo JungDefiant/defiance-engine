@@ -23,5 +23,4 @@ const app = new App();
 const engine = registerNewEngine();
 const mainMenuScene = new MainMenuScene(engine);
 app.mainMenuScene = mainMenuScene;
-
 app.gotoMainMenu();

@@ -4,7 +4,7 @@ import { Component } from "src/states/registries/ComponentRegistry";
 
 export const COMPONENT_ID_STICKERIMAGE = "StickerImage";
 
-export class StickerImageComponent extends Image implements Component {
+export default class StickerImageComponent extends Image implements Component {
 	constructor(name: string, url?: Nullable<string>) {
 		super(name, url);
 	}

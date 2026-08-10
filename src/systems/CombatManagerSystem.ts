@@ -49,7 +49,7 @@ export default class CombatManagerSystem implements GameSystem {
 
 	public constructor(
 		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
-		@inject(FactoryRegistry) private factoryRegistry: FactoryRegistry,
+		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
 	) {}
 
 	public async start() {}

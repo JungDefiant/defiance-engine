@@ -1,16 +1,17 @@
-import { inject, singleton } from "tsyringe";
+import { inject } from "tsyringe";
 import GameSystem from "./GameSystem";
 import { Engine, Vector3 } from "@babylonjs/core";
-import GameState from "src/states/GameState";
 import { EntityId, query, removeComponent } from "bitecs";
 import { EntityMovementComponent } from "src/components/EntityMovementComponent";
-import { SystemRegistry } from "src/states/registries/SystemRegistry";
+import { SystemRegistry } from "src/registries/SystemRegistry";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
 
 export const SYSTEM_ID_ENTITYMOVEMENT = "EntityMovement";
 
 export default class EntityMovementSystem implements GameSystem {
 	public constructor(
 		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
+		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
 	) {}
 
 	public async start(engine: Engine): Promise<void> {}

@@ -9,13 +9,14 @@ import ControlState, { STATE_ID_CONTROLSTATE } from "src/states/ControlState";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import SceneState, { STATE_ID_SCENESTATE } from "src/states/SceneState";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import { SystemRegistry } from "src/registries/SystemRegistry";
 
 export const SYSTEM_ID_ACTORSTATE = "ActorState";
 
 export default class ActorStateSystem implements GameSystem {
 	public constructor(
+		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
 		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
-		@inject(ComponentRegistry) private componentRegistry: ComponentRegistry,
 	) {}
 
 	public async start() {}

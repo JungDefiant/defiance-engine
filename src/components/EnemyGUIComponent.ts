@@ -22,7 +22,7 @@ import { ActorGUI } from "./interfaces/ActorGUI";
 
 export const COMPONENT_ID_ENEMYGUI = "EnemyGUI";
 
-export class EnemyGUIComponent implements ActorGUI, Component {
+export default class EnemyGUIComponent implements ActorGUI, Component {
 	private rootContainer: StackPanel;
 	private targetingUI: Image;
 	private actBarBGUI: Rectangle;

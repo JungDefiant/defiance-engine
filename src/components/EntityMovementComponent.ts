@@ -3,7 +3,7 @@ import { Component } from "src/states/registries/ComponentRegistry";
 
 export const COMPONENT_ID_ENTITYMOVEMENT = "EntityMovement";
 
-export class EntityMovementComponent implements Component {
+export default class EntityMovementComponent implements Component {
 	transform: TransformNode;
 	destination: Vector3;
 	speed: number;
