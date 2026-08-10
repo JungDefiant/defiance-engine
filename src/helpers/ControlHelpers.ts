@@ -1,13 +1,50 @@
-import { ActionEvent, ActionManager, ExecuteCodeAction } from "@babylonjs/core";
+import {
+	ActionEvent,
+	ActionManager,
+	ExecuteCodeAction,
+	UniversalCamera,
+} from "@babylonjs/core";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import ControlState from "src/states/ControlState";
 import GameplayState from "src/states/GameplayState";
 import SceneState from "src/states/SceneState";
+import UserInterfaceState from "src/states/UserInterfaceState";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import { container } from "tsyringe";
+import { getGameCanvas, resetCombatViewPosition } from "./SceneHelpers";
 
 export function resetExploreModeControls() {
+	const gameStateRegistry = container.resolve(GameStateRegistry);
+	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+		SceneState.toString(),
+	);
+	const userInterfaceState =
+		gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+			UserInterfaceState.toString(),
+		);
+	const controlState = gameStateRegistry.getGameStateByStateId<ControlState>(
+		ControlState.toString(),
+	);
+
+	const camera = sceneState.currentScene.activeCamera as UniversalCamera;
+	const gameCanvas = getGameCanvas();
+
+	if (camera && gameCanvas) {
+		camera.attachControl(gameCanvas);
+		sceneState.currentScene.onPointerObservable.add(() => {
+			// This will block out vertical rotation
+			// For blocking out horizontal rotation, simply use y instead of x
+			camera.cameraRotation.x = 0;
+		});
+		userInterfaceState.sceneGUI.rootContainer.isVisible = true;
+		controlState.exploreGUIControls.forEach((child) => {
+			child.isVisible = true;
+		});
+	}
+}
+
+export function resetExploreModeActionManager() {
 	const gameStateRegistry = container.resolve(GameStateRegistry);
 	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
 		SceneState.toString(),
@@ -52,18 +89,51 @@ export function resetExploreModeControls() {
 }
 
 export function resetCombatModeControls() {
-    const camera = sceneState.currentScene.activeCamera;
-    
-                if (!camera) {
-                    return;
-                }
-    
-                camera.detachControl();
-                userInterfaceState.sceneGUI.rootContainer.isVisible = true;
-                controlState.exploreGUIControls.forEach((child) => {
-                    child.isVisible = false;
-                });
-                this.resetViewPosition();
+	const gameStateRegistry = container.resolve(GameStateRegistry);
+	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+		SceneState.toString(),
+	);
+	const userInterfaceState =
+		gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+			UserInterfaceState.toString(),
+		);
+	const controlState = gameStateRegistry.getGameStateByStateId<ControlState>(
+		ControlState.toString(),
+	);
+
+	const camera = sceneState.currentScene.activeCamera;
+
+	if (camera) {
+		camera.detachControl();
+		userInterfaceState.sceneGUI.rootContainer.isVisible = true;
+		controlState.exploreGUIControls.forEach((child) => {
+			child.isVisible = false;
+		});
+	}
+}
+
+export function resetDialogueModeControls() {
+	const gameStateRegistry = container.resolve(GameStateRegistry);
+	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+		SceneState.toString(),
+	);
+	const userInterfaceState =
+		gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+			UserInterfaceState.toString(),
+		);
+	const controlState = gameStateRegistry.getGameStateByStateId<ControlState>(
+		ControlState.toString(),
+	);
+
+	const camera = sceneState.currentScene.activeCamera;
+
+	if (camera) {
+		camera.detachControl();
+		userInterfaceState.sceneGUI.rootContainer.isVisible = false;
+		controlState.exploreGUIControls.forEach((child) => {
+			child.isVisible = false;
+		});
+	}
 }
 
 function getSwitchPlayerRightFunction(

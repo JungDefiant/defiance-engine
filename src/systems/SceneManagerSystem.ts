@@ -73,6 +73,8 @@ import UserInterfaceState, {
 } from "src/states/UserInterfaceState";
 import GameplayState from "src/states/GameplayState";
 import ControlState from "src/states/ControlState";
+import TransformNodeComponent from "src/components/TransformNodeComponent";
+import { getGameCanvas, setExploreGameMode } from "src/helpers/SceneHelpers";
 
 export interface NewLocationSceneParams {
 	sceneState: SceneState;
@@ -103,36 +105,7 @@ export default class SceneManagerSystem implements GameSystem {
 		}
 	}
 
-	setDialogueGameMode() {
-		const camera = sceneState.currentScene.activeCamera;
-
-		if (!camera) {
-			return;
-		}
-
-		camera.detachControl();
-		userInterfaceState.sceneGUI.rootContainer.isVisible = false;
-	}
-
-	public setGameMode(newMode: GameMode) {
-		const userInterfaceSystem =
-			this.systemRegistry.getGameSystemBySystemId<UserInterfaceSystem>(
-				SYSTEM_ID_USERINTERFACE,
-			);
-
-		userInterfaceSystem.setGameMode(newMode);
-		gameplayState.gameMode = newMode;
-
-		if (newMode == GameMode.MainMenu) {
-			// X
-		} else if (newMode == GameMode.Explore) {
-		} else if (newMode == GameMode.Dialogue) {
-		} else if (newMode == GameMode.Combat) {
-			
-		}
-	}
-
-	async loadStartingPlayerParty() {
+	private async loadStartingPlayerParty() {
 		const campaignState =
 			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
 				CampaignState.toString(),
@@ -184,7 +157,7 @@ export default class SceneManagerSystem implements GameSystem {
 		await this.initDialogueSystem(sceneState.dialogueFileId);
 		await this.loadModalMap(sceneState.modalIds);
 		await playMusic(sceneState.startMusicId);
-		this.setGameMode(GameMode.Explore);
+		setExploreGameMode();
 	}
 
 	private async createStartingLocation(sceneState: SceneState) {
@@ -258,7 +231,7 @@ export default class SceneManagerSystem implements GameSystem {
 		const sceneUI = this.createSceneUI(scene);
 		const uiScene = this.createUIScene(engine);
 		const mainUI = this.createMainUI(uiScene);
-		this.CreateUICamera(uiScene);
+		this.createUICamera(uiScene);
 		CreateTypography(mainUI);
 		document.fonts.ready.then(() => {
 			mainUI.markAsDirty();
@@ -362,7 +335,7 @@ export default class SceneManagerSystem implements GameSystem {
 		).transformNodes;
 	}
 
-	private CreateUICamera(uiScene: Scene) {
+	private createUICamera(uiScene: Scene) {
 		return new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
 	}
 
@@ -410,27 +383,41 @@ export default class SceneManagerSystem implements GameSystem {
 	}
 
 	private createSceneCamera(scene: Scene, world: World<{}>) {
-		const camera = new UniversalCamera(
-			"cam_explore",
-			Vector3.Zero(),
-			scene,
-		);
-		camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
-		camera.setTarget(DEFAULT_CAM_TARGET);
-		camera.position = new Vector3(0, 0.4, 0);
-		camera.minZ = 0;
-		camera.viewport = new Viewport(0, 0.1, 1, 1);
-		camera.inputs.clear();
-		camera.inputs.addMouse();
-		camera.attachControl(this.gameCanvas, false);
-		scene.onPointerObservable.add((eventData) => {
-			// This will block out vertical rotation
-			// For blocking out horizontal rotation, simply use y instead of x
-			camera.cameraRotation.x = 0;
-		});
-		const newCameraEntityId = addEntity(world);
-		addComponent(world, newCameraEntityId, camera);
-		return newCameraEntityId;
+		const gameCanvas = getGameCanvas();
+
+		if (gameCanvas) {
+			const camera = new UniversalCamera(
+				"cam_explore",
+				Vector3.Zero(),
+				scene,
+			);
+			camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
+			camera.setTarget(DEFAULT_CAM_TARGET);
+			camera.position = new Vector3(0, 0.4, 0);
+			camera.minZ = 0;
+			camera.viewport = new Viewport(0, 0.1, 1, 1);
+			camera.inputs.clear();
+			camera.inputs.addMouse();
+			camera.attachControl(gameCanvas, false);
+			scene.onPointerObservable.add((eventData) => {
+				// This will block out vertical rotation
+				// For blocking out horizontal rotation, simply use y instead of x
+				camera.cameraRotation.x = 0;
+			});
+
+			const cameraTransformNode = new TransformNodeComponent(
+				"camera_node",
+				scene,
+			);
+
+			const newCameraEntityId = addEntity(world);
+			addComponent(world, newCameraEntityId, camera);
+			addComponent(world, newCameraEntityId, cameraTransformNode);
+
+			return newCameraEntityId;
+		}
+
+		return -1;
 	}
 
 	public async disposeScene() {

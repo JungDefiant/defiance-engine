@@ -1,5 +1,5 @@
 import { Nullable, Scene, TransformNode } from "@babylonjs/core";
-import { Component } from "src/registries/ComponentRegistry";
+import { Component } from "./Component";
 
 export const COMPONENT_ID_TRANSFORMNODE = "TransformNode";
 

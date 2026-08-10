@@ -4,19 +4,15 @@ import { Engine } from "@babylonjs/core";
 import { EntityId, query } from "bitecs";
 import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 import ActorStateComponent from "src/components/ActorStateComponent";
-import {
-	COMPONENT_ID_ENEMYGUI,
-	EnemyGUIComponent,
-} from "src/components/EnemyGUIComponent";
+import EnemyGUIComponent from "src/components/EnemyGUIComponent";
 import { GameMode } from "src/types/GameTypes";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import UserInterfaceState from "src/states/UserInterfaceState";
 import SceneState from "src/states/SceneState";
 import GameplayState from "src/states/GameplayState";
-import CombatManagerSystem, {
-	SYSTEM_ID_COMBATMANAGER,
-} from "./CombatManagerSystem";
+import CombatManagerSystem from "./CombatManagerSystem";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
 
 export const SYSTEM_ID_USERINTERFACE = "UserInterface";
 
@@ -31,19 +27,19 @@ export default class UserInterfaceSystem implements GameSystem {
 	public update(deltaTime: number) {
 		const sceneState =
 			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
+				SceneState.toString(),
 			);
 		const actorStateComponentArray =
 			sceneState.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
+				ActorStateComponent.toString(),
 			);
 		const playerGuiComponentArray =
 			sceneState.componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
-				COMPONENT_ID_PLAYERGUI,
+				PlayerGUIComponent.toString(),
 			);
 		const enemyGuiComponentArray =
 			sceneState.componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
-				COMPONENT_ID_ENEMYGUI,
+				EnemyGUIComponent.toString(),
 			);
 
 		for (const eid of query(sceneState.world, [
@@ -68,7 +64,7 @@ export default class UserInterfaceSystem implements GameSystem {
 	public setGameMode(newMode: GameMode) {
 		const userInterfaceState =
 			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				STATE_ID_USERINTERFACE,
+				UserInterfaceState.toString(),
 			);
 		userInterfaceState.partyInfoHud.showHideHud(
 			newMode == GameMode.Combat || newMode == GameMode.Explore,
@@ -80,10 +76,11 @@ export default class UserInterfaceSystem implements GameSystem {
 		userInterfaceState.combatHud.showHideHud(newMode == GameMode.Combat);
 	}
 
-	public setSelectedCharacter(eid: EntityId) {
+	public setSelectedCharacter(eid: EntityId, isCombatMode?: boolean) {
+		const componentRegistry = container.resolve(ComponentRegistry);
 		const gameplayState =
 			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
-				STATE_ID_GAMEPLAYSTATE,
+				GameplayState.toString(),
 			);
 
 		if (!gameplayState.playerEIDs.includes(eid)) {
@@ -91,8 +88,8 @@ export default class UserInterfaceSystem implements GameSystem {
 		}
 
 		const playerGuiComponentArray =
-			this.componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
-				COMPONENT_ID_PLAYERGUI,
+			componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
+				PlayerGUIComponent.toString(),
 			);
 
 		gameplayState.selectedPlayerEID = eid;
@@ -104,16 +101,14 @@ export default class UserInterfaceSystem implements GameSystem {
 			}
 		});
 
-		if (gameplayState.gameMode === GameMode.Combat) {
+		if (isCombatMode) {
 			const combatManagerSystem =
 				this.systemRegistry.getGameSystemBySystemId<CombatManagerSystem>(
-					SYSTEM_ID_COMBATMANAGER,
+					CombatManagerSystem.toString(),
 				);
 			combatManagerSystem.resetControls();
 		}
 	}
-
-	public createPlayerInput(inputMode: GameMode) {}
 
 	private updatePlayerGUI(
 		playerActorState: ActorStateComponent,

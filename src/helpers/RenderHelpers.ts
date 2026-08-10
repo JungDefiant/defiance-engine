@@ -1,14 +1,12 @@
 import { EntityId } from "bitecs";
-import {
+import ActorStateComponent, {
 	AbilityData,
-	ActorStateComponent,
 } from "src/components/ActorStateComponent";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import RenderQueueSystem, {
 	RenderQueueEntry,
 	RenderQueueType,
 	RenderQueueVarsSpecialFX,
-	SYSTEM_ID_RENDERQUEUE,
 } from "src/systems/RenderQueueSystem";
 import { container } from "tsyringe";
 
@@ -40,7 +38,9 @@ export function addAbilityRQEs(
 ) {
 	const renderQueueSystem = container
 		.resolve(SystemRegistry)
-		.getGameSystemBySystemId<RenderQueueSystem>(SYSTEM_ID_RENDERQUEUE);
+		.getGameSystemBySystemId<RenderQueueSystem>(
+			RenderQueueSystem.toString(),
+		);
 	const messageDisplayRenderQueueEntry = new RenderQueueEntry(
 		RenderQueueType.MessageDisplay,
 		{
