@@ -1,16 +1,17 @@
-import { container, singleton } from "tsyringe";
+import { container } from "tsyringe";
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { Image } from "@babylonjs/gui";
 import { getPublicRoot } from "src/helpers/Utils";
 import {
-	COMPONENT_ID_IMAGEANIMATION,
 	ImageAnimationComponent,
 	SpriteAnimationProps,
 } from "src/components/ImageAnimationComponent";
 import SceneState from "src/states/SceneState";
-import { ComponentRegistry } from "src/states/registries/ComponentRegistry";
-import { COMPONENT_ID_STICKERIMAGE } from "src/components/StickerImageComponent";
+import StickerImageComponent, {
+	COMPONENT_ID_STICKERIMAGE,
+} from "src/components/StickerImageComponent";
 import { EntityFactory } from "./EntityFactory";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
 
 export const FACTORY_ID_STICKER = "StickerFactory";
 
@@ -41,8 +42,8 @@ export class StickerFactory implements EntityFactory {
 			sceneState.world,
 			newEntity,
 			set(
-				componentRegistry.getComponentArrayByComponentId(
-					COMPONENT_ID_STICKERIMAGE,
+				componentRegistry.getComponentArrayByComponentId<StickerImageComponent>(
+					StickerImageComponent.toString(),
 				),
 				newSticker,
 			),
@@ -54,8 +55,8 @@ export class StickerFactory implements EntityFactory {
 				sceneState.world,
 				newEntity,
 				set(
-					componentRegistry.getComponentArrayByComponentId(
-						COMPONENT_ID_IMAGEANIMATION,
+					componentRegistry.getComponentArrayByComponentId<ImageAnimationComponent>(
+						ImageAnimationComponent.toString(),
 					),
 					newAnim,
 				),

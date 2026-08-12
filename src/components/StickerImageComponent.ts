@@ -1,6 +1,6 @@
 import { Nullable } from "@babylonjs/core";
 import { Image } from "@babylonjs/gui";
-import { Component } from "src/states/registries/ComponentRegistry";
+import { Component } from "./Component";
 
 export const COMPONENT_ID_STICKERIMAGE = "StickerImage";
 

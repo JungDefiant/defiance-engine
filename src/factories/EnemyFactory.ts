@@ -2,10 +2,6 @@ import { container, singleton } from "tsyringe";
 import { EntityFactory } from "src/factories/EntityFactory";
 import { addComponent, addEntity, EntityId, query, set } from "bitecs";
 import {
-	ActorStateComponent,
-	COMPONENT_ID_ACTORSTATE,
-} from "src/components/ActorStateComponent";
-import {
 	Mesh,
 	MeshBuilder,
 	PBRMaterial,
@@ -14,17 +10,13 @@ import {
 	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
-import {
-	COMPONENT_ID_ENEMYGUI,
-	EnemyGUIComponent,
-} from "src/components/EnemyGUIComponent";
 import { getPublicRoot } from "src/helpers/Utils";
-import { ComponentRegistry } from "src/states/registries/ComponentRegistry";
 import SceneState from "src/states/SceneState";
 import UserInterfaceState from "src/states/UserInterfaceState";
-import { COMPONENT_ID_CHARACTERSPRITE } from "src/components/CharacterSpriteComponent";
-
-export const FACTORY_ID_ENEMY = "EnemyFactory";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
+import ActorStateComponent from "src/components/ActorStateComponent";
+import EnemyGUIComponent from "src/components/EnemyGUIComponent";
 
 export class EnemyFactory implements EntityFactory {
 	public start() {}
@@ -39,10 +31,11 @@ export class EnemyFactory implements EntityFactory {
 			campaignId,
 		);
 		const componentRegistry = container.resolve(ComponentRegistry);
-		const characterSprite = componentRegistry.getComponentByEntityId<Mesh>(
-			COMPONENT_ID_CHARACTERSPRITE,
-			newEntityId,
-		);
+		const characterSprite =
+			componentRegistry.getComponentByEntityId<CharacterSpriteComponent>(
+				CharacterSpriteComponent.toString(),
+				newEntityId,
+			);
 		characterSprite.locallyTranslate(position);
 		return newEntityId;
 	}
@@ -88,8 +81,8 @@ export class EnemyFactory implements EntityFactory {
 			sceneState.world,
 			newEntity,
 			set(
-				componentRegistry.getComponentArrayByComponentId(
-					COMPONENT_ID_ACTORSTATE,
+				componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+					ActorStateComponent.toString(),
 				),
 				newActorComp,
 			),
@@ -101,8 +94,8 @@ export class EnemyFactory implements EntityFactory {
 			sceneState.world,
 			newEntity,
 			set(
-				componentRegistry.getComponentArrayByComponentId(
-					COMPONENT_ID_CHARACTERSPRITE,
+				componentRegistry.getComponentArrayByComponentId<CharacterSpriteComponent>(
+					CharacterSpriteComponent.toString(),
 				),
 				newEnemySprite,
 			),
@@ -116,8 +109,8 @@ export class EnemyFactory implements EntityFactory {
 			sceneState.world,
 			newEntity,
 			set(
-				componentRegistry.getComponentArrayByComponentId(
-					COMPONENT_ID_ENEMYGUI,
+				componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
+					EnemyGUIComponent.toString(),
 				),
 				newEnemyGUI,
 			),
@@ -126,18 +119,21 @@ export class EnemyFactory implements EntityFactory {
 		return newEntity;
 	}
 
-	private createEnemySprite(eid: EntityId, parentNode: TransformNode): Mesh {
+	private createEnemySprite(
+		entityId: EntityId,
+		parentNode: TransformNode,
+	): Mesh {
 		const sceneState = container.resolve(SceneState);
 		const componentRegistry = container.resolve(ComponentRegistry);
 
 		const actorData =
 			componentRegistry.getComponentByEntityId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
-				eid,
+				ActorStateComponent.toString(),
+				entityId,
 			);
 
 		const enActorSprite = MeshBuilder.CreatePlane(
-			`enBattlerSprite_${actorData.id}_${eid}`,
+			`enBattlerSprite_${actorData.id}_${entityId}`,
 			{
 				width: 0.4,
 				height: 0.8,
@@ -146,7 +142,7 @@ export class EnemyFactory implements EntityFactory {
 		);
 
 		const enActorSpriteMat = new PBRMaterial(
-			`mat_enBattlerSprite_${actorData.id}_${eid}`,
+			`mat_enBattlerSprite_${actorData.id}_${entityId}`,
 			sceneState.currentScene,
 		);
 		enActorSprite.parent = parentNode;

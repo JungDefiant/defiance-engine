@@ -1,7 +1,5 @@
 import { TransformNode, Vector3 } from "@babylonjs/core";
-import { Component } from "src/states/registries/ComponentRegistry";
-
-export const COMPONENT_ID_ENTITYMOVEMENT = "EntityMovement";
+import { Component } from "./Component";
 
 export default class EntityMovementComponent implements Component {
 	transform: TransformNode;

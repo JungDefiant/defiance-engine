@@ -1,17 +1,5 @@
-import {
-	CreateAudioEngineAsync,
-	Engine,
-	Scene,
-	UniversalCamera,
-	Vector3,
-} from "@babylonjs/core";
-import { DEFAULT_CAMPAIGN_ID } from "src/constants/GeneralConstants";
-import { MainMenuScreen } from "src/gui/screens/MainMenuScreen";
+import { Engine } from "@babylonjs/core";
 import { container } from "tsyringe";
-import { getPublicRoot } from "./Utils";
-import { CampaignData } from "src/types/GameTypes";
-import AudioState from "src/states/AudioState";
-import MainMenuScene from "src/objects/MainMenuScene";
 
 export function registerNewEngine(): Engine {
 	const canvas = document.getElementById(
@@ -24,5 +12,3 @@ export function registerNewEngine(): Engine {
 	container.register(Engine, { useValue: newEngine });
 	return newEngine;
 }
-
-

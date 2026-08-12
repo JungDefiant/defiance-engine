@@ -1,4 +1,4 @@
-import { ActorStateComponent } from "src/components/ActorStateComponent";
+import ActorStateComponent from "src/components/ActorStateComponent";
 import { getPublicRoot } from "./Utils";
 
 export async function loadSaveData(id: string): Promise<SaveData> {

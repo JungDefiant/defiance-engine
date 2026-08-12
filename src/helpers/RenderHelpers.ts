@@ -2,37 +2,39 @@ import { EntityId } from "bitecs";
 import ActorStateComponent, {
 	AbilityData,
 } from "src/components/ActorStateComponent";
+import {
+	RenderQueueEntryFloatingText,
+	RenderQueueEntryMessageDisplay,
+	RenderQueueEntrySpecialFX,
+} from "src/interfaces/RenderQueueEntry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
-import RenderQueueSystem, {
-	RenderQueueEntry,
-	RenderQueueType,
-	RenderQueueVarsSpecialFX,
-} from "src/systems/RenderQueueSystem";
+import RenderQueueSystem from "src/systems/RenderQueueSystem";
 import { container } from "tsyringe";
 
 export function addFloatingTextRQE(
-	targetEid: number,
+	targetEntityId: number,
 	text: string,
 	color: string,
 ) {
-	const rqeSystem = container.resolve(RenderQueueSystem);
-	const ftRQE = new RenderQueueEntry(
-		RenderQueueType.FloatingText,
-		{
-			targets: [targetEid],
-			text,
-			color,
-		},
+	const renderQueueSystem = container
+		.resolve(SystemRegistry)
+		.getGameSystemBySystemId<RenderQueueSystem>(
+			RenderQueueSystem.toString(),
+		);
+	const floatingTextRqe = new RenderQueueEntryFloatingText(
+		[targetEntityId],
+		text,
+		color,
 		true,
 		1,
 	);
 
-	rqeSystem.addRenderQueueEntry(ftRQE);
+	renderQueueSystem.addRenderQueueEntry(floatingTextRqe);
 }
 
 export function addAbilityRQEs(
-	sourceEid: EntityId,
-	targetEids: EntityId[],
+	sourceEntityId: EntityId,
+	targetEntityIds: EntityId[],
 	sourceData: ActorStateComponent,
 	actionData: AbilityData,
 ) {
@@ -41,33 +43,24 @@ export function addAbilityRQEs(
 		.getGameSystemBySystemId<RenderQueueSystem>(
 			RenderQueueSystem.toString(),
 		);
-	const messageDisplayRenderQueueEntry = new RenderQueueEntry(
-		RenderQueueType.MessageDisplay,
-		{
-			text: `${sourceData.name} : ${actionData.name}`,
-		},
+	const messageDisplayRenderQueueEntry = new RenderQueueEntryMessageDisplay(
+		`${sourceData.name} : ${actionData.name}`,
 		false,
 		1.05,
 	);
 
-	const castAbilitySpecialFxRenderQueueEntry = new RenderQueueEntry(
-		RenderQueueType.SpecialFX,
-		{
-			targets: [sourceEid],
-			vfxUrl: actionData.castVfxURL as string,
-			audioUrl: actionData.castSfxURL as string,
-		} as RenderQueueVarsSpecialFX,
+	const castAbilitySpecialFxRenderQueueEntry = new RenderQueueEntrySpecialFX(
+		[sourceEntityId],
+		actionData.castVfxURL as string,
+		actionData.castSfxURL as string,
 		true,
 		0.5,
 	);
 
-	const hitAbilitySpecialFxRenderQueueEntry = new RenderQueueEntry(
-		RenderQueueType.SpecialFX,
-		{
-			targets: targetEids,
-			vfxUrl: actionData.hitVfxURL as string,
-			audioUrl: actionData.hitSfxURL as string,
-		} as RenderQueueVarsSpecialFX,
+	const hitAbilitySpecialFxRenderQueueEntry = new RenderQueueEntrySpecialFX(
+		targetEntityIds,
+		actionData.hitVfxURL as string,
+		actionData.hitSfxURL as string,
 		false,
 		1,
 	);

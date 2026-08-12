@@ -1,7 +1,5 @@
 import { Image } from "@babylonjs/gui";
-import { Component } from "src/states/registries/ComponentRegistry";
-
-export const COMPONENT_ID_IMAGEANIMATION = "ImageAnimation";
+import { Component } from "./Component";
 
 export class ImageAnimationComponent implements Component {
 	spriteSheet: Image;

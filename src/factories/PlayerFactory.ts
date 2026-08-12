@@ -1,17 +1,11 @@
 import { addComponent, addEntity, EntityId, set } from "bitecs";
-import { container, singleton } from "tsyringe";
+import { container } from "tsyringe";
 import { EntityFactory } from "src/factories/EntityFactory";
-import {
-	ActorStateComponent,
-	COMPONENT_ID_ACTORSTATE,
-} from "src/components/ActorStateComponent";
-import {
-	COMPONENT_ID_PLAYERGUI,
-	PlayerGUIComponent,
-} from "src/components/PlayerGUIComponent";
 import { getPublicRoot } from "src/helpers/Utils";
 import SceneState from "src/states/SceneState";
-import { ComponentRegistry } from "src/states/registries/ComponentRegistry";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import ActorStateComponent from "src/components/ActorStateComponent";
+import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 
 export const FACTORY_ID_PLAYER = "PlayerFactory";
 
@@ -41,8 +35,8 @@ export class PlayerFactory implements EntityFactory {
 			sceneState.world,
 			newEntity,
 			set(
-				componentRegistry.getComponentArrayByComponentId(
-					COMPONENT_ID_ACTORSTATE,
+				componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+					ActorStateComponent.toString(),
 				),
 				newActorComp,
 			),
@@ -57,8 +51,8 @@ export class PlayerFactory implements EntityFactory {
 			sceneState.world,
 			newEntity,
 			set(
-				componentRegistry.getComponentArrayByComponentId(
-					COMPONENT_ID_PLAYERGUI,
+				componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
+					PlayerGUIComponent.toString(),
 				),
 				newPlayerGUI,
 			),

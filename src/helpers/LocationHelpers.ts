@@ -17,10 +17,8 @@ import {
 import { Button, Control, Vector2WithInfo } from "@babylonjs/gui";
 import { getPublicRoot } from "./Utils";
 import { container } from "tsyringe";
-import GameState from "src/states/GameState";
 import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import EventHandlerSystem from "src/systems/EventHandlerSystem";
-import { EntityMovementComponent } from "src/components/EntityMovementComponent";
 import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
 import { addComponent, set } from "bitecs";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";

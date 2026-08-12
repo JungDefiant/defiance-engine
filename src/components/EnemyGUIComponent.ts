@@ -13,14 +13,10 @@ import { container } from "tsyringe";
 import { EntityId } from "bitecs";
 import { Mesh } from "@babylonjs/core";
 import { Themes } from "../gui/Themes";
-import {
-	Component,
-	ComponentRegistry,
-} from "src/states/registries/ComponentRegistry";
-import { ActorStateComponent } from "./ActorStateComponent";
 import { ActorGUI } from "../interfaces/ActorGUI";
-
-export const COMPONENT_ID_ENEMYGUI = "EnemyGUI";
+import { Component } from "./Component";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import ActorStateComponent from "./ActorStateComponent";
 
 export default class EnemyGUIComponent implements ActorGUI, Component {
 	private rootContainer: StackPanel;
@@ -35,7 +31,7 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 
 	public constructor(eid: EntityId, sceneGUI: AdvancedDynamicTexture) {
 		const componentRegistry = container.resolve(ComponentRegistry);
-		const enemyActorData = componentRegistry.getComponentByEntityId(
+		const enemyActorState = componentRegistry.getComponentByEntityId(
 			"ActorState",
 			eid,
 		) as ActorStateComponent;
@@ -45,7 +41,7 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		) as Mesh;
 
 		this.rootContainer = new StackPanel(
-			`ui_enBattlerUI_${enemyActorData.id}_${eid}`,
+			`ui_enBattlerUI_${enemyActorState.id}_${eid}`,
 		);
 		this.rootContainer.widthInPixels = 120;
 		this.rootContainer.heightInPixels = 240;

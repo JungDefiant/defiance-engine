@@ -1,7 +1,5 @@
 import { Mesh, MeshCreationOptions, Nullable, Scene } from "@babylonjs/core";
-import { Component } from "src/states/registries/ComponentRegistry";
-
-export const COMPONENT_ID_CHARACTERSPRITE = "CharacterSprite";
+import { Component } from "./Component";
 
 export default class CharacterSpriteComponent
 	extends Mesh

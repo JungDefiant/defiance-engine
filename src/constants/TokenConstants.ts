@@ -9,15 +9,7 @@ import ActorStateSystem from "../systems/ActorStateSystem";
 import { EnemyFactory } from "src/factories/EnemyFactory";
 import { PlayerFactory } from "src/factories/PlayerFactory";
 import { StickerFactory } from "src/factories/StickerFactory";
-import { ActorStateComponent } from "src/components/ActorStateComponent";
-import { CharacterSpriteComponent } from "src/components/CharacterSpriteComponent";
-import { EnemyGUIComponent } from "src/components/EnemyGUIComponent";
-import { EntityMovementComponent } from "src/components/EntityMovementComponent";
-import { FloatingTextComponent } from "src/components/FloatingTextComponent";
 import { ImageAnimationComponent } from "src/components/ImageAnimationComponent";
-import { PlayerGUIComponent } from "src/components/PlayerGUIComponent";
-import { StickerImageComponent } from "src/components/StickerImageComponent";
-import { TransformNodeComponent } from "src/components/TransformNodeComponent";
 import AudioState from "src/states/AudioState";
 import CampaignState from "src/states/CampaignState";
 import ControlState from "src/states/ControlState";
@@ -25,6 +17,14 @@ import DialogueState from "src/states/DialogueState";
 import GameplayState from "src/states/GameplayState";
 import SceneState from "src/states/SceneState";
 import UserInterfaceState from "src/states/UserInterfaceState";
+import ActorStateComponent from "src/components/ActorStateComponent";
+import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
+import EnemyGUIComponent from "src/components/EnemyGUIComponent";
+import EntityMovementComponent from "src/components/EntityMovementComponent";
+import FloatingTextComponent from "src/components/FloatingTextComponent";
+import PlayerGUIComponent from "src/components/PlayerGUIComponent";
+import StickerImageComponent from "src/components/StickerImageComponent";
+import TransformNodeComponent from "src/components/TransformNodeComponent";
 
 export const SYSTEM_TOKENS = [
 	ActorStateSystem,

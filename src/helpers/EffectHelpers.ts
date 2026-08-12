@@ -1,13 +1,11 @@
 import { RandomRange } from "@babylonjs/core";
-import {
+import ActorStateComponent, {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTrigger,
-	ActorStateComponent,
 	EffectVar,
 } from "src/components/ActorStateComponent";
 import { Themes } from "src/gui/Themes";
-import GameState from "src/states/GameState";
 import { container } from "tsyringe";
 import { clamp } from "./Utils";
 import { addFloatingTextRQE } from "./RenderHelpers";
