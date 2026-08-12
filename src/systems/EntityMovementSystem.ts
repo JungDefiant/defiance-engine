@@ -1,10 +1,11 @@
 import { inject } from "tsyringe";
 import GameSystem from "./GameSystem";
 import { Engine, Vector3 } from "@babylonjs/core";
-import { EntityId, query, removeComponent } from "bitecs";
-import { EntityMovementComponent } from "src/components/EntityMovementComponent";
+import { query, removeComponent } from "bitecs";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import SceneState from "src/states/SceneState";
+import EntityMovementComponent from "src/components/EntityMovementComponent";
 
 export const SYSTEM_ID_ENTITYMOVEMENT = "EntityMovement";
 
@@ -17,12 +18,27 @@ export default class EntityMovementSystem implements GameSystem {
 	public async start(engine: Engine): Promise<void> {}
 
 	public update(deltaTime: number): void {
-		for (const eid of query(gameState.world, [gameState.EntityMovement])) {
-			const entityMovement = gameState.EntityMovement[eid];
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				SceneState.toString(),
+			);
+		const entityMovementComponentArray =
+			sceneState.componentRegistry.getComponentArrayByComponentId<EntityMovementComponent>(
+				EntityMovementComponent.toString(),
+			);
+
+		for (const eid of query(sceneState.world, [
+			entityMovementComponentArray,
+		])) {
+			const entityMovement = entityMovementComponentArray[eid];
 			this.moveEntityTowardsDestination(deltaTime, entityMovement);
-			if (this.checkIfEntityAtDestination(eid, gameState)) {
+			if (this.checkIfEntityAtDestination(entityMovement)) {
 				entityMovement.onDestinationReachedEvent();
-				removeComponent(gameState.world, eid, gameState.EntityMovement);
+				removeComponent(
+					sceneState.world,
+					eid,
+					entityMovementComponentArray,
+				);
 			}
 		}
 	}
@@ -53,10 +69,8 @@ export default class EntityMovementSystem implements GameSystem {
 	}
 
 	private checkIfEntityAtDestination(
-		eid: EntityId,
-		gameState: GameState,
+		entityMovement: EntityMovementComponent,
 	): boolean {
-		const entityMovement = gameState.EntityMovement[eid];
 		const distanceLeft = Vector3.Distance(
 			entityMovement.transform.position,
 			entityMovement.destination,

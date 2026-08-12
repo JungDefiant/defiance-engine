@@ -12,8 +12,11 @@ import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/premades/ActionSlot";
 import CombatManagerSystem from "src/systems/CombatManagerSystem";
-import { ActorStateComponent } from "src/components/ActorStateComponent";
 import { getPublicRoot } from "src/helpers/Utils";
+import { container } from "tsyringe";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import ControlState from "src/states/ControlState";
+import ActorStateComponent from "src/components/ActorStateComponent";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -67,32 +70,37 @@ export default class CombatHUD implements IHUD {
 	}
 
 	public async setActionBar(
-		actorData: ActorStateComponent,
-		cmSystem: CombatManagerSystem,
+		actorState: ActorStateComponent,
+		combatManagerSystem: CombatManagerSystem,
 	): Promise<void> {
-		if (!actorData) {
+		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const controlState =
+			gameStateRegistry.getGameStateByStateId<ControlState>(
+				ControlState.toString(),
+			);
+
+		if (!actorState) {
 			return;
 		}
 
 		for (let i = 0; i < this.abilitySlots.length; i++) {
-			const abData = await actorData.powerData[i];
+			const abilityData = await actorState.powerData[i];
 			const abilitySlot = this.abilitySlots[i];
 			if (!abilitySlot) {
 				continue;
 			}
 
-			if (abData) {
-				abilitySlot.setActionSlotIcon(abData.iconURL as string);
+			if (abilityData) {
+				abilitySlot.setActionSlotIcon(abilityData.iconURL as string);
 				abilitySlot.setOnClickEvent(() =>
-					cmSystem.startQueueActionPlayer(
-						gameState,
-						actorData.entityId,
+					combatManagerSystem.startQueueActionPlayer(
+						actorState.entityId,
 						i,
 					),
 				);
 				abilitySlot.setActionLabelText(
 					String.fromCharCode(
-						gameState.controlSettings.powerActions[i],
+						controlState.controlSettings.powerActions[i],
 					).toUpperCase(),
 				);
 			} else {
@@ -102,31 +110,30 @@ export default class CombatHUD implements IHUD {
 			}
 		}
 
-		if (!actorData.itemData) {
+		if (!actorState.itemData) {
 			return;
 		}
 
 		for (let i = 0; i < this.deviceSlots.length; i++) {
-			const devData = await actorData.itemData[i];
+			const deviceData = await actorState.itemData[i];
 			const deviceSlot = this.deviceSlots[i];
 			if (!deviceSlot) {
 				continue;
 			}
 
-			if (devData) {
+			if (deviceData) {
 				deviceSlot.setActionSlotIcon(
-					`${getPublicRoot()}${devData.iconURL as string}`,
+					`${getPublicRoot()}${deviceData.iconURL as string}`,
 				);
 				deviceSlot.setOnClickEvent(() =>
-					cmSystem.startQueueActionPlayer(
-						gameState,
-						actorData.entityId,
+					combatManagerSystem.startQueueActionPlayer(
+						actorState.entityId,
 						i,
 					),
 				);
 				deviceSlot.setActionLabelText(
 					String.fromCharCode(
-						gameState.controlSettings.deviceActions[i],
+						controlState.controlSettings.deviceActions[i],
 					).toUpperCase(),
 				);
 			} else {

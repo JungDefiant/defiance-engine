@@ -18,6 +18,16 @@ import { getPublicRoot } from "src/helpers/Utils";
 import EventHandlerSystem from "./EventHandlerSystem";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import DialogueState from "src/states/DialogueState";
+import CampaignState from "src/states/CampaignState";
+import SceneState from "src/states/SceneState";
+import UserInterfaceState from "src/states/UserInterfaceState";
+import ControlState from "src/states/ControlState";
+import {
+	setDialogueGameMode,
+	setExploreGameMode,
+} from "src/helpers/SceneHelpers";
+import { Control } from "@babylonjs/gui";
 
 export const SYSTEM_ID_DIALOGUEMANAGER = "DialogueManager";
 
@@ -32,10 +42,18 @@ export default class DialogueManagerSystem implements GameSystem {
 	public update(deltaTime: number) {}
 
 	public initSemantics() {
-		const gs = container.resolve(GameState);
-		gs.semantics = grammar.createSemantics();
+		const dialogueState =
+			this.gameStateRegistry.getGameStateByStateId<DialogueState>(
+				DialogueState.toString(),
+			);
+		const campaignState =
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
+				CampaignState.toString(),
+			);
 
-		gs.semantics.addOperation<DialogueNode[]>("eval()", {
+		dialogueState.semantics = grammar.createSemantics();
+
+		dialogueState.semantics.addOperation<DialogueNode[]>("eval()", {
 			DialogueData(nodes) {
 				return nodes.children.map((node) => {
 					return node.getNode();
@@ -43,7 +61,7 @@ export default class DialogueManagerSystem implements GameSystem {
 			},
 		});
 
-		gs.semantics.addOperation<DialogueNode>("getNode()", {
+		dialogueState.semantics.addOperation<DialogueNode>("getNode()", {
 			Node(node, _, lines, __) {
 				return {
 					name: node.sourceString,
@@ -63,7 +81,7 @@ export default class DialogueManagerSystem implements GameSystem {
 			},
 		});
 
-		gs.semantics.addOperation<DialogueLine>("getLine()", {
+		dialogueState.semantics.addOperation<DialogueLine>("getLine()", {
 			Line(_, char, __, txt) {
 				return {
 					type: "Line",
@@ -160,7 +178,7 @@ export default class DialogueManagerSystem implements GameSystem {
 			},
 		});
 
-		gs.semantics.addOperation<string>("getString()", {
+		dialogueState.semantics.addOperation<string>("getString()", {
 			String(_) {
 				return this.sourceString;
 			},
@@ -172,7 +190,7 @@ export default class DialogueManagerSystem implements GameSystem {
 			},
 		});
 
-		gs.semantics.addOperation<number>("getNumber()", {
+		dialogueState.semantics.addOperation<number>("getNumber()", {
 			Number(_) {
 				return parseFloat(this.sourceString);
 			},
@@ -181,154 +199,172 @@ export default class DialogueManagerSystem implements GameSystem {
 			},
 		});
 
-		gs.semantics.addOperation<Vector3>("getVector3()", {
+		dialogueState.semantics.addOperation<Vector3>("getVector3()", {
 			Vector(_, x, __, y, ___, z, _____) {
 				return new Vector3(x.getNumber(), y.getNumber(), z.getNumber());
 			},
 		});
 
-		gs.semantics.addOperation<ConditionFunction>("parseConditional()", {
-			Conditional(_, cond, __) {
-				return cond.parseConditional();
+		dialogueState.semantics.addOperation<ConditionFunction>(
+			"parseConditional()",
+			{
+				Conditional(_, cond, __) {
+					return cond.parseConditional();
+				},
+				StringVarEq(varKey, _, term) {
+					return () => {
+						const storyVarKey = varKey.sourceString;
+						if (!campaignState.storyVariableMap.has(storyVarKey)) {
+							return false;
+						}
+
+						const stringTerm = term.sourceString;
+						const storyVarValue =
+							campaignState.storyVariableMap.get(
+								storyVarKey,
+							) as string;
+
+						return storyVarValue === stringTerm;
+					};
+				},
+				NumberVarEq(varKey, _, __, term) {
+					return () => {
+						const storyVarKey = varKey.sourceString;
+
+						if (!campaignState.storyVariableMap.has(storyVarKey)) {
+							return false;
+						}
+
+						const numberTerm = term.getNumber();
+						const storyVarValue =
+							campaignState.storyVariableMap.get(
+								storyVarKey,
+							) as number;
+
+						return storyVarValue === numberTerm;
+					};
+				},
+				StringVarNeq(varKey, _, term) {
+					return () => {
+						const storyVarKey = varKey.sourceString;
+						if (!campaignState.storyVariableMap.has(storyVarKey)) {
+							return false;
+						}
+
+						const stringTerm = term.sourceString;
+						const storyVarValue =
+							campaignState.storyVariableMap.get(
+								storyVarKey,
+							) as string;
+
+						return storyVarValue !== stringTerm;
+					};
+				},
+				NumberVarNeq(varKey, _, __, term) {
+					return () => {
+						const storyVarKey = varKey.sourceString;
+
+						if (!campaignState.storyVariableMap.has(storyVarKey)) {
+							return false;
+						}
+
+						const numberTerm = term.getNumber();
+						const storyVarValue =
+							campaignState.storyVariableMap.get(
+								storyVarKey,
+							) as number;
+
+						return storyVarValue !== numberTerm;
+					};
+				},
+				VarLt(varKey, _, term) {
+					return () => {
+						const storyVarKey = varKey.sourceString;
+
+						if (!campaignState.storyVariableMap.has(storyVarKey)) {
+							return false;
+						}
+
+						const numberTerm = term.getNumber();
+						const storyVarValue =
+							campaignState.storyVariableMap.get(
+								storyVarKey,
+							) as number;
+
+						return storyVarValue < numberTerm;
+					};
+				},
+				VarLte(varKey, _, term) {
+					return () => {
+						const storyVarKey = varKey.sourceString;
+
+						if (!campaignState.storyVariableMap.has(storyVarKey)) {
+							return false;
+						}
+
+						const numberTerm = term.getNumber();
+						const storyVarValue =
+							campaignState.storyVariableMap.get(
+								storyVarKey,
+							) as number;
+
+						return storyVarValue <= numberTerm;
+					};
+				},
+				VarGt(varKey, _, term) {
+					return () => {
+						const storyVarKey = varKey.sourceString;
+
+						if (!campaignState.storyVariableMap.has(storyVarKey)) {
+							return false;
+						}
+
+						const numberTerm = term.getNumber();
+						const storyVarValue =
+							campaignState.storyVariableMap.get(
+								storyVarKey,
+							) as number;
+
+						return storyVarValue > numberTerm;
+					};
+				},
+				VarGte(varKey, _, term) {
+					return () => {
+						const storyVarKey = varKey.sourceString;
+
+						if (!campaignState.storyVariableMap.has(storyVarKey)) {
+							return false;
+						}
+
+						const numberTerm = term.getNumber();
+						const storyVarValue =
+							campaignState.storyVariableMap.get(
+								storyVarKey,
+							) as number;
+
+						return storyVarValue >= numberTerm;
+					};
+				},
 			},
-			StringVarEq(varKey, _, term) {
-				return () => {
-					const storyVarKey = varKey.sourceString;
-					if (!gs.storyVariableMap.has(storyVarKey)) {
-						return false;
-					}
-
-					const stringTerm = term.sourceString;
-					const storyVarValue = gs.storyVariableMap.get(
-						storyVarKey,
-					) as string;
-
-					return storyVarValue === stringTerm;
-				};
-			},
-			NumberVarEq(varKey, _, __, term) {
-				return () => {
-					const storyVarKey = varKey.sourceString;
-
-					if (!gs.storyVariableMap.has(storyVarKey)) {
-						return false;
-					}
-
-					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(
-						storyVarKey,
-					) as number;
-
-					return storyVarValue === numberTerm;
-				};
-			},
-			StringVarNeq(varKey, _, term) {
-				return () => {
-					const storyVarKey = varKey.sourceString;
-					if (!gs.storyVariableMap.has(storyVarKey)) {
-						return false;
-					}
-
-					const stringTerm = term.sourceString;
-					const storyVarValue = gs.storyVariableMap.get(
-						storyVarKey,
-					) as string;
-
-					return storyVarValue !== stringTerm;
-				};
-			},
-			NumberVarNeq(varKey, _, __, term) {
-				return () => {
-					const storyVarKey = varKey.sourceString;
-
-					if (!gs.storyVariableMap.has(storyVarKey)) {
-						return false;
-					}
-
-					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(
-						storyVarKey,
-					) as number;
-
-					return storyVarValue !== numberTerm;
-				};
-			},
-			VarLt(varKey, _, term) {
-				return () => {
-					const storyVarKey = varKey.sourceString;
-
-					if (!gs.storyVariableMap.has(storyVarKey)) {
-						return false;
-					}
-
-					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(
-						storyVarKey,
-					) as number;
-
-					return storyVarValue < numberTerm;
-				};
-			},
-			VarLte(varKey, _, term) {
-				return () => {
-					const storyVarKey = varKey.sourceString;
-
-					if (!gs.storyVariableMap.has(storyVarKey)) {
-						return false;
-					}
-
-					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(
-						storyVarKey,
-					) as number;
-
-					return storyVarValue <= numberTerm;
-				};
-			},
-			VarGt(varKey, _, term) {
-				return () => {
-					const storyVarKey = varKey.sourceString;
-
-					if (!gs.storyVariableMap.has(storyVarKey)) {
-						return false;
-					}
-
-					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(
-						storyVarKey,
-					) as number;
-
-					return storyVarValue > numberTerm;
-				};
-			},
-			VarGte(varKey, _, term) {
-				return () => {
-					const storyVarKey = varKey.sourceString;
-
-					if (!gs.storyVariableMap.has(storyVarKey)) {
-						return false;
-					}
-
-					const numberTerm = term.getNumber();
-					const storyVarValue = gs.storyVariableMap.get(
-						storyVarKey,
-					) as number;
-
-					return storyVarValue >= numberTerm;
-				};
-			},
-		});
+		);
 	}
 
-	public async loadDialogueMap(dlgId: string): Promise<void> {
-		const gs = container.resolve(GameState);
+	public async loadDialogueMap(dialogueId: string): Promise<void> {
+		const dialogueState =
+			this.gameStateRegistry.getGameStateByStateId<DialogueState>(
+				DialogueState.toString(),
+			);
+		const campaignState =
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
+				CampaignState.toString(),
+			);
 
-		if (!gs.semantics) {
+		if (!dialogueState.semantics) {
 			return;
 		}
 
 		const response = await fetch(
-			`${getPublicRoot()}/data/${gs.campaignId}/dialogues/${dlgId}.txt`,
+			`${getPublicRoot()}/data/${campaignState.campaignId}/dialogues/${dialogueId}.txt`,
 		);
 		const rawData = await response.text();
 		if (!rawData) {
@@ -339,11 +375,11 @@ export default class DialogueManagerSystem implements GameSystem {
 		if (matchResult.failed()) {
 			console.error("Match Result failed", matchResult.message);
 		} else if (matchResult.succeeded()) {
-			const dialogueNodes = gs
+			const dialogueNodes = dialogueState
 				.semantics(matchResult)
 				.eval() as DialogueNode[];
 			dialogueNodes.forEach((node) => {
-				gs.dialogueMap.set(node.name, node);
+				dialogueState.dialogueMap.set(node.name, node);
 			});
 		}
 	}
@@ -355,20 +391,34 @@ export default class DialogueManagerSystem implements GameSystem {
 			viewPositionNode: TransformNode;
 		},
 	): Promise<void> {
-		const gs = container.resolve(GameState);
-		const smSystem = container.resolve(SceneManagerSystem);
-		const dlgHud = gs.dialogueHud;
-		const camera = gs.scene.activeCamera as UniversalCamera;
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				SceneState.toString(),
+			);
+		const userInterfaceState =
+			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				UserInterfaceState.toString(),
+			);
+		const dialogueState =
+			this.gameStateRegistry.getGameStateByStateId<DialogueState>(
+				DialogueState.toString(),
+			);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				DialogueState.toString(),
+			);
+		const dialogueHud = userInterfaceState.dialogueHud;
+		const camera = sceneState.currentScene.activeCamera as UniversalCamera;
 
-		if (!gs || !smSystem || !dlgHud || !camera) {
+		if (!dialogueHud || !camera) {
 			return;
 		}
 
-		if (!gs.dialogueMap.has(dialogueNodeId)) {
+		if (!dialogueState.dialogueMap.has(dialogueNodeId)) {
 			return;
 		}
 
-		gs.actionPauseSet.add(PAUSE_DIALOGUE);
+		controlState.actionPauseSet.add(PAUSE_DIALOGUE);
 
 		if (startDialogueProps) {
 			camera.position =
@@ -379,57 +429,69 @@ export default class DialogueManagerSystem implements GameSystem {
 			);
 		}
 
-		smSystem.setGameMode(GameMode.Dialogue);
-		dlgHud.clearEntryStacks();
+		setDialogueGameMode();
+		dialogueHud.clearEntryStacks();
 
 		this.startDialogueNode(dialogueNodeId);
 	}
 
 	public startDialogueNode(node: string) {
-		const gs = container.resolve(GameState);
+		const dialogueState =
+			this.gameStateRegistry.getGameStateByStateId<DialogueState>(
+				DialogueState.toString(),
+			);
 
-		if (!gs.dialogueMap.has(node)) {
+		if (!dialogueState.dialogueMap.has(node)) {
 			return;
 		}
 
-		const dialogueData = gs.dialogueMap.get(node) as DialogueNode;
-		gs.activeDialogue = dialogueData;
+		const dialogueData = dialogueState.dialogueMap.get(
+			node,
+		) as DialogueNode;
+		dialogueState.activeDialogue = dialogueData;
 		this.runLine(0);
 	}
 
 	public runLine(id: number) {
-		const gs = container.resolve(GameState);
+		const dialogueState =
+			this.gameStateRegistry.getGameStateByStateId<DialogueState>(
+				DialogueState.toString(),
+			);
+		const userInterfaceState =
+			this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+				UserInterfaceState.toString(),
+			);
 
 		// Get dialogue HUD
-		if (!gs.activeDialogue) {
+		if (!dialogueState.activeDialogue) {
 			this.endDialogue(true);
 			return;
 		}
 
-		const dlgHud = container.resolve(GameState).dialogueHud;
-		const line = gs.activeDialogue.lines[id];
+		const dialogueHud = userInterfaceState.dialogueHud;
+		const line = dialogueState.activeDialogue.lines[id];
 
-		if (!dlgHud) {
+		if (!dialogueHud) {
 			this.endDialogue(true);
 			return;
 		}
 
 		if (!line) {
-			dlgHud.addExitEntry();
+			dialogueHud.addExitEntry();
 			return;
 		}
 
 		switch (line.type) {
 			case "Line":
 				if (line.condition()) {
-					this.displayTextLine(id, line, dlgHud);
+					this.displayTextLine(id, line, dialogueHud);
 				} else {
 					const nextLineId = id + 1;
 					this.runLine(nextLineId);
 				}
 				break;
 			case "Options":
-				this.displayOptionsLine(line, dlgHud);
+				this.displayOptionsLine(line, dialogueHud);
 				break;
 			case "Cmd":
 				if (line.condition()) {
@@ -443,26 +505,34 @@ export default class DialogueManagerSystem implements GameSystem {
 	}
 
 	public endDialogue(switchToExploreMode: boolean) {
-		const smSystem = container.resolve(SceneManagerSystem);
-		const gs = container.resolve(GameState);
+		const controlState =
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
+				ControlState.toString(),
+			);
 
-		gs.actionPauseSet.delete(PAUSE_DIALOGUE);
+		controlState.actionPauseSet.delete(PAUSE_DIALOGUE);
 		if (switchToExploreMode) {
-			smSystem.setGameMode(GameMode.Explore);
+			setExploreGameMode();
 		}
 
-		const ehSystem = container.resolve(EventHandlerSystem);
-		ehSystem.checkEventByTrigger("OnDialogueEnd");
+		const eventHandlerSystem =
+			this.systemRegistry.getGameSystemBySystemId<EventHandlerSystem>(
+				EventHandlerSystem.toString(),
+			);
+		eventHandlerSystem.checkEventByTrigger("OnDialogueEnd");
 	}
 
 	private displayTextLine(
 		id: number,
 		line: DialogueLine,
-		dlgHud: DialogueHUD,
+		dialogueHud: DialogueHUD,
 	) {
-		const gs = container.resolve(GameState);
+		const dialogueState =
+			this.gameStateRegistry.getGameStateByStateId<DialogueState>(
+				DialogueState.toString(),
+			);
 
-		if (!line.text) {
+		if (!dialogueState.activeDialogue || !line.text) {
 			return;
 		}
 
@@ -474,17 +544,17 @@ export default class DialogueManagerSystem implements GameSystem {
 
 		if (line.text) {
 			// Display text entry for dialogue
-			dlgHud.addTextDialogueEntry(line);
+			dialogueHud.addTextDialogueEntry(line);
 		}
 
 		const nextLineId = id + 1;
-		const nextLine = gs.activeDialogue?.lines[nextLineId];
+		const nextLine = dialogueState.activeDialogue?.lines[nextLineId];
 		if (!nextLine) {
-			dlgHud.addExitEntry();
+			dialogueHud.addExitEntry();
 		} else if (nextLine.type === "Options") {
 			this.runLine(nextLineId);
 		} else {
-			dlgHud.addContinueEntry(id, nextLineId);
+			dialogueHud.addContinueEntry(id, nextLineId);
 		}
 	}
 
@@ -505,9 +575,12 @@ export default class DialogueManagerSystem implements GameSystem {
 	}
 
 	private runCommand(id: number, line: DialogueLine) {
-		const gs = container.resolve(GameState);
+		const dialogueState =
+			this.gameStateRegistry.getGameStateByStateId<DialogueState>(
+				DialogueState.toString(),
+			);
 
-		if (!gs || !line.cmd || !line.vars) {
+		if (!dialogueState.activeDialogue || !line.cmd || !line.vars) {
 			this.endDialogue(true);
 			return;
 		}
@@ -537,7 +610,7 @@ export default class DialogueManagerSystem implements GameSystem {
 		}
 
 		const nextLineId = id + 1;
-		const nextLine = gs.activeDialogue?.lines[nextLineId];
+		const nextLine = dialogueState.activeDialogue.lines[nextLineId];
 		if (!nextLine) {
 			this.endDialogue(true);
 			return;
@@ -550,13 +623,19 @@ export default class DialogueManagerSystem implements GameSystem {
 	private setFlag(flag: string) {}
 
 	private setStringVariable(name: string, value: string) {
-		const gs = container.resolve(GameState);
-		gs.storyVariableMap.set(name, value);
+		const campaignState =
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
+				CampaignState.toString(),
+			);
+		campaignState.storyVariableMap.set(name, value);
 	}
 
 	private setNumberVariable(name: string, value: number) {
-		const gs = container.resolve(GameState);
-		gs.storyVariableMap.set(name, value);
+		const campaignState =
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
+				CampaignState.toString(),
+			);
+		campaignState.storyVariableMap.set(name, value);
 	}
 
 	private moveCamera(position: Vector3, target: Vector3) {}
@@ -567,7 +646,10 @@ export default class DialogueManagerSystem implements GameSystem {
 
 	private startCombat(encounterId: string) {
 		this.endDialogue(false);
-		const cmSystem = container.resolve(CombatManagerSystem);
-		cmSystem.startCombat(encounterId);
+		const combatManagerSystem =
+			this.systemRegistry.getGameSystemBySystemId<CombatManagerSystem>(
+				CombatManagerSystem.toString(),
+			);
+		combatManagerSystem.startCombat(encounterId);
 	}
 }

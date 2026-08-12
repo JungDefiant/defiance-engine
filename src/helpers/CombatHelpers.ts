@@ -1,25 +1,20 @@
 import { RandomRange } from "@babylonjs/core";
 import { EntityId, query } from "bitecs";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
-import {
+import ActorStateComponent, {
 	AbilityData,
 	AbilityTarget,
-	ActorStateComponent,
-	COMPONENT_ID_ACTORSTATE,
 	TacticsCondition,
 	TacticsData,
 } from "src/components/ActorStateComponent";
-import {
-	COMPONENT_ID_ENEMYGUI,
-	EnemyGUIComponent,
-} from "src/components/EnemyGUIComponent";
+import EnemyGUIComponent from "src/components/EnemyGUIComponent";
 import ControlState from "src/states/ControlState";
 import GameplayState from "src/states/GameplayState";
 import SceneState from "src/states/SceneState";
 import UserInterfaceState from "src/states/UserInterfaceState";
-import { ComponentRegistry } from "src/states/registries/ComponentRegistry";
 import { CombatState } from "src/systems/CombatManagerSystem";
 import { container } from "tsyringe";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
 
 export function setTacticalPause(isActive: boolean) {
 	const controlState = container.resolve(ControlState);
@@ -56,9 +51,9 @@ export function resetTargeting() {
 	const sceneState = container.resolve(SceneState);
 	const componentRegistry = container.resolve(ComponentRegistry);
 	const enemyGuiComponentArray =
-		componentRegistry.getComponentArrayByComponentId(
-			COMPONENT_ID_ENEMYGUI,
-		) as EnemyGUIComponent[];
+		componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
+			EnemyGUIComponent.toString(),
+		);
 	for (const eid of query(sceneState.world, [enemyGuiComponentArray])) {
 		const enemyGUI = enemyGuiComponentArray[eid];
 		enemyGUI.setVisibleTargetingUI(false);
@@ -77,7 +72,7 @@ export function defeatActor(actor: ActorStateComponent) {
 			let eid = gameplayState.playerEIDs[i];
 			let playerData =
 				componentRegistry.getComponentByEntityId<ActorStateComponent>(
-					COMPONENT_ID_ACTORSTATE,
+					ActorStateComponent.toString(),
 					eid,
 				);
 			if (!playerData.isDefeated) {
@@ -91,7 +86,7 @@ export function defeatActor(actor: ActorStateComponent) {
 			let eid = gameplayState.enemyEIDs[i];
 			let enemyData =
 				componentRegistry.getComponentByEntityId<ActorStateComponent>(
-					COMPONENT_ID_ACTORSTATE,
+					ActorStateComponent.toString(),
 					eid,
 				);
 			if (!enemyData.isDefeated) {
@@ -128,9 +123,9 @@ export function getLowestLifeTarget(
 
 	const componentRegistry = container.resolve(ComponentRegistry);
 	const actorStateComponentArray =
-		componentRegistry.getComponentArrayByComponentId(
-			COMPONENT_ID_ACTORSTATE,
-		) as ActorStateComponent[];
+		componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+			ActorStateComponent.toString(),
+		);
 
 	targetEids.forEach((eid: EntityId) => {
 		const currLife =

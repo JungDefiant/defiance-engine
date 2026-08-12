@@ -18,7 +18,7 @@ import {
 	ComponentRegistry,
 } from "src/states/registries/ComponentRegistry";
 import { ActorStateComponent } from "./ActorStateComponent";
-import { ActorGUI } from "./interfaces/ActorGUI";
+import { ActorGUI } from "../interfaces/ActorGUI";
 
 export const COMPONENT_ID_ENEMYGUI = "EnemyGUI";
 

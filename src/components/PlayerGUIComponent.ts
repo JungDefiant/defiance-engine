@@ -13,7 +13,7 @@ import { EntityId } from "bitecs";
 import { container } from "tsyringe";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import { Component } from "src/states/registries/ComponentRegistry";
-import { ActorGUI } from "./interfaces/ActorGUI";
+import { ActorGUI } from "../interfaces/ActorGUI";
 
 export const COMPONENT_ID_PLAYERGUI = "PlayerGUI";
 

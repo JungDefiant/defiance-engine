@@ -5,6 +5,8 @@ import DialogueManagerSystem from "./DialogueManagerSystem";
 import CombatManagerSystem from "./CombatManagerSystem";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import SceneState from "src/states/SceneState";
+import UserInterfaceState from "src/states/UserInterfaceState";
 
 export const SYSTEM_ID_EVENTHANDLER = "EventHandler";
 
@@ -19,20 +21,23 @@ export default class EventHandlerSystem implements GameSystem {
 	public update(deltaTime: number): void {}
 
 	public checkEventByTrigger(eventTrigger: EventTrigger) {
-		const gs = container.resolve(GameState);
-		if (!gs || !gs.currentLocation) {
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				SceneState.toString(),
+			);
+		if (!sceneState.currentLocation) {
 			return;
 		}
 
-		const eventsArray = gs.currentLocation.events.filter(
-			(evt) => evt.trigger === eventTrigger,
+		const eventsArray = sceneState.currentLocation.events.filter(
+			(event) => event.trigger === eventTrigger,
 		);
 
-		for (const evt of eventsArray) {
+		for (const event of eventsArray) {
 			// TO DO: Check condition for event to trigger
-			this.triggerEvent(evt);
-			const evtIndex = eventsArray.indexOf(evt);
-			gs.currentLocation.events.splice(evtIndex);
+			this.triggerEvent(event);
+			const eventIndex = eventsArray.indexOf(event);
+			sceneState.currentLocation.events.splice(eventIndex);
 			return;
 		}
 	}
@@ -44,13 +49,16 @@ export default class EventHandlerSystem implements GameSystem {
 				dmSystem.startDialogue(event.refId);
 				return;
 			case "Modal":
-				const gs = container.resolve(GameState);
-				const modalData = gs.modalMap.get(event.refId);
+				const userInterfaceState =
+					this.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+						UserInterfaceState.toString(),
+					);
+				const modalData = userInterfaceState.modalMap.get(event.refId);
 				if (!modalData) {
 					return;
 				}
-				gs.modalScreen.setNewPages(modalData.pages);
-				gs.modalScreen.showHide(true);
+				userInterfaceState.modalScreen.setNewPages(modalData.pages);
+				userInterfaceState.modalScreen.showHide(true);
 				return;
 			case "Combat":
 				const cmSystem = container.resolve(CombatManagerSystem);

@@ -13,6 +13,10 @@ import UserInterfaceState from "src/states/UserInterfaceState";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import { container } from "tsyringe";
 import { getGameCanvas, resetCombatViewPosition } from "./SceneHelpers";
+import ActorStateComponent from "src/components/ActorStateComponent";
+import CombatManagerSystem from "src/systems/CombatManagerSystem";
+import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
+import { resetTargeting, setTacticalPause } from "./CombatHelpers";
 
 export function resetExploreModeControls() {
 	const gameStateRegistry = container.resolve(GameStateRegistry);
@@ -110,6 +114,119 @@ export function resetCombatModeControls() {
 			child.isVisible = false;
 		});
 	}
+}
+
+export async function resetCombatModeActionManager() {
+	const systemRegistry = container.resolve(SystemRegistry);
+	const gameStateRegistry = container.resolve(GameStateRegistry);
+	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
+		SceneState.toString(),
+	);
+	const componentRegistry = sceneState.componentRegistry;
+
+	const combatManagerSystem =
+		systemRegistry.getGameSystemBySystemId<CombatManagerSystem>(
+			CombatManagerSystem.toString(),
+		);
+	const gameplayState =
+		gameStateRegistry.getGameStateByStateId<GameplayState>(
+			GameplayState.toString(),
+		);
+	const controlState = gameStateRegistry.getGameStateByStateId<ControlState>(
+		ControlState.toString(),
+	);
+	const userInterfaceState =
+		gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+			UserInterfaceState.toString(),
+		);
+	const actorData =
+		componentRegistry.getComponentByEntityId<ActorStateComponent>(
+			ActorStateComponent.toString(),
+			gameplayState.selectedPlayerEID,
+		);
+	await userInterfaceState.combatHud.setActionBar(
+		actorData,
+		combatManagerSystem,
+	);
+
+	resetTargeting();
+
+	if (controlState.actionManager) {
+		controlState.actionManager.dispose();
+		controlState.actionManager = null;
+	}
+
+	const actionManager = new ActionManager(sceneState.currentScene);
+
+	for (let i = 0; i < actorData.powerData.length; i++) {
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: controlState.controlSettings.powerActions[i],
+				},
+				() => {
+					const cmSystem = container.resolve(CombatManagerSystem);
+					cmSystem.startQueueActionPlayer(actorData.entityId, i);
+				},
+			),
+		);
+	}
+
+	if (actorData.itemData) {
+		for (let i = 0; i < actorData.itemData.length; i++) {
+			actionManager.registerAction(
+				new ExecuteCodeAction(
+					{
+						trigger: ActionManager.OnKeyDownTrigger,
+						parameter:
+							controlState.controlSettings.deviceActions[i],
+					},
+					() => {
+						const cmSystem = container.resolve(CombatManagerSystem);
+						cmSystem.startQueueActionPlayer(actorData.entityId, i);
+					},
+				),
+			);
+		}
+	}
+
+	actionManager.registerAction(
+		new ExecuteCodeAction(
+			{
+				trigger: ActionManager.OnKeyDownTrigger,
+				parameter: controlState.controlSettings.tacticalPause,
+			},
+			() => {
+				setTacticalPause(
+					!controlState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
+				);
+			},
+		),
+	);
+
+	actionManager.registerAction(
+		new ExecuteCodeAction(
+			{
+				trigger: ActionManager.OnKeyDownTrigger,
+				parameter: controlState.controlSettings.switchPlayerLeft,
+			},
+			getSwitchPlayerLeftFunction(gameplayState),
+		),
+	);
+
+	actionManager.registerAction(
+		new ExecuteCodeAction(
+			{
+				trigger: ActionManager.OnKeyDownTrigger,
+				parameter: controlState.controlSettings.switchPlayerRight,
+			},
+			getSwitchPlayerRightFunction(gameplayState),
+		),
+	);
+
+	controlState.actionManager = actionManager;
+	sceneState.currentScene.actionManager = actionManager;
 }
 
 export function resetDialogueModeControls() {

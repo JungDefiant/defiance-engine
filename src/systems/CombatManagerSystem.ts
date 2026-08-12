@@ -1,43 +1,39 @@
 import { container, inject } from "tsyringe";
 import GameSystem from "src/systems/GameSystem";
-import SceneManagerSystem from "src/systems/SceneManagerSystem";
-import { ActionManager, ExecuteCodeAction, Vector3 } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
 import { EntityId, query, removeEntity } from "bitecs";
-import {
+import ActorStateComponent, {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTarget,
 	AbilityTrigger,
-	ActorStateComponent,
 } from "src/components/ActorStateComponent";
 import { EnemyFactory } from "src/factories/EnemyFactory";
 import RenderQueueSystem from "./RenderQueueSystem";
 import {
 	PAUSE_GAMEOVER,
 	PAUSE_RENDERQUEUE,
-	PAUSE_TACTICALPAUSE,
 	PAUSE_VICTORYSCREEN,
 } from "src/constants/GeneralConstants";
-import { GameMode } from "src/types/GameTypes";
-import UserInterfaceSystem from "./UserInterfaceSystem";
 import EventHandlerSystem from "./EventHandlerSystem";
-import {
-	getTargetsBasedOnCondition,
-	resetTargeting as resetPlayerTargeting,
-	setTacticalPause,
-} from "src/helpers/CombatHelpers";
+import { getTargetsBasedOnCondition } from "src/helpers/CombatHelpers";
 import { processAbilityEffects } from "src/helpers/EffectHelpers";
 import { addAbilityRQEs } from "src/helpers/RenderHelpers";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import ControlState from "src/states/ControlState";
 import SceneState from "src/states/SceneState";
 import { SystemRegistry } from "src/registries/SystemRegistry";
-import { FactoryRegistry } from "src/registries/FactoryRegistry";
-import { EnemyGUIComponent } from "src/components/EnemyGUIComponent";
 import GameplayState from "src/states/GameplayState";
 import UserInterfaceState from "src/states/UserInterfaceState";
 import CampaignState from "src/states/CampaignState";
 import { getComponentRegistry } from "src/helpers/RegistryHelpers";
+import { FactoryRegistry } from "src/registries/FactoryRegistry";
+import {
+	setCombatGameMode,
+	setExploreGameMode,
+} from "src/helpers/SceneHelpers";
+import EnemyGUIComponent from "src/components/EnemyGUIComponent";
+import { resetCombatModeActionManager } from "src/helpers/ControlHelpers";
 
 export const SYSTEM_ID_COMBATMANAGER = "CombatManager";
 
@@ -74,11 +70,10 @@ export default class CombatManagerSystem implements GameSystem {
 				UserInterfaceState.toString(),
 			);
 
-		if (gameplayState.gameMode !== GameMode.Combat) {
-			return;
-		}
-
-		if (controlState.actionPauseSet.size > 0) {
+		if (
+			gameplayState.combatState === CombatState.Inactive ||
+			controlState.actionPauseSet.size > 0
+		) {
 			return;
 		}
 
@@ -116,36 +111,33 @@ export default class CombatManagerSystem implements GameSystem {
 	}
 
 	public async startCombat(encId: string): Promise<void> {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
+		const factoryRegistry = container.resolve(FactoryRegistry);
 
-		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-			SceneState.toString(),
-		);
+		const sceneState =
+			this.gameStateRegistry.getGameStateByStateId<SceneState>(
+				SceneState.toString(),
+			);
 		const componentRegistry = sceneState.componentRegistry;
 
-		const sceneManagerSystem =
-			this.systemRegistry.getGameSystemBySystemId<SceneManagerSystem>(
-				SceneManagerSystem.toString(),
-			);
 		const eventHandlerSystem =
 			this.systemRegistry.getGameSystemBySystemId<EventHandlerSystem>(
 				EventHandlerSystem.toString(),
 			);
 		const enemyFactory =
-			this.factoryRegistry.getEntityFactoryByFactoryId<EnemyFactory>(
+			factoryRegistry.getEntityFactoryByFactoryId<EnemyFactory>(
 				EnemyFactory.toString(),
 			);
 		const campaignState =
-			gameStateRegistry.getGameStateByStateId<CampaignState>(
+			this.gameStateRegistry.getGameStateByStateId<CampaignState>(
 				CampaignState.toString(),
 			);
 
 		const controlState =
-			gameStateRegistry.getGameStateByStateId<ControlState>(
+			this.gameStateRegistry.getGameStateByStateId<ControlState>(
 				ControlState.toString(),
 			);
 		const gameplayState =
-			gameStateRegistry.getGameStateByStateId<GameplayState>(
+			this.gameStateRegistry.getGameStateByStateId<GameplayState>(
 				GameplayState.toString(),
 			);
 		const actorStateComponentArray =
@@ -153,16 +145,16 @@ export default class CombatManagerSystem implements GameSystem {
 				ActorStateComponent.toString(),
 			);
 
-		sceneManagerSystem.setGameMode(GameMode.Combat);
+		setCombatGameMode();
 
-		const encData = sceneState.sceneData.encounters[encId];
+		const encounter = sceneState.encounters[encId];
 
-		for (let i = 0; i < encData.length; i++) {
-			const enId = encData[i];
+		for (let i = 0; i < encounter.length; i++) {
+			const enId = encounter[i];
 			const offsetVector = new Vector3(
 				0,
 				0,
-				(encData.length - 1) * -this.SPAWN_OFFSET +
+				(encounter.length - 1) * -this.SPAWN_OFFSET +
 					i * this.SPAWN_OFFSET * 2,
 			);
 			const spawnPosition = this.BASE_SPAWN_POSITION.add(offsetVector);
@@ -179,7 +171,7 @@ export default class CombatManagerSystem implements GameSystem {
 			this.decideNPCAction(enActorData);
 		}
 
-		await this.resetControls();
+		await resetCombatModeActionManager();
 
 		for (const eid of query(sceneState.world, [actorStateComponentArray])) {
 			const actorData = actorStateComponentArray[eid];
@@ -199,24 +191,19 @@ export default class CombatManagerSystem implements GameSystem {
 		this.clearCombatHudEntries();
 		this.disposeEnemyEntities();
 		this.resetPlayerActorState();
-		// Clear inscene UI & show rest of inscene UI
 		this.clearControlActionPause();
-		this.resetCombatStateToDefault();
-		const sceneManagerSystem =
-			this.systemRegistry.getGameSystemBySystemId<SceneManagerSystem>(
-				SceneManagerSystem.toString(),
-			);
-		sceneManagerSystem.setGameMode(GameMode.Explore);
+		this.resetCombatStateToInactive();
+		setExploreGameMode();
 		this.checkEventTriggersOnCombatEnd();
 	}
 
-	private resetCombatStateToDefault() {
+	private resetCombatStateToInactive() {
 		const gameStateRegistry = container.resolve(GameStateRegistry);
 		const gameplayState =
 			gameStateRegistry.getGameStateByStateId<GameplayState>(
 				GameplayState.toString(),
 			);
-		gameplayState.combatState = CombatState.Default;
+		gameplayState.combatState = CombatState.Inactive;
 	}
 
 	private disposeActionManager() {
@@ -315,151 +302,6 @@ export default class CombatManagerSystem implements GameSystem {
 		this.setPlayerActionTargeting(eid, actionData);
 	}
 
-	public async resetControls() {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
-		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-			SceneState.toString(),
-		);
-		const componentRegistry = sceneState.componentRegistry;
-
-		const gameplayState =
-			gameStateRegistry.getGameStateByStateId<GameplayState>(
-				GameplayState.toString(),
-			);
-		const controlState =
-			gameStateRegistry.getGameStateByStateId<ControlState>(
-				ControlState.toString(),
-			);
-		const userInterfaceState =
-			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				UserInterfaceState.toString(),
-			);
-		const actorData =
-			componentRegistry.getComponentByEntityId<ActorStateComponent>(
-				ActorStateComponent.toString(),
-				gameplayState.selectedPlayerEID,
-			);
-		await userInterfaceState.combatHud.setActionBar(actorData, this);
-
-		resetPlayerTargeting();
-
-		if (controlState.actionManager) {
-			controlState.actionManager.dispose();
-			controlState.actionManager = null;
-		}
-
-		const actionManager = new ActionManager(sceneState.currentScene);
-
-		for (let i = 0; i < actorData.powerData.length; i++) {
-			actionManager.registerAction(
-				new ExecuteCodeAction(
-					{
-						trigger: ActionManager.OnKeyDownTrigger,
-						parameter: controlState.controlSettings.powerActions[i],
-					},
-					() => {
-						const cmSystem = container.resolve(CombatManagerSystem);
-						cmSystem.startQueueActionPlayer(actorData.entityId, i);
-					},
-				),
-			);
-		}
-
-		if (actorData.itemData) {
-			for (let i = 0; i < actorData.itemData.length; i++) {
-				actionManager.registerAction(
-					new ExecuteCodeAction(
-						{
-							trigger: ActionManager.OnKeyDownTrigger,
-							parameter:
-								controlState.controlSettings.deviceActions[i],
-						},
-						() => {
-							const cmSystem =
-								container.resolve(CombatManagerSystem);
-							cmSystem.startQueueActionPlayer(
-								actorData.entityId,
-								i,
-							);
-						},
-					),
-				);
-			}
-		}
-
-		actionManager.registerAction(
-			new ExecuteCodeAction(
-				{
-					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: controlState.controlSettings.tacticalPause,
-				},
-				() => {
-					setTacticalPause(
-						!controlState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
-					);
-				},
-			),
-		);
-
-		actionManager.registerAction(
-			new ExecuteCodeAction(
-				{
-					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: controlState.controlSettings.switchPlayerLeft,
-				},
-				() => {
-					const uiSystem = container.resolve(UserInterfaceSystem);
-					if (!uiSystem) {
-						return;
-					}
-
-					let selPlyEidIndex = gameplayState.playerEIDs.findIndex(
-						(x) => x === gameplayState.selectedPlayerEID,
-					);
-					let newSelPlyEIDIndex = selPlyEidIndex - 1;
-					if (newSelPlyEIDIndex < 0) {
-						newSelPlyEIDIndex = gameplayState.playerEIDs.length - 1;
-					}
-					uiSystem.setSelectedCharacter(
-						gameplayState.playerEIDs[newSelPlyEIDIndex],
-					);
-				},
-			),
-		);
-
-		actionManager.registerAction(
-			new ExecuteCodeAction(
-				{
-					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: controlState.controlSettings.switchPlayerRight,
-				},
-				() => {
-					const uiSystem = container.resolve(UserInterfaceSystem);
-					if (!uiSystem) {
-						return;
-					}
-
-					let selPlyEidIndex = gameplayState.playerEIDs.findIndex(
-						(x) => x === gameplayState.selectedPlayerEID,
-					);
-					let newSelPlyEIDIndex = selPlyEidIndex + 1;
-					if (
-						newSelPlyEIDIndex >
-						gameplayState.playerEIDs.length - 1
-					) {
-						newSelPlyEIDIndex = 0;
-					}
-					uiSystem.setSelectedCharacter(
-						gameplayState.playerEIDs[newSelPlyEIDIndex],
-					);
-				},
-			),
-		);
-
-		controlState.actionManager = actionManager;
-		sceneState.currentScene.actionManager = actionManager;
-	}
-
 	private setPlayerActionTargeting(
 		sourceEid: EntityId,
 		actionData: AbilityData,
@@ -551,7 +393,7 @@ export default class CombatManagerSystem implements GameSystem {
 		const componentRegistry = getComponentRegistry();
 		const sourceActorState =
 			componentRegistry.getComponentByEntityId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
+				ActorStateComponent.toString(),
 				sourceEid,
 			);
 		sourceActorState.queuedAction = actionData;
@@ -608,7 +450,8 @@ export default class CombatManagerSystem implements GameSystem {
 }
 
 export enum CombatState {
-	Default,
+	Inactive,
+	Active,
 	Victory,
 	Gameover,
 }
