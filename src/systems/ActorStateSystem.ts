@@ -1,14 +1,10 @@
 import { inject } from "tsyringe";
 import GameSystem from "./GameSystem";
 import { query } from "bitecs";
-import {
-	ActorStateComponent,
-	COMPONENT_ID_ACTORSTATE,
-} from "../components/ActorStateComponent";
-import ControlState, { STATE_ID_CONTROLSTATE } from "src/states/ControlState";
+import ActorStateComponent from "../components/ActorStateComponent";
+import ControlState from "src/states/ControlState";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import SceneState, { STATE_ID_SCENESTATE } from "src/states/SceneState";
-import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import SceneState from "src/states/SceneState";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 
 export const SYSTEM_ID_ACTORSTATE = "ActorState";
@@ -24,7 +20,7 @@ export default class ActorStateSystem implements GameSystem {
 	public update(deltaTime: number): void {
 		const controlState =
 			this.gameStateRegistry.getGameStateByStateId<ControlState>(
-				STATE_ID_CONTROLSTATE,
+				ControlState.toString(),
 			);
 
 		if (controlState.actionPauseSet.size > 0) {
@@ -37,11 +33,11 @@ export default class ActorStateSystem implements GameSystem {
 	private tickRecoveryRegenOnAllActors(deltaTime: number) {
 		const sceneState =
 			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				STATE_ID_SCENESTATE,
+				SceneState.toString(),
 			);
 		const actorStateComponentArray =
-			this.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
-				COMPONENT_ID_ACTORSTATE,
+			sceneState.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+				ActorStateComponent.toString(),
 			);
 		for (const eid of query(sceneState.world, [actorStateComponentArray])) {
 			const actorState = actorStateComponentArray[eid];
