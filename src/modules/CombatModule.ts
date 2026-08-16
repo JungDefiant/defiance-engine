@@ -58,6 +58,8 @@ export async function startCombat(encId: string): Promise<void> {
 
 	const encounter = gameScene.encounters[encId];
 
+	gameplayState.combatState = CombatState.Active;
+
 	for (let i = 0; i < encounter.length; i++) {
 		const enId = encounter[i];
 		const offsetVector = new Vector3(
@@ -119,8 +121,8 @@ export function combatActionManager() {
 }
 
 export function setTacticalPause(isActive: boolean) {
-	const controlState = container.resolve(ControlState);
-	const userInterfaceState = container.resolve(UserInterfaceState);
+	const controlState = getControlState();
+	const userInterfaceState = getUserInterfaceState();
 
 	if (isActive) {
 		controlState.actionPauseSet.add(PAUSE_TACTICALPAUSE);
@@ -262,7 +264,7 @@ function finishQueueAction(
 }
 
 export function defeatActor(actor: ActorStateComponent) {
-	const gameplayState = container.resolve(GameplayState);
+	const gameplayState = getGameplayState();
 	const componentRegistry = container.resolve(ComponentRegistry);
 
 	actor.isDefeated = true;
@@ -343,7 +345,7 @@ export function getTargetEidsByActionTargetType(
 	sourceEid: EntityId,
 	isSingleTarget: boolean = false,
 ) {
-	const gameplayState = container.resolve(GameplayState);
+	const gameplayState = getGameplayState();
 
 	// Create different classes for different kinds of ability targets
 	switch (abilityTarget) {

@@ -11,8 +11,6 @@ import {
 	getPlayerGuiComponentArray,
 } from "src/modules/ComponentModule";
 
-export const FACTORY_ID_PLAYER = "PlayerFactory";
-
 export class PlayerFactory implements EntityFactory {
 	public start() {}
 

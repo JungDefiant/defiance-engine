@@ -13,6 +13,7 @@ import { container } from "tsyringe";
 import { ModalPage } from "src/types/GameTypes";
 import GameplayState from "src/states/GameplayState";
 import ControlState from "src/states/ControlState";
+import { getControlState } from "src/modules/GameStateModule";
 
 export class ModalScreen {
 	private rootContainer: Rectangle;
@@ -161,7 +162,7 @@ export class ModalScreen {
 	}
 
 	public showHide(show: boolean) {
-		const controlState = container.resolve(ControlState);
+		const controlState = getControlState();
 		if (show) {
 			controlState.actionPauseSet.add("PAUSE_MODAL");
 			controlState.renderPauseSet.add("PAUSE_MODAL");

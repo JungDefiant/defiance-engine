@@ -21,6 +21,7 @@ import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 import StickerImageComponent from "src/components/StickerImageComponent";
 import TransformNodeComponent from "src/components/TransformNodeComponent";
 import RenderState from "src/states/RenderState";
+import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 
 export const SYSTEM_TOKENS = [
 	ActorStateSystem,
@@ -28,6 +29,7 @@ export const SYSTEM_TOKENS = [
 	EntityMovementSystem,
 	ImageAnimationSystem,
 	RenderQueueSystem,
+	UserInterfaceSystem,
 ];
 
 export const FACTORY_TOKENS = [EnemyFactory, PlayerFactory, StickerFactory];

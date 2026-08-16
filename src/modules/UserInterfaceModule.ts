@@ -27,6 +27,7 @@ import { GameMode, LoadedModalJson } from "src/types/GameTypes";
 import { EntityId } from "bitecs";
 import { getPlayerGuiComponentArray } from "./ComponentModule";
 import { resetCombatModeControls } from "./ControlModule";
+import { getGameCanvas } from "./SceneModule";
 
 export async function loadModalMap(modalIds: string[]): Promise<void> {
 	const campaignState = getCampaignState();
@@ -78,7 +79,9 @@ function createSceneUI(scene: GameScene) {
 }
 
 function createUICamera(uiScene: UserInterfaceScene) {
-	return new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
+	const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
+	uiCamera.attachControl(getGameCanvas(), false);
+	return uiCamera;
 }
 
 function createVictoryScreen(mainUI: AdvancedDynamicTexture) {
@@ -135,12 +138,12 @@ function createExploreHUD(mainUI: AdvancedDynamicTexture) {
 	return exploreHud;
 }
 
-export function initUserInterfaceState() {
+export function createUserInterfaceState() {
 	const userInterfaceScene = getUserInterfaceScene();
-	const sceneUI = createSceneUI(getGameScene());
-	const mainUI = createMainUI(userInterfaceScene);
 	const uiCamera = createUICamera(userInterfaceScene);
 	userInterfaceScene.activeCamera = uiCamera;
+	const mainUI = createMainUI(userInterfaceScene);
+	const sceneUI = createSceneUI(getGameScene());
 	CreateTypography(mainUI);
 	document.fonts.ready.then(() => {
 		mainUI.markAsDirty();
@@ -172,7 +175,6 @@ export function initUserInterfaceState() {
 		UserInterfaceState.toString(),
 		newUserInterfaceState,
 	);
-	console.log("USER INTERFACE STATE", newUserInterfaceState);
 	return newUserInterfaceState;
 }
 

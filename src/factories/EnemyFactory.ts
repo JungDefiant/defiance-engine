@@ -89,7 +89,6 @@ export class EnemyFactory implements EntityFactory {
 		);
 
 		const newEnemySprite = this.createEnemySprite(newEntity, spawnNode);
-
 		addComponent(
 			gameScene.world,
 			newEntity,
@@ -112,16 +111,17 @@ export class EnemyFactory implements EntityFactory {
 	private createEnemySprite(
 		entityId: EntityId,
 		parentNode: TransformNode,
-	): Mesh {
+	): CharacterSpriteComponent {
 		const gameScene = getGameScene();
-		const actorData =
+		const actorState =
 			getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 				ActorStateComponent.toString(),
 				entityId,
 			);
 
-		const enActorSprite = MeshBuilder.CreatePlane(
-			`enBattlerSprite_${actorData.id}_${entityId}`,
+		// Need to create this sprite as a CharacterSpriteComponent
+		const enemyActorSprite = MeshBuilder.CreatePlane(
+			`enBattlerSprite_${actorState.id}_${entityId}`,
 			{
 				width: 0.4,
 				height: 0.8,
@@ -129,26 +129,30 @@ export class EnemyFactory implements EntityFactory {
 			gameScene,
 		);
 
-		const enActorSpriteMat = new PBRMaterial(
-			`mat_enBattlerSprite_${actorData.id}_${entityId}`,
+		const enemyActorSpriteMaterial = new PBRMaterial(
+			`mat_enBattlerSprite_${actorState.id}_${entityId}`,
 			gameScene,
 		);
-		enActorSprite.parent = parentNode;
-		enActorSprite.billboardMode = 7;
-		enActorSprite.rotate(Vector3.Forward(), Math.PI, Space.WORLD);
-		enActorSprite.setAbsolutePosition(parentNode.absolutePosition);
+		enemyActorSprite.parent = parentNode;
+		enemyActorSprite.billboardMode = 7;
+		enemyActorSprite.rotate(Vector3.Forward(), Math.PI, Space.WORLD);
+		enemyActorSprite.setAbsolutePosition(parentNode.absolutePosition);
 
-		enActorSpriteMat.albedoTexture = new Texture(
-			`${getPublicRoot()}/sprites/characters/${actorData.spriteUrl}`,
+		enemyActorSpriteMaterial.albedoTexture = new Texture(
+			`${getPublicRoot()}/sprites/characters/${actorState.spriteUrl}`,
 			gameScene,
 		);
-		enActorSpriteMat.metallic = 0;
-		enActorSpriteMat.roughness = 0;
-		enActorSpriteMat.alphaCutOff = 0.4;
-		enActorSpriteMat.transparencyMode = 1;
-		enActorSpriteMat.useAlphaFromAlbedoTexture = true;
+		enemyActorSpriteMaterial.metallic = 0;
+		enemyActorSpriteMaterial.roughness = 0;
+		enemyActorSpriteMaterial.alphaCutOff = 0.4;
+		enemyActorSpriteMaterial.transparencyMode = 1;
+		enemyActorSpriteMaterial.useAlphaFromAlbedoTexture = true;
 
-		enActorSprite.material = enActorSpriteMat;
-		return enActorSprite;
+		enemyActorSprite.material = enemyActorSpriteMaterial;
+
+		const characterSpriteComponent = new CharacterSpriteComponent(
+			enemyActorSprite,
+		);
+		return characterSpriteComponent;
 	}
 }

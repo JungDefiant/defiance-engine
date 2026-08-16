@@ -12,4 +12,8 @@ export default class StickerImageComponent extends Image implements Component {
 	public getValue(): Image {
 		return this;
 	}
+
+	public dispose(): void {
+		this.dispose();
+	}
 }

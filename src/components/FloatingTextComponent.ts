@@ -12,4 +12,8 @@ export default class FloatingTextComponent
 	public getValue(): TextBlock {
 		return this;
 	}
+
+	public dispose(): void {
+		this.dispose();
+	}
 }

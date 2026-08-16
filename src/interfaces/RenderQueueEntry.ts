@@ -121,7 +121,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 			} else {
 				const targetSprite = characterSpriteComponentArray[eid];
 				userInterfaceState.sceneGUI.addControl(floatingTextUI);
-				floatingTextUI.linkWithMesh(targetSprite);
+				floatingTextUI.linkWithMesh(targetSprite.getValue());
 			}
 
 			addComponent(
@@ -210,31 +210,20 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 		const stickerImageComponentArray = getStickerImageComponentArray();
 
 		for (const eid of this.targetEntityIds) {
-			stickerFactory
-				.createEntityFromFile(this.vfxUrl, campaignState.campaignId)
-				.then((entityId) => {
-					renderQueueState.entityIds.push(entityId);
-
-					Promise.resolve(stickerImageComponentArray[entityId]).then(
-						(specialFxStickerImage) => {
-							if (gameplayState.playerEIDs.includes(eid)) {
-								const playerGUI = playerGuiComponentArray[eid];
-								playerGUI
-									.getRoot()
-									.addControl(specialFxStickerImage);
-							} else {
-								const targetSprite =
-									characterSpriteComponentArray[eid];
-								userInterfaceState.sceneGUI.addControl(
-									specialFxStickerImage,
-								);
-								specialFxStickerImage.linkWithMesh(
-									targetSprite,
-								);
-							}
-						},
-					);
-				});
+			const entityId = await stickerFactory.createEntityFromFile(
+				this.vfxUrl,
+				campaignState.campaignId,
+			);
+			const specialFxStickerImage = stickerImageComponentArray[entityId];
+			renderQueueState.entityIds.push(entityId);
+			if (gameplayState.playerEIDs.includes(eid)) {
+				const playerGUI = playerGuiComponentArray[eid];
+				playerGUI.getRoot().addControl(specialFxStickerImage);
+			} else {
+				const targetSprite = characterSpriteComponentArray[eid];
+				userInterfaceState.sceneGUI.addControl(specialFxStickerImage);
+				specialFxStickerImage.linkWithMesh(targetSprite.getValue());
+			}
 		}
 	}
 

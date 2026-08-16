@@ -10,6 +10,7 @@ import {
 	getCampaignState,
 	getGameScene,
 	getSystemRegistry,
+	getUserInterfaceScene,
 } from "./GameStateModule";
 import {
 	DEFAULT_CAMPAIGN_ID,
@@ -20,6 +21,7 @@ import { LoadedCampaignJson } from "src/types/GameTypes";
 import CampaignState from "src/states/CampaignState";
 import { GameScene } from "src/scenes/GameScene";
 import {
+	COMPONENT_TOKENS,
 	FACTORY_TOKENS,
 	STATE_TOKENS,
 	SYSTEM_TOKENS,
@@ -30,7 +32,8 @@ import GameSystem from "src/systems/GameSystem";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { FactoryRegistry } from "src/registries/FactoryRegistry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
-import { initUserInterfaceState } from "./UserInterfaceModule";
+import { createUserInterfaceState } from "./UserInterfaceModule";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
 
 export async function gotoMainMenu() {
 	const mainMenuScene = container.resolve(MainMenuScene);
@@ -60,7 +63,7 @@ export function createNewEngine(): Engine {
 export async function startGame() {
 	stopEngineRenderLoop();
 	closeMainMenu();
-	await initCampaignState();
+	await createCampaignState();
 	await createStartingScene();
 	runScene();
 }
@@ -73,9 +76,11 @@ async function createStartingScene() {
 async function runScene() {
 	const engine = container.resolve(Engine);
 	const gameScene = getGameScene();
+	const userInterfaceScene = getUserInterfaceScene();
 	const systemRegistry = getSystemRegistry();
 	engine.runRenderLoop(() => {
 		gameScene.render();
+		userInterfaceScene.render();
 		const deltaTime = gameScene.deltaTime / DELTATIME_MS;
 		updateSystems(deltaTime, systemRegistry);
 	});
@@ -86,33 +91,13 @@ async function stopEngineRenderLoop() {
 	engine.stopRenderLoop();
 }
 
-async function initCampaignState() {
+async function createCampaignState() {
 	const response = await fetch(
 		`${getPublicRoot()}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
 	);
 	const campaignLoadedJson = (await response.json()) as LoadedCampaignJson;
 	const newCampaignState = new CampaignState(campaignLoadedJson);
 	container.register(CampaignState, { useValue: newCampaignState });
-}
-
-export async function registerStates(
-	gameStateRegistry: GameStateRegistry,
-	gameScene: GameScene,
-) {
-	gameStateRegistry.registerNewGameState(
-		AudioState.toString(),
-		await initAudioState(),
-	);
-
-	for (const stateToken of STATE_TOKENS) {
-		gameStateRegistry.registerNewGameState(
-			stateToken.toString(),
-			new stateToken(),
-		);
-	}
-
-	initUserInterfaceState();
-	initGameplayState(gameScene.cameraEntityId);
 }
 
 export function registerFactories(factoryRegistry: FactoryRegistry) {
@@ -133,6 +118,33 @@ export function registerSystems(
 			systemToken.toString(),
 			new systemToken(gameScene),
 		);
+	}
+}
+
+export async function registerStates(
+	gameStateRegistry: GameStateRegistry,
+	gameScene: GameScene,
+) {
+	gameStateRegistry.registerNewGameState(
+		AudioState.toString(),
+		await initAudioState(),
+	);
+
+	for (const stateToken of STATE_TOKENS) {
+		gameStateRegistry.registerNewGameState(
+			stateToken.toString(),
+			new stateToken(),
+		);
+	}
+
+	initGameplayState(gameScene.cameraEntityId);
+}
+
+export async function registerComponentArrays(
+	componentRegistry: ComponentRegistry,
+) {
+	for (const componentToken of COMPONENT_TOKENS) {
+		componentRegistry.registerNewComponentArray(componentToken.toString());
 	}
 }
 

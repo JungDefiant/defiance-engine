@@ -1,19 +1,18 @@
-import { Mesh, MeshCreationOptions, Nullable, Scene } from "@babylonjs/core";
+import { Mesh } from "@babylonjs/core";
 import { Component } from "./Component";
 
-export default class CharacterSpriteComponent
-	extends Mesh
-	implements Component
-{
-	constructor(
-		name: string,
-		scene?: Nullable<Scene>,
-		options?: MeshCreationOptions,
-	) {
-		super(name, scene, options);
+export default class CharacterSpriteComponent implements Component {
+	private _sprite: Mesh;
+
+	constructor(sprite: Mesh) {
+		this._sprite = sprite;
 	}
 
 	public getValue(): Mesh {
-		return this;
+		return this._sprite;
+	}
+
+	public dispose(): void {
+		this._sprite.dispose();
 	}
 }

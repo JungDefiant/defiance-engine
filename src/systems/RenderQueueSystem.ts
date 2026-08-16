@@ -29,8 +29,8 @@ export default class RenderQueueSystem implements GameSystem {
 				].renderQueueEntry.isBlocking) &&
 			currentRenderQueue.length !== 0
 		) {
-			const nextRqe = currentRenderQueue.dequeue();
-			renderQueueStates.push(new RenderQueueState(nextRqe));
+			const nextRenderQueueEntry = currentRenderQueue.dequeue();
+			renderQueueStates.push(new RenderQueueState(nextRenderQueueEntry));
 		}
 
 		for (let renderQeueuState of renderQueueStates) {

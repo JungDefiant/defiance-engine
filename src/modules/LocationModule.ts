@@ -47,7 +47,7 @@ export async function loadLocation(
 	});
 
 	locationData.doors.forEach(async (door) => {
-		await loadLocationDoor(door, newLocationSceneParams);
+		await createLocationDoor(door, newLocationSceneParams);
 	});
 
 	filterLocationEvents(locationData);
@@ -141,8 +141,8 @@ function disableHighlightInfoUIFunction(): (
 export async function filterLocationEvents(locationData: SceneLocation) {
 	const uniqueEvents = new Set<string>();
 	const eventIndsToRemove = new Array<number>();
-	locationData.events.forEach((evt, index) => {
-		const eventKey = `${evt.trigger}_${evt.type}_${evt.condition}`;
+	locationData.events.forEach((event, index) => {
+		const eventKey = `${event.trigger}_${event.type}_${event.condition}`;
 		if (uniqueEvents.has(eventKey)) {
 			eventIndsToRemove.push(index);
 		} else {
@@ -231,7 +231,7 @@ export async function transitionToNewLocation(
 		set(entityMovementComponentArray, entityMovement),
 	);
 }
-export async function loadLocationDoor(
+export async function createLocationDoor(
 	doorData: DoorData,
 	newLocationSceneParams: NewLocationSceneParams,
 ) {

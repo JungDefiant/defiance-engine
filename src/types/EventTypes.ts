@@ -5,7 +5,7 @@ export interface GameEvent {
 	trigger: EventTrigger;
 	refId: string;
 	isTriggered: boolean;
-	triggerFunction: Function;
+	triggerFunction: () => {};
 }
 
 export type EventTrigger =

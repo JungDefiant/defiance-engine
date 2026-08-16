@@ -7,9 +7,10 @@ import {
 export default class RenderState {
 	public _renderQueueStates: RenderQueueState[] = [];
 
+	private _isStarted: boolean = false;
+
 	private readonly _currentRenderQueue: Queue<RenderQueueEntry> =
 		new Queue<RenderQueueEntry>();
-	private _isStarted: boolean = false;
 
 	public get currentRenderQueue(): Queue<RenderQueueEntry> {
 		return this._currentRenderQueue;

@@ -110,12 +110,12 @@ export async function resetCombatModeActionManager() {
 	const gameplayState = getGameplayState();
 	const controlState = getControlState();
 	const userInterfaceState = getUserInterfaceState();
-	const actorData =
+	const actorState =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.toString(),
 			gameplayState.selectedPlayerEID,
 		);
-	await userInterfaceState.combatHud.setActionBar(actorData);
+	await userInterfaceState.combatHud.setActionBar(actorState);
 
 	resetTargeting();
 
@@ -126,7 +126,7 @@ export async function resetCombatModeActionManager() {
 
 	const actionManager = new ActionManager(gameScene);
 
-	for (let i = 0; i < actorData.powerData.length; i++) {
+	for (let i = 0; i < actorState.powerData.length; i++) {
 		actionManager.registerAction(
 			new ExecuteCodeAction(
 				{
@@ -134,14 +134,14 @@ export async function resetCombatModeActionManager() {
 					parameter: controlState.controlSettings.powerActions[i],
 				},
 				() => {
-					startQueueActionPlayer(actorData.entityId, i);
+					startQueueActionPlayer(actorState.entityId, i);
 				},
 			),
 		);
 	}
 
-	if (actorData.itemData) {
-		for (let i = 0; i < actorData.itemData.length; i++) {
+	if (actorState.itemData) {
+		for (let i = 0; i < actorState.itemData.length; i++) {
 			actionManager.registerAction(
 				new ExecuteCodeAction(
 					{
@@ -150,7 +150,7 @@ export async function resetCombatModeActionManager() {
 							controlState.controlSettings.deviceActions[i],
 					},
 					() => {
-						startQueueActionPlayer(actorData.entityId, i);
+						startQueueActionPlayer(actorState.entityId, i);
 					},
 				),
 			);

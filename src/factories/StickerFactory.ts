@@ -1,4 +1,3 @@
-import { container } from "tsyringe";
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { Image } from "@babylonjs/gui";
 import { getPublicRoot } from "src/modules/Utils";
@@ -6,39 +5,47 @@ import {
 	ImageAnimationComponent,
 	SpriteAnimationProps,
 } from "src/components/ImageAnimationComponent";
-import StickerImageComponent, {
-	COMPONENT_ID_STICKERIMAGE,
-} from "src/components/StickerImageComponent";
 import { EntityFactory } from "./EntityFactory";
-import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import { getGameScene } from "src/modules/GameStateModule";
 import {
 	getImageAnimationComponentArray,
 	getStickerImageComponentArray,
 } from "src/modules/ComponentModule";
 
-export const FACTORY_ID_STICKER = "StickerFactory";
-
 export class StickerFactory implements EntityFactory {
+	private cachedProps: Map<string, StickerProps> = new Map<
+		string,
+		StickerProps
+	>();
+
 	public start(): void {}
 
 	public async createEntityFromFile(
 		fileName: string,
 		campaignId: string,
 	): Promise<EntityId> {
-		const response = await fetch(
-			`${getPublicRoot()}/data/${campaignId}/${fileName}`,
-		);
-		const rawData = await response.json();
-		if (!rawData) {
-			return -1;
+		console.log("CACHED PROPS", this.cachedProps);
+		let stickerProps = this.cachedProps.get(fileName);
+		console.log("CACHED STICKER PROP", stickerProps);
+
+		if (!stickerProps) {
+			console.log("GET STICKER PROPS");
+			const response = await fetch(
+				`${getPublicRoot()}/data/${campaignId}/${fileName}`,
+			);
+			const rawData = await response.json();
+			if (!rawData) {
+				return -1;
+			}
+
+			stickerProps = rawData as StickerProps;
+			this.cachedProps.set(fileName, rawData);
 		}
 
 		const gameScene = getGameScene();
 		const newEntity = addEntity(gameScene.world);
-		const stickerProps = rawData as StickerProps;
 
-		const newSticker = await this.createStickerImage(stickerProps);
+		const newSticker = this.createStickerImage(stickerProps);
 		addComponent(
 			gameScene.world,
 			newEntity,
@@ -57,7 +64,7 @@ export class StickerFactory implements EntityFactory {
 		return newEntity;
 	}
 
-	private async createStickerImage(props: StickerProps) {
+	private createStickerImage(props: StickerProps) {
 		const newSticker = new Image(
 			"stk_image",
 			`${getPublicRoot()}/${props.source}`,
@@ -93,6 +100,7 @@ export class StickerFactory implements EntityFactory {
 }
 
 interface StickerProps {
+	id: string;
 	source: string;
 	width: number;
 	height: number;

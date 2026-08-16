@@ -1,7 +1,7 @@
 import { CombatState } from "src/systems/CombatManagerSystem";
 
 export default class GameplayState {
-	public cameraEID: number = -1;
+	public cameraEntityId: number = -1;
 	public selectedPlayerEID: number = -1;
 	public playerEIDs: number[] = [];
 	public enemyEIDs: number[] = [];

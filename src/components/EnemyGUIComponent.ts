@@ -17,6 +17,8 @@ import { ActorGUI } from "../interfaces/ActorGUI";
 import { Component } from "./Component";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import ActorStateComponent from "./ActorStateComponent";
+import { getComponentRegistry } from "src/modules/ComponentModule";
+import CharacterSpriteComponent from "./CharacterSpriteComponent";
 
 export default class EnemyGUIComponent implements ActorGUI, Component {
 	private rootContainer: StackPanel;
@@ -30,15 +32,16 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 	private statusIcons: Map<string, Rectangle> = new Map<string, Rectangle>();
 
 	public constructor(eid: EntityId, sceneGUI: AdvancedDynamicTexture) {
-		const componentRegistry = container.resolve(ComponentRegistry);
-		const enemyActorState = componentRegistry.getComponentByEntityId(
-			"ActorState",
-			eid,
-		) as ActorStateComponent;
-		const enemySprite = componentRegistry.getComponentByEntityId(
-			"CharacterSprite",
-			eid,
-		) as Mesh;
+		const enemyActorState =
+			getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
+				ActorStateComponent.toString(),
+				eid,
+			);
+		const enemySprite =
+			getComponentRegistry().getComponentByEntityId<CharacterSpriteComponent>(
+				CharacterSpriteComponent.toString(),
+				eid,
+			);
 
 		this.rootContainer = new StackPanel(
 			`ui_enBattlerUI_${enemyActorState.id}_${eid}`,
@@ -110,7 +113,7 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 			eid,
 			"lifeLabel",
 			Themes.neutral2,
-			Themes.typography.bodyText,
+			Themes.typography.caption,
 		);
 		this.lifeBarBGUI.addControl(this.lifeBarValueUI);
 

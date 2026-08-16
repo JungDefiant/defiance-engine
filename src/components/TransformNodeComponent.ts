@@ -14,4 +14,8 @@ export default class TransformNodeComponent
 	getValue(): TransformNode {
 		return this;
 	}
+
+	dispose() {
+		this.dispose();
+	}
 }

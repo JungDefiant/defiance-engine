@@ -45,7 +45,7 @@ import {
 import TransformNodeComponent from "src/components/TransformNodeComponent";
 import { addComponent, addEntity, EntityId } from "bitecs";
 import {
-	initUserInterfaceState,
+	createUserInterfaceState,
 	loadModalMap,
 	setUserInterfaceGameMode,
 } from "./UserInterfaceModule";
@@ -57,6 +57,7 @@ import { initSemantics, loadDialogueMap } from "./DialogueModule";
 import AudioState from "src/states/AudioState";
 import { UserInterfaceScene } from "src/scenes/UserInterfaceScene";
 import {
+	registerComponentArrays,
 	registerFactories,
 	registerStates,
 	registerSystems,
@@ -89,10 +90,12 @@ export async function initGameScene(sceneId: string) {
 	registerFactories(newFactoryRegistry);
 	registerSystems(newSystemRegistry, newGameScene);
 	await registerStates(newGameStateRegistry, newGameScene);
+	registerComponentArrays(newComponentRegistry);
 	await startFactories(newFactoryRegistry);
 
-	await loadModalMap(newGameScene.modalIds);
+	createUserInterfaceState();
 	await loadStartingPlayerParty();
+	await loadModalMap(newGameScene.modalIds);
 
 	await initSemantics();
 	await loadDialogueMap(newGameScene.dialogueFileId);
@@ -119,7 +122,7 @@ async function createStartingLocation(gameScene: GameScene) {
 
 export function initGameplayState(cameraEntityId: EntityId) {
 	const newGameplayState = new GameplayState();
-	newGameplayState.cameraEID = cameraEntityId;
+	newGameplayState.cameraEntityId = cameraEntityId;
 	getGameStateRegistry().registerNewGameState(
 		GameplayState.toString(),
 		newGameplayState,
@@ -186,12 +189,12 @@ export async function setExploreGameMode() {
 export async function setCombatGameMode() {
 	await resetCombatViewPosition();
 	resetCombatModeControls();
-	setUserInterfaceGameMode(GameMode.Dialogue);
+	setUserInterfaceGameMode(GameMode.Combat);
 }
 
 export function setDialogueGameMode() {
 	resetDialogueModeControls();
-	setUserInterfaceGameMode(GameMode.Combat);
+	setUserInterfaceGameMode(GameMode.Dialogue);
 }
 
 async function loadSceneJson(sceneId: string): Promise<LoadedSceneJson> {
