@@ -26,6 +26,7 @@ import {
 	getCampaignState,
 	getControlState,
 	getGameScene,
+	getGameStateRegistry,
 	getUserInterfaceScene,
 	getUserInterfaceState,
 } from "./GameStateModule";
@@ -61,6 +62,10 @@ import {
 	registerSystems,
 	startFactories,
 } from "./InitModule";
+import { FactoryRegistry } from "src/registries/FactoryRegistry";
+import { SystemRegistry } from "src/registries/SystemRegistry";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
 
 export let loadingMesh: Promise<ISceneLoaderAsyncResult> | null = null;
 
@@ -68,22 +73,24 @@ export async function initGameScene(sceneId: string) {
 	const engine = container.resolve(Engine);
 	const newGameScene = await createGameScene(sceneId, engine);
 	newGameScene.lastExploreViewTarget = DEFAULT_CAM_TARGET;
-	await createUserInterfaceScene(engine);
+	createUserInterfaceScene(engine);
 
 	createSkybox(newGameScene);
 	createSceneLight(newGameScene);
 
-	registerFactories(newGameScene);
-	registerSystems(newGameScene);
-	await startFactories(newGameScene);
-	newGameScene.gameStateRegistry.registerNewGameState(
-		AudioState.toString(),
-		await initAudioState(),
-	);
+	const newSystemRegistry = new SystemRegistry();
+	container.register(SystemRegistry, { useValue: newSystemRegistry });
+	const newFactoryRegistry = new FactoryRegistry();
+	container.register(FactoryRegistry, { useValue: newFactoryRegistry });
+	const newGameStateRegistry = new GameStateRegistry();
+	container.register(GameStateRegistry, { useValue: newGameStateRegistry });
+	const newComponentRegistry = new ComponentRegistry(newGameScene.world);
+	container.register(ComponentRegistry, { useValue: newComponentRegistry });
+	registerFactories(newFactoryRegistry);
+	registerSystems(newSystemRegistry, newGameScene);
+	await registerStates(newGameStateRegistry, newGameScene);
+	await startFactories(newFactoryRegistry);
 
-	registerStates(newGameScene);
-	initUserInterfaceState();
-	initGameplayState(newGameScene.cameraEntityId);
 	await loadModalMap(newGameScene.modalIds);
 	await loadStartingPlayerParty();
 
@@ -110,10 +117,10 @@ async function createStartingLocation(gameScene: GameScene) {
 	gameScene.currentLocation = location;
 }
 
-function initGameplayState(cameraEntityId: EntityId) {
+export function initGameplayState(cameraEntityId: EntityId) {
 	const newGameplayState = new GameplayState();
 	newGameplayState.cameraEID = cameraEntityId;
-	getGameScene().gameStateRegistry.registerNewGameState(
+	getGameStateRegistry().registerNewGameState(
 		GameplayState.toString(),
 		newGameplayState,
 	);
@@ -147,7 +154,7 @@ async function createGameScene(
 	return newGameScene;
 }
 
-async function createUserInterfaceScene(engine: Engine) {
+function createUserInterfaceScene(engine: Engine) {
 	const newUserInterfaceScene = new UserInterfaceScene(engine);
 	container.register(UserInterfaceScene, { useValue: newUserInterfaceScene });
 	return newUserInterfaceScene;

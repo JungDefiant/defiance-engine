@@ -16,6 +16,7 @@ import {
 	getCampaignState,
 	getGameplayState,
 	getGameScene,
+	getGameStateRegistry,
 	getUserInterfaceScene,
 	getUserInterfaceState,
 } from "./GameStateModule";
@@ -167,7 +168,7 @@ export function initUserInterfaceState() {
 		gameOverScreen,
 		victoryScreen,
 	} as UserInterfaceStateProps);
-	getGameScene().gameStateRegistry.registerNewGameState(
+	getGameStateRegistry().registerNewGameState(
 		UserInterfaceState.toString(),
 		newUserInterfaceState,
 	);

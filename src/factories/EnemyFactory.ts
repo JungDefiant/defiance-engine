@@ -24,6 +24,7 @@ import { getSceneNodes } from "src/modules/SceneModule";
 import {
 	getActorStateComponentArray,
 	getCharacterSpriteComponentArray,
+	getComponentRegistry,
 	getEnemyGuiComponentArray,
 } from "src/modules/ComponentModule";
 
@@ -114,7 +115,7 @@ export class EnemyFactory implements EntityFactory {
 	): Mesh {
 		const gameScene = getGameScene();
 		const actorData =
-			gameScene.componentRegistry.getComponentByEntityId<ActorStateComponent>(
+			getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 				ActorStateComponent.toString(),
 				entityId,
 			);

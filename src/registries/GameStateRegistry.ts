@@ -1,6 +1,6 @@
 import { singleton } from "tsyringe";
 
-singleton();
+@singleton()
 export class GameStateRegistry {
 	private gameStates: Map<string, GameState> = new Map();
 

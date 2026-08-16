@@ -7,58 +7,56 @@ import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
 import FloatingTextComponent from "src/components/FloatingTextComponent";
 import StickerImageComponent from "src/components/StickerImageComponent";
 import { ImageAnimationComponent } from "src/components/ImageAnimationComponent";
+import { container } from "tsyringe";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
+
+export function getComponentRegistry() {
+	return container.resolve(ComponentRegistry);
+}
 
 export function getActorStateComponentArray() {
-	const gameScene = getGameScene();
-	return gameScene.componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
+	return getComponentRegistry().getComponentArrayByComponentId<ActorStateComponent>(
 		ActorStateComponent.toString(),
 	);
 }
 
 export function getCharacterSpriteComponentArray() {
-	const gameScene = getGameScene();
-	return gameScene.componentRegistry.getComponentArrayByComponentId<CharacterSpriteComponent>(
+	return getComponentRegistry().getComponentArrayByComponentId<CharacterSpriteComponent>(
 		CharacterSpriteComponent.toString(),
 	);
 }
 export function getEntityMovementComponentArray() {
-	const gameScene = getGameScene();
-	return gameScene.componentRegistry.getComponentArrayByComponentId<EntityMovementComponent>(
+	return getComponentRegistry().getComponentArrayByComponentId<EntityMovementComponent>(
 		EntityMovementComponent.toString(),
 	);
 }
 
 export function getEnemyGuiComponentArray() {
-	const gameScene = getGameScene();
-	return gameScene.componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
+	return getComponentRegistry().getComponentArrayByComponentId<EnemyGUIComponent>(
 		EnemyGUIComponent.toString(),
 	);
 }
 
 export function getFloatingTextComponentArray() {
-	const gameScene = getGameScene();
-	return gameScene.componentRegistry.getComponentArrayByComponentId<FloatingTextComponent>(
+	return getComponentRegistry().getComponentArrayByComponentId<FloatingTextComponent>(
 		FloatingTextComponent.toString(),
 	);
 }
 
 export function getImageAnimationComponentArray() {
-	const gameScene = getGameScene();
-	return gameScene.componentRegistry.getComponentArrayByComponentId<ImageAnimationComponent>(
+	return getComponentRegistry().getComponentArrayByComponentId<ImageAnimationComponent>(
 		ImageAnimationComponent.toString(),
 	);
 }
 
 export function getPlayerGuiComponentArray() {
-	const gameScene = getGameScene();
-	return gameScene.componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
+	return getComponentRegistry().getComponentArrayByComponentId<PlayerGUIComponent>(
 		PlayerGUIComponent.toString(),
 	);
 }
 
 export function getStickerImageComponentArray() {
-	const gameScene = getGameScene();
-	return gameScene.componentRegistry.getComponentArrayByComponentId<StickerImageComponent>(
+	return getComponentRegistry().getComponentArrayByComponentId<StickerImageComponent>(
 		StickerImageComponent.toString(),
 	);
 }

@@ -29,6 +29,7 @@ import {
 import { getEnemyFactory } from "./FactoryModule";
 import {
 	getActorStateComponentArray,
+	getComponentRegistry,
 	getEnemyGuiComponentArray,
 } from "./ComponentModule";
 import { setCombatGameMode, setExploreGameMode } from "./SceneModule";
@@ -162,7 +163,7 @@ export async function startQueueActionPlayer(
 	isItem?: boolean,
 ): Promise<void> {
 	const actorData =
-		getGameScene().componentRegistry.getComponentByEntityId<ActorStateComponent>(
+		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.toString(),
 			eid,
 		);
@@ -252,7 +253,7 @@ function finishQueueAction(
 	targetEids: EntityId[],
 ): void {
 	const sourceActorState =
-		getGameScene().componentRegistry.getComponentByEntityId<ActorStateComponent>(
+		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.toString(),
 			sourceEid,
 		);

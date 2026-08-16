@@ -1,6 +1,9 @@
-import { EntityId, observe, onGet, onRemove, onSet, World } from "bitecs";
+import { EntityId, observe, onGet, onRemove, onSet } from "bitecs";
 import { Component } from "src/components/Component";
+import { singleton } from "tsyringe";
+import type { World } from "bitecs";
 
+@singleton()
 export class ComponentRegistry {
 	private world: World;
 	private componentArrays: Map<string, Array<Component>> = new Map();

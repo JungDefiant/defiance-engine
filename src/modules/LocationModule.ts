@@ -156,18 +156,16 @@ export async function filterLocationEvents(locationData: SceneLocation) {
 }
 
 export async function finishTransitionToNewLocation() {
-	const gameScene = getGameScene();
 	const userInterfaceState = getUserInterfaceState();
 
-	resetExploreViewPosition();
+	await resetExploreViewPosition();
 	userInterfaceState.exploreHud.hideHighlightInfoUI();
-	checkEventByTrigger("OnLocationEnter");
-	console.log("CURR LOC", gameScene.currentLocation);
 	const sceneGUIChildren = userInterfaceState.sceneGUI.getChildren();
 	for (let i = 0; i < sceneGUIChildren.length; i++) {
 		const sceneGUIObject = sceneGUIChildren[i];
 		sceneGUIObject.isVisible = true;
 	}
+	checkEventByTrigger("OnLocationEnter");
 }
 export async function transitionToNewLocation(
 	currentLocationViewNode: TransformNode,

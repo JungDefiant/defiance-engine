@@ -1,3 +1,6 @@
+import { FactoryRegistry } from "src/registries/FactoryRegistry";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameScene } from "src/scenes/GameScene";
 import { UserInterfaceScene } from "src/scenes/UserInterfaceScene";
 import AudioState from "src/states/AudioState";
@@ -21,49 +24,50 @@ export function getUserInterfaceScene() {
 	return container.resolve(UserInterfaceScene);
 }
 
+export function getSystemRegistry() {
+	return container.resolve(SystemRegistry);
+}
+
+export function getGameStateRegistry() {
+	return container.resolve(GameStateRegistry);
+}
+
 export function getAllGameStates() {
-	const gameScene = container.resolve(GameScene);
-	return gameScene.gameStateRegistry.getAllGameStates();
+	return getGameStateRegistry().getAllGameStates();
 }
 
 export function getAudioState(): AudioState {
-	const gameScene = container.resolve(GameScene);
-	return gameScene.gameStateRegistry.getGameStateByStateId<AudioState>(
+	return getGameStateRegistry().getGameStateByStateId<AudioState>(
 		AudioState.toString(),
 	);
 }
 
 export function getControlState(): ControlState {
-	const gameScene = container.resolve(GameScene);
-	return gameScene.gameStateRegistry.getGameStateByStateId<ControlState>(
+	return getGameStateRegistry().getGameStateByStateId<ControlState>(
 		ControlState.toString(),
 	);
 }
 
 export function getDialogueState(): DialogueState {
-	const gameScene = container.resolve(GameScene);
-	return gameScene.gameStateRegistry.getGameStateByStateId<DialogueState>(
+	return getGameStateRegistry().getGameStateByStateId<DialogueState>(
 		DialogueState.toString(),
 	);
 }
 
 export function getGameplayState(): GameplayState {
-	const gameScene = container.resolve(GameScene);
-	return gameScene.gameStateRegistry.getGameStateByStateId<GameplayState>(
+	return getGameStateRegistry().getGameStateByStateId<GameplayState>(
 		GameplayState.toString(),
 	);
 }
 
 export function getRenderState(): RenderState {
-	const gameScene = container.resolve(GameScene);
-	return gameScene.gameStateRegistry.getGameStateByStateId<RenderState>(
+	return getGameStateRegistry().getGameStateByStateId<RenderState>(
 		RenderState.toString(),
 	);
 }
 
 export function getUserInterfaceState(): UserInterfaceState {
-	const gameScene = container.resolve(GameScene);
-	return gameScene.gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
+	return getGameStateRegistry().getGameStateByStateId<UserInterfaceState>(
 		UserInterfaceState.toString(),
 	);
 }

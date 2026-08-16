@@ -10,6 +10,7 @@ import { container } from "tsyringe";
 import { clamp } from "./Utils";
 import { addFloatingTextRQE } from "./RenderModule";
 import { defeatActor } from "./CombatModule";
+import { getUserInterfaceState } from "./GameStateModule";
 
 export const BASE_DEFENSE = 10;
 
@@ -19,12 +20,12 @@ export function processAbilityEffects(
 	abilityData: AbilityData,
 	context?: { [index: string]: EffectVar },
 ) {
-	let effText;
-	const gs = container.resolve(GameState);
+	let effectText;
+	const userInterfaceState = getUserInterfaceState();
 	abilityData.effectData.forEach((eff) => {
 		switch (eff.id) {
 			case "damage":
-				effText = applyDamageEffect(
+				effectText = applyDamageEffect(
 					sourceData,
 					targetData,
 					abilityData.descriptors,
@@ -36,16 +37,16 @@ export function processAbilityEffects(
 
 				addFloatingTextRQE(
 					targetData.entityId,
-					effText,
+					effectText,
 					Themes.neutral2,
 				);
-				gs.combatHud.addCombatLogEntry(
+				userInterfaceState.combatHud.addCombatLogEntry(
 					`${sourceData.name} (${abilityData.name})`,
-					`Inflicts ${effText} Damage to ${targetData.name}!`,
+					`Inflicts ${effectText} Damage to ${targetData.name}!`,
 				);
 				break;
 			case "healing":
-				effText = applyHealEffect(
+				effectText = applyHealEffect(
 					sourceData,
 					targetData,
 					abilityData.descriptors,
@@ -56,12 +57,12 @@ export function processAbilityEffects(
 				);
 				addFloatingTextRQE(
 					targetData.entityId,
-					effText,
+					effectText,
 					Themes.success,
 				);
-				gs.combatHud.addCombatLogEntry(
+				userInterfaceState.combatHud.addCombatLogEntry(
 					`${sourceData.name} (${abilityData.name})`,
-					`Restores ${effText} Life to ${targetData.name}.`,
+					`Restores ${effectText} Life to ${targetData.name}.`,
 				);
 				break;
 			default:

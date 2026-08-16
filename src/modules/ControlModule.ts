@@ -22,6 +22,7 @@ import {
 	getUserInterfaceState,
 } from "./GameStateModule";
 import { setSelectedCharacter } from "./UserInterfaceModule";
+import { getComponentRegistry } from "./ComponentModule";
 
 export function clearControlActionPause() {
 	const controlState = getControlState();
@@ -110,7 +111,7 @@ export async function resetCombatModeActionManager() {
 	const controlState = getControlState();
 	const userInterfaceState = getUserInterfaceState();
 	const actorData =
-		gameScene.componentRegistry.getComponentByEntityId<ActorStateComponent>(
+		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.toString(),
 			gameplayState.selectedPlayerEID,
 		);

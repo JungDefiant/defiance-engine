@@ -15,6 +15,7 @@ import { DEFAULT_CAM_TARGET } from "src/constants/GeneralConstants";
 import { EncounterMap, SceneLocation } from "src/types/GameTypes";
 import { createSceneCamera, getSceneNodes } from "src/modules/SceneModule";
 import { getPublicRoot } from "src/modules/Utils";
+import { ShowInspector } from "@babylonjs/inspector";
 
 @singleton()
 export class GameScene extends Scene {
@@ -29,10 +30,6 @@ export class GameScene extends Scene {
 	private readonly _modalIds: string[];
 
 	private _world: World;
-	private _systemRegistry: SystemRegistry;
-	private _factoryRegistry: FactoryRegistry;
-	private _gameStateRegistry: GameStateRegistry;
-	private _componentRegistry: ComponentRegistry;
 	private _lastExploreViewTarget: Vector3 = DEFAULT_CAM_TARGET;
 	private _currentLocation: Nullable<SceneLocation> = null;
 	private _sceneNodes: Nullable<TransformNode[]> = null;
@@ -44,10 +41,6 @@ export class GameScene extends Scene {
 	) {
 		super(engine, options);
 		this._world = createWorld();
-		this._systemRegistry = new SystemRegistry();
-		this._factoryRegistry = new FactoryRegistry();
-		this._gameStateRegistry = new GameStateRegistry();
-		this._componentRegistry = new ComponentRegistry(this._world);
 		this._startLocationId = sceneProps.startLocationId;
 		this._startMusicId = sceneProps.startMusicId;
 		this._mapModelId = sceneProps.mapModelId;
@@ -56,28 +49,13 @@ export class GameScene extends Scene {
 		this._encounters = sceneProps.encounters;
 		this._locations = sceneProps.locations;
 		this._modalIds = sceneProps.modalIds;
-
 		this._cameraEntityId = createSceneCamera(this);
+
+		// ShowInspector(this);
 	}
 
 	public get world(): World {
 		return this._world;
-	}
-
-	public get systemRegistry(): SystemRegistry {
-		return this._systemRegistry;
-	}
-
-	public get factoryRegistry(): FactoryRegistry {
-		return this._factoryRegistry;
-	}
-
-	public get gameStateRegistry(): GameStateRegistry {
-		return this._gameStateRegistry;
-	}
-
-	public get componentRegistry(): ComponentRegistry {
-		return this._componentRegistry;
 	}
 
 	public get lastExploreViewTarget(): Vector3 {

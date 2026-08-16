@@ -1,6 +1,7 @@
 import { EntityFactory } from "src/factories/EntityFactory";
 import { singleton } from "tsyringe";
 
+@singleton()
 export class FactoryRegistry {
 	private entityFactories: Map<string, EntityFactory> = new Map();
 

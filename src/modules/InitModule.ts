@@ -1,8 +1,16 @@
 import { Engine } from "@babylonjs/core";
 import AudioState from "src/states/AudioState";
 import { container } from "tsyringe";
-import { initAudioState, initGameScene } from "./SceneModule";
-import { getCampaignState, getGameScene } from "./GameStateModule";
+import {
+	initAudioState,
+	initGameplayState,
+	initGameScene,
+} from "./SceneModule";
+import {
+	getCampaignState,
+	getGameScene,
+	getSystemRegistry,
+} from "./GameStateModule";
 import {
 	DEFAULT_CAMPAIGN_ID,
 	DELTATIME_MS,
@@ -19,6 +27,10 @@ import {
 import MainMenuScene from "src/scenes/MainMenuScene";
 import { EntityFactory } from "src/factories/EntityFactory";
 import GameSystem from "src/systems/GameSystem";
+import { GameStateRegistry } from "src/registries/GameStateRegistry";
+import { FactoryRegistry } from "src/registries/FactoryRegistry";
+import { SystemRegistry } from "src/registries/SystemRegistry";
+import { initUserInterfaceState } from "./UserInterfaceModule";
 
 export async function gotoMainMenu() {
 	const mainMenuScene = container.resolve(MainMenuScene);
@@ -61,10 +73,11 @@ async function createStartingScene() {
 async function runScene() {
 	const engine = container.resolve(Engine);
 	const gameScene = getGameScene();
+	const systemRegistry = getSystemRegistry();
 	engine.runRenderLoop(() => {
 		gameScene.render();
 		const deltaTime = gameScene.deltaTime / DELTATIME_MS;
-		updateSystems(deltaTime, gameScene);
+		updateSystems(deltaTime, systemRegistry);
 	});
 }
 
@@ -82,49 +95,62 @@ async function initCampaignState() {
 	container.register(CampaignState, { useValue: newCampaignState });
 }
 
-export function registerStates(gameScene: GameScene) {
+export async function registerStates(
+	gameStateRegistry: GameStateRegistry,
+	gameScene: GameScene,
+) {
+	gameStateRegistry.registerNewGameState(
+		AudioState.toString(),
+		await initAudioState(),
+	);
+
 	for (const stateToken of STATE_TOKENS) {
-		gameScene.gameStateRegistry.registerNewGameState(
+		gameStateRegistry.registerNewGameState(
 			stateToken.toString(),
 			new stateToken(),
 		);
 	}
+
+	initUserInterfaceState();
+	initGameplayState(gameScene.cameraEntityId);
 }
 
-export function registerFactories(gameScene: GameScene) {
+export function registerFactories(factoryRegistry: FactoryRegistry) {
 	for (const factoryToken of FACTORY_TOKENS) {
-		gameScene.factoryRegistry.registerNewEntityFactory(
+		factoryRegistry.registerNewEntityFactory(
 			factoryToken.toString(),
 			new factoryToken(),
 		);
 	}
 }
 
-export function registerSystems(gameScene: GameScene) {
+export function registerSystems(
+	systemRegistry: SystemRegistry,
+	gameScene: GameScene,
+) {
 	for (const systemToken of SYSTEM_TOKENS) {
-		gameScene.systemRegistry.registerNewGameSystem(
+		systemRegistry.registerNewGameSystem(
 			systemToken.toString(),
 			new systemToken(gameScene),
 		);
 	}
 }
 
-export async function startFactories(gameScene: GameScene) {
+export async function startFactories(factoryRegistry: FactoryRegistry) {
 	for (const factoryToken of FACTORY_TOKENS) {
 		const factory =
-			gameScene.factoryRegistry.getEntityFactoryByFactoryId<EntityFactory>(
+			factoryRegistry.getEntityFactoryByFactoryId<EntityFactory>(
 				factoryToken.toString(),
 			);
 		await factory.start();
 	}
 }
 
-function updateSystems(deltaTime: number, gameScene: GameScene) {
+function updateSystems(deltaTime: number, systemRegistry: SystemRegistry) {
 	for (const systemToken of SYSTEM_TOKENS) {
-		const system =
-			gameScene.systemRegistry.getGameSystemBySystemId<GameSystem>(
-				systemToken.toString(),
-			);
+		const system = systemRegistry.getGameSystemBySystemId<GameSystem>(
+			systemToken.toString(),
+		);
 		system.update(deltaTime);
 	}
 }
