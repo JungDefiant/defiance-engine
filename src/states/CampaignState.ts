@@ -1,5 +1,8 @@
-import { CampaignData, StoryVariable } from "src/types/GameTypes";
+import { StoryVariable } from "src/types/GameTypes";
+import { singleton } from "tsyringe";
+import type { LoadedCampaignJson } from "src/types/GameTypes";
 
+@singleton()
 export default class CampaignState {
 	public readonly campaignId: string;
 	public readonly startSceneId: string;
@@ -9,7 +12,7 @@ export default class CampaignState {
 	public readonly startingPartyIds: string[];
 	public readonly storyVariableMap: Map<string, StoryVariable> = new Map();
 
-	public constructor(loadedCampaignData: CampaignData) {
+	public constructor(loadedCampaignData: LoadedCampaignJson) {
 		this.campaignId = loadedCampaignData.id;
 		this.startSceneId = loadedCampaignData.startSceneId;
 		this.startDialogueId = loadedCampaignData.startDialogueId;

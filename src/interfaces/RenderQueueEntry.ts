@@ -1,18 +1,19 @@
 import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, removeEntity, set } from "bitecs";
-import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
-import FloatingTextComponent from "src/components/FloatingTextComponent";
-import PlayerGUIComponent from "src/components/PlayerGUIComponent";
-import StickerImageComponent from "src/components/StickerImageComponent";
-import { StickerFactory } from "src/factories/StickerFactory";
 import { Themes } from "src/gui/Themes";
-import { FactoryRegistry } from "src/registries/FactoryRegistry";
-import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import CampaignState from "src/states/CampaignState";
-import GameplayState from "src/states/GameplayState";
-import SceneState from "src/states/SceneState";
-import UserInterfaceState from "src/states/UserInterfaceState";
-import { container } from "tsyringe";
+import {
+	getCharacterSpriteComponentArray,
+	getFloatingTextComponentArray,
+	getPlayerGuiComponentArray,
+	getStickerImageComponentArray,
+} from "src/modules/ComponentModule";
+import { getStickerFactory } from "src/modules/FactoryModule";
+import {
+	getCampaignState,
+	getGameplayState,
+	getGameScene,
+	getUserInterfaceState,
+} from "src/modules/GameStateModule";
 
 export interface RenderQueueEntry {
 	readonly isBlocking: boolean;
@@ -52,22 +53,14 @@ export class RenderQueueEntryMessageDisplay implements RenderQueueEntry {
 	public async initRenderQueueEntry(
 		renderQueueState: RenderQueueState,
 	): Promise<void> {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
-		const userInterfaceState =
-			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				UserInterfaceState.toString(),
-			);
+		const userInterfaceState = getUserInterfaceState();
 		userInterfaceState.combatHud.setMessageDisplay(true, this.text);
 	}
 
 	public tickRenderQueueEntry(renderQueueState: RenderQueueState): void {}
 
 	public clearRenderQueueState(renderQueueState: RenderQueueState): void {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
-		const userInterfaceState =
-			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				UserInterfaceState.toString(),
-			);
+		const userInterfaceState = getUserInterfaceState();
 		userInterfaceState.combatHud.setMessageDisplay(false);
 	}
 }
@@ -98,34 +91,16 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 	public async initRenderQueueEntry(
 		renderQueueState: RenderQueueState,
 	): Promise<void> {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
-
-		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-			SceneState.toString(),
-		);
-		const gameplayState =
-			gameStateRegistry.getGameStateByStateId<GameplayState>(
-				GameplayState.toString(),
-			);
-		const userInterfaceState =
-			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				UserInterfaceState.toString(),
-			);
-		const playerGuiComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
-				PlayerGUIComponent.toString(),
-			);
+		const gameScene = getGameScene();
+		const gameplayState = getGameplayState();
+		const userInterfaceState = getUserInterfaceState();
+		const playerGuiComponentArray = getPlayerGuiComponentArray();
 		const characterSpriteComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<CharacterSpriteComponent>(
-				CharacterSpriteComponent.toString(),
-			);
-		const floatingTextComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<FloatingTextComponent>(
-				FloatingTextComponent.toString(),
-			);
+			getCharacterSpriteComponentArray();
+		const floatingTextComponentArray = getFloatingTextComponentArray();
 
 		for (const eid of this.targetEntityIds) {
-			const ftEntity = addEntity(sceneState.world);
+			const ftEntity = addEntity(gameScene.world);
 			renderQueueState.entityIds.push(ftEntity);
 
 			const floatingTextUI = new TextBlock(
@@ -150,7 +125,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 			}
 
 			addComponent(
-				sceneState.world,
+				gameScene.world,
 				ftEntity,
 				set(floatingTextComponentArray, floatingTextUI),
 			);
@@ -161,18 +136,8 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 		renderQueueState: RenderQueueState,
 		deltaTime: number,
 	): void {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
-		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-			SceneState.toString(),
-		);
-		const gameplayState =
-			gameStateRegistry.getGameStateByStateId<GameplayState>(
-				GameplayState.toString(),
-			);
-		const floatingTextComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<FloatingTextComponent>(
-				FloatingTextComponent.toString(),
-			);
+		const gameplayState = getGameplayState();
+		const floatingTextComponentArray = getFloatingTextComponentArray();
 
 		for (const eid of renderQueueState.entityIds) {
 			const floatingText = floatingTextComponentArray[eid];
@@ -194,18 +159,9 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 		}
 	}
 	public clearRenderQueueState(renderQueueState: RenderQueueState): void {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
-		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-			SceneState.toString(),
-		);
-		const userInterfaceState =
-			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				UserInterfaceState.toString(),
-			);
-		const floatingTextComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<FloatingTextComponent>(
-				FloatingTextComponent.toString(),
-			);
+		const world = getGameScene().world;
+		const userInterfaceState = getUserInterfaceState();
+		const floatingTextComponentArray = getFloatingTextComponentArray();
 
 		for (const eid of renderQueueState.entityIds) {
 			const ft = floatingTextComponentArray[eid];
@@ -214,7 +170,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 			}
 			userInterfaceState.sceneGUI.removeControl(ft);
 			ft.dispose();
-			removeEntity(sceneState.world, eid);
+			removeEntity(world, eid);
 		}
 	}
 }
@@ -244,40 +200,14 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 	public async initRenderQueueEntry(
 		renderQueueState: RenderQueueState,
 	): Promise<void> {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
-		const factoryRegistry = container.resolve(FactoryRegistry);
-
-		const stickerFactory =
-			factoryRegistry.getEntityFactoryByFactoryId<StickerFactory>(
-				StickerFactory.toString(),
-			);
-		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-			SceneState.toString(),
-		);
-		const gameplayState =
-			gameStateRegistry.getGameStateByStateId<GameplayState>(
-				GameplayState.toString(),
-			);
-		const campaignState =
-			gameStateRegistry.getGameStateByStateId<CampaignState>(
-				CampaignState.toString(),
-			);
-		const userInterfaceState =
-			gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-				UserInterfaceState.toString(),
-			);
-		const playerGuiComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
-				PlayerGUIComponent.toString(),
-			);
+		const stickerFactory = getStickerFactory();
+		const gameplayState = getGameplayState();
+		const campaignState = getCampaignState();
+		const userInterfaceState = getUserInterfaceState();
+		const playerGuiComponentArray = getPlayerGuiComponentArray();
 		const characterSpriteComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<CharacterSpriteComponent>(
-				CharacterSpriteComponent.toString(),
-			);
-		const stickerImageComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<StickerImageComponent>(
-				StickerImageComponent.toString(),
-			);
+			getCharacterSpriteComponentArray();
+		const stickerImageComponentArray = getStickerImageComponentArray();
 
 		for (const eid of this.targetEntityIds) {
 			stickerFactory
@@ -314,15 +244,8 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 	): void {}
 
 	public clearRenderQueueState(renderQueueState: RenderQueueState): void {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
-
-		const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-			SceneState.toString(),
-		);
-		const stickerImageComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<StickerImageComponent>(
-				StickerImageComponent.toString(),
-			);
+		const world = getGameScene().world;
+		const stickerImageComponentArray = getStickerImageComponentArray();
 
 		for (const eid of renderQueueState.entityIds) {
 			Promise.resolve(stickerImageComponentArray[eid]).then(
@@ -330,7 +253,7 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 					if (specialFxStickerImage) {
 						specialFxStickerImage.dispose();
 					}
-					removeEntity(sceneState.world, eid);
+					removeEntity(world, eid);
 				},
 			);
 		}

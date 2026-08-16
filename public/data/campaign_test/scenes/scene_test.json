@@ -2,13 +2,17 @@
 	"id": "test",
 	"difficultyLevel": 0,
 	"startLocationId": "loc0",
-	"modelURL": "defiance_level.glb",
-	"dialogueFile": "dlg_test",
-	"startMusic": "darkstar_azureglitch.mp3",
+	"mapModelId": "defiance_level.glb",
+	"dialogueFileId": "dlg_test",
+	"startMusicId": "darkstar_azureglitch.mp3",
+	"modalIds": [
+		"mdl_test"
+	],
 	"encounters": {
-		"enc_test": ["enem_test"]
+		"enc_test": [
+			"enem_test"
+		]
 	},
-	"modalRefs": ["mdl_test"],
 	"locations": [
 		{
 			"id": "loc0",
@@ -23,7 +27,11 @@
 					"dialogueNodeId": "ch0_start",
 					"interactableNodeId": "itr_computer_target",
 					"viewPositionNodeId": "itr_computer_view",
-					"guiPositionOffset": [0, 0, 0]
+					"guiPositionOffset": [
+						0,
+						0,
+						0
+					]
 				}
 			],
 			"doors": [

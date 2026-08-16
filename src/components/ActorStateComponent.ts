@@ -1,7 +1,7 @@
 import { container } from "tsyringe";
 import { EntityId } from "bitecs";
 import { Nullable } from "@babylonjs/core";
-import { getPublicRoot } from "src/helpers/Utils";
+import { getPublicRoot } from "src/modules/Utils";
 import CampaignState from "src/states/CampaignState";
 import { Component } from "./Component";
 

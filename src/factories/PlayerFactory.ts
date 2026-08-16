@@ -1,11 +1,15 @@
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { container } from "tsyringe";
 import { EntityFactory } from "src/factories/EntityFactory";
-import { getPublicRoot } from "src/helpers/Utils";
-import SceneState from "src/states/SceneState";
+import { getPublicRoot } from "src/modules/Utils";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import PlayerGUIComponent from "src/components/PlayerGUIComponent";
+import { getGameScene } from "src/modules/GameStateModule";
+import {
+	getActorStateComponentArray,
+	getPlayerGuiComponentArray,
+} from "src/modules/ComponentModule";
 
 export const FACTORY_ID_PLAYER = "PlayerFactory";
 
@@ -24,22 +28,16 @@ export class PlayerFactory implements EntityFactory {
 			return -1;
 		}
 
-		const sceneState = container.resolve(SceneState);
-		const componentRegistry = container.resolve(ComponentRegistry);
+		const gameScene = getGameScene();
 
-		const newEntity = addEntity(sceneState.world);
+		const newEntity = addEntity(gameScene.world);
 
 		const newActorComp = new ActorStateComponent(newEntity, rawData);
 		newActorComp.isPlayer = true;
 		addComponent(
-			sceneState.world,
+			gameScene.world,
 			newEntity,
-			set(
-				componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
-					ActorStateComponent.toString(),
-				),
-				newActorComp,
-			),
+			set(getActorStateComponentArray(), newActorComp),
 		);
 
 		const newPlayerGUI = new PlayerGUIComponent(
@@ -48,14 +46,9 @@ export class PlayerFactory implements EntityFactory {
 			`sprites/characters/${newActorComp.spriteUrl}`,
 		);
 		addComponent(
-			sceneState.world,
+			gameScene.world,
 			newEntity,
-			set(
-				componentRegistry.getComponentArrayByComponentId<PlayerGUIComponent>(
-					PlayerGUIComponent.toString(),
-				),
-				newPlayerGUI,
-			),
+			set(getPlayerGuiComponentArray(), newPlayerGUI),
 		);
 
 		return newEntity;

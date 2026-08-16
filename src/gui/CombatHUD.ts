@@ -1,4 +1,4 @@
-import { Nullable, Rotate2dBlock } from "@babylonjs/core";
+import { Nullable } from "@babylonjs/core";
 import {
 	Container,
 	Control,
@@ -10,13 +10,11 @@ import {
 } from "@babylonjs/gui";
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
-import { ActionSlot } from "src/gui/premades/ActionSlot";
-import CombatManagerSystem from "src/systems/CombatManagerSystem";
-import { getPublicRoot } from "src/helpers/Utils";
-import { container } from "tsyringe";
-import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import ControlState from "src/states/ControlState";
+import { ActionSlot } from "src/gui/elements/ActionSlot";
+import { getPublicRoot } from "src/modules/Utils";
 import ActorStateComponent from "src/components/ActorStateComponent";
+import { startQueueActionPlayer } from "src/modules/CombatModule";
+import { getControlState } from "src/modules/GameStateModule";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -69,15 +67,8 @@ export default class CombatHUD implements IHUD {
 		return this.rootContainer;
 	}
 
-	public async setActionBar(
-		actorState: ActorStateComponent,
-		combatManagerSystem: CombatManagerSystem,
-	): Promise<void> {
-		const gameStateRegistry = container.resolve(GameStateRegistry);
-		const controlState =
-			gameStateRegistry.getGameStateByStateId<ControlState>(
-				ControlState.toString(),
-			);
+	public async setActionBar(actorState: ActorStateComponent): Promise<void> {
+		const controlState = getControlState();
 
 		if (!actorState) {
 			return;
@@ -93,10 +84,7 @@ export default class CombatHUD implements IHUD {
 			if (abilityData) {
 				abilitySlot.setActionSlotIcon(abilityData.iconURL as string);
 				abilitySlot.setOnClickEvent(() =>
-					combatManagerSystem.startQueueActionPlayer(
-						actorState.entityId,
-						i,
-					),
+					startQueueActionPlayer(actorState.entityId, i),
 				);
 				abilitySlot.setActionLabelText(
 					String.fromCharCode(
@@ -126,10 +114,7 @@ export default class CombatHUD implements IHUD {
 					`${getPublicRoot()}${deviceData.iconURL as string}`,
 				);
 				deviceSlot.setOnClickEvent(() =>
-					combatManagerSystem.startQueueActionPlayer(
-						actorState.entityId,
-						i,
-					),
+					startQueueActionPlayer(actorState.entityId, i),
 				);
 				deviceSlot.setActionLabelText(
 					String.fromCharCode(

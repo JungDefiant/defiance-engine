@@ -1,18 +1,9 @@
 import { CreateSoundAsync, CreateStreamingSoundAsync } from "@babylonjs/core";
-import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import AudioState from "src/states/AudioState";
-import CampaignState from "src/states/CampaignState";
-import { container } from "tsyringe";
+import { getAudioState, getCampaignState } from "./GameStateModule";
 
 export async function playSFX(id: string) {
-	const gameStateRegistry = container.resolve(GameStateRegistry);
-	const audioState = gameStateRegistry.getGameStateByStateId<AudioState>(
-		AudioState.toString(),
-	);
-	const campaignState =
-		gameStateRegistry.getGameStateByStateId<CampaignState>(
-			CampaignState.toString(),
-		);
+	const audioState = getAudioState();
+	const campaignState = getCampaignState();
 
 	let sound = audioState.sfxMap.get(id);
 	if (!sound) {
@@ -28,14 +19,8 @@ export async function playSFX(id: string) {
 }
 
 export async function playMusic(musicId: string) {
-	const gameStateRegistry = container.resolve(GameStateRegistry);
-	const audioState = gameStateRegistry.getGameStateByStateId<AudioState>(
-		AudioState.toString(),
-	);
-	const campaignState =
-		gameStateRegistry.getGameStateByStateId<CampaignState>(
-			CampaignState.toString(),
-		);
+	const audioState = getAudioState();
+	const campaignState = getCampaignState();
 
 	let music = audioState.musicMap.get(musicId);
 	if (!music) {

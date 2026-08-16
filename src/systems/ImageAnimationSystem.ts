@@ -2,31 +2,20 @@ import GameSystem from "./GameSystem";
 import { inject } from "tsyringe";
 import { query } from "bitecs";
 import { ImageAnimationComponent } from "src/components/ImageAnimationComponent";
-import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import { SystemRegistry } from "src/registries/SystemRegistry";
-import SceneState from "src/states/SceneState";
+import { GameScene } from "src/scenes/GameScene";
+import { getImageAnimationComponentArray } from "src/modules/ComponentModule";
 
 export const SYSTEM_ID_IMAGEANIMATION = "ImageAnimation";
 
 export default class ImageAnimationSystem implements GameSystem {
-	public constructor(
-		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
-		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
-	) {}
+	public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
 	public async start(): Promise<void> {}
 
 	public update(deltaTime: number): void {
-		const sceneState =
-			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				SceneState.toString(),
-			);
-		const imageAnimationComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<ImageAnimationComponent>(
-				ImageAnimationComponent.toString(),
-			);
+		const imageAnimationComponentArray = getImageAnimationComponentArray();
 
-		for (const eid of query(sceneState.world, [
+		for (const eid of query(this.gameScene.world, [
 			imageAnimationComponentArray,
 		])) {
 			const imageAnimationComponent = imageAnimationComponentArray[eid];

@@ -3,24 +3,18 @@ import ActorStateComponent, {
 	AbilityData,
 } from "src/components/ActorStateComponent";
 import {
+	RenderQueueEntry,
 	RenderQueueEntryFloatingText,
 	RenderQueueEntryMessageDisplay,
 	RenderQueueEntrySpecialFX,
 } from "src/interfaces/RenderQueueEntry";
-import { SystemRegistry } from "src/registries/SystemRegistry";
-import RenderQueueSystem from "src/systems/RenderQueueSystem";
-import { container } from "tsyringe";
+import { getRenderState } from "./GameStateModule";
 
 export function addFloatingTextRQE(
 	targetEntityId: number,
 	text: string,
 	color: string,
 ) {
-	const renderQueueSystem = container
-		.resolve(SystemRegistry)
-		.getGameSystemBySystemId<RenderQueueSystem>(
-			RenderQueueSystem.toString(),
-		);
 	const floatingTextRqe = new RenderQueueEntryFloatingText(
 		[targetEntityId],
 		text,
@@ -29,7 +23,7 @@ export function addFloatingTextRQE(
 		1,
 	);
 
-	renderQueueSystem.addRenderQueueEntry(floatingTextRqe);
+	addRenderQueueEntry(floatingTextRqe);
 }
 
 export function addAbilityRQEs(
@@ -38,11 +32,6 @@ export function addAbilityRQEs(
 	sourceData: ActorStateComponent,
 	actionData: AbilityData,
 ) {
-	const renderQueueSystem = container
-		.resolve(SystemRegistry)
-		.getGameSystemBySystemId<RenderQueueSystem>(
-			RenderQueueSystem.toString(),
-		);
 	const messageDisplayRenderQueueEntry = new RenderQueueEntryMessageDisplay(
 		`${sourceData.name} : ${actionData.name}`,
 		false,
@@ -65,7 +54,23 @@ export function addAbilityRQEs(
 		1,
 	);
 
-	renderQueueSystem.addRenderQueueEntry(messageDisplayRenderQueueEntry);
-	renderQueueSystem.addRenderQueueEntry(castAbilitySpecialFxRenderQueueEntry);
-	renderQueueSystem.addRenderQueueEntry(hitAbilitySpecialFxRenderQueueEntry);
+	addRenderQueueEntry(messageDisplayRenderQueueEntry);
+	addRenderQueueEntry(castAbilitySpecialFxRenderQueueEntry);
+	addRenderQueueEntry(hitAbilitySpecialFxRenderQueueEntry);
+}
+
+export function startRenderQueue(): void {
+	const renderState = getRenderState();
+	if (!renderState.isStarted) {
+		renderState.isStarted = true;
+	}
+}
+
+export function addRenderQueueEntry(renderQueueEntry: RenderQueueEntry): void {
+	const renderState = getRenderState();
+	if (renderState.isStarted) {
+		console.warn("Cannot add new RQE while render queue is started.");
+		return;
+	}
+	renderState.currentRenderQueue.enqueue(renderQueueEntry);
 }

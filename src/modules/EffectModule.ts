@@ -8,8 +8,8 @@ import ActorStateComponent, {
 import { Themes } from "src/gui/Themes";
 import { container } from "tsyringe";
 import { clamp } from "./Utils";
-import { addFloatingTextRQE } from "./RenderHelpers";
-import { defeatActor } from "./CombatHelpers";
+import { addFloatingTextRQE } from "./RenderModule";
+import { defeatActor } from "./CombatModule";
 
 export const BASE_DEFENSE = 10;
 

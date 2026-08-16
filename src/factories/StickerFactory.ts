@@ -1,17 +1,21 @@
 import { container } from "tsyringe";
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { Image } from "@babylonjs/gui";
-import { getPublicRoot } from "src/helpers/Utils";
+import { getPublicRoot } from "src/modules/Utils";
 import {
 	ImageAnimationComponent,
 	SpriteAnimationProps,
 } from "src/components/ImageAnimationComponent";
-import SceneState from "src/states/SceneState";
 import StickerImageComponent, {
 	COMPONENT_ID_STICKERIMAGE,
 } from "src/components/StickerImageComponent";
 import { EntityFactory } from "./EntityFactory";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import { getGameScene } from "src/modules/GameStateModule";
+import {
+	getImageAnimationComponentArray,
+	getStickerImageComponentArray,
+} from "src/modules/ComponentModule";
 
 export const FACTORY_ID_STICKER = "StickerFactory";
 
@@ -30,36 +34,23 @@ export class StickerFactory implements EntityFactory {
 			return -1;
 		}
 
-		const sceneState = container.resolve(SceneState);
-		const componentRegistry = container.resolve(ComponentRegistry);
-
-		const newEntity = addEntity(sceneState.world);
-
+		const gameScene = getGameScene();
+		const newEntity = addEntity(gameScene.world);
 		const stickerProps = rawData as StickerProps;
 
 		const newSticker = await this.createStickerImage(stickerProps);
 		addComponent(
-			sceneState.world,
+			gameScene.world,
 			newEntity,
-			set(
-				componentRegistry.getComponentArrayByComponentId<StickerImageComponent>(
-					StickerImageComponent.toString(),
-				),
-				newSticker,
-			),
+			set(getStickerImageComponentArray(), newSticker),
 		);
 
 		if (stickerProps.animation) {
 			const newAnim = this.createImageAnimation(newSticker, stickerProps);
 			addComponent(
-				sceneState.world,
+				gameScene.world,
 				newEntity,
-				set(
-					componentRegistry.getComponentArrayByComponentId<ImageAnimationComponent>(
-						ImageAnimationComponent.toString(),
-					),
-					newAnim,
-				),
+				set(getImageAnimationComponentArray(), newAnim),
 			);
 		}
 

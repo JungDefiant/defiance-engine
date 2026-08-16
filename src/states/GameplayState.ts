@@ -1,5 +1,4 @@
 import { CombatState } from "src/systems/CombatManagerSystem";
-import { GameMode } from "src/types/GameTypes";
 
 export default class GameplayState {
 	public cameraEID: number = -1;

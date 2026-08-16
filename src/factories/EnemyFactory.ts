@@ -10,13 +10,22 @@ import {
 	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
-import { getPublicRoot } from "src/helpers/Utils";
-import SceneState from "src/states/SceneState";
+import { getPublicRoot } from "src/modules/Utils";
 import UserInterfaceState from "src/states/UserInterfaceState";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import EnemyGUIComponent from "src/components/EnemyGUIComponent";
+import {
+	getGameScene,
+	getUserInterfaceState,
+} from "src/modules/GameStateModule";
+import { getSceneNodes } from "src/modules/SceneModule";
+import {
+	getActorStateComponentArray,
+	getCharacterSpriteComponentArray,
+	getEnemyGuiComponentArray,
+} from "src/modules/ComponentModule";
 
 export class EnemyFactory implements EntityFactory {
 	public start() {}
@@ -44,21 +53,16 @@ export class EnemyFactory implements EntityFactory {
 		fileName: string,
 		campaignId: string,
 	): Promise<EntityId> {
-		const sceneState = container.resolve(SceneState);
-		const userInterfaceState = container.resolve(UserInterfaceState);
-		const componentRegistry = container.resolve(ComponentRegistry);
-		const currentLocation = sceneState.currentLocation;
+		const gameScene = getGameScene();
+		const userInterfaceState = getUserInterfaceState();
+		const sceneNodes = await getSceneNodes(gameScene.mapModelId);
+		const currentLocation = gameScene.currentLocation;
 
-		if (
-			!sceneState ||
-			!userInterfaceState ||
-			!componentRegistry ||
-			!currentLocation
-		) {
-			return -1;
+		if (!currentLocation) {
+			throw new Error("No location found!");
 		}
 
-		const spawnNode = sceneState.sceneNodes.find(
+		const spawnNode = sceneNodes.find(
 			(node) => node.id === currentLocation.combatSpawnNodeId,
 		);
 
@@ -74,31 +78,21 @@ export class EnemyFactory implements EntityFactory {
 			return -1;
 		}
 
-		const newEntity = addEntity(sceneState.world);
+		const newEntity = addEntity(gameScene.world);
 
 		const newActorComp = new ActorStateComponent(newEntity, rawData);
 		addComponent(
-			sceneState.world,
+			gameScene.world,
 			newEntity,
-			set(
-				componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
-					ActorStateComponent.toString(),
-				),
-				newActorComp,
-			),
+			set(getActorStateComponentArray(), newActorComp),
 		);
 
 		const newEnemySprite = this.createEnemySprite(newEntity, spawnNode);
 
 		addComponent(
-			sceneState.world,
+			gameScene.world,
 			newEntity,
-			set(
-				componentRegistry.getComponentArrayByComponentId<CharacterSpriteComponent>(
-					CharacterSpriteComponent.toString(),
-				),
-				newEnemySprite,
-			),
+			set(getCharacterSpriteComponentArray(), newEnemySprite),
 		);
 
 		const newEnemyGUI = new EnemyGUIComponent(
@@ -106,14 +100,9 @@ export class EnemyFactory implements EntityFactory {
 			userInterfaceState.sceneGUI,
 		);
 		addComponent(
-			sceneState.world,
+			gameScene.world,
 			newEntity,
-			set(
-				componentRegistry.getComponentArrayByComponentId<EnemyGUIComponent>(
-					EnemyGUIComponent.toString(),
-				),
-				newEnemyGUI,
-			),
+			set(getEnemyGuiComponentArray(), newEnemyGUI),
 		);
 
 		return newEntity;
@@ -123,11 +112,9 @@ export class EnemyFactory implements EntityFactory {
 		entityId: EntityId,
 		parentNode: TransformNode,
 	): Mesh {
-		const sceneState = container.resolve(SceneState);
-		const componentRegistry = container.resolve(ComponentRegistry);
-
+		const gameScene = getGameScene();
 		const actorData =
-			componentRegistry.getComponentByEntityId<ActorStateComponent>(
+			gameScene.componentRegistry.getComponentByEntityId<ActorStateComponent>(
 				ActorStateComponent.toString(),
 				entityId,
 			);
@@ -138,12 +125,12 @@ export class EnemyFactory implements EntityFactory {
 				width: 0.4,
 				height: 0.8,
 			},
-			sceneState.currentScene,
+			gameScene,
 		);
 
 		const enActorSpriteMat = new PBRMaterial(
 			`mat_enBattlerSprite_${actorData.id}_${entityId}`,
-			sceneState.currentScene,
+			gameScene,
 		);
 		enActorSprite.parent = parentNode;
 		enActorSprite.billboardMode = 7;
@@ -152,7 +139,7 @@ export class EnemyFactory implements EntityFactory {
 
 		enActorSpriteMat.albedoTexture = new Texture(
 			`${getPublicRoot()}/sprites/characters/${actorData.spriteUrl}`,
-			sceneState.currentScene,
+			gameScene,
 		);
 		enActorSpriteMat.metallic = 0;
 		enActorSpriteMat.roughness = 0;

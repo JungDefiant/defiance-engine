@@ -1,7 +1,6 @@
 import GameSystem from "src/systems/GameSystem";
 import { singleton } from "tsyringe";
 
-singleton();
 export class SystemRegistry {
 	private gameSystems: Map<string, GameSystem> = new Map();
 

@@ -14,6 +14,7 @@ import { container } from "tsyringe";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import { ActorGUI } from "../interfaces/ActorGUI";
 import { Component } from "./Component";
+import { setSelectedCharacter } from "src/modules/UserInterfaceModule";
 
 export default class PlayerGUIComponent implements ActorGUI, Component {
 	private rootContainer: Container;
@@ -52,8 +53,7 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		this.backgroundUI.color = Themes.primary1;
 		this.backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.backgroundUI.onPointerClickObservable.add(() => {
-			const uiSystem = container.resolve(UserInterfaceSystem);
-			uiSystem.setSelectedCharacter(eid);
+			setSelectedCharacter(eid);
 		});
 
 		this.rootContainer.addControl(this.backgroundUI);
@@ -66,8 +66,7 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		portraitUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		portraitUI.detectPointerOnOpaqueOnly = true;
 		portraitUI.onPointerClickObservable.add(() => {
-			const uiSystem = container.resolve(UserInterfaceSystem);
-			uiSystem.setSelectedCharacter(eid);
+			setSelectedCharacter(eid);
 		});
 		this.rootContainer.addControl(portraitUI);
 
@@ -78,8 +77,7 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		rootStackPanel.isVertical = true;
 		rootStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		rootStackPanel.onPointerClickObservable.add(() => {
-			const uiSystem = container.resolve(UserInterfaceSystem);
-			uiSystem.setSelectedCharacter(eid);
+			setSelectedCharacter(eid);
 		});
 		this.rootContainer.addControl(rootStackPanel);
 

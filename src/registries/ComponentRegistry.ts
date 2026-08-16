@@ -1,13 +1,12 @@
-import { EntityId, observe, onGet, onRemove, onSet } from "bitecs";
-import SceneState from "src/states/SceneState";
+import { EntityId, observe, onGet, onRemove, onSet, World } from "bitecs";
 import { Component } from "src/components/Component";
 
 export class ComponentRegistry {
-	private sceneState: SceneState;
+	private world: World;
 	private componentArrays: Map<string, Array<Component>> = new Map();
 
-	public constructor(sceneState: SceneState) {
-		this.sceneState = sceneState;
+	public constructor(world: World) {
+		this.world = world;
 	}
 
 	public registerNewComponentArray<T extends Component>(componentId: string) {
@@ -16,29 +15,21 @@ export class ComponentRegistry {
 		this.componentArrays.set(componentId, componentArray as Array<T>);
 
 		observe(
-			this.sceneState.world,
+			this.world,
 			onSet(componentArray),
 			(eid: EntityId, params: T) => {
 				componentArray[eid] = params;
 			},
 		);
 
-		observe(
-			this.sceneState.world,
-			onGet(componentArray),
-			(eid: EntityId) => {
-				return componentArray[eid];
-			},
-		);
+		observe(this.world, onGet(componentArray), (eid: EntityId) => {
+			return componentArray[eid];
+		});
 
-		observe(
-			this.sceneState.world,
-			onRemove(componentArray),
-			(eid: EntityId) => {
-				componentArray[eid].dispose();
-				componentArray.splice(eid);
-			},
-		);
+		observe(this.world, onRemove(componentArray), (eid: EntityId) => {
+			componentArray[eid].dispose();
+			componentArray.splice(eid);
+		});
 	}
 
 	public getComponentArrayByComponentId<T>(componentId: string): Array<T> {

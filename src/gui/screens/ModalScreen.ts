@@ -8,7 +8,7 @@ import {
 	TextBlock,
 } from "@babylonjs/gui";
 import { Themes } from "../Themes";
-import { getPublicRoot } from "src/helpers/Utils";
+import { getPublicRoot } from "src/modules/Utils";
 import { container } from "tsyringe";
 import { ModalPage } from "src/types/GameTypes";
 import GameplayState from "src/states/GameplayState";

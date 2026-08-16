@@ -1,11 +1,8 @@
 import "reflect-metadata";
 import { container } from "tsyringe";
-import { App } from "src/App";
-import { SystemRegistry } from "./registries/SystemRegistry";
-import { GameStateRegistry } from "./registries/GameStateRegistry";
-import { FactoryRegistry } from "./registries/FactoryRegistry";
-import { registerNewEngine } from "./helpers/InitHelpers";
-import MainMenuScene from "./objects/MainMenuScene";
+import { gotoMainMenu, createNewEngine } from "./modules/InitModule";
+import MainMenuScene from "./scenes/MainMenuScene";
+import { Engine } from "@babylonjs/core";
 
 // Source - https://stackoverflow.com/a/77970818
 // Posted by Helto, modified by community. See post 'Timeline' for change history
@@ -14,13 +11,10 @@ window.addEventListener("vite:preloadError", () => {
 	window.location.reload();
 });
 
-container.resolve(SystemRegistry);
-container.resolve(FactoryRegistry);
-container.resolve(GameStateRegistry);
+const engine = createNewEngine();
+container.register(Engine, { useValue: engine });
 
-const app = new App();
-
-const engine = registerNewEngine();
 const mainMenuScene = new MainMenuScene(engine);
-app.mainMenuScene = mainMenuScene;
-app.gotoMainMenu();
+container.register(MainMenuScene, { useValue: mainMenuScene });
+
+gotoMainMenu();

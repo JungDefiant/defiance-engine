@@ -1,5 +1,7 @@
 import { Vector3 } from "@babylonjs/core";
-import { EventData } from "src/types/EventTypes";
+import { AdvancedDynamicTexture, Control } from "@babylonjs/gui";
+import { GameScene } from "src/scenes/GameScene";
+import { GameEvent } from "src/types/EventTypes";
 
 export class ControlSettings {
 	powerActions: number[] = [
@@ -21,7 +23,7 @@ export class ControlSettings {
 	switchPlayerRight: number = "S".charCodeAt(0);
 }
 
-export interface CampaignData {
+export interface LoadedCampaignJson {
 	id: string;
 	startSceneId: "";
 	startDialogueId: "";
@@ -30,7 +32,7 @@ export interface CampaignData {
 	startingPartyIds: string[];
 }
 
-export interface SceneData {
+export interface LoadedSceneJson {
 	id: string;
 	startLocationId: string;
 	mapModelId: string;
@@ -38,17 +40,17 @@ export interface SceneData {
 	startMusicId: string;
 	dialogueFileId: string;
 	encounters: EncounterMap;
-	locations: Location[];
+	locations: SceneLocation[];
 	modalIds: string[];
 }
 
-export interface Location {
+export interface SceneLocation {
 	id: string;
 	exploreViewNodeId: string;
 	combatViewNodeId: string;
 	combatSpawnNodeId: string;
 	interactables: Interactable[];
-	events: EventData[];
+	events: GameEvent[];
 	doors: DoorData[];
 }
 
@@ -106,7 +108,7 @@ export interface DialogueOptionLine {
 	condition: ConditionFunction;
 }
 
-export interface ModalData {
+export interface LoadedModalJson {
 	id: string;
 	pages: ModalPage[];
 }
@@ -121,4 +123,10 @@ export type StoryVariable = string | number;
 
 export interface ConditionFunction {
 	(): boolean;
+}
+
+export interface NewLocationSceneParams {
+	gameScene: GameScene;
+	sceneGUI: AdvancedDynamicTexture;
+	exploreGUIControls: Control[];
 }

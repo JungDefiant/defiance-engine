@@ -15,14 +15,13 @@ import {
 	StreamingSound,
 	Texture,
 } from "@babylonjs/core";
-import { getPublicRoot } from "src/helpers/Utils";
+import { getPublicRoot } from "src/modules/Utils";
+import { startGame } from "src/modules/InitModule";
 
 export class MainMenuScreen {
 	private root: AdvancedDynamicTexture;
 	private audioEngine: Nullable<AudioEngineV2> = null;
 	private music: Nullable<StreamingSound> = null;
-
-	private isLoadingMusic = false;
 
 	public constructor(scene: Scene) {
 		const env = import.meta.env;

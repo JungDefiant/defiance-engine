@@ -1,82 +1,55 @@
-import { inject } from "tsyringe";
 import GameSystem from "src/systems/GameSystem";
-import { Queue } from "queue-typescript";
 import { PAUSE_RENDERQUEUE } from "src/constants/GeneralConstants";
-import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import { SystemRegistry } from "src/registries/SystemRegistry";
-import ControlState from "src/states/ControlState";
-import {
-	RenderQueueEntry,
-	RenderQueueState,
-} from "src/interfaces/RenderQueueEntry";
+import { RenderQueueState } from "src/interfaces/RenderQueueEntry";
+import { getControlState, getRenderState } from "src/modules/GameStateModule";
+import { GameScene } from "src/scenes/GameScene";
+import { inject } from "tsyringe";
 
 export default class RenderQueueSystem implements GameSystem {
-	private currentRenderQueue: Queue<RenderQueueEntry> =
-		new Queue<RenderQueueEntry>();
-	private renderQueueStates: RenderQueueState[] = [];
-	private isStarted: boolean = false;
-
-	public constructor(
-		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
-		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
-	) {}
-
-	public async start(): Promise<void> {}
+	public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
 	public update(deltaTime: number): void {
-		if (!this.isStarted) {
+		const renderState = getRenderState();
+		if (!renderState.isStarted) {
 			return;
 		}
 
-		const controlState =
-			this.gameStateRegistry.getGameStateByStateId<ControlState>(
-				ControlState.toString(),
-			);
+		const controlState = getControlState();
+		const renderQueueStates = renderState.renderQueueStates;
+		const currentRenderQueue = renderState.currentRenderQueue;
 
 		if (controlState.renderPauseSet.size > 0) {
 			return;
 		}
 
 		if (
-			(this.renderQueueStates.length === 0 ||
-				!this.renderQueueStates[this.renderQueueStates.length - 1]
-					.renderQueueEntry.isBlocking) &&
-			this.currentRenderQueue.length !== 0
+			(renderState.renderQueueStates.length === 0 ||
+				!renderState.renderQueueStates[
+					renderState.renderQueueStates.length - 1
+				].renderQueueEntry.isBlocking) &&
+			currentRenderQueue.length !== 0
 		) {
-			const nextRqe = this.currentRenderQueue.dequeue();
-			this.renderQueueStates.push(new RenderQueueState(nextRqe));
+			const nextRqe = currentRenderQueue.dequeue();
+			renderQueueStates.push(new RenderQueueState(nextRqe));
 		}
 
-		for (let renderQeueuState of this.renderQueueStates) {
+		for (let renderQeueuState of renderQueueStates) {
 			this.processRenderQueueState(deltaTime, renderQeueuState);
 		}
 
-		if (this.renderQueueStates.length === 0) {
+		if (renderQueueStates.length === 0) {
 			if (controlState.actionPauseSet.has(PAUSE_RENDERQUEUE)) {
 				controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 			}
-			this.isStarted = false;
+			renderState.isStarted = false;
 		}
-	}
-
-	public startRenderQueue(): void {
-		if (!this.isStarted) {
-			this.isStarted = true;
-		}
-	}
-
-	public addRenderQueueEntry(rqe: RenderQueueEntry): void {
-		if (this.isStarted) {
-			console.warn("Cannot add new RQE while render queue is started.");
-			return;
-		}
-		this.currentRenderQueue.enqueue(rqe);
 	}
 
 	private processRenderQueueState(
 		deltaTime: number,
 		renderQueueState: RenderQueueState,
 	): void {
+		const renderState = getRenderState();
 		if (renderQueueState.renderQueueEntry.duration) {
 			if (!renderQueueState.init) {
 				renderQueueState.renderQueueEntry.initRenderQueueEntry(
@@ -101,9 +74,10 @@ export default class RenderQueueSystem implements GameSystem {
 				renderQueueState.renderQueueEntry.clearRenderQueueState(
 					renderQueueState,
 				);
-				this.renderQueueStates = this.renderQueueStates.filter(
-					(x) => x !== renderQueueState,
-				);
+				renderState.renderQueueStates =
+					renderState.renderQueueStates.filter(
+						(x) => x !== renderQueueState,
+					);
 			}
 		} else {
 			if (!renderQueueState.init) {

@@ -2,43 +2,27 @@ import { inject } from "tsyringe";
 import GameSystem from "./GameSystem";
 import { Engine, Vector3 } from "@babylonjs/core";
 import { query, removeComponent } from "bitecs";
-import { SystemRegistry } from "src/registries/SystemRegistry";
-import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import SceneState from "src/states/SceneState";
 import EntityMovementComponent from "src/components/EntityMovementComponent";
+import { GameScene } from "src/scenes/GameScene";
+import { getEntityMovementComponentArray } from "src/modules/ComponentModule";
 
 export const SYSTEM_ID_ENTITYMOVEMENT = "EntityMovement";
 
 export default class EntityMovementSystem implements GameSystem {
-	public constructor(
-		@inject(SystemRegistry) private systemRegistry: SystemRegistry,
-		@inject(GameStateRegistry) private gameStateRegistry: GameStateRegistry,
-	) {}
+	public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
 	public async start(engine: Engine): Promise<void> {}
 
 	public update(deltaTime: number): void {
-		const sceneState =
-			this.gameStateRegistry.getGameStateByStateId<SceneState>(
-				SceneState.toString(),
-			);
-		const entityMovementComponentArray =
-			sceneState.componentRegistry.getComponentArrayByComponentId<EntityMovementComponent>(
-				EntityMovementComponent.toString(),
-			);
+		const world = this.gameScene.world;
+		const entityMovementComponentArray = getEntityMovementComponentArray();
 
-		for (const eid of query(sceneState.world, [
-			entityMovementComponentArray,
-		])) {
+		for (const eid of query(world, [entityMovementComponentArray])) {
 			const entityMovement = entityMovementComponentArray[eid];
 			this.moveEntityTowardsDestination(deltaTime, entityMovement);
 			if (this.checkIfEntityAtDestination(entityMovement)) {
 				entityMovement.onDestinationReachedEvent();
-				removeComponent(
-					sceneState.world,
-					eid,
-					entityMovementComponentArray,
-				);
+				removeComponent(world, eid, entityMovementComponentArray);
 			}
 		}
 	}

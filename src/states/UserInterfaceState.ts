@@ -7,7 +7,7 @@ import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { VictoryScreen } from "src/gui/screens/VictoryScreen";
-import { ModalData } from "src/types/GameTypes";
+import { LoadedModalJson } from "src/types/GameTypes";
 
 export default class UserInterfaceState {
 	public readonly mainUI: AdvancedDynamicTexture;
@@ -20,7 +20,7 @@ export default class UserInterfaceState {
 	public readonly modalScreen: ModalScreen;
 	public readonly gameOverScreen: GameOverScreen;
 	public readonly victoryScreen: VictoryScreen;
-	public readonly modalMap: Map<string, ModalData> = new Map();
+	public readonly modalMap: Map<string, LoadedModalJson> = new Map();
 
 	public constructor(newProps: UserInterfaceStateProps) {
 		this.mainUI = newProps.mainUI;

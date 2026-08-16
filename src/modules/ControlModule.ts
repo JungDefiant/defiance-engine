@@ -4,39 +4,43 @@ import {
 	ExecuteCodeAction,
 	UniversalCamera,
 } from "@babylonjs/core";
-import { GameStateRegistry } from "src/registries/GameStateRegistry";
-import { SystemRegistry } from "src/registries/SystemRegistry";
-import ControlState from "src/states/ControlState";
 import GameplayState from "src/states/GameplayState";
-import SceneState from "src/states/SceneState";
 import UserInterfaceState from "src/states/UserInterfaceState";
-import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
-import { container } from "tsyringe";
-import { getGameCanvas, resetCombatViewPosition } from "./SceneHelpers";
+import { getGameCanvas } from "./SceneModule";
 import ActorStateComponent from "src/components/ActorStateComponent";
-import CombatManagerSystem from "src/systems/CombatManagerSystem";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
-import { resetTargeting, setTacticalPause } from "./CombatHelpers";
+import {
+	resetTargeting,
+	setTacticalPause,
+	startQueueActionPlayer,
+} from "./CombatModule";
+import {
+	getControlState,
+	getGameplayState,
+	getGameScene,
+	getUserInterfaceScene,
+	getUserInterfaceState,
+} from "./GameStateModule";
+import { setSelectedCharacter } from "./UserInterfaceModule";
+
+export function clearControlActionPause() {
+	const controlState = getControlState();
+	if (controlState.actionPauseSet.size > 0) {
+		controlState.actionPauseSet.clear();
+	}
+}
 
 export function resetExploreModeControls() {
-	const gameStateRegistry = container.resolve(GameStateRegistry);
-	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-		SceneState.toString(),
-	);
-	const userInterfaceState =
-		gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-			UserInterfaceState.toString(),
-		);
-	const controlState = gameStateRegistry.getGameStateByStateId<ControlState>(
-		ControlState.toString(),
-	);
+	const gameScene = getUserInterfaceScene();
+	const userInterfaceState = getUserInterfaceState();
+	const controlState = getControlState();
 
-	const camera = sceneState.currentScene.activeCamera as UniversalCamera;
+	const camera = gameScene.activeCamera as UniversalCamera;
 	const gameCanvas = getGameCanvas();
 
 	if (camera && gameCanvas) {
 		camera.attachControl(gameCanvas);
-		sceneState.currentScene.onPointerObservable.add(() => {
+		gameScene.onPointerObservable.add(() => {
 			// This will block out vertical rotation
 			// For blocking out horizontal rotation, simply use y instead of x
 			camera.cameraRotation.x = 0;
@@ -49,24 +53,16 @@ export function resetExploreModeControls() {
 }
 
 export function resetExploreModeActionManager() {
-	const gameStateRegistry = container.resolve(GameStateRegistry);
-	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-		SceneState.toString(),
-	);
-	const gameplayState =
-		gameStateRegistry.getGameStateByStateId<GameplayState>(
-			GameplayState.toString(),
-		);
-	const controlState = gameStateRegistry.getGameStateByStateId<ControlState>(
-		ControlState.toString(),
-	);
+	const gameScene = getGameScene();
+	const gameplayState = getGameplayState();
+	const controlState = getControlState();
 
 	if (controlState.actionManager) {
 		controlState.actionManager.dispose();
 		controlState.actionManager = null;
 	}
 
-	const actionManager = new ActionManager(sceneState.currentScene);
+	const actionManager = new ActionManager(gameScene);
 
 	actionManager.registerAction(
 		new ExecuteCodeAction(
@@ -89,23 +85,15 @@ export function resetExploreModeActionManager() {
 	);
 
 	controlState.actionManager = actionManager;
-	sceneState.currentScene.actionManager = actionManager;
+	gameScene.actionManager = actionManager;
 }
 
 export function resetCombatModeControls() {
-	const gameStateRegistry = container.resolve(GameStateRegistry);
-	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-		SceneState.toString(),
-	);
-	const userInterfaceState =
-		gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-			UserInterfaceState.toString(),
-		);
-	const controlState = gameStateRegistry.getGameStateByStateId<ControlState>(
-		ControlState.toString(),
-	);
+	const gameScene = getGameScene();
+	const userInterfaceState = getUserInterfaceState();
+	const controlState = getControlState();
 
-	const camera = sceneState.currentScene.activeCamera;
+	const camera = gameScene.activeCamera;
 
 	if (camera) {
 		camera.detachControl();
@@ -117,37 +105,16 @@ export function resetCombatModeControls() {
 }
 
 export async function resetCombatModeActionManager() {
-	const systemRegistry = container.resolve(SystemRegistry);
-	const gameStateRegistry = container.resolve(GameStateRegistry);
-	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-		SceneState.toString(),
-	);
-	const componentRegistry = sceneState.componentRegistry;
-
-	const combatManagerSystem =
-		systemRegistry.getGameSystemBySystemId<CombatManagerSystem>(
-			CombatManagerSystem.toString(),
-		);
-	const gameplayState =
-		gameStateRegistry.getGameStateByStateId<GameplayState>(
-			GameplayState.toString(),
-		);
-	const controlState = gameStateRegistry.getGameStateByStateId<ControlState>(
-		ControlState.toString(),
-	);
-	const userInterfaceState =
-		gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-			UserInterfaceState.toString(),
-		);
+	const gameScene = getGameScene();
+	const gameplayState = getGameplayState();
+	const controlState = getControlState();
+	const userInterfaceState = getUserInterfaceState();
 	const actorData =
-		componentRegistry.getComponentByEntityId<ActorStateComponent>(
+		gameScene.componentRegistry.getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.toString(),
 			gameplayState.selectedPlayerEID,
 		);
-	await userInterfaceState.combatHud.setActionBar(
-		actorData,
-		combatManagerSystem,
-	);
+	await userInterfaceState.combatHud.setActionBar(actorData);
 
 	resetTargeting();
 
@@ -156,7 +123,7 @@ export async function resetCombatModeActionManager() {
 		controlState.actionManager = null;
 	}
 
-	const actionManager = new ActionManager(sceneState.currentScene);
+	const actionManager = new ActionManager(gameScene);
 
 	for (let i = 0; i < actorData.powerData.length; i++) {
 		actionManager.registerAction(
@@ -166,8 +133,7 @@ export async function resetCombatModeActionManager() {
 					parameter: controlState.controlSettings.powerActions[i],
 				},
 				() => {
-					const cmSystem = container.resolve(CombatManagerSystem);
-					cmSystem.startQueueActionPlayer(actorData.entityId, i);
+					startQueueActionPlayer(actorData.entityId, i);
 				},
 			),
 		);
@@ -183,8 +149,7 @@ export async function resetCombatModeActionManager() {
 							controlState.controlSettings.deviceActions[i],
 					},
 					() => {
-						const cmSystem = container.resolve(CombatManagerSystem);
-						cmSystem.startQueueActionPlayer(actorData.entityId, i);
+						startQueueActionPlayer(actorData.entityId, i);
 					},
 				),
 			);
@@ -226,23 +191,14 @@ export async function resetCombatModeActionManager() {
 	);
 
 	controlState.actionManager = actionManager;
-	sceneState.currentScene.actionManager = actionManager;
+	gameScene.actionManager = actionManager;
 }
 
 export function resetDialogueModeControls() {
-	const gameStateRegistry = container.resolve(GameStateRegistry);
-	const sceneState = gameStateRegistry.getGameStateByStateId<SceneState>(
-		SceneState.toString(),
-	);
-	const userInterfaceState =
-		gameStateRegistry.getGameStateByStateId<UserInterfaceState>(
-			UserInterfaceState.toString(),
-		);
-	const controlState = gameStateRegistry.getGameStateByStateId<ControlState>(
-		ControlState.toString(),
-	);
+	const userInterfaceState = getUserInterfaceState();
+	const controlState = getControlState();
 
-	const camera = sceneState.currentScene.activeCamera;
+	const camera = getGameScene().activeCamera;
 
 	if (camera) {
 		camera.detachControl();
@@ -257,12 +213,6 @@ function getSwitchPlayerRightFunction(
 	gameplayState: GameplayState,
 ): (evt: ActionEvent) => void {
 	return () => {
-		const systemRegistry = container.resolve(SystemRegistry);
-		const userInterfaceSystem =
-			systemRegistry.getGameSystemBySystemId<UserInterfaceSystem>(
-				UserInterfaceSystem.toString(),
-			);
-
 		let currentSelectedPlayerEntityIdIndex =
 			gameplayState.playerEIDs.findIndex(
 				(x) => x === gameplayState.selectedPlayerEID,
@@ -275,7 +225,7 @@ function getSwitchPlayerRightFunction(
 		) {
 			newSelectedPlayerEntityIdIndex = 0;
 		}
-		userInterfaceSystem.setSelectedCharacter(
+		setSelectedCharacter(
 			gameplayState.playerEIDs[newSelectedPlayerEntityIdIndex],
 		);
 	};
@@ -285,12 +235,6 @@ function getSwitchPlayerLeftFunction(
 	gameplayState: GameplayState,
 ): (evt: ActionEvent) => void {
 	return () => {
-		const systemRegistry = container.resolve(SystemRegistry);
-		const userInterfaceSystem =
-			systemRegistry.getGameSystemBySystemId<UserInterfaceSystem>(
-				UserInterfaceSystem.toString(),
-			);
-
 		let currentSelectedPlayerEntityIdIndex =
 			gameplayState.playerEIDs.findIndex(
 				(x) => x === gameplayState.selectedPlayerEID,
@@ -301,7 +245,7 @@ function getSwitchPlayerLeftFunction(
 			newSelectedPlayerEntityIdIndex =
 				gameplayState.playerEIDs.length - 1;
 		}
-		userInterfaceSystem.setSelectedCharacter(
+		setSelectedCharacter(
 			gameplayState.playerEIDs[newSelectedPlayerEntityIdIndex],
 		);
 	};
