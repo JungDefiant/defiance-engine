@@ -9,7 +9,6 @@ import {
 } from "src/modules/ComponentModule";
 import { getStickerFactory } from "src/modules/FactoryModule";
 import {
-	getCampaignState,
 	getGameplayState,
 	getGameScene,
 	getUserInterfaceState,
@@ -202,7 +201,6 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 	): Promise<void> {
 		const stickerFactory = getStickerFactory();
 		const gameplayState = getGameplayState();
-		const campaignState = getCampaignState();
 		const userInterfaceState = getUserInterfaceState();
 		const playerGuiComponentArray = getPlayerGuiComponentArray();
 		const characterSpriteComponentArray =
@@ -212,7 +210,6 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 		for (const eid of this.targetEntityIds) {
 			const entityId = await stickerFactory.createEntityFromFile(
 				this.vfxUrl,
-				campaignState.campaignId,
 			);
 			const specialFxStickerImage = stickerImageComponentArray[entityId];
 			renderQueueState.entityIds.push(entityId);

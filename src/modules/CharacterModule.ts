@@ -8,15 +8,9 @@ import {
 	getUserInterfaceState,
 } from "./GameStateModule";
 
-async function loadPlayerCharacter(
-	charId: string,
-	campaignId: string,
-): Promise<number> {
+async function loadPlayerCharacter(charId: string): Promise<number> {
 	const playerFactory = getPlayerFactory();
-	const playerEntityId = await playerFactory.createEntityFromFile(
-		charId,
-		campaignId,
-	);
+	const playerEntityId = await playerFactory.createEntityFromFile(charId);
 
 	return playerEntityId;
 }
@@ -32,7 +26,6 @@ export async function loadStartingPlayerParty() {
 	for (let i = 0; i < partyCharacterIds.length; i++) {
 		const newPlayerCharacter = await loadPlayerCharacter(
 			partyCharacterIds[i],
-			campaignState.campaignId,
 		);
 		playerEntityIds.push(newPlayerCharacter);
 	}

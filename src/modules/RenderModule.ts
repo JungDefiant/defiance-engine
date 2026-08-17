@@ -38,6 +38,8 @@ export function addAbilityRQEs(
 		1.05,
 	);
 
+	console.log("ACTION DATA CAST VFX URL", actionData.castVfxURL);
+
 	const castAbilitySpecialFxRenderQueueEntry = new RenderQueueEntrySpecialFX(
 		[sourceEntityId],
 		actionData.castVfxURL as string,

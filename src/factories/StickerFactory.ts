@@ -11,37 +11,46 @@ import {
 	getImageAnimationComponentArray,
 	getStickerImageComponentArray,
 } from "src/modules/ComponentModule";
+import { Nullable } from "@babylonjs/core";
+
+const PRELOAD_STICKERS = ["vfx/vfx_test"];
 
 export class StickerFactory implements EntityFactory {
-	private cachedProps: Map<string, StickerProps> = new Map<
-		string,
-		StickerProps
-	>();
+	private stickerPropsCache: Map<string, StickerProps> = new Map();
+	private loadPromises: Nullable<Promise<void>> = null;
 
-	public start(): void {}
+	public start(campaignId: string) {
+		this.loadPromises = this.loadAllStickers(campaignId);
+	}
 
-	public async createEntityFromFile(
-		fileName: string,
-		campaignId: string,
-	): Promise<EntityId> {
-		console.log("CACHED PROPS", this.cachedProps);
-		let stickerProps = this.cachedProps.get(fileName);
-		console.log("CACHED STICKER PROP", stickerProps);
+	private async loadAllStickers(campaignId: string): Promise<void> {
+		await Promise.all(
+			PRELOAD_STICKERS.map(async (fileName) => {
+				try {
+					const response = await fetch(
+						`${getPublicRoot()}/data/${campaignId}/stickers/${fileName}.json`,
+					);
+					const stickerEntityData = await response.json();
+					this.stickerPropsCache.set(fileName, stickerEntityData);
+				} catch (error) {
+					console.error("Failed to load entity data", fileName);
+				}
+			}),
+		);
+	}
 
-		if (!stickerProps) {
-			console.log("GET STICKER PROPS");
-			const response = await fetch(
-				`${getPublicRoot()}/data/${campaignId}/${fileName}`,
-			);
-			const rawData = await response.json();
-			if (!rawData) {
-				return -1;
-			}
-
-			stickerProps = rawData as StickerProps;
-			this.cachedProps.set(fileName, rawData);
+	public async createEntityFromFile(fileName: string): Promise<EntityId> {
+		if (this.loadPromises) {
+			await this.loadPromises;
 		}
 
+		if (!this.stickerPropsCache.has(fileName)) {
+			return -1;
+		}
+
+		const stickerProps = this.stickerPropsCache.get(
+			fileName,
+		) as StickerProps;
 		const gameScene = getGameScene();
 		const newEntity = addEntity(gameScene.world);
 

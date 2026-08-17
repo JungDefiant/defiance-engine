@@ -70,13 +70,11 @@ export default class CombatManagerSystem implements GameSystem {
 		}
 	}
 
-	private async executeQueuedAction(
-		sourceActorState: ActorStateComponent,
-	): Promise<void> {
+	private executeQueuedAction(sourceActorState: ActorStateComponent): void {
 		const controlState = getControlState();
 		const actorStateComponentArray = getActorStateComponentArray();
 
-		const actionToExecute = await sourceActorState.queuedAction;
+		const actionToExecute = sourceActorState.queuedAction;
 		if (!actionToExecute) {
 			controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 			return;

@@ -50,7 +50,6 @@ import { clearCombatHudEntries } from "./UserInterfaceModule";
 export async function startCombat(encId: string): Promise<void> {
 	const gameScene = getGameScene();
 	const enemyFactory = getEnemyFactory();
-	const campaignState = getCampaignState();
 	const controlState = getControlState();
 	const gameplayState = getGameplayState();
 	const actorStateComponentArray = getActorStateComponentArray();
@@ -70,7 +69,6 @@ export async function startCombat(encId: string): Promise<void> {
 		const spawnPosition = BASE_SPAWN_POSITION.add(offsetVector);
 		const newEnemy = await enemyFactory.createEntityFromFileAtPosition(
 			enId,
-			campaignState.campaignId,
 			spawnPosition,
 		);
 		gameplayState.enemyEIDs.push(newEnemy);

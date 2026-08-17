@@ -154,7 +154,7 @@ export async function startFactories(factoryRegistry: FactoryRegistry) {
 			factoryRegistry.getEntityFactoryByFactoryId<EntityFactory>(
 				factoryToken.toString(),
 			);
-		await factory.start();
+		await factory.start(getCampaignState().campaignId);
 	}
 }
 

@@ -4,6 +4,7 @@ import { addComponent, addEntity, EntityId, query, set } from "bitecs";
 import {
 	Mesh,
 	MeshBuilder,
+	Nullable,
 	PBRMaterial,
 	Space,
 	Texture,
@@ -28,18 +29,37 @@ import {
 	getEnemyGuiComponentArray,
 } from "src/modules/ComponentModule";
 
+const PRELOAD_ENEMIES = ["enem_test"];
+
 export class EnemyFactory implements EntityFactory {
-	public start() {}
+	private cache: Map<string, any> = new Map();
+	private loadPromises: Nullable<Promise<void>> = null;
+
+	public start(campaignId: string) {
+		this.loadPromises = this.loadAllEnemies(campaignId);
+	}
+
+	private async loadAllEnemies(campaignId: string): Promise<void> {
+		await Promise.all(
+			PRELOAD_ENEMIES.map(async (fileName) => {
+				try {
+					const response = await fetch(
+						`${getPublicRoot()}/data/${campaignId}/enemies/${fileName}.json`,
+					);
+					const enemyEntityData = await response.json();
+					this.cache.set(fileName, enemyEntityData);
+				} catch (error) {
+					console.error("Failed to load entity data", fileName);
+				}
+			}),
+		);
+	}
 
 	public async createEntityFromFileAtPosition(
 		fileName: string,
-		campaignId: string,
 		position: Vector3,
 	): Promise<EntityId> {
-		const newEntityId = await this.createEntityFromFile(
-			fileName,
-			campaignId,
-		);
+		const newEntityId = await this.createEntityFromFile(fileName);
 		const componentRegistry = container.resolve(ComponentRegistry);
 		const characterSprite =
 			componentRegistry.getComponentByEntityId<CharacterSpriteComponent>(
@@ -50,10 +70,16 @@ export class EnemyFactory implements EntityFactory {
 		return newEntityId;
 	}
 
-	public async createEntityFromFile(
-		fileName: string,
-		campaignId: string,
-	): Promise<EntityId> {
+	public async createEntityFromFile(fileName: string): Promise<EntityId> {
+		if (this.loadPromises) {
+			await this.loadPromises;
+		}
+
+		if (!this.cache.has(fileName)) {
+			return -1;
+		}
+
+		const enemyData = this.cache.get(fileName);
 		const gameScene = getGameScene();
 		const userInterfaceState = getUserInterfaceState();
 		const sceneNodes = await getSceneNodes(gameScene.mapModelId);
@@ -71,17 +97,9 @@ export class EnemyFactory implements EntityFactory {
 			return -1;
 		}
 
-		const response = await fetch(
-			`${getPublicRoot()}/data/${campaignId}/enemies/${fileName}.json`,
-		);
-		const rawData = await response.json();
-		if (!rawData) {
-			return -1;
-		}
-
 		const newEntity = addEntity(gameScene.world);
 
-		const newActorComp = new ActorStateComponent(newEntity, rawData);
+		const newActorComp = new ActorStateComponent(newEntity, enemyData);
 		addComponent(
 			gameScene.world,
 			newEntity,
