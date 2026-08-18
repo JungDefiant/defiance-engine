@@ -79,10 +79,10 @@ async function runScene() {
 	const userInterfaceScene = getUserInterfaceScene();
 	const systemRegistry = getSystemRegistry();
 	engine.runRenderLoop(() => {
-		gameScene.render();
-		userInterfaceScene.render();
 		const deltaTime = gameScene.deltaTime / DELTATIME_MS;
 		updateSystems(deltaTime, systemRegistry);
+		gameScene.render();
+		userInterfaceScene.render();
 	});
 }
 
@@ -103,7 +103,7 @@ async function createCampaignState() {
 export function registerFactories(factoryRegistry: FactoryRegistry) {
 	for (const factoryToken of FACTORY_TOKENS) {
 		factoryRegistry.registerNewEntityFactory(
-			factoryToken.toString(),
+			factoryToken.name,
 			new factoryToken(),
 		);
 	}
@@ -115,7 +115,7 @@ export function registerSystems(
 ) {
 	for (const systemToken of SYSTEM_TOKENS) {
 		systemRegistry.registerNewGameSystem(
-			systemToken.toString(),
+			systemToken.name,
 			new systemToken(gameScene),
 		);
 	}
@@ -126,13 +126,13 @@ export async function registerStates(
 	gameScene: GameScene,
 ) {
 	gameStateRegistry.registerNewGameState(
-		AudioState.toString(),
+		AudioState.name,
 		await initAudioState(),
 	);
 
 	for (const stateToken of STATE_TOKENS) {
 		gameStateRegistry.registerNewGameState(
-			stateToken.toString(),
+			stateToken.name,
 			new stateToken(),
 		);
 	}
@@ -144,7 +144,7 @@ export async function registerComponentArrays(
 	componentRegistry: ComponentRegistry,
 ) {
 	for (const componentToken of COMPONENT_TOKENS) {
-		componentRegistry.registerNewComponentArray(componentToken.toString());
+		componentRegistry.registerNewComponentArray(componentToken.name);
 	}
 }
 
@@ -152,7 +152,7 @@ export async function startFactories(factoryRegistry: FactoryRegistry) {
 	for (const factoryToken of FACTORY_TOKENS) {
 		const factory =
 			factoryRegistry.getEntityFactoryByFactoryId<EntityFactory>(
-				factoryToken.toString(),
+				factoryToken.name,
 			);
 		await factory.start(getCampaignState().campaignId);
 	}
@@ -161,7 +161,7 @@ export async function startFactories(factoryRegistry: FactoryRegistry) {
 function updateSystems(deltaTime: number, systemRegistry: SystemRegistry) {
 	for (const systemToken of SYSTEM_TOKENS) {
 		const system = systemRegistry.getGameSystemBySystemId<GameSystem>(
-			systemToken.toString(),
+			systemToken.name,
 		);
 		system.update(deltaTime);
 	}

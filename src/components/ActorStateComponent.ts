@@ -85,14 +85,17 @@ export default class ActorStateComponent implements Component {
 		const campaignState = container.resolve(CampaignState);
 		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
 
-		this.powerData = initData.abilityIds.map(async (el: string) => {
-			const response = await fetch(
-				`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${el}.json`,
-			);
-			const abData = (await response.json()) as AbilityData;
+		this.powerData = initData.abilityIds.map(
+			async (powerDataId: string) => {
+				const response = await fetch(
+					`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${powerDataId}.json`,
+				);
+				const abData = await response.json();
 
-			return abData;
-		});
+				return abData as AbilityData;
+			},
+		);
+
 		// newActorData.itemData = initData.itemIds.map((el: string) => {
 		// 	return this.actionData.get(el);
 		// });

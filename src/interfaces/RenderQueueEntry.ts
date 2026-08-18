@@ -14,17 +14,6 @@ import {
 	getUserInterfaceState,
 } from "src/modules/GameStateModule";
 
-export interface RenderQueueEntry {
-	readonly isBlocking: boolean;
-	readonly duration?: number;
-	initRenderQueueEntry(renderQueueState: RenderQueueState): Promise<void>;
-	tickRenderQueueEntry(
-		renderQueueState: RenderQueueState,
-		deltaTime: number,
-	): void;
-	clearRenderQueueState(renderQueueState: RenderQueueState): void;
-}
-
 export class RenderQueueState {
 	public readonly renderQueueEntry: RenderQueueEntry;
 	public timeAccumulated: number;
@@ -35,6 +24,17 @@ export class RenderQueueState {
 		this.renderQueueEntry = renderQueueEntry;
 		this.timeAccumulated = 0;
 	}
+}
+
+export interface RenderQueueEntry {
+	readonly isBlocking: boolean;
+	readonly duration?: number;
+	initRenderQueueEntry(renderQueueState: RenderQueueState): Promise<void>;
+	tickRenderQueueEntry(
+		renderQueueState: RenderQueueState,
+		deltaTime: number,
+	): void;
+	clearRenderQueueState(renderQueueState: RenderQueueState): void;
 }
 
 export class RenderQueueEntryMessageDisplay implements RenderQueueEntry {
@@ -196,6 +196,7 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 			this.duration = duration;
 		}
 	}
+
 	public async initRenderQueueEntry(
 		renderQueueState: RenderQueueState,
 	): Promise<void> {
@@ -205,21 +206,22 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 		const playerGuiComponentArray = getPlayerGuiComponentArray();
 		const characterSpriteComponentArray =
 			getCharacterSpriteComponentArray();
-		const stickerImageComponentArray = getStickerImageComponentArray();
 
 		for (const eid of this.targetEntityIds) {
 			const entityId = await stickerFactory.createEntityFromFile(
 				this.vfxUrl,
 			);
-			const specialFxStickerImage = stickerImageComponentArray[entityId];
 			renderQueueState.entityIds.push(entityId);
+
+			const stickerImage = getStickerImageComponentArray()[entityId];
+
 			if (gameplayState.playerEIDs.includes(eid)) {
 				const playerGUI = playerGuiComponentArray[eid];
-				playerGUI.getRoot().addControl(specialFxStickerImage);
+				playerGUI.getRoot().addControl(stickerImage);
 			} else {
 				const targetSprite = characterSpriteComponentArray[eid];
-				userInterfaceState.sceneGUI.addControl(specialFxStickerImage);
-				specialFxStickerImage.linkWithMesh(targetSprite.getValue());
+				userInterfaceState.sceneGUI.addControl(stickerImage);
+				stickerImage.linkWithMesh(targetSprite.getValue());
 			}
 		}
 	}

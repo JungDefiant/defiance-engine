@@ -63,7 +63,7 @@ export class EnemyFactory implements EntityFactory {
 		const componentRegistry = container.resolve(ComponentRegistry);
 		const characterSprite =
 			componentRegistry.getComponentByEntityId<CharacterSpriteComponent>(
-				CharacterSpriteComponent.toString(),
+				CharacterSpriteComponent.name,
 				newEntityId,
 			);
 		characterSprite.locallyTranslate(position);
@@ -133,7 +133,7 @@ export class EnemyFactory implements EntityFactory {
 		const gameScene = getGameScene();
 		const actorState =
 			getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
-				ActorStateComponent.toString(),
+				ActorStateComponent.name,
 				entityId,
 			);
 

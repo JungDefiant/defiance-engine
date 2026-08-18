@@ -87,6 +87,7 @@ export async function initGameScene(sceneId: string) {
 	container.register(GameStateRegistry, { useValue: newGameStateRegistry });
 	const newComponentRegistry = new ComponentRegistry(newGameScene.world);
 	container.register(ComponentRegistry, { useValue: newComponentRegistry });
+
 	registerFactories(newFactoryRegistry);
 	registerSystems(newSystemRegistry, newGameScene);
 	await registerStates(newGameStateRegistry, newGameScene);
@@ -124,7 +125,7 @@ export function initGameplayState(cameraEntityId: EntityId) {
 	const newGameplayState = new GameplayState();
 	newGameplayState.cameraEntityId = cameraEntityId;
 	getGameStateRegistry().registerNewGameState(
-		GameplayState.toString(),
+		GameplayState.name,
 		newGameplayState,
 	);
 }

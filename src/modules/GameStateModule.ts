@@ -38,36 +38,36 @@ export function getAllGameStates() {
 
 export function getAudioState(): AudioState {
 	return getGameStateRegistry().getGameStateByStateId<AudioState>(
-		AudioState.toString(),
+		AudioState.name,
 	);
 }
 
 export function getControlState(): ControlState {
 	return getGameStateRegistry().getGameStateByStateId<ControlState>(
-		ControlState.toString(),
+		ControlState.name,
 	);
 }
 
 export function getDialogueState(): DialogueState {
 	return getGameStateRegistry().getGameStateByStateId<DialogueState>(
-		DialogueState.toString(),
+		DialogueState.name,
 	);
 }
 
 export function getGameplayState(): GameplayState {
 	return getGameStateRegistry().getGameStateByStateId<GameplayState>(
-		GameplayState.toString(),
+		GameplayState.name,
 	);
 }
 
 export function getRenderState(): RenderState {
 	return getGameStateRegistry().getGameStateByStateId<RenderState>(
-		RenderState.toString(),
+		RenderState.name,
 	);
 }
 
 export function getUserInterfaceState(): UserInterfaceState {
 	return getGameStateRegistry().getGameStateByStateId<UserInterfaceState>(
-		UserInterfaceState.toString(),
+		UserInterfaceState.name,
 	);
 }

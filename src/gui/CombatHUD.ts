@@ -226,7 +226,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionAbilityStack, 1, 0);
 
 		for (let i = 0; i < 8; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "", () => {});
+			const actionSlot = new ActionSlot(i.name, "", () => {});
 			actionAbilityStack.addControl(actionSlot.rootContainer);
 			this.abilitySlots.push(actionSlot);
 		}
@@ -239,7 +239,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionDeviceStack, 1, 1);
 
 		for (let i = 0; i < 4; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "", () => {});
+			const actionSlot = new ActionSlot(i.name, "", () => {});
 			actionDeviceStack.addControl(actionSlot.rootContainer);
 			this.deviceSlots.push(actionSlot);
 		}

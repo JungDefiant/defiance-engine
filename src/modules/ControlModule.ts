@@ -112,7 +112,7 @@ export async function resetCombatModeActionManager() {
 	const userInterfaceState = getUserInterfaceState();
 	const actorState =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
-			ActorStateComponent.toString(),
+			ActorStateComponent.name,
 			gameplayState.selectedPlayerEID,
 		);
 	await userInterfaceState.combatHud.setActionBar(actorState);

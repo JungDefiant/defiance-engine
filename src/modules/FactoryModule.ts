@@ -11,18 +11,18 @@ export function getFactoryRegistry() {
 
 export function getEnemyFactory(): EnemyFactory {
 	return getFactoryRegistry().getEntityFactoryByFactoryId<EnemyFactory>(
-		EnemyFactory.toString(),
+		EnemyFactory.name,
 	);
 }
 
 export function getPlayerFactory(): PlayerFactory {
 	return getFactoryRegistry().getEntityFactoryByFactoryId<PlayerFactory>(
-		PlayerFactory.toString(),
+		PlayerFactory.name,
 	);
 }
 
 export function getStickerFactory(): StickerFactory {
 	return getFactoryRegistry().getEntityFactoryByFactoryId<StickerFactory>(
-		StickerFactory.toString(),
+		StickerFactory.name,
 	);
 }

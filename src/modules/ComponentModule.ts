@@ -16,47 +16,47 @@ export function getComponentRegistry() {
 
 export function getActorStateComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<ActorStateComponent>(
-		ActorStateComponent.toString(),
+		ActorStateComponent.name,
 	);
 }
 
 export function getCharacterSpriteComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<CharacterSpriteComponent>(
-		CharacterSpriteComponent.toString(),
+		CharacterSpriteComponent.name,
 	);
 }
 export function getEntityMovementComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<EntityMovementComponent>(
-		EntityMovementComponent.toString(),
+		EntityMovementComponent.name,
 	);
 }
 
 export function getEnemyGuiComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<EnemyGUIComponent>(
-		EnemyGUIComponent.toString(),
+		EnemyGUIComponent.name,
 	);
 }
 
 export function getFloatingTextComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<FloatingTextComponent>(
-		FloatingTextComponent.toString(),
+		FloatingTextComponent.name,
 	);
 }
 
 export function getImageAnimationComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<ImageAnimationComponent>(
-		ImageAnimationComponent.toString(),
+		ImageAnimationComponent.name,
 	);
 }
 
 export function getPlayerGuiComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<PlayerGUIComponent>(
-		PlayerGUIComponent.toString(),
+		PlayerGUIComponent.name,
 	);
 }
 
 export function getStickerImageComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<StickerImageComponent>(
-		StickerImageComponent.toString(),
+		StickerImageComponent.name,
 	);
 }

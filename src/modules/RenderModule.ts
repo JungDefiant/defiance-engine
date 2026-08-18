@@ -38,27 +38,33 @@ export function addAbilityRQEs(
 		1.05,
 	);
 
-	console.log("ACTION DATA CAST VFX URL", actionData.castVfxURL);
-
-	const castAbilitySpecialFxRenderQueueEntry = new RenderQueueEntrySpecialFX(
-		[sourceEntityId],
-		actionData.castVfxURL as string,
-		actionData.castSfxURL as string,
-		true,
-		0.5,
-	);
-
-	const hitAbilitySpecialFxRenderQueueEntry = new RenderQueueEntrySpecialFX(
-		targetEntityIds,
-		actionData.hitVfxURL as string,
-		actionData.hitSfxURL as string,
-		false,
-		1,
-	);
-
 	addRenderQueueEntry(messageDisplayRenderQueueEntry);
-	addRenderQueueEntry(castAbilitySpecialFxRenderQueueEntry);
-	addRenderQueueEntry(hitAbilitySpecialFxRenderQueueEntry);
+
+	if (actionData.castVfxURL && actionData.castSfxURL) {
+		const castAbilitySpecialFxRenderQueueEntry =
+			new RenderQueueEntrySpecialFX(
+				[sourceEntityId],
+				actionData.castVfxURL,
+				actionData.castSfxURL,
+				true,
+				0.5,
+			);
+
+		addRenderQueueEntry(castAbilitySpecialFxRenderQueueEntry);
+	}
+
+	if (actionData.hitVfxURL) {
+		const hitAbilitySpecialFxRenderQueueEntry =
+			new RenderQueueEntrySpecialFX(
+				targetEntityIds,
+				actionData.hitVfxURL,
+				actionData.hitSfxURL || "",
+				false,
+				1,
+			);
+
+		addRenderQueueEntry(hitAbilitySpecialFxRenderQueueEntry);
+	}
 }
 
 export function startRenderQueue(): void {

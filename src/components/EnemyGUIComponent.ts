@@ -34,12 +34,12 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 	public constructor(eid: EntityId, sceneGUI: AdvancedDynamicTexture) {
 		const enemyActorState =
 			getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
-				ActorStateComponent.toString(),
+				ActorStateComponent.name,
 				eid,
 			);
 		const enemySprite =
 			getComponentRegistry().getComponentByEntityId<CharacterSpriteComponent>(
-				CharacterSpriteComponent.toString(),
+				CharacterSpriteComponent.name,
 				eid,
 			);
 

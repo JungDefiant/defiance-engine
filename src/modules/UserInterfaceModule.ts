@@ -172,7 +172,7 @@ export function createUserInterfaceState() {
 		victoryScreen,
 	} as UserInterfaceStateProps);
 	getGameStateRegistry().registerNewGameState(
-		UserInterfaceState.toString(),
+		UserInterfaceState.name,
 		newUserInterfaceState,
 	);
 	return newUserInterfaceState;

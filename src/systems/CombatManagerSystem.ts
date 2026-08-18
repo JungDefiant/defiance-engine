@@ -37,7 +37,9 @@ export default class CombatManagerSystem implements GameSystem {
 			controlState.actionPauseSet.add(PAUSE_VICTORYSCREEN);
 			userInterfaceState.victoryScreen.showHide(true);
 			return;
-		} else if (gameplayState.combatState === CombatState.Gameover) {
+		}
+
+		if (gameplayState.combatState === CombatState.Gameover) {
 			controlState.actionPauseSet.add(PAUSE_GAMEOVER);
 			userInterfaceState.gameOverScreen.showHide(true);
 			return;
@@ -49,7 +51,6 @@ export default class CombatManagerSystem implements GameSystem {
 	private queueActorAction() {
 		const gameplayState = getGameplayState();
 		const controlState = getControlState();
-
 		const actorStateComponents = getActorStateComponentArray();
 
 		for (const eid of query(this.gameScene.world, [actorStateComponents])) {
@@ -61,20 +62,25 @@ export default class CombatManagerSystem implements GameSystem {
 				rcvyAttr.currentValue === rcvyAttr.maximumValue
 			) {
 				controlState.actionPauseSet.add(PAUSE_RENDERQUEUE);
-				this.executeQueuedAction(actorData);
-				if (gameplayState.enemyEIDs.includes(eid)) {
-					decideNPCAction(actorData);
-				}
-				break;
+				Promise.resolve(this.executeQueuedAction(actorData)).then(
+					() => {
+						if (gameplayState.enemyEIDs.includes(eid)) {
+							decideNPCAction(actorData);
+						}
+					},
+				);
+				return;
 			}
 		}
 	}
 
-	private executeQueuedAction(sourceActorState: ActorStateComponent): void {
+	private async executeQueuedAction(
+		sourceActorState: ActorStateComponent,
+	): Promise<void> {
 		const controlState = getControlState();
 		const actorStateComponentArray = getActorStateComponentArray();
 
-		const actionToExecute = sourceActorState.queuedAction;
+		const actionToExecute = await sourceActorState.queuedAction;
 		if (!actionToExecute) {
 			controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 			return;

@@ -23,13 +23,14 @@ import TransformNodeComponent from "src/components/TransformNodeComponent";
 import RenderState from "src/states/RenderState";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 
+// The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
-	ActorStateSystem,
-	CombatManagerSystem,
 	EntityMovementSystem,
+	CombatManagerSystem,
+	ActorStateSystem,
+	UserInterfaceSystem,
 	ImageAnimationSystem,
 	RenderQueueSystem,
-	UserInterfaceSystem,
 ];
 
 export const FACTORY_TOKENS = [EnemyFactory, PlayerFactory, StickerFactory];

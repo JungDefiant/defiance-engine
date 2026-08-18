@@ -164,7 +164,7 @@ export async function startQueueActionPlayer(
 ): Promise<void> {
 	const actorData =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
-			ActorStateComponent.toString(),
+			ActorStateComponent.name,
 			eid,
 		);
 	const actionData = (await (isItem
@@ -254,7 +254,7 @@ function finishQueueAction(
 ): void {
 	const sourceActorState =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
-			ActorStateComponent.toString(),
+			ActorStateComponent.name,
 			sourceEid,
 		);
 	sourceActorState.queuedAction = actionData;
@@ -272,7 +272,7 @@ export function defeatActor(actor: ActorStateComponent) {
 			let eid = gameplayState.playerEIDs[i];
 			let playerData =
 				componentRegistry.getComponentByEntityId<ActorStateComponent>(
-					ActorStateComponent.toString(),
+					ActorStateComponent.name,
 					eid,
 				);
 			if (!playerData.isDefeated) {
@@ -286,7 +286,7 @@ export function defeatActor(actor: ActorStateComponent) {
 			let eid = gameplayState.enemyEIDs[i];
 			let enemyData =
 				componentRegistry.getComponentByEntityId<ActorStateComponent>(
-					ActorStateComponent.toString(),
+					ActorStateComponent.name,
 					eid,
 				);
 			if (!enemyData.isDefeated) {
@@ -324,7 +324,7 @@ export function getLowestLifeTarget(
 	const componentRegistry = container.resolve(ComponentRegistry);
 	const actorStateComponentArray =
 		componentRegistry.getComponentArrayByComponentId<ActorStateComponent>(
-			ActorStateComponent.toString(),
+			ActorStateComponent.name,
 		);
 
 	targetEids.forEach((eid: EntityId) => {

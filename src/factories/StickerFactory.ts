@@ -16,7 +16,7 @@ import { Nullable } from "@babylonjs/core";
 const PRELOAD_STICKERS = ["vfx/vfx_test"];
 
 export class StickerFactory implements EntityFactory {
-	private stickerPropsCache: Map<string, StickerProps> = new Map();
+	private cache: Map<string, any> = new Map();
 	private loadPromises: Nullable<Promise<void>> = null;
 
 	public start(campaignId: string) {
@@ -31,7 +31,7 @@ export class StickerFactory implements EntityFactory {
 						`${getPublicRoot()}/data/${campaignId}/stickers/${fileName}.json`,
 					);
 					const stickerEntityData = await response.json();
-					this.stickerPropsCache.set(fileName, stickerEntityData);
+					this.cache.set(fileName, stickerEntityData);
 				} catch (error) {
 					console.error("Failed to load entity data", fileName);
 				}
@@ -44,15 +44,14 @@ export class StickerFactory implements EntityFactory {
 			await this.loadPromises;
 		}
 
-		if (!this.stickerPropsCache.has(fileName)) {
+		if (!this.cache.has(fileName)) {
 			return -1;
 		}
 
-		const stickerProps = this.stickerPropsCache.get(
-			fileName,
-		) as StickerProps;
 		const gameScene = getGameScene();
 		const newEntity = addEntity(gameScene.world);
+
+		const stickerProps = this.cache.get(fileName);
 
 		const newSticker = this.createStickerImage(stickerProps);
 		addComponent(

@@ -34,8 +34,9 @@ export default class RenderQueueSystem implements GameSystem {
 		}
 
 		for (let renderQueueState of renderQueueStates) {
-			(async () =>
-				this.processRenderQueueState(deltaTime, renderQueueState))();
+			Promise.resolve(
+				this.processRenderQueueState(deltaTime, renderQueueState),
+			);
 		}
 
 		if (renderQueueStates.length === 0) {
