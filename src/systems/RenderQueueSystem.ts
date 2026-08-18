@@ -34,9 +34,7 @@ export default class RenderQueueSystem implements GameSystem {
 		}
 
 		for (let renderQueueState of renderQueueStates) {
-			Promise.resolve(
-				this.processRenderQueueState(deltaTime, renderQueueState),
-			);
+			this.processRenderQueueState(deltaTime, renderQueueState);
 		}
 
 		if (renderQueueStates.length === 0) {
@@ -47,15 +45,17 @@ export default class RenderQueueSystem implements GameSystem {
 		}
 	}
 
-	private async processRenderQueueState(
+	private processRenderQueueState(
 		deltaTime: number,
 		renderQueueState: RenderQueueState,
-	): Promise<void> {
+	): void {
 		const renderState = getRenderState();
 		if (renderQueueState.renderQueueEntry.duration) {
 			if (!renderQueueState.init) {
-				await renderQueueState.renderQueueEntry.initRenderQueueEntry(
-					renderQueueState,
+				Promise.resolve(
+					renderQueueState.renderQueueEntry.initRenderQueueEntry(
+						renderQueueState,
+					),
 				);
 				renderQueueState.init = true;
 			}
@@ -83,8 +83,10 @@ export default class RenderQueueSystem implements GameSystem {
 			}
 		} else {
 			if (!renderQueueState.init) {
-				await renderQueueState.renderQueueEntry.initRenderQueueEntry(
-					renderQueueState,
+				Promise.resolve(
+					renderQueueState.renderQueueEntry.initRenderQueueEntry(
+						renderQueueState,
+					),
 				);
 				renderQueueState.init = true;
 			}

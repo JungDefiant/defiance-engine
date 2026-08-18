@@ -268,7 +268,8 @@ export default class DialogueHUD implements IHUD {
 				const gameplayState = getGameplayState();
 				const actorStateComponentArray = getActorStateComponentArray();
 				const pcName =
-					actorStateComponentArray[gameplayState.playerEIDs[0]].name;
+					actorStateComponentArray[gameplayState.playerEntityIds[0]]
+						.name;
 
 				if (
 					!choiceData.destinationNode ||

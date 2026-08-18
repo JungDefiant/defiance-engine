@@ -3,9 +3,8 @@ export interface GameEvent {
 	condition: string;
 	type: EventType;
 	trigger: EventTrigger;
-	refId: string;
+	assetId: string;
 	isTriggered: boolean;
-	triggerFunction: () => {};
 }
 
 export type EventTrigger =

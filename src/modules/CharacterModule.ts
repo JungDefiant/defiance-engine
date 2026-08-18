@@ -23,7 +23,7 @@ export async function loadStartingPlayerParty() {
 		playerEntityIds.push(newPlayerCharacter);
 	}
 
-	gameplayState.playerEIDs = playerEntityIds;
+	gameplayState.playerEntityIds = playerEntityIds;
 	gameplayState.selectedPlayerEID = playerEntityIds[0];
 	userInterfaceState.partyInfoHud.setPartyInfoEntryStack();
 }
@@ -38,7 +38,7 @@ async function loadPlayerCharacter(charId: string): Promise<number> {
 export function resetPlayerActorState() {
 	const gameplayState = getGameplayState();
 	const actorStateComponentArray = getActorStateComponentArray();
-	gameplayState.playerEIDs.forEach((eid) => {
+	gameplayState.playerEntityIds.forEach((eid) => {
 		const playerData = actorStateComponentArray[eid];
 		const rcvyAttr = playerData.attributes.recovery;
 		rcvyAttr.maximumValue = 0;
@@ -49,7 +49,7 @@ export function resetPlayerActorState() {
 export function disposeEnemyEntities() {
 	const gameplayState = getGameplayState();
 	const world = getGameScene().world;
-	gameplayState.enemyEIDs.forEach((eid) => {
+	gameplayState.enemyEntityIds.forEach((eid) => {
 		removeEntity(world, eid);
 	});
 }

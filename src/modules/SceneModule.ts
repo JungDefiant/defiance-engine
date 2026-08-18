@@ -184,18 +184,18 @@ export async function getViewPositionNode(viewPositionNodeId: string) {
 export async function setExploreGameMode() {
 	await resetExploreViewPosition();
 	resetExploreModeControls();
-	setUserInterfaceGameMode(GameMode.Explore);
+	setUserInterfaceGameMode("Explore");
 }
 
 export async function setCombatGameMode() {
 	await resetCombatViewPosition();
 	resetCombatModeControls();
-	setUserInterfaceGameMode(GameMode.Combat);
+	setUserInterfaceGameMode("Combat");
 }
 
 export function setDialogueGameMode() {
 	resetDialogueModeControls();
-	setUserInterfaceGameMode(GameMode.Dialogue);
+	setUserInterfaceGameMode("Dialogue");
 }
 
 async function loadSceneJson(sceneId: string): Promise<LoadedSceneJson> {

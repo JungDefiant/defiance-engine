@@ -168,7 +168,7 @@ export class ModalScreen {
 			controlState.renderPauseSet.add("PAUSE_MODAL");
 		} else {
 			controlState.actionPauseSet.delete("PAUSE_MODAL");
-			controlState.renderPauseSet.add("PAUSE_MODAL");
+			controlState.renderPauseSet.delete("PAUSE_MODAL");
 		}
 		this.rootContainer.isVisible = show;
 	}

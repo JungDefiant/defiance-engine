@@ -1,8 +1,8 @@
 {
 	"id": "vfx_test",
 	"source": "sprites/particles/vfx_hit.png",
-	"width": 128,
-	"height": 128,
+	"width": 192,
+	"height": 192,
 	"top": 0,
 	"left": 0,
 	"sizeRange": 0,

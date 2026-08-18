@@ -64,7 +64,7 @@ export default class CombatManagerSystem implements GameSystem {
 				controlState.actionPauseSet.add(PAUSE_RENDERQUEUE);
 				Promise.resolve(this.executeQueuedAction(actorData)).then(
 					() => {
-						if (gameplayState.enemyEIDs.includes(eid)) {
+						if (gameplayState.enemyEntityIds.includes(eid)) {
 							decideNPCAction(actorData);
 						}
 					},

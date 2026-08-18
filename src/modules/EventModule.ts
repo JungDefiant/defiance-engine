@@ -1,5 +1,8 @@
-import { EventTrigger } from "src/types/EventTypes";
+import { EventTrigger, GameEvent } from "src/types/EventTypes";
 import { getGameScene } from "./GameStateModule";
+import { startDialogue } from "./DialogueModule";
+import { startCombat } from "./CombatModule";
+import { showModal } from "./UserInterfaceModule";
 
 export function checkEventByTrigger(eventTrigger: EventTrigger) {
 	const gameScene = getGameScene();
@@ -12,10 +15,38 @@ export function checkEventByTrigger(eventTrigger: EventTrigger) {
 	);
 
 	for (const event of eventsArray) {
-		// TO DO: Check condition for event to trigger
-		event.triggerFunction();
+		triggerEventByType(event);
 		const eventIndex = eventsArray.indexOf(event);
 		gameScene.currentLocation.events.splice(eventIndex);
 		return;
 	}
+}
+
+function triggerEventByType(event: GameEvent) {
+	if (event.type === "Dialogue") {
+		triggerDialogueEvent(event);
+		return;
+	}
+
+	if (event.type === "Combat") {
+		triggerCombatEvent(event);
+		return;
+	}
+
+	if (event.type === "Modal") {
+		triggerModalEvent(event);
+		return;
+	}
+}
+
+function triggerDialogueEvent(event: GameEvent) {
+	startDialogue(event.assetId);
+}
+
+function triggerCombatEvent(event: GameEvent) {
+	startCombat(event.assetId);
+}
+
+function triggerModalEvent(event: GameEvent) {
+	showModal(event.assetId);
 }

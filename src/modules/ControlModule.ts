@@ -215,19 +215,19 @@ function getSwitchPlayerRightFunction(
 ): (evt: ActionEvent) => void {
 	return () => {
 		let currentSelectedPlayerEntityIdIndex =
-			gameplayState.playerEIDs.findIndex(
+			gameplayState.playerEntityIds.findIndex(
 				(x) => x === gameplayState.selectedPlayerEID,
 			);
 		let newSelectedPlayerEntityIdIndex =
 			currentSelectedPlayerEntityIdIndex + 1;
 		if (
 			newSelectedPlayerEntityIdIndex >
-			gameplayState.playerEIDs.length - 1
+			gameplayState.playerEntityIds.length - 1
 		) {
 			newSelectedPlayerEntityIdIndex = 0;
 		}
 		setSelectedCharacter(
-			gameplayState.playerEIDs[newSelectedPlayerEntityIdIndex],
+			gameplayState.playerEntityIds[newSelectedPlayerEntityIdIndex],
 		);
 	};
 }
@@ -237,17 +237,17 @@ function getSwitchPlayerLeftFunction(
 ): (evt: ActionEvent) => void {
 	return () => {
 		let currentSelectedPlayerEntityIdIndex =
-			gameplayState.playerEIDs.findIndex(
+			gameplayState.playerEntityIds.findIndex(
 				(x) => x === gameplayState.selectedPlayerEID,
 			);
 		let newSelectedPlayerEntityIdIndex =
 			currentSelectedPlayerEntityIdIndex - 1;
 		if (newSelectedPlayerEntityIdIndex < 0) {
 			newSelectedPlayerEntityIdIndex =
-				gameplayState.playerEIDs.length - 1;
+				gameplayState.playerEntityIds.length - 1;
 		}
 		setSelectedCharacter(
-			gameplayState.playerEIDs[newSelectedPlayerEntityIdIndex],
+			gameplayState.playerEntityIds[newSelectedPlayerEntityIdIndex],
 		);
 	};
 }

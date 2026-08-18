@@ -71,7 +71,7 @@ export async function startCombat(encId: string): Promise<void> {
 			enId,
 			spawnPosition,
 		);
-		gameplayState.enemyEIDs.push(newEnemy);
+		gameplayState.enemyEntityIds.push(newEnemy);
 		const enActorData = actorStateComponentArray[newEnemy];
 		enActorData.name = enActorData.name.concat(
 			` ${String.fromCharCode(65 + i)}`,
@@ -267,9 +267,9 @@ export function defeatActor(actor: ActorStateComponent) {
 
 	actor.isDefeated = true;
 
-	if (gameplayState.playerEIDs.includes(actor.entityId)) {
-		for (let i = 0; i < gameplayState.playerEIDs.length; i++) {
-			let eid = gameplayState.playerEIDs[i];
+	if (gameplayState.playerEntityIds.includes(actor.entityId)) {
+		for (let i = 0; i < gameplayState.playerEntityIds.length; i++) {
+			let eid = gameplayState.playerEntityIds[i];
 			let playerData =
 				componentRegistry.getComponentByEntityId<ActorStateComponent>(
 					ActorStateComponent.name,
@@ -282,8 +282,8 @@ export function defeatActor(actor: ActorStateComponent) {
 
 		gameplayState.combatState = CombatState.Gameover;
 	} else {
-		for (let i = 0; i < gameplayState.enemyEIDs.length; i++) {
-			let eid = gameplayState.enemyEIDs[i];
+		for (let i = 0; i < gameplayState.enemyEntityIds.length; i++) {
+			let eid = gameplayState.enemyEntityIds[i];
 			let enemyData =
 				componentRegistry.getComponentByEntityId<ActorStateComponent>(
 					ActorStateComponent.name,
@@ -354,10 +354,10 @@ export function getTargetEidsByActionTargetType(
 			if (isSingleTarget && abilityTarget === AbilityTarget.groupAlly) {
 				return [];
 			} else {
-				if (gameplayState.playerEIDs.includes(sourceEid)) {
-					return gameplayState.playerEIDs;
-				} else if (gameplayState.enemyEIDs.includes(sourceEid)) {
-					return gameplayState.enemyEIDs;
+				if (gameplayState.playerEntityIds.includes(sourceEid)) {
+					return gameplayState.playerEntityIds;
+				} else if (gameplayState.enemyEntityIds.includes(sourceEid)) {
+					return gameplayState.enemyEntityIds;
 				}
 			}
 		case AbilityTarget.groupEnemy:
@@ -365,10 +365,10 @@ export function getTargetEidsByActionTargetType(
 			if (isSingleTarget && abilityTarget === AbilityTarget.groupEnemy) {
 				return [];
 			} else {
-				if (gameplayState.playerEIDs.includes(sourceEid)) {
-					return gameplayState.enemyEIDs;
-				} else if (gameplayState.enemyEIDs.includes(sourceEid)) {
-					return gameplayState.playerEIDs;
+				if (gameplayState.playerEntityIds.includes(sourceEid)) {
+					return gameplayState.enemyEntityIds;
+				} else if (gameplayState.enemyEntityIds.includes(sourceEid)) {
+					return gameplayState.playerEntityIds;
 				}
 			}
 		default:

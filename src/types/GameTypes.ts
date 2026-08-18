@@ -73,12 +73,7 @@ export interface EncounterMap {
 	[index: string]: string[];
 }
 
-export enum GameMode {
-	MainMenu,
-	Combat,
-	Explore,
-	Dialogue,
-}
+export type GameMode = "MainMenu" | "Combat" | "Explore" | "Dialogue";
 
 export interface DialogueNode {
 	name: string;

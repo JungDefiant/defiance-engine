@@ -186,17 +186,17 @@ export function clearCombatHudEntries() {
 export function setUserInterfaceGameMode(newMode: GameMode) {
 	const userInterfaceState = getUserInterfaceState();
 	userInterfaceState.partyInfoHud.showHideHud(
-		newMode == GameMode.Combat || newMode == GameMode.Explore,
+		newMode == "Combat" || newMode == "Explore",
 	);
-	userInterfaceState.exploreHud.showHideHud(newMode == GameMode.Explore);
-	userInterfaceState.dialogueHud.showHideHud(newMode == GameMode.Dialogue);
-	userInterfaceState.combatHud.showHideHud(newMode == GameMode.Combat);
+	userInterfaceState.exploreHud.showHideHud(newMode == "Explore");
+	userInterfaceState.dialogueHud.showHideHud(newMode == "Dialogue");
+	userInterfaceState.combatHud.showHideHud(newMode == "Combat");
 }
 
 export function setSelectedCharacter(eid: EntityId, isCombatMode?: boolean) {
 	const gameplayState = getGameplayState();
 
-	if (!gameplayState.playerEIDs.includes(eid)) {
+	if (!gameplayState.playerEntityIds.includes(eid)) {
 		return;
 	}
 
@@ -214,4 +214,14 @@ export function setSelectedCharacter(eid: EntityId, isCombatMode?: boolean) {
 	if (isCombatMode) {
 		resetCombatModeControls();
 	}
+}
+
+export function showModal(modalId: string) {
+	const userInterfaceState = getUserInterfaceState();
+	const modalData = userInterfaceState.modalMap.get(modalId);
+	if (!modalData) {
+		return;
+	}
+	userInterfaceState.modalScreen.setNewPages(modalData.pages);
+	userInterfaceState.modalScreen.showHide(true);
 }

@@ -1,5 +1,6 @@
 import { TextBlock } from "@babylonjs/gui";
-import { addComponent, addEntity, removeEntity, set } from "bitecs";
+import { addComponent, addEntity, query, removeEntity, set } from "bitecs";
+import FloatingTextComponent from "src/components/FloatingTextComponent";
 import { Themes } from "src/gui/Themes";
 import {
 	getCharacterSpriteComponentArray,
@@ -98,34 +99,39 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 			getCharacterSpriteComponentArray();
 		const floatingTextComponentArray = getFloatingTextComponentArray();
 
-		for (const eid of this.targetEntityIds) {
-			const ftEntity = addEntity(gameScene.world);
-			renderQueueState.entityIds.push(ftEntity);
+		for (const entityId of this.targetEntityIds) {
+			const floatingTextEntityId = addEntity(gameScene.world);
+			renderQueueState.entityIds.push(floatingTextEntityId);
 
-			const floatingTextUI = new TextBlock(
-				`ui_floatingText_${ftEntity}`,
+			const floatingTextUI = new FloatingTextComponent(
+				`ui_floatingText_${floatingTextEntityId}`,
 				this.text,
+				{
+					fadeRate: 1,
+					textSpeed: 0,
+					targetEntityId: entityId,
+				},
 			);
+			floatingTextUI.topInPixels = 0;
 			floatingTextUI.widthInPixels = 128;
 			floatingTextUI.heightInPixels = 128;
 			floatingTextUI.color = this.color;
 			floatingTextUI.alpha = 1;
 			floatingTextUI.linkOffsetYInPixels = 0;
 			floatingTextUI.style = Themes.typography.header1;
-			floatingTextUI._customData = { targetEid: eid };
 
-			if (gameplayState.playerEIDs.includes(eid)) {
-				const playerGUI = playerGuiComponentArray[eid];
+			if (gameplayState.playerEntityIds.includes(entityId)) {
+				const playerGUI = playerGuiComponentArray[entityId];
 				playerGUI.getRoot().addControl(floatingTextUI);
 			} else {
-				const targetSprite = characterSpriteComponentArray[eid];
+				const targetSprite = characterSpriteComponentArray[entityId];
 				userInterfaceState.sceneGUI.addControl(floatingTextUI);
 				floatingTextUI.linkWithMesh(targetSprite.getValue());
 			}
 
 			addComponent(
 				gameScene.world,
-				ftEntity,
+				floatingTextEntityId,
 				set(floatingTextComponentArray, floatingTextUI),
 			);
 		}
@@ -135,26 +141,19 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 		renderQueueState: RenderQueueState,
 		deltaTime: number,
 	): void {
-		const gameplayState = getGameplayState();
 		const floatingTextComponentArray = getFloatingTextComponentArray();
 
-		for (const eid of renderQueueState.entityIds) {
-			const floatingText = floatingTextComponentArray[eid];
+		for (const entityId of query(getGameScene().world, [
+			floatingTextComponentArray,
+		])) {
+			const floatingText = floatingTextComponentArray[entityId];
 
 			floatingText.alpha = Math.max(
-				floatingText.alpha - 1 * deltaTime,
+				floatingText.alpha - floatingText.fadeRate * deltaTime,
 				0,
 			);
 
-			let targetEid = floatingText._customData["targetEid"] as number;
-
-			if (targetEid && gameplayState.playerEIDs.includes(targetEid)) {
-				floatingText.topInPixels =
-					floatingText.topInPixels - 20 * deltaTime;
-			} else {
-				floatingText.linkOffsetYInPixels =
-					floatingText.linkOffsetYInPixels - 20 * deltaTime;
-			}
+			// floatingText.topInPixels -= floatingText.textSpeed * deltaTime;
 		}
 	}
 	public clearRenderQueueState(renderQueueState: RenderQueueState): void {
@@ -162,14 +161,14 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 		const userInterfaceState = getUserInterfaceState();
 		const floatingTextComponentArray = getFloatingTextComponentArray();
 
-		for (const eid of renderQueueState.entityIds) {
-			const ft = floatingTextComponentArray[eid];
-			if (!ft) {
+		for (const entityId of renderQueueState.entityIds) {
+			const floatingText = floatingTextComponentArray[entityId];
+			if (!floatingText) {
 				continue;
 			}
-			userInterfaceState.sceneGUI.removeControl(ft);
-			ft.dispose();
-			removeEntity(world, eid);
+			userInterfaceState.sceneGUI.removeControl(floatingText);
+			floatingText.dispose();
+			removeEntity(world, entityId);
 		}
 	}
 }
@@ -207,19 +206,20 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 		const characterSpriteComponentArray =
 			getCharacterSpriteComponentArray();
 
-		for (const eid of this.targetEntityIds) {
-			const entityId = await stickerFactory.createEntityFromFile(
-				this.vfxUrl,
-			);
-			renderQueueState.entityIds.push(entityId);
+		for (const targetEntityId of this.targetEntityIds) {
+			const stickerImageEntityId =
+				await stickerFactory.createEntityFromFile(this.vfxUrl);
+			renderQueueState.entityIds.push(stickerImageEntityId);
 
-			const stickerImage = getStickerImageComponentArray()[entityId];
+			const stickerImage =
+				getStickerImageComponentArray()[stickerImageEntityId];
 
-			if (gameplayState.playerEIDs.includes(eid)) {
-				const playerGUI = playerGuiComponentArray[eid];
+			if (gameplayState.playerEntityIds.includes(targetEntityId)) {
+				const playerGUI = playerGuiComponentArray[targetEntityId];
 				playerGUI.getRoot().addControl(stickerImage);
 			} else {
-				const targetSprite = characterSpriteComponentArray[eid];
+				const targetSprite =
+					characterSpriteComponentArray[targetEntityId];
 				userInterfaceState.sceneGUI.addControl(stickerImage);
 				stickerImage.linkWithMesh(targetSprite.getValue());
 			}
@@ -235,13 +235,13 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 		const world = getGameScene().world;
 		const stickerImageComponentArray = getStickerImageComponentArray();
 
-		for (const eid of renderQueueState.entityIds) {
-			Promise.resolve(stickerImageComponentArray[eid]).then(
+		for (const entityId of renderQueueState.entityIds) {
+			Promise.resolve(stickerImageComponentArray[entityId]).then(
 				(specialFxStickerImage) => {
 					if (specialFxStickerImage) {
 						specialFxStickerImage.dispose();
 					}
-					removeEntity(world, eid);
+					removeEntity(world, entityId);
 				},
 			);
 		}
