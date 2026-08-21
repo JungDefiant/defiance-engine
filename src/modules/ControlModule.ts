@@ -18,7 +18,6 @@ import {
 	getControlState,
 	getGameplayState,
 	getGameScene,
-	getUserInterfaceScene,
 	getUserInterfaceState,
 } from "./GameStateModule";
 import { setSelectedCharacter } from "./UserInterfaceModule";
@@ -31,10 +30,8 @@ export function clearControlActionPause() {
 	}
 }
 
-let storedInputs;
-
 export function resetExploreModeControls() {
-	const gameScene = getUserInterfaceScene();
+	const gameScene = getGameScene();
 	const userInterfaceState = getUserInterfaceState();
 	const controlState = getControlState();
 
@@ -42,9 +39,12 @@ export function resetExploreModeControls() {
 	const gameCanvas = getGameCanvas();
 
 	if (camera && gameCanvas) {
-		camera.inputs = new FreeCameraInputsManager(camera);
-		camera.inputs.addMouse();
-		camera.attachControl(false);
+		camera.attachControl(gameCanvas);
+		gameScene.onPointerObservable.add((eventData) => {
+			// This will block out vertical rotation
+			// For blocking out horizontal rotation, simply use y instead of x
+			camera.cameraRotation.x = 0;
+		});
 		userInterfaceState.sceneGUI.rootContainer.isVisible = true;
 		controlState.exploreGUIControls.forEach((child) => {
 			child.isVisible = true;
@@ -92,11 +92,10 @@ export function resetCombatModeControls() {
 	const gameScene = getGameScene();
 	const userInterfaceState = getUserInterfaceState();
 	const controlState = getControlState();
-
-	const camera = gameScene.activeCamera;
+	const camera = gameScene.activeCamera as UniversalCamera;
 
 	if (camera) {
-		camera.inputs.attached.mouse.detachControl();
+		camera.detachControl();
 		userInterfaceState.sceneGUI.rootContainer.isVisible = true;
 		controlState.exploreGUIControls.forEach((child) => {
 			child.isVisible = false;
@@ -200,7 +199,6 @@ export function resetDialogueModeControls() {
 	const camera = getGameScene().activeCamera as UniversalCamera;
 
 	if (camera) {
-		camera.inputs.clear();
 		camera.detachControl();
 		userInterfaceState.sceneGUI.rootContainer.isVisible = false;
 		controlState.exploreGUIControls.forEach((child) => {

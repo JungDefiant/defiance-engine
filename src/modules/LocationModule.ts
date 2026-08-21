@@ -158,10 +158,10 @@ export async function filterLocationEvents(locationData: SceneLocation) {
 	});
 }
 
-export async function finishTransitionToNewLocation() {
+export function finishTransitionToNewLocation() {
 	const userInterfaceState = getUserInterfaceState();
 
-	await resetExploreViewPosition();
+	Promise.resolve(resetExploreViewPosition());
 	userInterfaceState.exploreHud.hideHighlightInfoUI();
 	const sceneGUIChildren = userInterfaceState.sceneGUI.getChildren();
 	for (let i = 0; i < sceneGUIChildren.length; i++) {
@@ -201,9 +201,9 @@ export async function transitionToNewLocation(destinationId: string) {
 	if (viewNode && gameScene.activeCamera) {
 		const entityMovement = new EntityMovementComponent(
 			gameScene.activeCamera.position,
-			viewNode.position,
+			viewNode.getPositionExpressedInLocalSpace(),
 			BASE_MOVEMENT_SPEED,
-			async () => {
+			() => {
 				finishTransitionToNewLocation();
 			},
 		);
@@ -246,8 +246,8 @@ export async function createLocationDoor(
 		const userInterfaceState = getUserInterfaceState();
 		userInterfaceState.exploreHud.hideHighlightInfoUI();
 	});
-	button.onPointerClickObservable.add(async () => {
-		transitionToNewLocation(doorData.destination);
+	button.onPointerClickObservable.add(() => {
+		Promise.resolve(transitionToNewLocation(doorData.destination));
 	});
 	newLocationSceneParams.sceneGUI.addControl(button);
 	newLocationSceneParams.exploreGUIControls.push(button);

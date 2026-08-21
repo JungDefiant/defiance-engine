@@ -6,7 +6,6 @@ import {
 	Engine,
 	HemisphericLight,
 	ImportMeshAsync,
-	ISceneLoaderAsyncResult,
 	MeshBuilder,
 	StandardMaterial,
 	UniversalCamera,
@@ -69,9 +68,6 @@ import { FactoryRegistry } from "src/registries/FactoryRegistry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
-import { getTransformNodeComponentArray } from "./ComponentModule";
-
-export let loadingMesh: Promise<ISceneLoaderAsyncResult> | null = null;
 
 export async function initGameScene(sceneId: string) {
 	const engine = container.resolve(Engine);
@@ -242,7 +238,7 @@ export function createSceneCamera(scene: GameScene): EntityId {
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.inputs.clear();
 		camera.inputs.addMouse();
-		camera.attachControl(false);
+		camera.attachControl();
 		scene.onPointerObservable.add((eventData) => {
 			// This will block out vertical rotation
 			// For blocking out horizontal rotation, simply use y instead of x
@@ -260,19 +256,15 @@ export function createSceneCamera(scene: GameScene): EntityId {
 
 export async function getSceneNodes(mapModelId: string) {
 	const scene = getGameScene();
-	if (!loadingMesh) {
-		loadingMesh = ImportMeshAsync(
+	if (!scene.sceneNodes) {
+		const loadingMesh = await ImportMeshAsync(
 			`${getPublicRoot()}/models/maps/${mapModelId}`,
 			scene,
 			{
 				pluginOptions: {},
 			},
 		);
+		scene.sceneNodes = loadingMesh.transformNodes;
 	}
-
-	if (!scene.sceneNodes) {
-		scene.sceneNodes = (await loadingMesh).transformNodes;
-	}
-
 	return scene.sceneNodes;
 }

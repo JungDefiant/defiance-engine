@@ -11,8 +11,6 @@ export const SYSTEM_ID_ENTITYMOVEMENT = "EntityMovement";
 export default class EntityMovementSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
-	public async start(engine: Engine): Promise<void> {}
-
 	public update(deltaTime: number): void {
 		const world = this.gameScene.world;
 		const entityMovementComponentArray = getEntityMovementComponentArray();
@@ -31,32 +29,38 @@ export default class EntityMovementSystem implements GameSystem {
 		deltaTime: number,
 		entityMovement: EntityMovementComponent,
 	) {
-		const transform = entityMovement.transform;
-		const distanceLeft = Vector3.Distance(
-			transform.position,
-			entityMovement.destination,
-		);
+		const position = entityMovement.position;
+		const destination = entityMovement.destination;
+
+		const distanceLeft = Vector3.Distance(position, destination);
 
 		let distanceMoved = deltaTime * entityMovement.speed;
 		if (distanceMoved > distanceLeft) {
 			distanceMoved = distanceLeft;
 		}
 
-		const lerpAmount = distanceMoved / distanceLeft;
-
-		const moveTowardsVector = Vector3.Lerp(
-			transform.position,
-			entityMovement.destination,
-			lerpAmount,
-		);
-		transform.setPositionWithLocalVector(moveTowardsVector);
+		if (distanceLeft !== 0) {
+			const lerpAmount = distanceMoved / distanceLeft;
+			const moveTowardsVector = Vector3.Lerp(
+				position,
+				destination,
+				lerpAmount,
+			);
+			position._x = moveTowardsVector.x;
+			position._y = moveTowardsVector.y;
+			position._z = moveTowardsVector.z;
+		} else {
+			position._x = destination.x;
+			position._y = destination.y;
+			position._z = destination.z;
+		}
 	}
 
 	private checkIfEntityAtDestination(
 		entityMovement: EntityMovementComponent,
 	): boolean {
 		const distanceLeft = Vector3.Distance(
-			entityMovement.transform.position,
+			entityMovement.position,
 			entityMovement.destination,
 		);
 

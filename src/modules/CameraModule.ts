@@ -70,6 +70,6 @@ export function resetCameraPositionToViewNode(viewNode: TransformNode) {
 	const gameScene = getGameScene();
 	const activeCamera = gameScene.activeCamera;
 	if (activeCamera) {
-		activeCamera.position = viewNode.position;
+		activeCamera.position = viewNode.getPositionExpressedInLocalSpace();
 	}
 }

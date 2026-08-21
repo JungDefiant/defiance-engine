@@ -1,33 +1,34 @@
 {
-  "name": "defiance-engine",
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build --base=/",
-    "build-pages": "tsc && vite build --base=/defiance-engine/",
-    "build-itch": "tsc && vite build",
-    "preview": "vite preview",
-    "generateOhm": "npx ohm generateBundles --withTypes --esm 'src/parser/*.ohm'"
-  },
-  "dependencies": {
-    "@babylonjs/core": "^8.54.1",
-    "@babylonjs/gui": "^8.54.1",
-    "@babylonjs/loaders": "^8.54.1",
-    "@babylonjs/inspector": "^8.54.1",
-    "bitecs": "^0.4.0",
-    "ohm-js": "^17.0.0",
-    "reflect-metadata": "^0.2.2",
-    "tsx": "^4.23.0",
-    "tsyringe": "^4.10.0",
-    "vite-tsconfig-paths": "^6.1.1"
-  },
-  "devDependencies": {
-    "@ohm-js/cli": "^2.0.1",
-    "@types/node": "^24.11.0",
-    "esbuild": "^0.28.1",
-    "queue-typescript": "^1.0.1",
-    "typescript": "~5.9.3",
-    "vite": "^8.0.16"
-  }
+	"name": "defiance-engine",
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc && vite build --base=/",
+		"build-pages": "tsc && vite build --base=/defiance-engine/",
+		"build-itch": "tsc && vite build",
+		"preview": "vite preview",
+		"generateOhm": "npx ohm generateBundles --withTypes --esm 'src/parser/*.ohm'"
+	},
+	"dependencies": {
+		"@babylonjs/core": "^8.56.2",
+		"@babylonjs/gui": "^8.56.2",
+		"@babylonjs/inspector": "^8.56.2",
+		"@babylonjs/loaders": "^8.56.2",
+		"babylonjs": "^9.22.1",
+		"bitecs": "^0.4.0",
+		"ohm-js": "^17.0.0",
+		"reflect-metadata": "^0.2.2",
+		"tsx": "^4.23.0",
+		"tsyringe": "^4.10.0",
+		"vite-tsconfig-paths": "^6.1.1"
+	},
+	"devDependencies": {
+		"@ohm-js/cli": "^2.0.1",
+		"@types/node": "^24.11.0",
+		"esbuild": "^0.28.1",
+		"queue-typescript": "^1.0.1",
+		"typescript": "~5.9.3",
+		"vite": "^8.0.16"
+	}
 }
