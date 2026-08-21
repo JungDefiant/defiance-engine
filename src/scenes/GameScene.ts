@@ -1,9 +1,5 @@
 import { singleton } from "tsyringe";
-import { SystemRegistry } from "../registries/SystemRegistry";
-import { GameStateRegistry } from "../registries/GameStateRegistry";
-import { FactoryRegistry } from "../registries/FactoryRegistry";
-import { ComponentRegistry } from "../registries/ComponentRegistry";
-import { Engine, ImportMeshAsync, Scene } from "@babylonjs/core";
+import { Engine, Scene } from "@babylonjs/core";
 import type {
 	Nullable,
 	SceneOptions,
@@ -13,13 +9,9 @@ import type {
 import { createWorld, EntityId, World } from "bitecs";
 import { DEFAULT_CAM_TARGET } from "src/constants/GeneralConstants";
 import { EncounterMap, SceneLocation } from "src/types/GameTypes";
-import { createSceneCamera, getSceneNodes } from "src/modules/SceneModule";
-import { getPublicRoot } from "src/modules/Utils";
-import { ShowInspector } from "@babylonjs/inspector";
 
 @singleton()
 export class GameScene extends Scene {
-	private readonly _cameraEntityId: EntityId;
 	private readonly _startLocationId: string;
 	private readonly _mapModelId: string;
 	private readonly _difficultyLevel: number;
@@ -30,6 +22,7 @@ export class GameScene extends Scene {
 	private readonly _modalIds: string[];
 
 	private _world: World;
+	private _cameraEntityId: EntityId = -1;
 	private _lastExploreViewTarget: Vector3 = DEFAULT_CAM_TARGET;
 	private _currentLocation: Nullable<SceneLocation> = null;
 	private _sceneNodes: Nullable<TransformNode[]> = null;
@@ -49,7 +42,6 @@ export class GameScene extends Scene {
 		this._encounters = sceneProps.encounters;
 		this._locations = sceneProps.locations;
 		this._modalIds = sceneProps.modalIds;
-		this._cameraEntityId = createSceneCamera(this);
 
 		// ShowInspector(this);
 	}
@@ -104,6 +96,10 @@ export class GameScene extends Scene {
 
 	public get modalIds(): string[] {
 		return this._modalIds;
+	}
+
+	public set cameraEntityId(value: EntityId) {
+		this._cameraEntityId = value;
 	}
 
 	public set sceneNodes(value: TransformNode[]) {

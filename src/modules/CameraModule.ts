@@ -2,10 +2,11 @@ import { TransformNode, UniversalCamera, Vector3 } from "@babylonjs/core";
 import { DEFAULT_CAM_TARGET } from "src/constants/GeneralConstants";
 import { GameScene } from "src/scenes/GameScene";
 import { container } from "tsyringe";
-import { getSceneNodes } from "./SceneModule";
+import { getSceneNode } from "./SceneModule";
+import { getGameScene } from "./GameStateModule";
 
 export async function resetExploreViewPosition() {
-	const gameScene = container.resolve(GameScene);
+	const gameScene = getGameScene();
 
 	const camera = gameScene.activeCamera as UniversalCamera;
 	const currentLocation = gameScene.currentLocation;
@@ -20,23 +21,20 @@ export async function resetExploreViewPosition() {
 		return;
 	}
 
+	const viewNode = await getSceneNode(viewNodeId);
+	if (viewNode) {
+		resetCameraPositionToViewNode(viewNode);
+	}
+
 	let camTarget = DEFAULT_CAM_TARGET;
 	if (gameScene.lastExploreViewTarget !== Vector3.Zero()) {
 		camTarget = gameScene.lastExploreViewTarget;
-		camTarget.y = DEFAULT_CAM_TARGET.y;
 	}
 	camera.setTarget(camTarget);
-
-	const sceneNodes = await getSceneNodes(gameScene.mapModelId);
-	const viewNode = sceneNodes.find(
-		(x) => x.id === viewNodeId,
-	) as TransformNode;
-	resetCameraPositionToViewNode(viewNode, camera);
 }
 
 export async function resetCombatViewPosition() {
 	const gameScene = container.resolve(GameScene);
-	const sceneNodes = await getSceneNodes(gameScene.mapModelId);
 
 	const camera = gameScene.activeCamera as UniversalCamera;
 	const currentLocation = gameScene.currentLocation;
@@ -51,35 +49,27 @@ export async function resetCombatViewPosition() {
 		return;
 	}
 
+	const viewNode = await getSceneNode(currentLocation.combatViewNodeId);
+	if (viewNode) {
+		resetCameraPositionToViewNode(viewNode);
+	}
+
 	let camTarget = DEFAULT_CAM_TARGET;
-	let spawnNode = sceneNodes.find(
-		(x) => x.id === currentLocation.combatSpawnNodeId,
-	);
+	let spawnNode = await getSceneNode(currentLocation.combatSpawnNodeId);
 	if (spawnNode) {
 		camTarget = new Vector3(
 			spawnNode.absolutePosition.x,
-			DEFAULT_CAM_TARGET.y / 2,
+			DEFAULT_CAM_TARGET.y,
 			spawnNode.absolutePosition.z,
 		);
 		camera.setTarget(camTarget);
 	}
-
-	const viewNode = sceneNodes.find(
-		(x) => x.id === currentLocation.combatViewNodeId,
-	) as TransformNode;
-	resetCameraPositionToViewNode(viewNode, camera);
 }
 
-export function resetCameraPositionToViewNode(
-	viewNode: TransformNode,
-	camera: UniversalCamera,
-) {
-	if (camera && viewNode) {
-		const camParent = camera.parent as TransformNode;
-		if (camParent) {
-			camParent.position = viewNode.absolutePosition;
-		} else {
-			camera.position = viewNode.absolutePosition;
-		}
+export function resetCameraPositionToViewNode(viewNode: TransformNode) {
+	const gameScene = getGameScene();
+	const activeCamera = gameScene.activeCamera;
+	if (activeCamera) {
+		activeCamera.position = viewNode.position;
 	}
 }

@@ -15,7 +15,7 @@ import { Button, Control, Vector2WithInfo } from "@babylonjs/gui";
 import { getPublicRoot } from "./Utils";
 import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
 import { addComponent, set } from "bitecs";
-import { getSceneNodes, getViewPositionNode } from "./SceneModule";
+import { getSceneNodes, getSceneNode } from "./SceneModule";
 import {
 	getControlState,
 	getGameScene,
@@ -23,7 +23,10 @@ import {
 } from "./GameStateModule";
 import { resetExploreViewPosition } from "./CameraModule";
 import EntityMovementComponent from "src/components/EntityMovementComponent";
-import { getEntityMovementComponentArray } from "./ComponentModule";
+import {
+	getEntityMovementComponentArray,
+	getTransformNodeComponentArray,
+} from "./ComponentModule";
 import { startDialogue } from "./DialogueModule";
 import { checkEventByTrigger } from "./EventModule";
 
@@ -95,7 +98,7 @@ function startDialogueFromInteractableFunction(
 ): (eventData: Vector2WithInfo, eventState: EventState) => void {
 	return async () => {
 		setLastExploreViewTarget();
-		const viewPositionNode = await getViewPositionNode(
+		const viewPositionNode = await getSceneNode(
 			interactable.viewPositionNodeId,
 		);
 
@@ -167,12 +170,8 @@ export async function finishTransitionToNewLocation() {
 	}
 	checkEventByTrigger("OnLocationEnter");
 }
-export async function transitionToNewLocation(
-	currentLocationViewNode: TransformNode,
-	destinationId: string,
-) {
+export async function transitionToNewLocation(destinationId: string) {
 	const gameScene = getGameScene();
-	const sceneNodes = await getSceneNodes(gameScene.mapModelId);
 	const userInterfaceState = getUserInterfaceState();
 	const controlState = getControlState();
 
@@ -190,22 +189,7 @@ export async function transitionToNewLocation(
 		return;
 	}
 
-	const currCamera = gameScene.activeCamera as UniversalCamera;
-	if (currCamera) {
-		gameScene.lastExploreViewTarget =
-			currentLocationViewNode.absolutePosition;
-	}
-
 	gameScene.currentLocation = newLocation;
-
-	let cameraTransformNode = currCamera.parent;
-	if (!cameraTransformNode) {
-		const newTransformNode = new TransformNode("activeCamNode");
-		newTransformNode.setAbsolutePosition(currCamera.position);
-		currCamera.parent = newTransformNode;
-		currCamera.position = Vector3.Zero();
-		cameraTransformNode = newTransformNode;
-	}
 
 	const sceneGUIChildren = userInterfaceState.sceneGUI.getChildren();
 	for (let i = 0; i < sceneGUIChildren.length; i++) {
@@ -213,23 +197,23 @@ export async function transitionToNewLocation(
 		sceneGUIObject.isVisible = false;
 	}
 
-	const viewNode = sceneNodes.find(
-		(x) => x.id === newLocation.exploreViewNodeId,
-	) as TransformNode;
-	const entityMovement = new EntityMovementComponent(
-		cameraTransformNode as TransformNode,
-		viewNode.position,
-		BASE_MOVEMENT_SPEED,
-		async () => {
-			finishTransitionToNewLocation();
-		},
-	);
-	const entityMovementComponentArray = getEntityMovementComponentArray();
-	addComponent(
-		gameScene.world,
-		gameScene.cameraEntityId,
-		set(entityMovementComponentArray, entityMovement),
-	);
+	const viewNode = await getSceneNode(newLocation.exploreViewNodeId);
+	if (viewNode && gameScene.activeCamera) {
+		const entityMovement = new EntityMovementComponent(
+			gameScene.activeCamera.position,
+			viewNode.position,
+			BASE_MOVEMENT_SPEED,
+			async () => {
+				finishTransitionToNewLocation();
+			},
+		);
+		const entityMovementComponentArray = getEntityMovementComponentArray();
+		addComponent(
+			gameScene.world,
+			gameScene.cameraEntityId,
+			set(entityMovementComponentArray, entityMovement),
+		);
+	}
 }
 export async function createLocationDoor(
 	doorData: DoorData,
@@ -263,7 +247,7 @@ export async function createLocationDoor(
 		userInterfaceState.exploreHud.hideHighlightInfoUI();
 	});
 	button.onPointerClickObservable.add(async () => {
-		transitionToNewLocation(sceneNode, doorData.destination);
+		transitionToNewLocation(doorData.destination);
 	});
 	newLocationSceneParams.sceneGUI.addControl(button);
 	newLocationSceneParams.exploreGUIControls.push(button);

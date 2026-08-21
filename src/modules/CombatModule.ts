@@ -32,7 +32,11 @@ import {
 	getComponentRegistry,
 	getEnemyGuiComponentArray,
 } from "./ComponentModule";
-import { setCombatGameMode, setExploreGameMode } from "./SceneModule";
+import {
+	getSceneNode,
+	setCombatGameMode,
+	setExploreGameMode,
+} from "./SceneModule";
 import {
 	clearControlActionPause,
 	resetCombatModeActionManager,
@@ -94,14 +98,14 @@ export async function startCombat(encId: string): Promise<void> {
 	checkEventByTrigger("OnCombatStart");
 }
 
-export async function endCombat() {
+export function endCombat() {
 	combatActionManager();
 	clearCombatHudEntries();
 	disposeEnemyEntities();
 	resetPlayerActorState();
 	clearControlActionPause();
 	resetCombatStateToInactive();
-	await setExploreGameMode();
+	setExploreGameMode();
 	checkEventByTrigger("OnCombatEnd");
 }
 

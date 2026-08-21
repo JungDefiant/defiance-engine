@@ -3,9 +3,9 @@ import {
 	ActionManager,
 	ExecuteCodeAction,
 	UniversalCamera,
+	FreeCameraInputsManager,
 } from "@babylonjs/core";
 import GameplayState from "src/states/GameplayState";
-import UserInterfaceState from "src/states/UserInterfaceState";
 import { getGameCanvas } from "./SceneModule";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
@@ -31,6 +31,8 @@ export function clearControlActionPause() {
 	}
 }
 
+let storedInputs;
+
 export function resetExploreModeControls() {
 	const gameScene = getUserInterfaceScene();
 	const userInterfaceState = getUserInterfaceState();
@@ -40,12 +42,9 @@ export function resetExploreModeControls() {
 	const gameCanvas = getGameCanvas();
 
 	if (camera && gameCanvas) {
-		camera.attachControl(gameCanvas);
-		gameScene.onPointerObservable.add(() => {
-			// This will block out vertical rotation
-			// For blocking out horizontal rotation, simply use y instead of x
-			camera.cameraRotation.x = 0;
-		});
+		camera.inputs = new FreeCameraInputsManager(camera);
+		camera.inputs.addMouse();
+		camera.attachControl(false);
 		userInterfaceState.sceneGUI.rootContainer.isVisible = true;
 		controlState.exploreGUIControls.forEach((child) => {
 			child.isVisible = true;
@@ -97,7 +96,7 @@ export function resetCombatModeControls() {
 	const camera = gameScene.activeCamera;
 
 	if (camera) {
-		camera.detachControl();
+		camera.inputs.attached.mouse.detachControl();
 		userInterfaceState.sceneGUI.rootContainer.isVisible = true;
 		controlState.exploreGUIControls.forEach((child) => {
 			child.isVisible = false;
@@ -198,10 +197,10 @@ export async function resetCombatModeActionManager() {
 export function resetDialogueModeControls() {
 	const userInterfaceState = getUserInterfaceState();
 	const controlState = getControlState();
-
-	const camera = getGameScene().activeCamera;
+	const camera = getGameScene().activeCamera as UniversalCamera;
 
 	if (camera) {
+		camera.inputs.clear();
 		camera.detachControl();
 		userInterfaceState.sceneGUI.rootContainer.isVisible = false;
 		controlState.exploreGUIControls.forEach((child) => {

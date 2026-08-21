@@ -80,7 +80,7 @@ function createSceneUI(scene: GameScene) {
 
 function createUICamera(uiScene: UserInterfaceScene) {
 	const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
-	uiCamera.attachControl(getGameCanvas(), false);
+	uiCamera.attachControl(false);
 	return uiCamera;
 }
 
@@ -186,11 +186,11 @@ export function clearCombatHudEntries() {
 export function setUserInterfaceGameMode(newMode: GameMode) {
 	const userInterfaceState = getUserInterfaceState();
 	userInterfaceState.partyInfoHud.showHideHud(
-		newMode == "Combat" || newMode == "Explore",
+		newMode === "Combat" || newMode === "Explore",
 	);
-	userInterfaceState.exploreHud.showHideHud(newMode == "Explore");
-	userInterfaceState.dialogueHud.showHideHud(newMode == "Dialogue");
-	userInterfaceState.combatHud.showHideHud(newMode == "Combat");
+	userInterfaceState.exploreHud.showHideHud(newMode === "Explore");
+	userInterfaceState.dialogueHud.showHideHud(newMode === "Dialogue");
+	userInterfaceState.combatHud.showHideHud(newMode === "Combat");
 }
 
 export function setSelectedCharacter(eid: EntityId, isCombatMode?: boolean) {

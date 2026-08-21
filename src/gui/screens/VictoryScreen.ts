@@ -45,8 +45,8 @@ export class VictoryScreen {
 			continueButton.textBlock.color = Themes.neutral2;
 			continueButton.textBlock.style = Themes.typography.header4;
 		}
-		continueButton.onPointerClickObservable.add(async () => {
-			await endCombat();
+		continueButton.onPointerClickObservable.add(() => {
+			endCombat();
 			this.showHide(false);
 		});
 		this.rootContainer.addControl(continueButton);

@@ -14,8 +14,10 @@ import {
 	Viewport,
 } from "@babylonjs/core";
 import {
+	resetCombatModeActionManager,
 	resetCombatModeControls,
 	resetDialogueModeControls,
+	resetExploreModeActionManager,
 	resetExploreModeControls,
 } from "./ControlModule";
 import {
@@ -43,7 +45,7 @@ import {
 	DEFAULT_CAM_TARGET,
 } from "src/constants/GeneralConstants";
 import TransformNodeComponent from "src/components/TransformNodeComponent";
-import { addComponent, addEntity, EntityId } from "bitecs";
+import { addComponent, addEntity, EntityId, set } from "bitecs";
 import {
 	createUserInterfaceState,
 	loadModalMap,
@@ -67,6 +69,7 @@ import { FactoryRegistry } from "src/registries/FactoryRegistry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import { getTransformNodeComponentArray } from "./ComponentModule";
 
 export let loadingMesh: Promise<ISceneLoaderAsyncResult> | null = null;
 
@@ -101,9 +104,10 @@ export async function initGameScene(sceneId: string) {
 	await initSemantics();
 	await loadDialogueMap(newGameScene.dialogueFileId);
 
+	newGameScene.cameraEntityId = createSceneCamera(newGameScene);
 	await createStartingLocation(newGameScene);
 	await playMusic(newGameScene.startMusicId);
-	await setExploreGameMode();
+	setExploreGameMode();
 }
 
 async function createStartingLocation(gameScene: GameScene) {
@@ -174,28 +178,29 @@ export function getGameCanvas(): HTMLCanvasElement {
 	return engine.getRenderingCanvas() as HTMLCanvasElement;
 }
 
-export async function getViewPositionNode(viewPositionNodeId: string) {
-	const viewNode = (await getSceneNodes(getGameScene().mapModelId)).find(
-		(x) => x.id === viewPositionNodeId,
-	);
-	return viewNode;
+export async function getSceneNode(sceneNodeId: string) {
+	const gameSceneNodes = await getSceneNodes(getGameScene().mapModelId);
+	const sceneNode = gameSceneNodes.find((x) => x.id === sceneNodeId);
+	return sceneNode;
 }
 
-export async function setExploreGameMode() {
-	await resetExploreViewPosition();
-	resetExploreModeControls();
+export function setExploreGameMode() {
 	setUserInterfaceGameMode("Explore");
+	Promise.resolve(resetExploreViewPosition());
+	resetExploreModeControls();
+	resetExploreModeActionManager();
 }
 
-export async function setCombatGameMode() {
-	await resetCombatViewPosition();
-	resetCombatModeControls();
+export function setCombatGameMode() {
 	setUserInterfaceGameMode("Combat");
+	Promise.resolve(resetCombatViewPosition());
+	resetCombatModeControls();
+	resetCombatModeActionManager();
 }
 
 export function setDialogueGameMode() {
-	resetDialogueModeControls();
 	setUserInterfaceGameMode("Dialogue");
+	resetDialogueModeControls();
 }
 
 async function loadSceneJson(sceneId: string): Promise<LoadedSceneJson> {
@@ -222,7 +227,7 @@ function createSkybox(scene: GameScene) {
 	skybox.infiniteDistance = true;
 }
 
-export function createSceneCamera(scene: GameScene) {
+export function createSceneCamera(scene: GameScene): EntityId {
 	const gameCanvas = getGameCanvas();
 
 	if (gameCanvas) {
@@ -233,26 +238,19 @@ export function createSceneCamera(scene: GameScene) {
 		);
 		camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
 		camera.setTarget(DEFAULT_CAM_TARGET);
-		camera.position = new Vector3(0, 0.4, 0);
 		camera.minZ = 0;
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.inputs.clear();
 		camera.inputs.addMouse();
-		camera.attachControl(gameCanvas, false);
+		camera.attachControl(false);
 		scene.onPointerObservable.add((eventData) => {
 			// This will block out vertical rotation
 			// For blocking out horizontal rotation, simply use y instead of x
 			camera.cameraRotation.x = 0;
 		});
 
-		const cameraTransformNode = new TransformNodeComponent(
-			"camera_node",
-			scene,
-		);
-
 		const newCameraEntityId = addEntity(scene.world);
 		addComponent(scene.world, newCameraEntityId, camera);
-		addComponent(scene.world, newCameraEntityId, cameraTransformNode);
 
 		return newCameraEntityId;
 	}

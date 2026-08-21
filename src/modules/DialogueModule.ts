@@ -19,6 +19,7 @@ import { getPublicRoot } from "./Utils";
 import { PAUSE_DIALOGUE } from "src/constants/GeneralConstants";
 import { setDialogueGameMode, setExploreGameMode } from "./SceneModule";
 import { checkEventByTrigger } from "./EventModule";
+import { getTransformNodeComponentArray } from "./ComponentModule";
 
 export async function loadDialogueMap(dialogueId: string): Promise<void> {
 	const dialogueState = getDialogueState();
@@ -74,8 +75,7 @@ export async function startDialogue(
 	controlState.actionPauseSet.add(PAUSE_DIALOGUE);
 
 	if (startDialogueProps) {
-		camera.position = startDialogueProps.viewPositionNode.absolutePosition;
-		// TO DO: Implement moving camera to target over time
+		camera.position = startDialogueProps.viewPositionNode.position;
 		camera.setTarget(
 			startDialogueProps.interactablePositionNode.absolutePosition,
 		);
@@ -145,12 +145,12 @@ export function runLine(id: number) {
 	}
 }
 
-export async function endDialogue(switchToExploreMode: boolean) {
+export function endDialogue(switchToExploreMode: boolean) {
 	const controlState = getControlState();
 
 	controlState.actionPauseSet.delete(PAUSE_DIALOGUE);
 	if (switchToExploreMode) {
-		await setExploreGameMode();
+		setExploreGameMode();
 	}
 
 	checkEventByTrigger("OnDialogueEnd");

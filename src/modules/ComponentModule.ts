@@ -9,6 +9,7 @@ import StickerImageComponent from "src/components/StickerImageComponent";
 import { ImageAnimationComponent } from "src/components/ImageAnimationComponent";
 import { container } from "tsyringe";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import TransformNodeComponent from "src/components/TransformNodeComponent";
 
 export function getComponentRegistry() {
 	return container.resolve(ComponentRegistry);
@@ -58,5 +59,11 @@ export function getPlayerGuiComponentArray() {
 export function getStickerImageComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<StickerImageComponent>(
 		StickerImageComponent.name,
+	);
+}
+
+export function getTransformNodeComponentArray() {
+	return getComponentRegistry().getComponentArrayByComponentId<TransformNodeComponent>(
+		TransformNodeComponent.name,
 	);
 }
