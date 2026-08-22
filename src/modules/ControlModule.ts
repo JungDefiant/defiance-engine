@@ -3,7 +3,6 @@ import {
 	ActionManager,
 	ExecuteCodeAction,
 	UniversalCamera,
-	FreeCameraInputsManager,
 } from "@babylonjs/core";
 import GameplayState from "src/states/GameplayState";
 import { getGameCanvas } from "./SceneModule";

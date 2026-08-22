@@ -5,12 +5,8 @@ import { ImageAnimationComponent } from "src/components/ImageAnimationComponent"
 import { GameScene } from "src/scenes/GameScene";
 import { getImageAnimationComponentArray } from "src/modules/ComponentModule";
 
-export const SYSTEM_ID_IMAGEANIMATION = "ImageAnimation";
-
 export default class ImageAnimationSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
-
-	public async start(): Promise<void> {}
 
 	public update(deltaTime: number): void {
 		const imageAnimationComponentArray = getImageAnimationComponentArray();

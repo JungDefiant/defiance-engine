@@ -1,12 +1,10 @@
 import { inject } from "tsyringe";
 import GameSystem from "./GameSystem";
-import { Engine, Vector3 } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
 import { query, removeComponent } from "bitecs";
 import EntityMovementComponent from "src/components/EntityMovementComponent";
 import { GameScene } from "src/scenes/GameScene";
 import { getEntityMovementComponentArray } from "src/modules/ComponentModule";
-
-export const SYSTEM_ID_ENTITYMOVEMENT = "EntityMovement";
 
 export default class EntityMovementSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}

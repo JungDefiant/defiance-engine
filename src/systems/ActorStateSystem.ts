@@ -2,7 +2,6 @@ import { inject } from "tsyringe";
 import GameSystem from "./GameSystem";
 import { query } from "bitecs";
 import ActorStateComponent from "../components/ActorStateComponent";
-import ControlState from "src/states/ControlState";
 import { GameScene } from "src/scenes/GameScene";
 import { getControlState, getGameScene } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";

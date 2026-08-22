@@ -12,12 +12,8 @@ import {
 	getPlayerGuiComponentArray,
 } from "src/modules/ComponentModule";
 
-export const SYSTEM_ID_USERINTERFACE = "UserInterface";
-
 export default class UserInterfaceSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
-
-	public async start(engine: Engine) {}
 
 	public update(deltaTime: number) {
 		const actorStateComponentArray = getActorStateComponentArray();
