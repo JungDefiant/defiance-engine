@@ -4,16 +4,16 @@ import { singleton } from "tsyringe";
 export class GameStateRegistry {
 	private gameStates: Map<string, GameState> = new Map();
 
-	public registerNewGameState(systemId: string, newSystem: GameState) {
-		this.gameStates.set(systemId, newSystem);
+	public registerNewGameState(gameStateId: string, newGameState: GameState) {
+		this.gameStates.set(gameStateId, newGameState);
 	}
 
 	public getAllGameStates(): Map<string, GameState> {
 		return this.gameStates;
 	}
 
-	public getGameStateByStateId<T>(systemId: string): T {
-		return this.gameStates.get(systemId) as T;
+	public getGameStateByStateId<T>(gameStateId: string): T {
+		return this.gameStates.get(gameStateId) as T;
 	}
 }
 

@@ -1,10 +1,10 @@
-import { EventTrigger, GameEvent } from "src/types/EventTypes";
+import { GameEventTrigger, GameEvent } from "src/types/EventTypes";
 import { getGameScene } from "./GameStateModule";
 import { startDialogue } from "./DialogueModule";
 import { startCombat } from "./CombatModule";
 import { showModal } from "./UserInterfaceModule";
 
-export function checkEventByTrigger(eventTrigger: EventTrigger) {
+export function checkEventByTrigger(eventTrigger: GameEventTrigger) {
 	const gameScene = getGameScene();
 	if (!gameScene.currentLocation) {
 		return;
@@ -39,14 +39,14 @@ function triggerEventByType(event: GameEvent) {
 	}
 }
 
-function triggerDialogueEvent(event: GameEvent) {
+export function triggerDialogueEvent(event: GameEvent) {
 	startDialogue(event.assetId);
 }
 
-function triggerCombatEvent(event: GameEvent) {
+export function triggerCombatEvent(event: GameEvent) {
 	startCombat(event.assetId);
 }
 
-function triggerModalEvent(event: GameEvent) {
+export function triggerModalEvent(event: GameEvent) {
 	showModal(event.assetId);
 }

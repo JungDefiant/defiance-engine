@@ -13,7 +13,7 @@ import { container } from "tsyringe";
 import { EntityId } from "bitecs";
 import { Mesh } from "@babylonjs/core";
 import { Themes } from "../gui/Themes";
-import { ActorGUI } from "../interfaces/ActorGUI";
+import { ActorGUI } from "../types/UserInterfaceTypes";
 import { Component } from "./Component";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import ActorStateComponent from "./ActorStateComponent";

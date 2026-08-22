@@ -1,6 +1,6 @@
 import GameSystem from "src/systems/GameSystem";
 import { PAUSE_RENDERQUEUE } from "src/constants/GeneralConstants";
-import { RenderQueueState } from "src/interfaces/RenderQueueEntry";
+import { RenderQueueState } from "src/types/RenderTypes";
 import { getControlState, getRenderState } from "src/modules/GameStateModule";
 import { GameScene } from "src/scenes/GameScene";
 import { inject } from "tsyringe";

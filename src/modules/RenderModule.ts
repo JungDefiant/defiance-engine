@@ -7,7 +7,7 @@ import {
 	RenderQueueEntryFloatingText,
 	RenderQueueEntryMessageDisplay,
 	RenderQueueEntrySpecialFX,
-} from "src/interfaces/RenderQueueEntry";
+} from "src/types/RenderTypes";
 import { getRenderState } from "./GameStateModule";
 
 export function addFloatingTextRQE(

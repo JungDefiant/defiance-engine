@@ -125,3 +125,9 @@ export interface NewLocationSceneParams {
 	sceneGUI: AdvancedDynamicTexture;
 	exploreGUIControls: Control[];
 }
+
+export type RenderQueueEntryType =
+	| "MessageDisplay"
+	| "FloatingText"
+	| "SpecialFx"
+	| "WaitUntilDone";

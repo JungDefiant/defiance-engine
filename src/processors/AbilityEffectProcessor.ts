@@ -1,32 +1,29 @@
-import { singleton } from "tsyringe";
 import { Processor } from "./Processor";
+import { AbilityEffectType } from "src/types/AbilityTypes";
 import { applyDamageEffect, applyHealEffect } from "src/modules/EffectModule";
 
-type AbilityEffectType = "DamageEffect" | "HealingEffect";
-
-@singleton()
-export class AbilityEffectProcessor implements Processor<
-	AbilityEffectType,
-	Function
-> {
-	private records: Record<AbilityEffectType, Function>;
+export class AbilityEffectProcessor implements Processor {
+	private processorFunctions: Record<AbilityEffectType, Function>;
 
 	public constructor() {
-		this.records = {
+		this.processorFunctions = {
 			DamageEffect: applyDamageEffect,
 			HealingEffect: applyHealEffect,
 		};
 	}
 
-	public setRecord(key: AbilityEffectType, value: Function): void {
-		this.records[key] = value;
+	public setProcessorFunction(key: string, value: Function): void {
+		const parsedKey = key as AbilityEffectType;
+		this.processorFunctions[parsedKey] = value;
 	}
 
-	public removeRecord(key: AbilityEffectType): void {
-		this.records[key] = () => {};
+	public removeProcessorFunction(key: string): void {
+		const parsedKey = key as AbilityEffectType;
+		this.processorFunctions[parsedKey] = () => {};
 	}
 
-	public getRecord(key: AbilityEffectType): Function {
-		return this.records[key];
+	public getProcessorFunction(key: string): Function {
+		const parsedKey = key as AbilityEffectType;
+		return this.processorFunctions[parsedKey];
 	}
 }

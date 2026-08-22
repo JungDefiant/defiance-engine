@@ -1,16 +1,16 @@
 export interface GameEvent {
 	id: string;
 	condition: string;
-	type: EventType;
-	trigger: EventTrigger;
+	type: GameEventType;
+	trigger: GameEventTrigger;
 	assetId: string;
 	isTriggered: boolean;
 }
 
-export type EventTrigger =
+export type GameEventTrigger =
 	| "OnLocationEnter"
 	| "OnCombatStart"
 	| "OnCombatEnd"
 	| "OnDialogueEnd";
 
-export type EventType = "Dialogue" | "Modal" | "Combat";
+export type GameEventType = "Dialogue" | "Modal" | "Combat";

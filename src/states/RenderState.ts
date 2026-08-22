@@ -1,8 +1,5 @@
 import { Queue } from "queue-typescript";
-import {
-	RenderQueueEntry,
-	RenderQueueState,
-} from "src/interfaces/RenderQueueEntry";
+import { RenderQueueEntry, RenderQueueState } from "src/types/RenderTypes";
 
 export default class RenderState {
 	public _renderQueueStates: RenderQueueState[] = [];
