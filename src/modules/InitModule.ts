@@ -23,6 +23,7 @@ import { GameScene } from "src/scenes/GameScene";
 import {
 	COMPONENT_TOKENS,
 	FACTORY_TOKENS,
+	PROCESSOR_TOKENS,
 	STATE_TOKENS,
 	SYSTEM_TOKENS,
 } from "src/constants/TokenConstants";
@@ -34,6 +35,7 @@ import { FactoryRegistry } from "src/registries/FactoryRegistry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { createUserInterfaceState } from "./UserInterfaceModule";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 
 export async function gotoMainMenu() {
 	const mainMenuScene = container.resolve(MainMenuScene);
@@ -145,6 +147,17 @@ export async function registerComponentArrays(
 ) {
 	for (const componentToken of COMPONENT_TOKENS) {
 		componentRegistry.registerNewComponentArray(componentToken.name);
+	}
+}
+
+export async function registerProcessorArrays(
+	processorRegistry: ProcessorRegistry,
+) {
+	for (const processorToken of PROCESSOR_TOKENS) {
+		processorRegistry.registerNewProcessor(
+			processorToken.name,
+			new processorToken(),
+		);
 	}
 }
 

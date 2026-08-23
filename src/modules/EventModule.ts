@@ -3,6 +3,7 @@ import { getGameScene } from "./GameStateModule";
 import { startDialogue } from "./DialogueModule";
 import { startCombat } from "./CombatModule";
 import { showModal } from "./UserInterfaceModule";
+import { getGameEventProcessor } from "./ProcessorModule";
 
 export function checkEventByTrigger(eventTrigger: GameEventTrigger) {
 	const gameScene = getGameScene();
@@ -15,26 +16,9 @@ export function checkEventByTrigger(eventTrigger: GameEventTrigger) {
 	);
 
 	for (const event of eventsArray) {
-		triggerEventByType(event);
+		getGameEventProcessor().getProcessorFunction(event.type)(event);
 		const eventIndex = eventsArray.indexOf(event);
 		gameScene.currentLocation.events.splice(eventIndex);
-		return;
-	}
-}
-
-function triggerEventByType(event: GameEvent) {
-	if (event.type === "Dialogue") {
-		triggerDialogueEvent(event);
-		return;
-	}
-
-	if (event.type === "Combat") {
-		triggerCombatEvent(event);
-		return;
-	}
-
-	if (event.type === "Modal") {
-		triggerModalEvent(event);
 		return;
 	}
 }

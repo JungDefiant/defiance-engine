@@ -60,6 +60,7 @@ import { UserInterfaceScene } from "src/scenes/UserInterfaceScene";
 import {
 	registerComponentArrays,
 	registerFactories,
+	registerProcessorArrays as registerProcessors,
 	registerStates,
 	registerSystems,
 	startFactories,
@@ -68,6 +69,7 @@ import { FactoryRegistry } from "src/registries/FactoryRegistry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 
 export async function initGameScene(sceneId: string) {
 	const engine = container.resolve(Engine);
@@ -82,6 +84,8 @@ export async function initGameScene(sceneId: string) {
 	container.register(SystemRegistry, { useValue: newSystemRegistry });
 	const newFactoryRegistry = new FactoryRegistry();
 	container.register(FactoryRegistry, { useValue: newFactoryRegistry });
+	const newProcessorRegistry = new ProcessorRegistry();
+	container.register(ProcessorRegistry, { useValue: newProcessorRegistry });
 	const newGameStateRegistry = new GameStateRegistry();
 	container.register(GameStateRegistry, { useValue: newGameStateRegistry });
 	const newComponentRegistry = new ComponentRegistry(newGameScene.world);
@@ -91,6 +95,7 @@ export async function initGameScene(sceneId: string) {
 	registerSystems(newSystemRegistry, newGameScene);
 	await registerStates(newGameStateRegistry, newGameScene);
 	registerComponentArrays(newComponentRegistry);
+	registerProcessors(newProcessorRegistry);
 	await startFactories(newFactoryRegistry);
 
 	createUserInterfaceState();
