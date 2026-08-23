@@ -1,5 +1,5 @@
 import { RandomRange, Vector3 } from "@babylonjs/core";
-import { EntityId, query, removeEntity } from "bitecs";
+import { EntityId, query } from "bitecs";
 import {
 	PAUSE_RENDERQUEUE,
 	PAUSE_TACTICALPAUSE,
@@ -12,15 +12,10 @@ import ActorStateComponent, {
 	TacticsCondition,
 	TacticsData,
 } from "src/components/ActorStateComponent";
-import EnemyGUIComponent from "src/components/EnemyGUIComponent";
-import ControlState from "src/states/ControlState";
-import GameplayState from "src/states/GameplayState";
-import UserInterfaceState from "src/states/UserInterfaceState";
 import { CombatState } from "src/systems/CombatManagerSystem";
 import { container } from "tsyringe";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import {
-	getCampaignState,
 	getControlState,
 	getGameplayState,
 	getGameScene,
@@ -32,11 +27,7 @@ import {
 	getComponentRegistry,
 	getEnemyGuiComponentArray,
 } from "./ComponentModule";
-import {
-	getSceneNode,
-	setCombatGameMode,
-	setExploreGameMode,
-} from "./SceneModule";
+import { setCombatGameMode, setExploreGameMode } from "./SceneModule";
 import {
 	clearControlActionPause,
 	resetCombatModeActionManager,

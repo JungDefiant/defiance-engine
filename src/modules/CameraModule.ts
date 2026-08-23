@@ -51,16 +51,23 @@ export async function resetCombatViewPosition() {
 
 	const viewNode = await getSceneNode(currentLocation.combatViewNodeId);
 	if (viewNode) {
+		console.log(
+			"VIEW NODE POS",
+			viewNode.getPositionExpressedInLocalSpace(),
+		);
 		resetCameraPositionToViewNode(viewNode);
 	}
+
+	gameScene.lastExploreViewTarget = camera.target;
 
 	let camTarget = DEFAULT_CAM_TARGET;
 	let spawnNode = await getSceneNode(currentLocation.combatSpawnNodeId);
 	if (spawnNode) {
+		console.log("SPAWN POS", spawnNode.getAbsolutePosition());
 		camTarget = new Vector3(
-			spawnNode.absolutePosition.x,
-			DEFAULT_CAM_TARGET.y,
-			spawnNode.absolutePosition.z,
+			spawnNode.getAbsolutePosition().x,
+			DEFAULT_CAM_TARGET.y / 2,
+			spawnNode.getAbsolutePosition().z,
 		);
 		camera.setTarget(camTarget);
 	}
