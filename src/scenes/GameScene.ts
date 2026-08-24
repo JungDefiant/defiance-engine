@@ -9,7 +9,7 @@ import type {
 import { createWorld, EntityId, World } from "bitecs";
 import { DEFAULT_CAM_TARGET } from "src/constants/GeneralConstants";
 import { EncounterMap, SceneLocation } from "src/types/GameTypes";
-import { ShowInspector } from "@babylonjs/inspector";
+// import { ShowInspector } from "@babylonjs/inspector";
 import { getPublicRoot } from "src/modules/Utils";
 
 @singleton()
@@ -45,7 +45,7 @@ export class GameScene extends Scene {
 		this._locations = sceneProps.locations;
 		this._modalIds = sceneProps.modalIds;
 
-		ShowInspector(this);
+		// ShowInspector(this);
 
 		Promise.resolve(
 			ImportMeshAsync(
