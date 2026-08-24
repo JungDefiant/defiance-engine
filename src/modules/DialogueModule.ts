@@ -75,9 +75,10 @@ export async function startDialogue(
 	controlState.actionPauseSet.add(PAUSE_DIALOGUE);
 
 	if (startDialogueProps) {
-		camera.position = startDialogueProps.viewPositionNode.position;
+		camera.position =
+			startDialogueProps.viewPositionNode.getPositionExpressedInLocalSpace();
 		camera.setTarget(
-			startDialogueProps.interactablePositionNode.absolutePosition,
+			startDialogueProps.interactablePositionNode.getAbsolutePosition(),
 		);
 	}
 

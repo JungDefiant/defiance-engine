@@ -21,7 +21,7 @@ import {
 	getGameScene,
 	getUserInterfaceState,
 } from "src/modules/GameStateModule";
-import { getSceneNodes } from "src/modules/SceneModule";
+import { getAllSceneNodes } from "src/modules/SceneModule";
 import {
 	getActorStateComponentArray,
 	getCharacterSpriteComponentArray,
@@ -82,7 +82,7 @@ export class EnemyFactory implements EntityFactory {
 		const enemyData = this.cache.get(fileName);
 		const gameScene = getGameScene();
 		const userInterfaceState = getUserInterfaceState();
-		const sceneNodes = await getSceneNodes(gameScene.mapModelId);
+		const sceneNodes = await getAllSceneNodes(gameScene.mapModelId);
 		const currentLocation = gameScene.currentLocation;
 
 		if (!currentLocation) {

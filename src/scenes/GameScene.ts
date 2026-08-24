@@ -1,5 +1,5 @@
 import { singleton } from "tsyringe";
-import { Engine, Scene } from "@babylonjs/core";
+import { Engine, ImportMeshAsync, Scene } from "@babylonjs/core";
 import type {
 	Nullable,
 	SceneOptions,
@@ -9,6 +9,8 @@ import type {
 import { createWorld, EntityId, World } from "bitecs";
 import { DEFAULT_CAM_TARGET } from "src/constants/GeneralConstants";
 import { EncounterMap, SceneLocation } from "src/types/GameTypes";
+import { ShowInspector } from "@babylonjs/inspector";
+import { getPublicRoot } from "src/modules/Utils";
 
 @singleton()
 export class GameScene extends Scene {
@@ -43,7 +45,19 @@ export class GameScene extends Scene {
 		this._locations = sceneProps.locations;
 		this._modalIds = sceneProps.modalIds;
 
-		// ShowInspector(this);
+		ShowInspector(this);
+
+		Promise.resolve(
+			ImportMeshAsync(
+				`${getPublicRoot()}/models/maps/${this._mapModelId}`,
+				this,
+				{
+					pluginOptions: {},
+				},
+			),
+		).then((sceneLoaderResult) => {
+			this._sceneNodes = sceneLoaderResult.transformNodes;
+		});
 	}
 
 	public get world(): World {

@@ -23,11 +23,12 @@ export async function resetExploreViewPosition() {
 
 	const viewNode = await getSceneNode(viewNodeId);
 	if (viewNode) {
-		resetCameraPositionToViewNode(viewNode);
+		resetCameraPositionToViewNode(viewNode, false);
 	}
 
 	let camTarget = DEFAULT_CAM_TARGET;
 	if (gameScene.lastExploreViewTarget !== Vector3.Zero()) {
+		gameScene.lastExploreViewTarget.y = DEFAULT_CAM_TARGET.y;
 		camTarget = gameScene.lastExploreViewTarget;
 	}
 	camera.setTarget(camTarget);
@@ -55,7 +56,7 @@ export async function resetCombatViewPosition() {
 			"VIEW NODE POS",
 			viewNode.getPositionExpressedInLocalSpace(),
 		);
-		resetCameraPositionToViewNode(viewNode);
+		resetCameraPositionToViewNode(viewNode, true);
 	}
 
 	gameScene.lastExploreViewTarget = camera.target;
@@ -63,20 +64,24 @@ export async function resetCombatViewPosition() {
 	let camTarget = DEFAULT_CAM_TARGET;
 	let spawnNode = await getSceneNode(currentLocation.combatSpawnNodeId);
 	if (spawnNode) {
-		console.log("SPAWN POS", spawnNode.getAbsolutePosition());
 		camTarget = new Vector3(
 			spawnNode.getAbsolutePosition().x,
-			DEFAULT_CAM_TARGET.y / 2,
+			0.2,
 			spawnNode.getAbsolutePosition().z,
 		);
 		camera.setTarget(camTarget);
 	}
 }
 
-export function resetCameraPositionToViewNode(viewNode: TransformNode) {
+export function resetCameraPositionToViewNode(
+	viewNode: TransformNode,
+	useAbsolutePosition: boolean,
+) {
 	const gameScene = getGameScene();
 	const activeCamera = gameScene.activeCamera;
 	if (activeCamera) {
-		activeCamera.position = viewNode.getPositionExpressedInLocalSpace();
+		activeCamera.position = useAbsolutePosition
+			? viewNode.getAbsolutePosition()
+			: viewNode.getPositionExpressedInLocalSpace();
 	}
 }

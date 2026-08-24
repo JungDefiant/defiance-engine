@@ -179,8 +179,13 @@ export function getGameCanvas(): HTMLCanvasElement {
 	return engine.getRenderingCanvas() as HTMLCanvasElement;
 }
 
+export async function getAllSceneNodes() {
+	const scene = getGameScene();
+	return scene.sceneNodes;
+}
+
 export async function getSceneNode(sceneNodeId: string) {
-	const gameSceneNodes = await getSceneNodes(getGameScene().mapModelId);
+	const gameSceneNodes = (await getAllSceneNodes()) || [];
 	const sceneNode = gameSceneNodes.find((x) => x.id === sceneNodeId);
 	return sceneNode;
 }
@@ -257,19 +262,4 @@ export function createSceneCamera(scene: GameScene): EntityId {
 	}
 
 	throw Error("No game canvas found!");
-}
-
-export async function getSceneNodes(mapModelId: string) {
-	const scene = getGameScene();
-	if (!scene.sceneNodes) {
-		const loadingMesh = await ImportMeshAsync(
-			`${getPublicRoot()}/models/maps/${mapModelId}`,
-			scene,
-			{
-				pluginOptions: {},
-			},
-		);
-		scene.sceneNodes = loadingMesh.transformNodes;
-	}
-	return scene.sceneNodes;
 }

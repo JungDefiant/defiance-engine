@@ -15,7 +15,7 @@ import { Button, Control, Vector2WithInfo } from "@babylonjs/gui";
 import { getPublicRoot } from "./Utils";
 import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
 import { addComponent, set } from "bitecs";
-import { getSceneNodes, getSceneNode } from "./SceneModule";
+import { getAllSceneNodes, getSceneNode } from "./SceneModule";
 import {
 	getControlState,
 	getGameScene,
@@ -62,11 +62,8 @@ export async function createLocationInteractable(
 	interactable: Interactable,
 	newLocationSceneParams: NewLocationSceneParams,
 ) {
-	const sceneNodes = await getSceneNodes(
-		newLocationSceneParams.gameScene.mapModelId,
-	);
-	const interactableNode = sceneNodes.find(
-		(sceneNode) => sceneNode.id == interactable.interactableNodeId,
+	const interactableNode = await getSceneNode(
+		interactable.interactableNodeId,
 	);
 
 	if (!interactableNode) {
@@ -219,10 +216,7 @@ export async function createLocationDoor(
 	doorData: DoorData,
 	newLocationSceneParams: NewLocationSceneParams,
 ) {
-	const sceneNodes = await getSceneNodes(
-		newLocationSceneParams.gameScene.mapModelId,
-	);
-	const sceneNode = sceneNodes.find((x) => x.id == doorData.id);
+	const sceneNode = await getSceneNode(doorData.id);
 
 	if (!sceneNode) {
 		return;
