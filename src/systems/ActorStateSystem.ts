@@ -1,35 +1,43 @@
-import { container, singleton } from "tsyringe";
-import ISystem from "./ISystem";
-import GameState from "../states/GameState";
+import { inject } from "tsyringe";
+import GameSystem from "./GameSystem";
 import { query } from "bitecs";
-import { ActorState } from "../components/ActorState";
+import ActorStateComponent from "../components/ActorStateComponent";
+import { GameScene } from "src/scenes/GameScene";
+import { getControlState, getGameScene } from "src/modules/GameStateModule";
+import { getActorStateComponentArray } from "src/modules/ComponentModule";
 
-@singleton()
-export default class ActorStateSystem implements ISystem {
+export const SYSTEM_ID_ACTORSTATE = "ActorState";
+
+export default class ActorStateSystem implements GameSystem {
+	public constructor(@inject(GameScene) private gameScene: GameScene) {}
+
 	public async start() {}
 
 	public update(deltaTime: number): void {
-		const gameState = container.resolve(GameState);
+		const controlState = getControlState();
 
-		if (gameState.actionPauseSet.size > 0) {
+		if (controlState.actionPauseSet.size > 0) {
 			return;
 		}
 
-		this.tickRecoveryAndRegen(gameState, deltaTime);
+		this.tickRecoveryRegenOnAllActors(deltaTime);
 	}
 
-	private tickRecoveryAndRegen(gameState: GameState, deltaTime: number) {
-		for (const eid of query(gameState.world, [gameState.ActorState])) {
-			const actorData = gameState.ActorState[eid];
-			if (actorData.isDefeated) {
+	private tickRecoveryRegenOnAllActors(deltaTime: number) {
+		const actorStateComponentArray = getActorStateComponentArray();
+		for (const eid of query(getGameScene().world, [
+			actorStateComponentArray,
+		])) {
+			const actorState = actorStateComponentArray[eid];
+			if (actorState.isDefeated) {
 				return;
 			}
-			this.tickRecovery(deltaTime, actorData);
-			this.tickRegen(deltaTime, actorData);
+			this.tickRecovery(deltaTime, actorState);
+			this.tickRegen(deltaTime, actorState);
 		}
 	}
 
-	private tickRecovery(deltaTime: number, actorData: ActorState) {
+	private tickRecovery(deltaTime: number, actorData: ActorStateComponent) {
 		const spdAttr = actorData.attributes.speed;
 		const rcvyAttr = actorData.attributes.recovery;
 
@@ -43,7 +51,7 @@ export default class ActorStateSystem implements ISystem {
 		}
 	}
 
-	private tickRegen(deltaTime: number, actorData: ActorState) {
+	private tickRegen(deltaTime: number, actorData: ActorStateComponent) {
 		const regnTimerAttr = actorData.attributes.regenTimer;
 		const lifeAttr = actorData.attributes.life;
 

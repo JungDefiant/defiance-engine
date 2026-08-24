@@ -1,55 +1,78 @@
-import { container, singleton } from "tsyringe";
 import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { Image } from "@babylonjs/gui";
-import { getPublicRoot } from "src/helpers/Utils";
-import GameState from "src/states/GameState";
-import { IFactory } from "./IFactory";
+import { getPublicRoot } from "src/modules/Utils";
 import {
-	ImageAnimation,
+	ImageAnimationComponent,
 	SpriteAnimationProps,
-} from "src/components/ImageAnimation";
+} from "src/components/ImageAnimationComponent";
+import { EntityFactory } from "./EntityFactory";
+import { getGameScene } from "src/modules/GameStateModule";
+import {
+	getImageAnimationComponentArray,
+	getStickerImageComponentArray,
+} from "src/modules/ComponentModule";
+import { Nullable } from "@babylonjs/core";
 
-@singleton()
-export class StickerFactory implements IFactory {
-	public start(): void {}
+const PRELOAD_STICKERS = ["vfx/vfx_test"];
 
-	public async createEntityFromFile(
-		fileName: string,
-		campaignId: string,
-	): Promise<EntityId> {
-		const response = await fetch(
-			`${getPublicRoot()}/data/${campaignId}/${fileName}`,
+export class StickerFactory implements EntityFactory {
+	private cache: Map<string, any> = new Map();
+	private loadPromises: Nullable<Promise<void>> = null;
+
+	public start(campaignId: string) {
+		this.loadPromises = this.loadAllStickers(campaignId);
+	}
+
+	private async loadAllStickers(campaignId: string): Promise<void> {
+		await Promise.all(
+			PRELOAD_STICKERS.map(async (fileName) => {
+				try {
+					const response = await fetch(
+						`${getPublicRoot()}/data/${campaignId}/stickers/${fileName}.json`,
+					);
+					const stickerEntityData = await response.json();
+					this.cache.set(fileName, stickerEntityData);
+				} catch (error) {
+					console.error("Failed to load entity data", fileName);
+				}
+			}),
 		);
-		const rawData = await response.json();
-		if (!rawData) {
+	}
+
+	public async createEntityFromFile(fileName: string): Promise<EntityId> {
+		if (this.loadPromises) {
+			await this.loadPromises;
+		}
+
+		if (!this.cache.has(fileName)) {
 			return -1;
 		}
 
-		const gameState = container.resolve(GameState);
-		const newEntity = addEntity(gameState.world);
+		const gameScene = getGameScene();
+		const newEntity = addEntity(gameScene.world);
 
-		const stickerProps = rawData as StickerProps;
+		const stickerProps = this.cache.get(fileName);
 
-		const newSticker = await this.createStickerImage(stickerProps);
+		const newSticker = this.createStickerImage(stickerProps);
 		addComponent(
-			gameState.world,
+			gameScene.world,
 			newEntity,
-			set(gameState.StickerImage, newSticker),
+			set(getStickerImageComponentArray(), newSticker),
 		);
 
 		if (stickerProps.animation) {
 			const newAnim = this.createImageAnimation(newSticker, stickerProps);
 			addComponent(
-				gameState.world,
+				gameScene.world,
 				newEntity,
-				set(gameState.ImageAnimation, newAnim),
+				set(getImageAnimationComponentArray(), newAnim),
 			);
 		}
 
 		return newEntity;
 	}
 
-	private async createStickerImage(props: StickerProps) {
+	private createStickerImage(props: StickerProps) {
 		const newSticker = new Image(
 			"stk_image",
 			`${getPublicRoot()}/${props.source}`,
@@ -79,12 +102,13 @@ export class StickerFactory implements IFactory {
 			loop: stickerAnimProps.loop || false,
 		} as SpriteAnimationProps;
 
-		const newAnim = new ImageAnimation(spriteSheet, newAnimProps);
+		const newAnim = new ImageAnimationComponent(spriteSheet, newAnimProps);
 		return newAnim;
 	}
 }
 
 interface StickerProps {
+	id: string;
 	source: string;
 	width: number;
 	height: number;

@@ -1,47 +1,74 @@
 import { addComponent, addEntity, EntityId, set } from "bitecs";
-import { container, singleton } from "tsyringe";
-import GameState from "src/states/GameState";
-import { IFactory } from "src/factories/IFactory";
-import { ActorState } from "src/components/ActorState";
-import { PlayerGUI } from "src/gui/components/PlayerGUI";
-import { getPublicRoot } from "src/helpers/Utils";
+import { EntityFactory } from "src/factories/EntityFactory";
+import { getPublicRoot } from "src/modules/Utils";
+import ActorStateComponent from "src/components/ActorStateComponent";
+import PlayerGUIComponent from "src/components/PlayerGUIComponent";
+import { getGameScene } from "src/modules/GameStateModule";
+import {
+	getActorStateComponentArray,
+	getPlayerGuiComponentArray,
+} from "src/modules/ComponentModule";
+import { Nullable } from "@babylonjs/core";
 
-@singleton()
-export class PlayerFactory implements IFactory {
-	public start() {}
+const PRELOAD_CHARACTERS = ["pc_test"];
 
-	public async createEntityFromFile(
-		fileName: string,
-		campaignId: string,
-	): Promise<EntityId> {
-		const response = await fetch(
-			`${getPublicRoot()}/data/${campaignId}/playableChars/${fileName}.json`,
+export class PlayerFactory implements EntityFactory {
+	private cache: Map<string, any> = new Map();
+	private loadPromises: Nullable<Promise<void>> = null;
+
+	public start(campaignId: string) {
+		this.loadPromises = this.loadAllPlayers(campaignId);
+	}
+
+	private async loadAllPlayers(campaignId: string): Promise<void> {
+		await Promise.all(
+			PRELOAD_CHARACTERS.map(async (fileName) => {
+				try {
+					const response = await fetch(
+						`${getPublicRoot()}/data/${campaignId}/playableChars/${fileName}.json`,
+					);
+					const playerEntityData = await response.json();
+					this.cache.set(fileName, playerEntityData);
+				} catch (error) {
+					console.error("Failed to load entity data", fileName);
+				}
+			}),
 		);
-		const rawData = await response.json();
-		if (!rawData) {
+	}
+
+	public async createEntityFromFile(fileName: string): Promise<EntityId> {
+		if (this.loadPromises) {
+			await this.loadPromises;
+		}
+
+		if (!this.cache.has(fileName)) {
 			return -1;
 		}
 
-		const gameState = container.resolve(GameState);
-		const newEntity = addEntity(gameState.world);
+		const gameScene = getGameScene();
+		const newEntity = addEntity(gameScene.world);
 
-		const newActorComp = new ActorState(newEntity, rawData);
+		const playerEntityData = this.cache.get(fileName);
+		const newActorComp = new ActorStateComponent(
+			newEntity,
+			playerEntityData,
+		);
 		newActorComp.isPlayer = true;
 		addComponent(
-			gameState.world,
+			gameScene.world,
 			newEntity,
-			set(gameState.ActorState, newActorComp),
+			set(getActorStateComponentArray(), newActorComp),
 		);
 
-		const newPlayerGUI = new PlayerGUI(
+		const newPlayerGUI = new PlayerGUIComponent(
 			newEntity,
 			newActorComp.name,
 			`sprites/characters/${newActorComp.spriteUrl}`,
 		);
 		addComponent(
-			gameState.world,
+			gameScene.world,
 			newEntity,
-			set(gameState.PlayerGUIComponent, newPlayerGUI),
+			set(getPlayerGuiComponentArray(), newPlayerGUI),
 		);
 
 		return newEntity;

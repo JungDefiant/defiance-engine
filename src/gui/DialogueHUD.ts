@@ -6,18 +6,22 @@ import {
 	StackPanel,
 	ScrollBar,
 	Button,
-	TextWrapping,
 } from "@babylonjs/gui";
 import type IHUD from "src/gui/IHUD";
-import DialogueManagerSystem from "src/systems/DialogueManagerSystem";
 import { container } from "tsyringe";
 import { Themes } from "src/gui/Themes";
 import { type Nullable } from "@babylonjs/core";
-import StackPanelImage from "./components/StackPanelImage";
-import GameState from "src/states/GameState";
-import { getPublicRoot } from "src/helpers/Utils";
-import { DialogueLine, DialogueOptionLine } from "src/states/types/GameTypes";
-import { playSFX } from "src/helpers/AudioHelpers";
+import StackPanelImage from "./elements/StackPanelImage";
+import { getPublicRoot } from "src/modules/Utils";
+import { DialogueLine, DialogueOptionLine } from "src/types/GameTypes";
+import { playSFX } from "src/modules/AudioModule";
+import {
+	endDialogue,
+	runLine,
+	startDialogueNode,
+} from "src/modules/DialogueModule";
+import { getGameplayState } from "src/modules/GameStateModule";
+import { getActorStateComponentArray } from "src/modules/ComponentModule";
 
 export default class DialogueHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -133,11 +137,6 @@ export default class DialogueHUD implements IHUD {
 			return;
 		}
 
-		const dmSystem = container.resolve(DialogueManagerSystem);
-		if (!dmSystem) {
-			return;
-		}
-
 		this.optionsEntryStack.clearControls();
 
 		const buttonUI = Button.CreateSimpleButton(
@@ -170,7 +169,7 @@ export default class DialogueHUD implements IHUD {
 			playSFX("sfx_confirm.wav");
 		});
 		buttonUI.onPointerClickObservable.addOnce(() => {
-			dmSystem.runLine(nextDlgId);
+			runLine(nextDlgId);
 		});
 
 		this.optionsEntryStack.addControl(buttonUI);
@@ -178,11 +177,6 @@ export default class DialogueHUD implements IHUD {
 
 	public addExitEntry(): void {
 		if (!this.optionsEntryStack) {
-			return;
-		}
-
-		const dmSystem = container.resolve(DialogueManagerSystem);
-		if (!dmSystem) {
 			return;
 		}
 
@@ -218,7 +212,7 @@ export default class DialogueHUD implements IHUD {
 			playSFX("sfx_confirm.wav");
 		});
 		buttonUI.onPointerClickObservable.addOnce(() => {
-			dmSystem.endDialogue(true);
+			endDialogue(true);
 		});
 
 		this.optionsEntryStack.addControl(buttonUI);
@@ -226,11 +220,6 @@ export default class DialogueHUD implements IHUD {
 
 	public addChoiceEntries(choices: DialogueOptionLine[]): void {
 		if (!this.optionsEntryStack) {
-			return;
-		}
-
-		const dmSystem = container.resolve(DialogueManagerSystem);
-		if (!dmSystem) {
 			return;
 		}
 
@@ -276,9 +265,11 @@ export default class DialogueHUD implements IHUD {
 				playSFX("sfx_confirm.wav");
 			});
 			buttonUI.onPointerClickObservable.addOnce(() => {
-				const gameState = container.resolve(GameState);
+				const gameplayState = getGameplayState();
+				const actorStateComponentArray = getActorStateComponentArray();
 				const pcName =
-					gameState.ActorState[gameState.playerEIDs[0]].name;
+					actorStateComponentArray[gameplayState.playerEntityIds[0]]
+						.name;
 
 				if (
 					!choiceData.destinationNode ||
@@ -302,7 +293,7 @@ export default class DialogueHUD implements IHUD {
 					text: choiceData.text,
 					condition: () => true,
 				} as DialogueLine);
-				dmSystem.startDialogueNode(choiceData.destinationNode);
+				startDialogueNode(choiceData.destinationNode);
 			});
 
 			this.optionsEntryStack.addControl(buttonUI);

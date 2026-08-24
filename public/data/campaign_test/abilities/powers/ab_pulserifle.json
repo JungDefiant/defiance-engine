@@ -4,7 +4,7 @@
 	"description": "",
 	"iconURL": "sprites/gui/icons/weapons/icon_pulserifle.png",
 	"castVfxURL": "",
-	"hitVfxURL": "stickers/vfx/vfx_test.json",
+	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
 	"hitSfxURL": "",
 	"trigger": "onActionExecute",

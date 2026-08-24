@@ -1,4 +1,4 @@
-import { Nullable, Rotate2dBlock } from "@babylonjs/core";
+import { Nullable } from "@babylonjs/core";
 import {
 	Container,
 	Control,
@@ -10,11 +10,11 @@ import {
 } from "@babylonjs/gui";
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
-import { ActionSlot } from "src/gui/components/ActionSlot";
-import CombatManagerSystem from "src/systems/CombatManagerSystem";
-import GameState from "src/states/GameState";
-import { ActorState } from "src/components/ActorState";
-import { getPublicRoot } from "src/helpers/Utils";
+import { ActionSlot } from "src/gui/elements/ActionSlot";
+import { getPublicRoot } from "src/modules/Utils";
+import ActorStateComponent from "src/components/ActorStateComponent";
+import { startQueueActionPlayer } from "src/modules/CombatModule";
+import { getControlState } from "src/modules/GameStateModule";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -67,34 +67,28 @@ export default class CombatHUD implements IHUD {
 		return this.rootContainer;
 	}
 
-	public async setActionBar(
-		actorData: ActorState,
-		cmSystem: CombatManagerSystem,
-		gameState: GameState,
-	): Promise<void> {
-		if (!actorData) {
+	public async setActionBar(actorState: ActorStateComponent): Promise<void> {
+		const controlState = getControlState();
+
+		if (!actorState) {
 			return;
 		}
 
 		for (let i = 0; i < this.abilitySlots.length; i++) {
-			const abData = await actorData.powerData[i];
+			const abilityData = await actorState.powerData[i];
 			const abilitySlot = this.abilitySlots[i];
 			if (!abilitySlot) {
 				continue;
 			}
 
-			if (abData) {
-				abilitySlot.setActionSlotIcon(abData.iconURL as string);
+			if (abilityData) {
+				abilitySlot.setActionSlotIcon(abilityData.iconURL as string);
 				abilitySlot.setOnClickEvent(() =>
-					cmSystem.startQueueActionPlayer(
-						gameState,
-						actorData.entityId,
-						i,
-					),
+					startQueueActionPlayer(actorState.entityId, i),
 				);
 				abilitySlot.setActionLabelText(
 					String.fromCharCode(
-						gameState.controlSettings.powerActions[i],
+						controlState.controlSettings.powerActions[i],
 					).toUpperCase(),
 				);
 			} else {
@@ -104,31 +98,27 @@ export default class CombatHUD implements IHUD {
 			}
 		}
 
-		if (!actorData.itemData) {
+		if (!actorState.itemData) {
 			return;
 		}
 
 		for (let i = 0; i < this.deviceSlots.length; i++) {
-			const devData = await actorData.itemData[i];
+			const deviceData = await actorState.itemData[i];
 			const deviceSlot = this.deviceSlots[i];
 			if (!deviceSlot) {
 				continue;
 			}
 
-			if (devData) {
+			if (deviceData) {
 				deviceSlot.setActionSlotIcon(
-					`${getPublicRoot()}${devData.iconURL as string}`,
+					`${getPublicRoot()}${deviceData.iconURL as string}`,
 				);
 				deviceSlot.setOnClickEvent(() =>
-					cmSystem.startQueueActionPlayer(
-						gameState,
-						actorData.entityId,
-						i,
-					),
+					startQueueActionPlayer(actorState.entityId, i),
 				);
 				deviceSlot.setActionLabelText(
 					String.fromCharCode(
-						gameState.controlSettings.deviceActions[i],
+						controlState.controlSettings.deviceActions[i],
 					).toUpperCase(),
 				);
 			} else {
@@ -236,7 +226,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionAbilityStack, 1, 0);
 
 		for (let i = 0; i < 8; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "", () => {});
+			const actionSlot = new ActionSlot(i.name, "", () => {});
 			actionAbilityStack.addControl(actionSlot.rootContainer);
 			this.abilitySlots.push(actionSlot);
 		}
@@ -249,7 +239,7 @@ export default class CombatHUD implements IHUD {
 		actionGrid.addControl(actionDeviceStack, 1, 1);
 
 		for (let i = 0; i < 4; i++) {
-			const actionSlot = new ActionSlot(i.toString(), "", () => {});
+			const actionSlot = new ActionSlot(i.name, "", () => {});
 			actionDeviceStack.addControl(actionSlot.rootContainer);
 			this.deviceSlots.push(actionSlot);
 		}

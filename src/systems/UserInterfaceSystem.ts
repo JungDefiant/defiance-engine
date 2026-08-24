@@ -1,111 +1,81 @@
-import { container, singleton } from "tsyringe";
-import ISystem from "src/systems/ISystem";
+import { inject } from "tsyringe";
+import GameSystem from "src/systems/GameSystem";
 import { Engine } from "@babylonjs/core";
-import GameState from "src/states/GameState";
-import { EntityId, query } from "bitecs";
-import { PlayerGUI } from "src/gui/components/PlayerGUI";
-import { ActorState } from "src/components/ActorState";
-import { EnemyGUI } from "src/gui/components/EnemyGUI";
-import { GameMode } from "src/states/types/GameTypes";
-import CombatManagerSystem from "./CombatManagerSystem";
+import { query } from "bitecs";
+import PlayerGUIComponent from "src/components/PlayerGUIComponent";
+import ActorStateComponent from "src/components/ActorStateComponent";
+import EnemyGUIComponent from "src/components/EnemyGUIComponent";
+import { GameScene } from "src/scenes/GameScene";
+import {
+	getActorStateComponentArray,
+	getEnemyGuiComponentArray,
+	getPlayerGuiComponentArray,
+} from "src/modules/ComponentModule";
 
-@singleton()
-export default class UserInterfaceSystem implements ISystem {
-	public async start(engine: Engine) {}
+export default class UserInterfaceSystem implements GameSystem {
+	public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
-	public update(deltaTime: number, gameState?: GameState) {
-		if (!gameState) {
-			return;
-		}
+	public update(deltaTime: number) {
+		const actorStateComponentArray = getActorStateComponentArray();
+		const playerGuiComponentArray = getPlayerGuiComponentArray();
+		const enemyGuiComponentArray = getEnemyGuiComponentArray();
 
-		gameState.uiScene.render();
-
-		for (const eid of query(gameState.world, [
-			gameState.ActorState,
-			gameState.PlayerGUIComponent,
+		for (const eid of query(this.gameScene.world, [
+			actorStateComponentArray,
+			playerGuiComponentArray,
 		])) {
-			const actorData = gameState.ActorState[eid];
-			const playerGUI = gameState.PlayerGUIComponent[eid];
+			const actorData = actorStateComponentArray[eid];
+			const playerGUI = playerGuiComponentArray[eid];
 			this.updatePlayerGUI(actorData, playerGUI);
 		}
 
-		for (const eid of query(gameState.world, [
-			gameState.ActorState,
-			gameState.EnemyGUIComponent,
+		for (const eid of query(this.gameScene.world, [
+			actorStateComponentArray,
+			enemyGuiComponentArray,
 		])) {
-			const actorData = gameState.ActorState[eid];
-			const enemyGUI = gameState.EnemyGUIComponent[eid];
+			const actorData = actorStateComponentArray[eid];
+			const enemyGUI = enemyGuiComponentArray[eid];
 			this.updateEnemyGUI(actorData, enemyGUI);
 		}
 	}
 
-	public setGameMode(newMode: GameMode) {
-		const gameState = container.resolve(GameState);
-		gameState.partyInfoHud.showHideHud(
-			newMode == GameMode.Combat || newMode == GameMode.Explore,
-		);
-		gameState.exploreHud.showHideHud(newMode == GameMode.Explore);
-		gameState.dialogueHud.showHideHud(newMode == GameMode.Dialogue);
-		gameState.combatHud.showHideHud(newMode == GameMode.Combat);
-	}
-
-	public setSelectedCharacter(eid: EntityId) {
-		const gameState = container.resolve(GameState);
-		if (!gameState.playerEIDs.includes(eid)) {
-			return;
-		}
-
-		gameState.selectedPlayerEID = eid;
-		gameState.PlayerGUIComponent.forEach((gui, eid) => {
-			if (eid === gameState.selectedPlayerEID) {
-				gui.setSelected(true);
-			} else {
-				gui.setSelected(false);
-			}
-		});
-
-		if (gameState.gameMode === GameMode.Combat) {
-			const cmSystem = container.resolve(CombatManagerSystem);
-			if (!cmSystem) {
-				return;
-			}
-			cmSystem.resetControls(gameState);
-		}
-	}
-
-	public createPlayerInput(inputMode: GameMode) {}
-
-	private updatePlayerGUI(actorData: ActorState, gui: PlayerGUI) {
-		gui.setQueuedAction(
-			actorData.queuedAction
-				? (actorData.queuedAction.iconURL as string)
+	private updatePlayerGUI(
+		playerActorState: ActorStateComponent,
+		playerGui: PlayerGUIComponent,
+	) {
+		playerGui.setQueuedAction(
+			playerActorState.queuedAction
+				? (playerActorState.queuedAction.iconURL as string)
 				: "",
 		);
 
-		gui.setActBarFill(
-			actorData.attributes.recovery.currentValue,
-			actorData.attributes.recovery.maximumValue,
+		playerGui.setActBarFill(
+			playerActorState.attributes.recovery.currentValue,
+			playerActorState.attributes.recovery.maximumValue,
 		);
 
-		gui.setLifeBarFill(
-			actorData.attributes.life.currentValue,
-			actorData.attributes.life.maximumValue,
+		playerGui.setLifeBarFill(
+			playerActorState.attributes.life.currentValue,
+			playerActorState.attributes.life.maximumValue,
 		);
 
-		gui.setWillBarFill(
-			actorData.attributes.will.currentValue,
-			actorData.attributes.will.maximumValue,
+		playerGui.setWillBarFill(
+			playerActorState.attributes.will.currentValue,
+			playerActorState.attributes.will.maximumValue,
 		);
 	}
 
-	private updateEnemyGUI(actorData: ActorState, gui: EnemyGUI) {
-		gui.setActBarFill(
-			actorData.attributes.recovery.currentValue,
-			actorData.attributes.recovery.maximumValue,
+	private updateEnemyGUI(
+		enemyActorState: ActorStateComponent,
+		enemyGui: EnemyGUIComponent,
+	) {
+		enemyGui.setActBarFill(
+			enemyActorState.attributes.recovery.currentValue,
+			enemyActorState.attributes.recovery.maximumValue,
 		);
-		gui.setLifeBarFill(
-			actorData.attributes.life.currentValue,
-			actorData.attributes.life.maximumValue,
+		enemyGui.setLifeBarFill(
+			enemyActorState.attributes.life.currentValue,
+			enemyActorState.attributes.life.maximumValue,
 		);
 	}
 }

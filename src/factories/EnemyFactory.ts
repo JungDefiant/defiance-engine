@@ -1,129 +1,176 @@
 import { container, singleton } from "tsyringe";
-import { IFactory } from "src/factories/IFactory";
+import { EntityFactory } from "src/factories/EntityFactory";
 import { addComponent, addEntity, EntityId, query, set } from "bitecs";
-import GameState from "src/states/GameState";
-import { ActorState } from "src/components/ActorState";
 import {
 	Mesh,
 	MeshBuilder,
+	Nullable,
 	PBRMaterial,
 	Space,
 	Texture,
 	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
-import { EnemyGUI } from "src/gui/components/EnemyGUI";
-import { getPublicRoot } from "src/helpers/Utils";
+import { getPublicRoot } from "src/modules/Utils";
+import UserInterfaceState from "src/states/UserInterfaceState";
+import { ComponentRegistry } from "src/registries/ComponentRegistry";
+import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
+import ActorStateComponent from "src/components/ActorStateComponent";
+import EnemyGUIComponent from "src/components/EnemyGUIComponent";
+import {
+	getGameScene,
+	getUserInterfaceState,
+} from "src/modules/GameStateModule";
+import { getAllSceneNodes } from "src/modules/SceneModule";
+import {
+	getActorStateComponentArray,
+	getCharacterSpriteComponentArray,
+	getComponentRegistry,
+	getEnemyGuiComponentArray,
+} from "src/modules/ComponentModule";
 
-@singleton()
-export class EnemyFactory implements IFactory {
-	public start() {}
+const PRELOAD_ENEMIES = ["enem_test"];
+
+export class EnemyFactory implements EntityFactory {
+	private cache: Map<string, any> = new Map();
+	private loadPromises: Nullable<Promise<void>> = null;
+
+	public start(campaignId: string) {
+		this.loadPromises = this.loadAllEnemies(campaignId);
+	}
+
+	private async loadAllEnemies(campaignId: string): Promise<void> {
+		await Promise.all(
+			PRELOAD_ENEMIES.map(async (fileName) => {
+				try {
+					const response = await fetch(
+						`${getPublicRoot()}/data/${campaignId}/enemies/${fileName}.json`,
+					);
+					const enemyEntityData = await response.json();
+					this.cache.set(fileName, enemyEntityData);
+				} catch (error) {
+					console.error("Failed to load entity data", fileName);
+				}
+			}),
+		);
+	}
 
 	public async createEntityFromFileAtPosition(
 		fileName: string,
-		campaignId: string,
 		position: Vector3,
 	): Promise<EntityId> {
-		const newEntity = await this.createEntityFromFile(fileName, campaignId);
-		const gameState = container.resolve(GameState);
-		gameState.CharacterSprite[newEntity].locallyTranslate(position);
-		return newEntity;
+		const newEntityId = await this.createEntityFromFile(fileName);
+		const componentRegistry = container.resolve(ComponentRegistry);
+		const characterSprite =
+			componentRegistry.getComponentByEntityId<CharacterSpriteComponent>(
+				CharacterSpriteComponent.name,
+				newEntityId,
+			);
+		characterSprite.locallyTranslate(position);
+		return newEntityId;
 	}
 
-	public async createEntityFromFile(
-		fileName: string,
-		campaignId: string,
-	): Promise<EntityId> {
-		const gameState = container.resolve(GameState);
-		const loc = gameState.currentLocation;
-		if (!gameState || !loc) {
+	public async createEntityFromFile(fileName: string): Promise<EntityId> {
+		if (this.loadPromises) {
+			await this.loadPromises;
+		}
+
+		if (!this.cache.has(fileName)) {
 			return -1;
 		}
 
-		const spawnNode = gameState.sceneNodes.find(
-			(node) => node.id === loc.combatSpawnNodeId,
+		const enemyData = this.cache.get(fileName);
+		const gameScene = getGameScene();
+		const userInterfaceState = getUserInterfaceState();
+		const sceneNodes = await getAllSceneNodes(gameScene.mapModelId);
+		const currentLocation = gameScene.currentLocation;
+
+		if (!currentLocation) {
+			throw new Error("No location found!");
+		}
+
+		const spawnNode = sceneNodes.find(
+			(node) => node.id === currentLocation.combatSpawnNodeId,
 		);
 
 		if (!spawnNode) {
 			return -1;
 		}
 
-		const response = await fetch(
-			`${getPublicRoot()}/data/${campaignId}/enemies/${fileName}.json`,
-		);
-		const rawData = await response.json();
-		if (!rawData) {
-			return -1;
-		}
+		const newEntity = addEntity(gameScene.world);
 
-		const newEntity = addEntity(gameState.world);
-
-		const newActorComp = new ActorState(newEntity, rawData);
+		const newActorComp = new ActorStateComponent(newEntity, enemyData);
 		addComponent(
-			gameState.world,
+			gameScene.world,
 			newEntity,
-			set(gameState.ActorState, newActorComp),
+			set(getActorStateComponentArray(), newActorComp),
 		);
 
-		const newEnemySprite = this.createEnemySprite(
-			newEntity,
-			gameState,
-			spawnNode,
-		);
-
+		const newEnemySprite = this.createEnemySprite(newEntity, spawnNode);
 		addComponent(
-			gameState.world,
+			gameScene.world,
 			newEntity,
-			set(gameState.CharacterSprite, newEnemySprite),
+			set(getCharacterSpriteComponentArray(), newEnemySprite),
 		);
 
-		const newEnemyGUI = new EnemyGUI(newEntity, gameState, newEnemySprite);
-		addComponent(
-			gameState.world,
+		const newEnemyGUI = new EnemyGUIComponent(
 			newEntity,
-			set(gameState.EnemyGUIComponent, newEnemyGUI),
+			userInterfaceState.sceneGUI,
+		);
+		addComponent(
+			gameScene.world,
+			newEntity,
+			set(getEnemyGuiComponentArray(), newEnemyGUI),
 		);
 
 		return newEntity;
 	}
 
 	private createEnemySprite(
-		eid: EntityId,
-		gameState: GameState,
+		entityId: EntityId,
 		parentNode: TransformNode,
-	): Mesh {
-		const actorData = gameState.ActorState[eid];
+	): CharacterSpriteComponent {
+		const gameScene = getGameScene();
+		const actorState =
+			getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
+				ActorStateComponent.name,
+				entityId,
+			);
 
-		const enActorSprite = MeshBuilder.CreatePlane(
-			`enBattlerSprite_${actorData.id}_${eid}`,
+		// Need to create this sprite as a CharacterSpriteComponent
+		const enemyActorSprite = MeshBuilder.CreatePlane(
+			`enBattlerSprite_${actorState.id}_${entityId}`,
 			{
 				width: 0.4,
 				height: 0.8,
 			},
-			gameState.scene,
+			gameScene,
 		);
 
-		const enActorSpriteMat = new PBRMaterial(
-			`mat_enBattlerSprite_${actorData.id}_${eid}`,
-			gameState.scene,
+		const enemyActorSpriteMaterial = new PBRMaterial(
+			`mat_enBattlerSprite_${actorState.id}_${entityId}`,
+			gameScene,
 		);
-		enActorSprite.parent = parentNode;
-		enActorSprite.billboardMode = 7;
-		enActorSprite.rotate(Vector3.Forward(), Math.PI, Space.WORLD);
-		enActorSprite.setAbsolutePosition(parentNode.absolutePosition);
-		// enActorSprite.locallyTranslate(positionOffset);
+		enemyActorSprite.parent = parentNode;
+		enemyActorSprite.billboardMode = 7;
+		enemyActorSprite.rotate(Vector3.Forward(), Math.PI, Space.WORLD);
+		enemyActorSprite.setAbsolutePosition(parentNode.absolutePosition);
 
-		enActorSpriteMat.albedoTexture = new Texture(
-			`${getPublicRoot()}/sprites/characters/${actorData.spriteUrl}`,
-			gameState.scene,
+		enemyActorSpriteMaterial.albedoTexture = new Texture(
+			`${getPublicRoot()}/sprites/characters/${actorState.spriteUrl}`,
+			gameScene,
 		);
-		enActorSpriteMat.metallic = 0;
-		enActorSpriteMat.roughness = 0;
-		enActorSpriteMat.alphaCutOff = 0.4;
-		enActorSpriteMat.transparencyMode = 1;
-		enActorSpriteMat.useAlphaFromAlbedoTexture = true;
+		enemyActorSpriteMaterial.metallic = 0;
+		enemyActorSpriteMaterial.roughness = 0;
+		enemyActorSpriteMaterial.alphaCutOff = 0.4;
+		enemyActorSpriteMaterial.transparencyMode = 1;
+		enemyActorSpriteMaterial.useAlphaFromAlbedoTexture = true;
 
-		enActorSprite.material = enActorSpriteMat;
-		return enActorSprite;
+		enemyActorSprite.material = enemyActorSpriteMaterial;
+
+		const characterSpriteComponent = new CharacterSpriteComponent(
+			enemyActorSprite,
+		);
+		return characterSpriteComponent;
 	}
 }

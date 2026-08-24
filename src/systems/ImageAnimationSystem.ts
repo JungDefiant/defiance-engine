@@ -1,32 +1,30 @@
-import { Engine } from "@babylonjs/core";
-import ISystem from "./ISystem";
-import { singleton } from "tsyringe";
-import GameState from "src/states/GameState";
+import GameSystem from "./GameSystem";
+import { inject } from "tsyringe";
 import { query } from "bitecs";
-import { ImageAnimation } from "src/components/ImageAnimation";
+import { ImageAnimationComponent } from "src/components/ImageAnimationComponent";
+import { GameScene } from "src/scenes/GameScene";
+import { getImageAnimationComponentArray } from "src/modules/ComponentModule";
 
-@singleton()
-export default class ImageAnimationSystem implements ISystem {
-	public async start(): Promise<void> {}
+export default class ImageAnimationSystem implements GameSystem {
+	public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
-	public update(deltaTime: number, gameState?: GameState): void {
-		if (!gameState) {
-			return;
-		}
+	public update(deltaTime: number): void {
+		const imageAnimationComponentArray = getImageAnimationComponentArray();
 
-		for (const eid of query(gameState.world, [gameState.ImageAnimation])) {
-			const imageAnimationComponent = gameState.ImageAnimation[eid];
+		for (const eid of query(this.gameScene.world, [
+			imageAnimationComponentArray,
+		])) {
 			(async () => {
-				Promise.resolve(imageAnimationComponent).then((component) => {
-					this.incrementAnimationCell(deltaTime, component);
-				});
+				const imageAnimationComponent =
+					await imageAnimationComponentArray[eid];
+				this.incrementAnimationCell(deltaTime, imageAnimationComponent);
 			})();
 		}
 	}
 
 	private incrementAnimationCell(
 		deltaTime: number,
-		imageAnimation: ImageAnimation,
+		imageAnimation: ImageAnimationComponent,
 	) {
 		const spriteSheet = imageAnimation.spriteSheet;
 		imageAnimation.accumulatedTime += deltaTime;

@@ -15,17 +15,15 @@ import {
 	StreamingSound,
 	Texture,
 } from "@babylonjs/core";
-import { App } from "src/App";
-import { getPublicRoot } from "src/helpers/Utils";
+import { getPublicRoot } from "src/modules/Utils";
+import { startGame } from "src/modules/InitModule";
 
 export class MainMenuScreen {
 	private root: AdvancedDynamicTexture;
 	private audioEngine: Nullable<AudioEngineV2> = null;
 	private music: Nullable<StreamingSound> = null;
 
-	private isLoadingMusic = false;
-
-	public constructor(scene: Scene, app: App) {
+	public constructor(scene: Scene) {
 		const env = import.meta.env;
 		this.root = AdvancedDynamicTexture.CreateFullscreenUI(
 			"ui_main",
@@ -97,7 +95,7 @@ export class MainMenuScreen {
 			if (thisMainMenu.music) {
 				thisMainMenu.music.stop();
 			}
-			await app.startGame();
+			await startGame();
 		});
 		stackPanel.addControl(newGameButton);
 

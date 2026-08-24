@@ -8,10 +8,12 @@ import {
 	TextBlock,
 } from "@babylonjs/gui";
 import { Themes } from "../Themes";
-import { getPublicRoot } from "src/helpers/Utils";
+import { getPublicRoot } from "src/modules/Utils";
 import { container } from "tsyringe";
-import GameState from "src/states/GameState";
-import { ModalPage } from "src/states/types/GameTypes";
+import { ModalPage } from "src/types/GameTypes";
+import GameplayState from "src/states/GameplayState";
+import ControlState from "src/states/ControlState";
+import { getControlState } from "src/modules/GameStateModule";
 
 export class ModalScreen {
 	private rootContainer: Rectangle;
@@ -30,7 +32,8 @@ export class ModalScreen {
 		this.rootContainer.thickness = 1;
 		this.rootContainer.color = Themes.primary1;
 		this.rootContainer.background = Themes.primary3;
-		this.rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+		this.rootContainer.verticalAlignment =
+			Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.rootContainer.topInPixels = -100;
 		this.rootContainer.isVisible = false;
 
@@ -68,7 +71,8 @@ export class ModalScreen {
 		this.modalText.color = Themes.neutral2;
 		this.modalText.style = Themes.typography.bodyText;
 		this.modalText.resizeToFit = true;
-		this.modalText.paddingLeftInPixels = this.modalText.paddingRightInPixels = 16;
+		this.modalText.paddingLeftInPixels =
+			this.modalText.paddingRightInPixels = 16;
 		textBodyPanel.addControl(this.modalText);
 
 		const buttonPanel = new StackPanel("ui_buttonStackPanel");
@@ -76,7 +80,10 @@ export class ModalScreen {
 		buttonPanel.heightInPixels = 40;
 		buttonPanel.adaptWidthToChildren = true;
 		buttonPanel.spacing = 16;
-		buttonPanel.paddingLeftInPixels = buttonPanel.paddingRightInPixels = buttonPanel.paddingBottomInPixels = 8;
+		buttonPanel.paddingLeftInPixels =
+			buttonPanel.paddingRightInPixels =
+			buttonPanel.paddingBottomInPixels =
+				8;
 		buttonPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		buttonPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
 		this.rootContainer.addControl(buttonPanel);
@@ -91,9 +98,9 @@ export class ModalScreen {
 		lastPageButton.background = Themes.primary3;
 		lastPageButton.heightInPixels = 32;
 		lastPageButton.widthInPixels = 32;
-		lastPageButton.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		if(lastPageButton.image)
-		{
+		lastPageButton.horizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_CENTER;
+		if (lastPageButton.image) {
 			lastPageButton.image.stretch = Image.STRETCH_UNIFORM;
 		}
 		lastPageButton.onPointerClickObservable.add(() => {
@@ -110,26 +117,27 @@ export class ModalScreen {
 		nextPageButton.background = Themes.primary3;
 		nextPageButton.heightInPixels = 32;
 		nextPageButton.widthInPixels = 32;
-		nextPageButton.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		if(nextPageButton.image)
-		{
+		nextPageButton.horizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_CENTER;
+		if (nextPageButton.image) {
 			nextPageButton.image.stretch = Image.STRETCH_UNIFORM;
 		}
 		nextPageButton.onPointerClickObservable.add(() => {
 			thisScreen.renderPageByIndex(thisScreen.currentPageIndex + 1);
-
 		});
 		buttonPanel.addControl(nextPageButton);
 		this.navButtons[1] = nextPageButton;
 
-		const exitButton = Button.CreateImageOnlyButton("ui_exitButton", `${getPublicRoot()}/sprites/gui/icons/icon_exit.png`);
+		const exitButton = Button.CreateImageOnlyButton(
+			"ui_exitButton",
+			`${getPublicRoot()}/sprites/gui/icons/icon_exit.png`,
+		);
 		exitButton.color = Themes.primary1;
 		exitButton.background = Themes.primary3;
 		exitButton.heightInPixels = 32;
 		exitButton.widthInPixels = 32;
 		exitButton.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		if(exitButton.image)
-		{
+		if (exitButton.image) {
 			exitButton.image.stretch = Image.STRETCH_UNIFORM;
 		}
 		exitButton.onPointerClickObservable.add(() => {
@@ -154,15 +162,13 @@ export class ModalScreen {
 	}
 
 	public showHide(show: boolean) {
-		const gameState = container.resolve(GameState);
-		if(show) {
-			gameState.actionPauseSet.add("PAUSE_MODAL");
-			gameState.renderPauseSet.add("PAUSE_MODAL");
-		}
-		else {
-			gameState.actionPauseSet.delete("PAUSE_MODAL");
-			gameState.renderPauseSet.add("PAUSE_MODAL");
-
+		const controlState = getControlState();
+		if (show) {
+			controlState.actionPauseSet.add("PAUSE_MODAL");
+			controlState.renderPauseSet.add("PAUSE_MODAL");
+		} else {
+			controlState.actionPauseSet.delete("PAUSE_MODAL");
+			controlState.renderPauseSet.delete("PAUSE_MODAL");
 		}
 		this.rootContainer.isVisible = show;
 	}
@@ -174,10 +180,9 @@ export class ModalScreen {
 
 	public renderPageByIndex(index: number) {
 		// Check for out of bounds and early exit
-		if(index < 0) {
+		if (index < 0) {
 			index = this.modalPages.length - 1;
-		}
-		else if (index > this.modalPages.length - 1) {
+		} else if (index > this.modalPages.length - 1) {
 			index = 0;
 		}
 
@@ -185,7 +190,7 @@ export class ModalScreen {
 		const currentPage = this.modalPages[index];
 
 		this.modalLabel.text = currentPage.title;
-    	this.modalText.text = currentPage.textBody;
+		this.modalText.text = currentPage.textBody;
 		if (currentPage.imageSrc) {
 			this.modalImage.source = currentPage.imageSrc;
 			this.modalImage.isVisible = true;
@@ -194,31 +199,28 @@ export class ModalScreen {
 			this.modalImage.isVisible = false;
 		}
 
-		if(this.modalPages.length > 1) {
+		if (this.modalPages.length > 1) {
 			this.pageCount.text = `${index + 1} / ${this.modalPages.length}`;
 			this.pageCount.isVisible = true;
-		}
-		else {
+		} else {
 			this.pageCount.isVisible = false;
 		}
 
+		this.navButtons.forEach((button) => (button.isVisible = false));
 
-		this.navButtons.forEach((button) => button.isVisible = false);
-
-		if(index > 0 && this.modalPages.length > 1) {
+		if (index > 0 && this.modalPages.length > 1) {
 			// Enables last page button
 			this.navButtons[0].isVisible = true;
 		}
 
-		if(index < this.modalPages.length - 1 && this.modalPages.length > 1) {
+		if (index < this.modalPages.length - 1 && this.modalPages.length > 1) {
 			// Enables next page button
 			this.navButtons[1].isVisible = true;
 		}
 
-		if(index === this.modalPages.length - 1) {
+		if (index === this.modalPages.length - 1) {
 			// Enables exit button
 			this.navButtons[2].isVisible = true;
 		}
-
 	}
 }

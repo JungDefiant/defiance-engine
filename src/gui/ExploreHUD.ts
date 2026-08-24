@@ -1,10 +1,4 @@
-import {
-	Container,
-	Control,
-	Rectangle,
-	TextBlock,
-	TextWrapping,
-} from "@babylonjs/gui";
+import { Container, Control, Rectangle, TextBlock } from "@babylonjs/gui";
 import IHUD from "./IHUD";
 import { Nullable } from "@babylonjs/core";
 import { Themes } from "./Themes";
@@ -82,7 +76,8 @@ export default class ExploreHUD implements IHUD {
 		highlightDescription.topInPixels = 20;
 		highlightDescription.paddingLeftInPixels =
 			highlightDescription.paddingRightInPixels = 8;
-		highlightDescription.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		highlightDescription.textVerticalAlignment =
+			Control.VERTICAL_ALIGNMENT_TOP;
 		highlightDescription.textWrapping = 1;
 		highlightDescription.color = Themes.neutral2;
 		highlightDescription.style = Themes.typography.bodyText;
