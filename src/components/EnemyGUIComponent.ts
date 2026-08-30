@@ -22,7 +22,9 @@ import CharacterSpriteComponent from "./CharacterSpriteComponent";
 
 export default class EnemyGUIComponent implements ActorGUI, Component {
 	private rootContainer: StackPanel;
+	private targetingContainer: Container;
 	private targetingUI: Image;
+	private enemyGUIContainer: StackPanel;
 	private actBarBGUI: Rectangle;
 	private actBarFillUI: Rectangle;
 	private lifeBarBGUI: Rectangle;
@@ -44,15 +46,23 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 			);
 
 		this.rootContainer = new StackPanel(
-			`ui_enBattlerUI_${enemyActorState.id}_${eid}`,
+			`ui_enBattlerUIRoot_${enemyActorState.id}_${eid}`,
 		);
 		this.rootContainer.widthInPixels = 120;
 		this.rootContainer.heightInPixels = 240;
+		this.rootContainer.spacing = -20;
 		sceneGUI.addControl(this.rootContainer);
+
+		this.targetingContainer = new Container(
+			`ui_enBattlerTargetingUI_${enemyActorState.id}_${eid}`,
+		);
+		this.targetingContainer.widthInPixels = 100;
+		this.targetingContainer.heightInPixels = 100;
+		this.rootContainer.addControl(this.targetingContainer);
 
 		this.targetingUI = new Image(
 			`ui_enBattlerTargetings_${eid}`,
-			"sprites/particles/magic_03.png",
+			"sprites/spr_targeting.png",
 		);
 		this.targetingUI.widthInPixels = 96;
 		this.targetingUI.heightInPixels = 96;
@@ -66,7 +76,14 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		});
 		this.targetingUI.onPointerClickObservable.add(() => {});
 		this.targetingUI.isVisible = false;
-		this.rootContainer.addControl(this.targetingUI);
+		this.targetingContainer.addControl(this.targetingUI);
+
+		this.enemyGUIContainer = new StackPanel(
+			`ui_enBattlerUI_${enemyActorState.id}_${eid}`,
+		);
+		this.enemyGUIContainer.widthInPixels = 120;
+		this.enemyGUIContainer.heightInPixels = 120;
+		this.rootContainer.addControl(this.enemyGUIContainer);
 
 		this.statusIconsUI = new Grid(`ui_enBattlerStatusIcons_${eid}`);
 		this.statusIconsUI.widthInPixels = 120;

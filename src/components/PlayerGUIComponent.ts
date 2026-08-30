@@ -10,8 +10,6 @@ import {
 } from "@babylonjs/gui";
 import { Themes } from "../gui/Themes";
 import { EntityId } from "bitecs";
-import { container } from "tsyringe";
-import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import { ActorGUI } from "../types/UserInterfaceTypes";
 import { Component } from "./Component";
 import { setSelectedCharacter } from "src/modules/UserInterfaceModule";
