@@ -8,7 +8,6 @@ import {
 	Button,
 } from "@babylonjs/gui";
 import type IHUD from "src/gui/IHUD";
-import { container } from "tsyringe";
 import { Themes } from "src/gui/Themes";
 import { type Nullable } from "@babylonjs/core";
 import StackPanelImage from "./elements/StackPanelImage";
@@ -22,6 +21,7 @@ import {
 } from "src/modules/DialogueModule";
 import { getGameplayState } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
+import { createButton } from "src/modules/UserInterfaceModule";
 
 export default class DialogueHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -139,22 +139,26 @@ export default class DialogueHUD implements IHUD {
 
 		this.optionsEntryStack.clearControls();
 
-		const buttonUI = Button.CreateSimpleButton(
-			"ui_line_" + currDlgId,
-			"Continue",
-		);
+		const buttonUIName = `ui_line_${currDlgId}`;
+		const buttonUI = createButton(buttonUIName, {
+			isCentered: false,
+			text: "Continue",
+			sfxId: "sfx_confirm.wav",
+			sfxBaseUrl: "audio/sfx",
+		});
 		buttonUI.width = 1;
 		buttonUI.heightInPixels = 40;
 		buttonUI.color = Themes.primary1;
 		buttonUI.background = Themes.primary3;
 		buttonUI.thickness = 2;
 
-		if (buttonUI.textBlock) {
-			buttonUI.textBlock.textHorizontalAlignment =
+		const buttonUIText = buttonUI.getChildByName(buttonUIName) as TextBlock;
+		if (buttonUIText) {
+			buttonUIText.textHorizontalAlignment =
 				Control.HORIZONTAL_ALIGNMENT_LEFT;
-			buttonUI.textBlock.paddingLeftInPixels = 8;
-			buttonUI.textBlock.color = Themes.neutral2;
-			buttonUI.textBlock.style = Themes.typography.header4;
+			buttonUIText.paddingLeftInPixels = 8;
+			buttonUIText.color = Themes.neutral2;
+			buttonUIText.style = Themes.typography.header4;
 		}
 
 		buttonUI.onPointerEnterObservable.add(() => {
@@ -164,9 +168,6 @@ export default class DialogueHUD implements IHUD {
 		buttonUI.onPointerOutObservable.add(() => {
 			buttonUI.background =
 				Themes.primary3 + Themes.textButtonDefaultOpacity;
-		});
-		buttonUI.onPointerClickObservable.add(() => {
-			playSFX("sfx_confirm.wav");
 		});
 		buttonUI.onPointerClickObservable.addOnce(() => {
 			runLine(nextDlgId);
@@ -182,22 +183,26 @@ export default class DialogueHUD implements IHUD {
 
 		this.optionsEntryStack.clearControls();
 
-		const buttonUI = Button.CreateSimpleButton(
-			"ui_line_exit",
-			"End Dialogue",
-		);
+		const buttonUIName = "ui_line_exit";
+		const buttonUI = createButton(buttonUIName, {
+			isCentered: false,
+			text: "End Dialogue",
+			sfxId: "sfx_cancel.wav",
+			sfxBaseUrl: "audio/sfx",
+		});
 		buttonUI.width = 1;
 		buttonUI.heightInPixels = 40;
 		buttonUI.color = Themes.primary1;
 		buttonUI.background = Themes.primary3;
 		buttonUI.thickness = 2;
 
-		if (buttonUI.textBlock) {
-			buttonUI.textBlock.textHorizontalAlignment =
+		const buttonUIText = buttonUI.getChildByName(buttonUIName) as TextBlock;
+		if (buttonUIText) {
+			buttonUIText.textHorizontalAlignment =
 				Control.HORIZONTAL_ALIGNMENT_LEFT;
-			buttonUI.textBlock.paddingLeftInPixels = 8;
-			buttonUI.textBlock.color = Themes.neutral2;
-			buttonUI.textBlock.style = Themes.typography.header4;
+			buttonUIText.paddingLeftInPixels = 8;
+			buttonUIText.color = Themes.neutral2;
+			buttonUIText.style = Themes.typography.header4;
 		}
 
 		buttonUI.onPointerEnterObservable.add(() => {
@@ -207,9 +212,6 @@ export default class DialogueHUD implements IHUD {
 		buttonUI.onPointerOutObservable.add(() => {
 			buttonUI.background =
 				Themes.primary3 + Themes.textButtonDefaultOpacity;
-		});
-		buttonUI.onPointerClickObservable.add(() => {
-			playSFX("sfx_confirm.wav");
 		});
 		buttonUI.onPointerClickObservable.addOnce(() => {
 			endDialogue(true);
@@ -235,22 +237,29 @@ export default class DialogueHUD implements IHUD {
 			}
 
 			const numChoice = index + 1;
-			const buttonUI = Button.CreateSimpleButton(
-				"ui_choice_" + numChoice,
-				numChoice + ". " + choiceData.text,
-			);
+
+			const buttonUIName = `ui_choice_${numChoice}`;
+			const buttonUI = createButton(buttonUIName, {
+				isCentered: false,
+				text: numChoice + ". " + choiceData.text,
+				sfxId: "sfx_confirm.wav",
+				sfxBaseUrl: "audio/sfx",
+			});
 			buttonUI.width = 1;
 			buttonUI.heightInPixels = 40;
 			buttonUI.color = Themes.primary1;
 			buttonUI.background = Themes.primary3;
 			buttonUI.thickness = 2;
 
-			if (buttonUI.textBlock) {
-				buttonUI.textBlock.textHorizontalAlignment =
+			const buttonUIText = buttonUI.getChildByName(
+				buttonUIName,
+			) as TextBlock;
+			if (buttonUIText) {
+				buttonUIText.textHorizontalAlignment =
 					Control.HORIZONTAL_ALIGNMENT_LEFT;
-				buttonUI.textBlock.paddingLeftInPixels = 8;
-				buttonUI.textBlock.color = Themes.neutral2;
-				buttonUI.textBlock.style = Themes.typography.header4;
+				buttonUIText.paddingLeftInPixels = 8;
+				buttonUIText.color = Themes.neutral2;
+				buttonUIText.style = Themes.typography.header4;
 			}
 
 			buttonUI.onPointerEnterObservable.add(() => {
@@ -260,9 +269,6 @@ export default class DialogueHUD implements IHUD {
 			buttonUI.onPointerOutObservable.add(() => {
 				buttonUI.background =
 					Themes.primary3 + Themes.textButtonDefaultOpacity;
-			});
-			buttonUI.onPointerClickObservable.add(() => {
-				playSFX("sfx_confirm.wav");
 			});
 			buttonUI.onPointerClickObservable.addOnce(() => {
 				const gameplayState = getGameplayState();

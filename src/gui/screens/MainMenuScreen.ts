@@ -17,6 +17,8 @@ import {
 } from "@babylonjs/core";
 import { getPublicRoot } from "src/modules/Utils";
 import { startGame } from "src/modules/InitModule";
+import { createButton } from "src/modules/UserInterfaceModule";
+import AudioState from "src/states/AudioState";
 
 export class MainMenuScreen {
 	private root: AdvancedDynamicTexture;
@@ -79,17 +81,24 @@ export class MainMenuScreen {
 		mainMenuTitle.textWrapping = 1;
 		stackPanel.addControl(mainMenuTitle);
 
-		const newGameButton = Button.CreateSimpleButton(
-			"ui_newGameButton",
-			"NEW GAME",
-		);
+		const newGameButtonName = "ui_newGameButton";
+		const newGameButton = createButton("ui_newGameButton", {
+			isCentered: true,
+			text: "NEW GAME",
+			sfxId: "sfx_confirm.wav",
+			sfxBaseUrl: "audio/sfx",
+		});
 		newGameButton.color = Themes.primary1;
 		newGameButton.background = Themes.primary3;
 		newGameButton.widthInPixels = 200;
 		newGameButton.heightInPixels = 40;
-		if (newGameButton.textBlock) {
-			newGameButton.textBlock.color = Themes.neutral2;
-			newGameButton.textBlock.style = Themes.typography.header2;
+
+		const newGameButtonText = newGameButton.getChildByName(
+			`${newGameButtonName}_text`,
+		) as TextBlock;
+		if (newGameButtonText) {
+			newGameButtonText.color = Themes.neutral2;
+			newGameButtonText.style = Themes.typography.header2;
 		}
 		newGameButton.onPointerClickObservable.add(async () => {
 			if (thisMainMenu.music) {

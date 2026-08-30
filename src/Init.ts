@@ -17,4 +17,4 @@ container.register(Engine, { useValue: engine });
 const mainMenuScene = new MainMenuScene(engine);
 container.register(MainMenuScene, { useValue: mainMenuScene });
 
-gotoMainMenu();
+Promise.resolve(gotoMainMenu());

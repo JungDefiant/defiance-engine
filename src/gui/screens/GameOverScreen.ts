@@ -7,6 +7,7 @@ import {
 	TextBlock,
 } from "@babylonjs/gui";
 import { Themes } from "../Themes";
+import { createButton } from "src/modules/UserInterfaceModule";
 
 export class GameOverScreen {
 	private rootContainer: Rectangle;
@@ -33,17 +34,24 @@ export class GameOverScreen {
 		gameOverLabel.heightInPixels = 64;
 		stackPanel.addControl(gameOverLabel);
 
-		const mainMenuButton = Button.CreateSimpleButton(
-			"ui_mainMenuButton",
-			"Main Menu",
-		);
+		const mainMenuButtonName = "ui_mainMenuButton";
+		const mainMenuButton = createButton(mainMenuButtonName, {
+			isCentered: true,
+			text: "Main Menu",
+			sfxId: "sfx_confirm.wav",
+			sfxBaseUrl: "audio/sfx",
+		});
 		mainMenuButton.color = Themes.primary1;
 		mainMenuButton.background = Themes.primary3;
 		mainMenuButton.heightInPixels = 32;
 		mainMenuButton.widthInPixels = 120;
-		if (mainMenuButton.textBlock) {
-			mainMenuButton.textBlock.color = Themes.neutral2;
-			mainMenuButton.textBlock.style = Themes.typography.header4;
+
+		const mainMenuButtonText = mainMenuButton.getChildByName(
+			`${mainMenuButtonName}_text`,
+		) as TextBlock;
+		if (mainMenuButtonText) {
+			mainMenuButtonText.color = Themes.neutral2;
+			mainMenuButtonText.style = Themes.typography.header4;
 		}
 		mainMenuButton.onPointerClickObservable.add(() => {
 			window.location.reload();

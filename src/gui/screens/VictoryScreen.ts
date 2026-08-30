@@ -7,6 +7,7 @@ import {
 } from "@babylonjs/gui";
 import { Themes } from "../Themes";
 import { endCombat } from "src/modules/CombatModule";
+import { createButton } from "src/modules/UserInterfaceModule";
 
 export class VictoryScreen {
 	private rootContainer: StackPanel;
@@ -33,17 +34,24 @@ export class VictoryScreen {
 		victoryScreenLabel.heightInPixels = 64;
 		this.rootContainer.addControl(victoryScreenLabel);
 
-		const continueButton = Button.CreateSimpleButton(
-			"ui_continueButton",
-			"Continue",
-		);
+		const continueGameButtonName = "ui_continueButton";
+		const continueButton = createButton(continueGameButtonName, {
+			isCentered: true,
+			text: "Continue",
+			sfxId: "sfx_confirm.wav",
+			sfxBaseUrl: "audio/sfx",
+		});
 		continueButton.color = Themes.primary1;
 		continueButton.background = Themes.primary3;
 		continueButton.heightInPixels = 32;
 		continueButton.widthInPixels = 120;
-		if (continueButton.textBlock) {
-			continueButton.textBlock.color = Themes.neutral2;
-			continueButton.textBlock.style = Themes.typography.header4;
+
+		const continueGameButtonText = continueButton.getChildByName(
+			`${continueGameButtonName}_text`,
+		) as TextBlock;
+		if (continueGameButtonText) {
+			continueGameButtonText.color = Themes.neutral2;
+			continueGameButtonText.style = Themes.typography.header4;
 		}
 		continueButton.onPointerClickObservable.add(() => {
 			endCombat();
