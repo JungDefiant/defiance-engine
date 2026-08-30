@@ -33,11 +33,10 @@ import GameSystem from "src/systems/GameSystem";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { FactoryRegistry } from "src/registries/FactoryRegistry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
-import { createUserInterfaceState } from "./UserInterfaceModule";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 
-export async function gotoMainMenu() {
+export async function gotoMainMenu(): Promise<void> {
 	const mainMenuScene = container.resolve(MainMenuScene);
 	const engine = container.resolve(Engine);
 	mainMenuScene.audioState = await initAudioState();

@@ -1,5 +1,11 @@
 import { Texture, UniversalCamera, Vector3 } from "@babylonjs/core";
-import { AdvancedDynamicTexture } from "@babylonjs/gui";
+import {
+	AdvancedDynamicTexture,
+	Button,
+	Control,
+	Image,
+	TextBlock,
+} from "@babylonjs/gui";
 import CombatHUD from "src/gui/CombatHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
@@ -27,7 +33,8 @@ import { GameMode, LoadedModalJson } from "src/types/GameTypes";
 import { EntityId } from "bitecs";
 import { getPlayerGuiComponentArray } from "./ComponentModule";
 import { resetCombatModeControls } from "./ControlModule";
-import { getGameCanvas } from "./SceneModule";
+import { playSFX } from "./AudioModule";
+import AudioState from "src/states/AudioState";
 
 export async function loadModalMap(modalIds: string[]): Promise<void> {
 	const campaignState = getCampaignState();
@@ -136,6 +143,49 @@ function createExploreHUD(mainUI: AdvancedDynamicTexture) {
 	mainUI.addControl(exploreHud.createHudRoot());
 	exploreHud.showHideHud(false);
 	return exploreHud;
+}
+
+interface ButtonProps {
+	isCentered: boolean;
+	text?: string;
+	imageUrl?: string;
+	sfxId?: string;
+	sfxBaseUrl?: string;
+}
+
+export function createButton(name: string, props: ButtonProps): Button {
+	const newButton = new Button(name);
+
+	if (props.sfxId && props.sfxBaseUrl) {
+		const sfxId = props.sfxId;
+		const sfxBaseUrl = props.sfxBaseUrl;
+		newButton.onPointerClickObservable.add(() => {
+			playSFX(sfxId, sfxBaseUrl);
+		});
+	}
+
+	if (props.imageUrl) {
+		const iconImage = new Image(name + "_icon", props.imageUrl);
+		if (props.text) {
+			iconImage.width = "20%";
+			iconImage.stretch = Image.STRETCH_UNIFORM;
+		} else {
+			iconImage.stretch = Image.STRETCH_FILL;
+		}
+		iconImage.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+		newButton.addControl(iconImage);
+	}
+
+	if (props.text) {
+		const textBlock = new TextBlock(name + "_text", props.text);
+		textBlock.textWrapping = true;
+		textBlock.textHorizontalAlignment = props.isCentered
+			? Control.HORIZONTAL_ALIGNMENT_CENTER
+			: Control.HORIZONTAL_ALIGNMENT_LEFT;
+		newButton.addControl(textBlock);
+	}
+
+	return newButton;
 }
 
 export function createUserInterfaceState() {

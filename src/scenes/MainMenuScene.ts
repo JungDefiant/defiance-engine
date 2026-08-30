@@ -3,7 +3,6 @@ import { MainMenuScreen } from "src/gui/screens/MainMenuScreen";
 import { singleton } from "tsyringe";
 import type { Nullable, SceneOptions } from "@babylonjs/core";
 import AudioState from "src/states/AudioState";
-import { initAudioState } from "src/modules/SceneModule";
 
 @singleton()
 export default class MainMenuScene extends Scene {
