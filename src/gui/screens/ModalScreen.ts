@@ -9,10 +9,7 @@ import {
 } from "@babylonjs/gui";
 import { Themes } from "../Themes";
 import { getPublicRoot } from "src/modules/Utils";
-import { container } from "tsyringe";
 import { ModalPage } from "src/types/GameTypes";
-import GameplayState from "src/states/GameplayState";
-import ControlState from "src/states/ControlState";
 import { getControlState } from "src/modules/GameStateModule";
 
 export class ModalScreen {
@@ -28,13 +25,13 @@ export class ModalScreen {
 	public constructor() {
 		this.rootContainer = new Rectangle("ui_modalGUI");
 		this.rootContainer.widthInPixels = 400;
-		this.rootContainer.heightInPixels = 400;
+		this.rootContainer.heightInPixels = 240;
 		this.rootContainer.thickness = 1;
 		this.rootContainer.color = Themes.primary1;
 		this.rootContainer.background = Themes.primary3;
 		this.rootContainer.verticalAlignment =
-			Control.VERTICAL_ALIGNMENT_BOTTOM;
-		this.rootContainer.topInPixels = -100;
+			Control.VERTICAL_ALIGNMENT_CENTER;
+		this.rootContainer.topInPixels = -80;
 		this.rootContainer.isVisible = false;
 
 		const stackPanel = new StackPanel("ui_modalStackPanel");
@@ -59,11 +56,11 @@ export class ModalScreen {
 		textBodyPanel.adaptHeightToChildren = true;
 		textBodyPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		textBodyPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		this.rootContainer.addControl(textBodyPanel);
+		this.rootContainer.addControl(textBodyPanel); 
 
 		this.modalImage = new Image("ui_modalImage", "");
-		this.modalImage.widthInPixels = 200;
-		this.modalImage.heightInPixels = 150;
+		this.modalImage.widthInPixels = 64;
+		this.modalImage.heightInPixels = 64;
 		this.modalImage.stretch = Image.STRETCH_UNIFORM;
 		textBodyPanel.addControl(this.modalImage);
 

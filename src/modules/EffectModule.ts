@@ -3,71 +3,60 @@ import ActorStateComponent, {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTrigger,
-	EffectVar,
+	EffectData,
+	EffectVariable,
 } from "src/components/ActorStateComponent";
 import { Themes } from "src/gui/Themes";
-import { container } from "tsyringe";
 import { clamp } from "./Utils";
 import { addFloatingTextRQE } from "./RenderModule";
 import { defeatActor } from "./CombatModule";
 import { getUserInterfaceState } from "./GameStateModule";
+import { getAbilityEffectProcessor } from "./ProcessorModule";
 
-export const BASE_DEFENSE = 10;
+export interface EffectFunctionProps {
+	source: ActorStateComponent;
+	target: ActorStateComponent;
+	descriptors: AbilityDescriptor[];
+	effectVariables: { [index: string]: EffectVariable };
+}
+
+export interface EffectFeedbackDetails {
+	floatingText: string;
+	floatingTextColor: string;
+	combatLogText: string;
+}
 
 export function processAbilityEffects(
 	sourceData: ActorStateComponent,
 	targetData: ActorStateComponent,
 	abilityData: AbilityData,
-	context?: { [index: string]: EffectVar },
+	context?: { [index: string]: EffectVariable },
 ) {
-	let effectText;
+	let effectFeedbackDetails;
 	const userInterfaceState = getUserInterfaceState();
-	abilityData.effectData.forEach((eff) => {
-		switch (eff.id) {
-			case "damage":
-				effectText = applyDamageEffect(
-					sourceData,
-					targetData,
-					abilityData.descriptors,
-					{
-						...eff.variables,
-						...context,
-					},
-				);
-
-				addFloatingTextRQE(
-					targetData.entityId,
-					effectText,
-					Themes.neutral2,
-				);
-				userInterfaceState.combatHud.addCombatLogEntry(
-					`${sourceData.name} (${abilityData.name})`,
-					`Inflicts ${effectText} Damage to ${targetData.name}!`,
-				);
-				break;
-			case "healing":
-				effectText = applyHealEffect(
-					sourceData,
-					targetData,
-					abilityData.descriptors,
-					{
-						...eff.variables,
-						...context,
-					},
-				);
-				addFloatingTextRQE(
-					targetData.entityId,
-					effectText,
-					Themes.success,
-				);
-				userInterfaceState.combatHud.addCombatLogEntry(
-					`${sourceData.name} (${abilityData.name})`,
-					`Restores ${effectText} Life to ${targetData.name}.`,
-				);
-				break;
-			default:
-				return;
-		}
+	abilityData.effectData.forEach((effectData) => {
+		const effectProcessor =
+			getAbilityEffectProcessor().getProcessorFunction(effectData.id);
+		effectFeedbackDetails = effectProcessor({
+			source: sourceData,
+			target: targetData,
+			descriptors: abilityData.descriptors,
+			effectVariables: {
+				...effectData.variables,
+				...context,
+			},
+		});
+		effectFeedbackDetails.forEach((effectFeedbackDetails) => {
+			addFloatingTextRQE(
+				targetData.entityId,
+				effectFeedbackDetails.floatingText,
+				effectFeedbackDetails.floatingTextColor,
+			);
+			userInterfaceState.combatHud.addCombatLogEntry(
+				`${sourceData.name} (${abilityData.name})`,
+				effectFeedbackDetails.combatLogText,
+			);
+		});
 	});
 }
 
@@ -75,7 +64,7 @@ export function triggerFeatEffects(
 	sourceData: ActorStateComponent,
 	targetData: ActorStateComponent,
 	trigger: AbilityTrigger,
-	context?: { [index: string]: EffectVar },
+	context?: { [index: string]: EffectVariable },
 ) {
 	const triggeredFeats = sourceData.featData.filter(
 		(x) => x.trigger === trigger,
@@ -86,43 +75,37 @@ export function triggerFeatEffects(
 }
 
 export function applyDamageEffect(
-	source: ActorStateComponent,
-	target: ActorStateComponent,
-	descriptors: AbilityDescriptor[],
-	effVars: { [index: string]: EffectVar },
-): string {
-	const targetLifeAttr = target.attributes.life;
-	const targetDefenseAttr = target.attributes.defense;
+	props: EffectFunctionProps,
+): EffectFeedbackDetails[] {
+	const targetLifeAttribute = props.target.attributes.life;
+	const targetResistAttribute = props.target.attributes.resist;
 
-	const minDamage = effVars["min"] as number;
-	const maxDamage = effVars["max"] as number;
-	const damageRoll = Math.round(RandomRange(minDamage, maxDamage));
+	const damageAmount = props.effectVariables["amount"] as number;
 
 	const damageContext = {
 		effect: "damage",
-		damage: damageRoll,
+		damage: damageAmount,
 		damageMultiplier: 1,
-		targetDefense: targetDefenseAttr.currentValue,
+		targetResist: targetResistAttribute.currentValue,
 	};
 
 	triggerFeatEffects(
-		source,
-		target,
+		props.source,
+		props.target,
 		AbilityTrigger.onActorEffectInflicted,
 		damageContext,
 	);
 
 	const totalDamageMultiplier =
-		(BASE_DEFENSE / damageContext.targetDefense) *
-		damageContext.damageMultiplier;
+		1 - Math.max(0, Math.min(damageContext.targetResist / 100, 100));
 
 	const totalDamage = Math.floor(
 		damageContext.damage * totalDamageMultiplier,
 	);
-	targetLifeAttr.currentValue = clamp(
-		targetLifeAttr.currentValue - totalDamage,
+	targetLifeAttribute.currentValue = clamp(
+		targetLifeAttribute.currentValue - totalDamage,
 		0,
-		targetLifeAttr.maximumValue,
+		targetLifeAttribute.maximumValue,
 	);
 
 	const damageTakenContext = {
@@ -131,27 +114,31 @@ export function applyDamageEffect(
 	};
 
 	triggerFeatEffects(
-		source,
-		target,
+		props.source,
+		props.target,
 		AbilityTrigger.onActorEffectTaken,
 		damageTakenContext,
 	);
 
-	if (targetLifeAttr.currentValue === 0) {
-		defeatActor(target);
+	if (targetLifeAttribute.currentValue === 0) {
+		defeatActor(props.target);
 	}
 
-	return totalDamage.toString();
+	const damageString = totalDamage.toString();
+	return [
+		{
+			floatingText: damageString,
+			floatingTextColor: Themes.secondary2,
+			combatLogText: `Inflicts ${damageString} Damage to ${props.target.name}!`,
+		},
+	];
 }
 
 export function applyHealEffect(
-	source: ActorStateComponent,
-	target: ActorStateComponent,
-	descriptors: AbilityDescriptor[],
-	effVars: { [index: string]: EffectVar },
-): string {
-	const targetLifeAttr = target.attributes.life;
-	const healing = effVars["healing"] as number;
+	props: EffectFunctionProps,
+): EffectFeedbackDetails[] {
+	const targetLifeAttribute = props.target.attributes.life;
+	const healing = props.effectVariables["healing"] as number;
 
 	const healingContext = {
 		effect: "healing",
@@ -159,17 +146,63 @@ export function applyHealEffect(
 	};
 
 	triggerFeatEffects(
-		source,
-		target,
+		props.source,
+		props.target,
 		AbilityTrigger.onActorEffectTaken,
 		healingContext,
 	);
 
-	targetLifeAttr.currentValue = clamp(
-		targetLifeAttr.currentValue + healingContext.healing,
+	targetLifeAttribute.currentValue = clamp(
+		targetLifeAttribute.currentValue + healingContext.healing,
 		0,
-		targetLifeAttr.maximumValue,
+		targetLifeAttribute.maximumValue,
 	);
 
-	return healing.toString();
+	const healingString = healing.toString();
+	return [
+		{
+			floatingText: healingString,
+			floatingTextColor: Themes.success,
+			combatLogText: `Restores ${healingString} Life to ${props.target.name}.`,
+		},
+	];
+}
+
+export function applyStatusEffect(
+	props: EffectFunctionProps,
+): EffectFeedbackDetails[] {
+	const statusId = props.effectVariables["statusId"] as string;
+	return [
+		{
+			floatingText: statusId,
+			floatingTextColor: Themes.success,
+			combatLogText: `Inflicts ${statusId} to ${props.target.name}.`,
+		},
+	];
+}
+
+export function applyCriticalEffect(
+	props: EffectFunctionProps,
+): EffectFeedbackDetails[] {
+	const criticalAttribute = props.source.attributes.critical;
+	const criticalEffects = props.effectVariables["effects"] as EffectData[];
+	const criticalRoll = RandomRange(1, 100) / 100;
+	if (criticalRoll <= criticalAttribute.currentValue) {
+		const criticalEffectFeedbackDetails: EffectFeedbackDetails[] = [];
+		criticalEffects.forEach((effectData) => {
+			const effectProcessor =
+				getAbilityEffectProcessor().getProcessorFunction(effectData.id);
+			const effectFeedbackDetails = effectProcessor({
+				source: props.source,
+				target: props.target,
+				descriptors: props.descriptors,
+				effectVariables: {
+					...effectData.variables,
+				},
+			});
+			criticalEffectFeedbackDetails.push(...effectFeedbackDetails);
+		});
+		return criticalEffectFeedbackDetails;
+	}
+	return [];
 }

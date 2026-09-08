@@ -1,1 +1,1 @@
-export type AbilityEffectType = "DamageEffect" | "HealingEffect";
+export type AbilityEffectType = "damage" | "healing" | "status" | "critical";

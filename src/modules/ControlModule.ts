@@ -19,7 +19,7 @@ import {
 	getGameScene,
 	getUserInterfaceState,
 } from "./GameStateModule";
-import { setSelectedCharacter } from "./UserInterfaceModule";
+import { setSelectedCharacter } from "./CharacterModule";
 import { getComponentRegistry } from "./ComponentModule";
 
 export function clearControlActionPause() {
@@ -69,7 +69,7 @@ export function resetExploreModeActionManager() {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: controlState.controlSettings.switchPlayerLeft,
 			},
-			getSwitchPlayerLeftFunction(gameplayState),
+			getSwitchPlayerFunction(gameplayState, false),
 		),
 	);
 
@@ -79,7 +79,7 @@ export function resetExploreModeActionManager() {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: controlState.controlSettings.switchPlayerRight,
 			},
-			getSwitchPlayerRightFunction(gameplayState),
+			getSwitchPlayerFunction(gameplayState, true),
 		),
 	);
 
@@ -174,7 +174,7 @@ export async function resetCombatModeActionManager() {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: controlState.controlSettings.switchPlayerLeft,
 			},
-			getSwitchPlayerLeftFunction(gameplayState),
+			getSwitchPlayerFunction(gameplayState, false, true),
 		),
 	);
 
@@ -184,7 +184,7 @@ export async function resetCombatModeActionManager() {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: controlState.controlSettings.switchPlayerRight,
 			},
-			getSwitchPlayerRightFunction(gameplayState),
+			getSwitchPlayerFunction(gameplayState, true, true),
 		),
 	);
 
@@ -206,8 +206,10 @@ export function resetDialogueModeControls() {
 	}
 }
 
-function getSwitchPlayerRightFunction(
+function getSwitchPlayerFunction(
 	gameplayState: GameplayState,
+	isRightSelection: boolean,
+	isCombatMode?: boolean,
 ): (evt: ActionEvent) => void {
 	return () => {
 		let currentSelectedPlayerEntityIdIndex =
@@ -215,7 +217,7 @@ function getSwitchPlayerRightFunction(
 				(x) => x === gameplayState.selectedPlayerEID,
 			);
 		let newSelectedPlayerEntityIdIndex =
-			currentSelectedPlayerEntityIdIndex + 1;
+			currentSelectedPlayerEntityIdIndex + (isRightSelection ? 1 : -1);
 		if (
 			newSelectedPlayerEntityIdIndex >
 			gameplayState.playerEntityIds.length - 1
@@ -224,26 +226,7 @@ function getSwitchPlayerRightFunction(
 		}
 		setSelectedCharacter(
 			gameplayState.playerEntityIds[newSelectedPlayerEntityIdIndex],
-		);
-	};
-}
-
-function getSwitchPlayerLeftFunction(
-	gameplayState: GameplayState,
-): (evt: ActionEvent) => void {
-	return () => {
-		let currentSelectedPlayerEntityIdIndex =
-			gameplayState.playerEntityIds.findIndex(
-				(x) => x === gameplayState.selectedPlayerEID,
-			);
-		let newSelectedPlayerEntityIdIndex =
-			currentSelectedPlayerEntityIdIndex - 1;
-		if (newSelectedPlayerEntityIdIndex < 0) {
-			newSelectedPlayerEntityIdIndex =
-				gameplayState.playerEntityIds.length - 1;
-		}
-		setSelectedCharacter(
-			gameplayState.playerEntityIds[newSelectedPlayerEntityIdIndex],
+			isCombatMode,
 		);
 	};
 }

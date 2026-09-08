@@ -1,28 +1,48 @@
 import { Processor } from "./Processor";
 import { AbilityEffectType } from "src/types/AbilityTypes";
-import { applyDamageEffect, applyHealEffect } from "src/modules/EffectModule";
+import {
+	applyCriticalEffect,
+	applyDamageEffect,
+	applyHealEffect,
+	applyStatusEffect,
+	EffectFunctionProps,
+	EffectFeedbackDetails,
+} from "src/modules/EffectModule";
+
+export type AbilityEffectFunction = (
+	props: EffectFunctionProps,
+) => EffectFeedbackDetails[];
 
 export class AbilityEffectProcessor implements Processor {
-	private processorFunctions: Record<AbilityEffectType, Function>;
+	private processorFunctions: Record<
+		AbilityEffectType,
+		AbilityEffectFunction
+	>;
 
 	public constructor() {
 		this.processorFunctions = {
-			DamageEffect: applyDamageEffect,
-			HealingEffect: applyHealEffect,
+			damage: (props: EffectFunctionProps) => applyDamageEffect(props),
+			healing: (props: EffectFunctionProps) => applyHealEffect(props),
+			status: (props: EffectFunctionProps) => applyStatusEffect(props),
+			critical: (props: EffectFunctionProps) =>
+				applyCriticalEffect(props),
 		};
 	}
 
-	public setProcessorFunction(key: string, value: Function): void {
+	public setProcessorFunction(
+		key: string,
+		value: AbilityEffectFunction,
+	): void {
 		const parsedKey = key as AbilityEffectType;
 		this.processorFunctions[parsedKey] = value;
 	}
 
 	public removeProcessorFunction(key: string): void {
 		const parsedKey = key as AbilityEffectType;
-		this.processorFunctions[parsedKey] = () => {};
+		this.processorFunctions[parsedKey] = (props: EffectFunctionProps) => [];
 	}
 
-	public getProcessorFunction(key: string): Function {
+	public getProcessorFunction(key: string): AbilityEffectFunction {
 		const parsedKey = key as AbilityEffectType;
 		return this.processorFunctions[parsedKey];
 	}

@@ -20,7 +20,6 @@ import UserInterfaceState, {
 } from "src/states/UserInterfaceState";
 import {
 	getCampaignState,
-	getGameplayState,
 	getGameScene,
 	getGameStateRegistry,
 	getUserInterfaceScene,
@@ -30,11 +29,7 @@ import { CreateTypography } from "src/gui/Themes";
 import { GameScene } from "src/scenes/GameScene";
 import { getPublicRoot } from "./Utils";
 import { GameMode, LoadedModalJson } from "src/types/GameTypes";
-import { EntityId } from "bitecs";
-import { getPlayerGuiComponentArray } from "./ComponentModule";
-import { resetCombatModeControls } from "./ControlModule";
 import { playSFX } from "./AudioModule";
-import AudioState from "src/states/AudioState";
 
 export async function loadModalMap(modalIds: string[]): Promise<void> {
 	const campaignState = getCampaignState();
@@ -241,29 +236,6 @@ export function setUserInterfaceGameMode(newMode: GameMode) {
 	userInterfaceState.exploreHud.showHideHud(newMode === "Explore");
 	userInterfaceState.dialogueHud.showHideHud(newMode === "Dialogue");
 	userInterfaceState.combatHud.showHideHud(newMode === "Combat");
-}
-
-export function setSelectedCharacter(eid: EntityId, isCombatMode?: boolean) {
-	const gameplayState = getGameplayState();
-
-	if (!gameplayState.playerEntityIds.includes(eid)) {
-		return;
-	}
-
-	const playerGuiComponentArray = getPlayerGuiComponentArray();
-
-	gameplayState.selectedPlayerEID = eid;
-	playerGuiComponentArray.forEach((gui, eid) => {
-		if (eid === gameplayState.selectedPlayerEID) {
-			gui.setSelected(true);
-		} else {
-			gui.setSelected(false);
-		}
-	});
-
-	if (isCombatMode) {
-		resetCombatModeControls();
-	}
 }
 
 export function showModal(modalId: string) {

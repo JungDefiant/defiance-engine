@@ -6,14 +6,14 @@
 	"primaryColor": "",
 	"spriteUrl": "spr_sentineltest.png",
 	"attributes": {
-		"life": 40,
-		"will": 10,
-		"speed": 10,
-		"defense": 13,
-		"critical": 11,
-		"regen": 10
+		"might": 4,
+		"impulse": 4,
+		"guile": 4,
+		"heart": 4
 	},
-	"abilityIds": ["ab_brawl"],
+	"abilityIds": [
+		"ab_brawl"
+	],
 	"itemIds": [],
 	"tactics": [
 		{
