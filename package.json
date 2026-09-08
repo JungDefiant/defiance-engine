@@ -17,6 +17,7 @@
 		"@babylonjs/loaders": "^8.56.2",
 		"babylonjs": "^9.22.1",
 		"bitecs": "^0.4.0",
+		"heap-js": "^2.7.1",
 		"ohm-js": "^17.0.0",
 		"reflect-metadata": "^0.2.2",
 		"tsx": "^4.23.0",

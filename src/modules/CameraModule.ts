@@ -52,10 +52,6 @@ export async function resetCombatViewPosition() {
 
 	const viewNode = await getSceneNode(currentLocation.combatViewNodeId);
 	if (viewNode) {
-		console.log(
-			"VIEW NODE POS",
-			viewNode.getPositionExpressedInLocalSpace(),
-		);
 		resetCameraPositionToViewNode(viewNode, true);
 	}
 

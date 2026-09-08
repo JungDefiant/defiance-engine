@@ -8,27 +8,32 @@
 	"castSfxURL": "",
 	"hitSfxURL": "",
 	"trigger": "onActionExecute",
-	"descriptors": ["power", "single", "ranged", "lethal", "weapon", "attack"],
+	"descriptors": [
+		"power",
+		"single",
+		"ranged",
+		"lethal",
+		"weapon",
+		"attack"
+	],
 	"target": "single_en",
-	"recovery": 4,
+	"recovery": 2,
 	"cost": 0,
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"min": 2,
-				"max": 14
+				"amount": 12
 			}
 		},
 		{
 			"id": "critical",
 			"variables": {
-				"maxTimes": 4,
 				"effects": [
 					{
-						"id": "extraDamageMultiplier",
+						"id": "damage",
 						"variables": {
-							"amount": 0.25
+							"amount": 8
 						}
 					}
 				]

@@ -1,4 +1,4 @@
-import { removeEntity } from "bitecs";
+import { EntityId, removeEntity } from "bitecs";
 import { getActorStateComponentArray } from "./ComponentModule";
 import { getPlayerFactory } from "./FactoryModule";
 import {
@@ -7,6 +7,11 @@ import {
 	getGameScene,
 	getUserInterfaceState,
 } from "./GameStateModule";
+import { getPlayerGuiComponentArray } from "./ComponentModule";
+import {
+	resetCombatModeActionManager,
+	resetCombatModeControls,
+} from "./ControlModule";
 
 export async function loadStartingPlayerParty() {
 	const campaignState = getCampaignState();
@@ -40,8 +45,8 @@ export function resetPlayerActorState() {
 	const actorStateComponentArray = getActorStateComponentArray();
 	gameplayState.playerEntityIds.forEach((eid) => {
 		const playerData = actorStateComponentArray[eid];
-		const rcvyAttr = playerData.attributes.recovery;
-		rcvyAttr.maximumValue = 0;
+		const actionTimerAttribute = playerData.attributes.actionTimer;
+		actionTimerAttribute.maximumValue = 0;
 		playerData.queuedAction = null;
 	});
 }
@@ -52,4 +57,28 @@ export function disposeEnemyEntities() {
 	gameplayState.enemyEntityIds.forEach((eid) => {
 		removeEntity(world, eid);
 	});
+}
+
+export function setSelectedCharacter(eid: EntityId, isCombatMode?: boolean) {
+	const gameplayState = getGameplayState();
+
+	if (!gameplayState.playerEntityIds.includes(eid)) {
+		return;
+	}
+
+	const playerGuiComponentArray = getPlayerGuiComponentArray();
+
+	gameplayState.selectedPlayerEID = eid;
+	playerGuiComponentArray.forEach((gui, eid) => {
+		if (eid === gameplayState.selectedPlayerEID) {
+			gui.setSelected(true);
+		} else {
+			gui.setSelected(false);
+		}
+	});
+
+	if (isCombatMode) {
+		resetCombatModeControls();
+		Promise.resolve(resetCombatModeActionManager());
+	}
 }

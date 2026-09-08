@@ -50,8 +50,8 @@ export default class UserInterfaceSystem implements GameSystem {
 		);
 
 		playerGui.setActBarFill(
-			playerActorState.attributes.recovery.currentValue,
-			playerActorState.attributes.recovery.maximumValue,
+			playerActorState.attributes.actionTimer.currentValue,
+			playerActorState.attributes.actionTimer.maximumValue,
 		);
 
 		playerGui.setLifeBarFill(
@@ -70,8 +70,8 @@ export default class UserInterfaceSystem implements GameSystem {
 		enemyGui: EnemyGUIComponent,
 	) {
 		enemyGui.setActBarFill(
-			enemyActorState.attributes.recovery.currentValue,
-			enemyActorState.attributes.recovery.maximumValue,
+			enemyActorState.attributes.actionTimer.currentValue,
+			enemyActorState.attributes.actionTimer.maximumValue,
 		);
 		enemyGui.setLifeBarFill(
 			enemyActorState.attributes.life.currentValue,

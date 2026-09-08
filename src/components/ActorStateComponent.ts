@@ -6,6 +6,18 @@ import CampaignState from "src/states/CampaignState";
 import { Component } from "./Component";
 
 const BASE_REGEN_TICKS: number = 4;
+const BASE_RECOVERY_TICKS: number = 4;
+const BASE_ATTRIBUTES = {
+	life: 60,
+	lifePerPoint: 10,
+	willPerPoint: 5,
+	speed: 0.6,
+	speedPerPoint: 0.1,
+	defensePerPoint: 0.02,
+	criticalPerPoint: 0.02,
+	damage: -0.4,
+	damagePerPoint: 0.1,
+};
 
 export default class ActorStateComponent implements Component {
 	entityId: EntityId;
@@ -26,58 +38,105 @@ export default class ActorStateComponent implements Component {
 	tactics?: TacticsData[];
 	queuedAction?: Nullable<AbilityData>;
 
-	public constructor(entityId: number, initData: any) {
+	public constructor(entityId: number, initialData: any) {
 		this.entityId = entityId;
-		this.id = initData.id;
-		this.name = initData.name;
-		this.backstory = initData.backstory;
-		this.description = initData.description;
-		this.spriteUrl = initData.spriteUrl;
+		this.id = initialData.id;
+		this.name = initialData.name;
+		this.backstory = initialData.backstory;
+		this.description = initialData.description;
+		this.spriteUrl = initialData.spriteUrl;
+
+		const initialMightValue = initialData.attributes.might;
+		const initialImpulseValue = initialData.attributes.impulse;
+		const initialGuileValue = initialData.attributes.guile;
+		const initialHeartValue = initialData.attributes.heart;
+		const initialLifeValue =
+			BASE_ATTRIBUTES.life +
+			BASE_ATTRIBUTES.lifePerPoint * initialMightValue;
+		const initialWillValue =
+			BASE_ATTRIBUTES.willPerPoint * initialHeartValue;
+		const initialSpeedValue =
+			BASE_ATTRIBUTES.speed +
+			BASE_ATTRIBUTES.speedPerPoint * initialImpulseValue;
+		const initialDefenseValue =
+			BASE_ATTRIBUTES.defensePerPoint * initialImpulseValue;
+		const initialCriticalValue =
+			BASE_ATTRIBUTES.criticalPerPoint * initialGuileValue;
+
 		this.attributes = {
+			might: {
+				baseValue: initialMightValue,
+				maximumValue: initialMightValue,
+				currentValue: initialMightValue,
+			} as ActorAttribute,
+			impulse: {
+				baseValue: initialImpulseValue,
+				maximumValue: initialImpulseValue,
+				currentValue: initialImpulseValue,
+			} as ActorAttribute,
+			guile: {
+				baseValue: initialGuileValue,
+				maximumValue: initialGuileValue,
+				currentValue: initialGuileValue,
+			} as ActorAttribute,
+			heart: {
+				baseValue: initialHeartValue,
+				maximumValue: initialHeartValue,
+				currentValue: initialHeartValue,
+			} as ActorAttribute,
 			life: {
-				baseValue: initData.attributes.life,
-				maximumValue: initData.attributes.life,
-				currentValue: initData.attributes.life,
+				baseValue: initialLifeValue,
+				maximumValue: initialLifeValue,
+				currentValue: initialLifeValue,
 			} as ActorAttribute,
 			will: {
-				baseValue: initData.attributes.will,
-				maximumValue: initData.attributes.will,
-				currentValue: initData.attributes.will,
+				baseValue: initialWillValue,
+				maximumValue: initialWillValue,
+				currentValue: initialWillValue,
 			} as ActorAttribute,
 			speed: {
-				baseValue: initData.attributes.speed,
-				maximumValue: initData.attributes.speed,
-				currentValue: initData.attributes.speed,
+				baseValue: initialSpeedValue,
+				maximumValue: initialSpeedValue,
+				currentValue: initialSpeedValue,
 			} as ActorAttribute,
 			defense: {
-				baseValue: initData.attributes.defense,
-				maximumValue: initData.attributes.defense,
-				currentValue: initData.attributes.defense,
+				baseValue: initialDefenseValue,
+				maximumValue: initialDefenseValue,
+				currentValue: initialDefenseValue,
 			} as ActorAttribute,
 			critical: {
-				baseValue: initData.attributes.critical,
-				maximumValue: initData.attributes.critical,
-				currentValue: initData.attributes.critical,
+				baseValue: initialCriticalValue,
+				maximumValue: initialCriticalValue,
+				currentValue: initialCriticalValue,
+			} as ActorAttribute,
+			resist: {
+				baseValue: 0,
+				maximumValue: 0,
+				currentValue: 0,
 			} as ActorAttribute,
 			regen: {
-				baseValue: initData.attributes.regen,
-				maximumValue: initData.attributes.regen,
-				currentValue: initData.attributes.regen,
+				baseValue: 1,
+				maximumValue: 1,
+				currentValue: 1,
 			} as ActorAttribute,
 			recovery: {
+				baseValue: 1,
+				maximumValue: 1,
+				currentValue: 1,
+			} as ActorAttribute,
+			actionTimer: {
 				baseValue: 0,
 				maximumValue: 0,
 				currentValue: 0,
 			} as ActorAttribute,
 			regenTimer: {
-				baseValue: +(
-					BASE_REGEN_TICKS *
-					(10 / initData.attributes.regen)
-				).toFixed(2),
-				maximumValue: +(
-					BASE_REGEN_TICKS *
-					(10 / initData.attributes.regen)
-				).toFixed(2),
+				baseValue: BASE_REGEN_TICKS,
+				maximumValue: BASE_REGEN_TICKS,
+				currentValue: 0,
+			} as ActorAttribute,
+			recoveryTimer: {
+				baseValue: BASE_RECOVERY_TICKS,
+				maximumValue: BASE_RECOVERY_TICKS,
 				currentValue: 0,
 			} as ActorAttribute,
 		};
@@ -85,7 +144,7 @@ export default class ActorStateComponent implements Component {
 		const campaignState = container.resolve(CampaignState);
 		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
 
-		this.powerData = initData.abilityIds.map(
+		this.powerData = initialData.abilityIds.map(
 			async (powerDataId: string) => {
 				const response = await fetch(
 					`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${powerDataId}.json`,
@@ -99,7 +158,7 @@ export default class ActorStateComponent implements Component {
 		// newActorData.itemData = initData.itemIds.map((el: string) => {
 		// 	return this.actionData.get(el);
 		// });
-		this.tactics = initData.tactics;
+		this.tactics = initialData.tactics;
 	}
 
 	public getValue(): ActorStateComponent {
@@ -144,12 +203,17 @@ export interface AbilityData {
 	hitSfxURL?: string;
 }
 
-export type EffectVar = string | number;
+export type EffectVariable =
+	| string
+	| number
+	| string[]
+	| number[]
+	| EffectData[];
 
 export interface EffectData {
 	id: string;
 	variables: {
-		[index: string]: EffectVar;
+		[index: string]: EffectVariable;
 	};
 }
 

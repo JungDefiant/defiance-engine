@@ -55,11 +55,12 @@ export default class CombatManagerSystem implements GameSystem {
 
 		for (const eid of query(this.gameScene.world, [actorStateComponents])) {
 			const actorData = actorStateComponents[eid];
-			const rcvyAttr = actorData.attributes.recovery;
+			const actionTimerAttribute = actorData.attributes.actionTimer;
 
 			if (
 				actorData.queuedAction &&
-				rcvyAttr.currentValue === rcvyAttr.maximumValue
+				actionTimerAttribute.currentValue ===
+					actionTimerAttribute.maximumValue
 			) {
 				controlState.actionPauseSet.add(PAUSE_RENDERQUEUE);
 				Promise.resolve(this.executeQueuedAction(actorData)).then(
@@ -106,9 +107,9 @@ export default class CombatManagerSystem implements GameSystem {
 
 		startRenderQueue();
 
-		const rcvyAttr = sourceActorState.attributes.recovery;
-		rcvyAttr.maximumValue = actionToExecute.recovery || 0.5;
-		rcvyAttr.currentValue = 0;
+		const actionTimerAttribute = sourceActorState.attributes.actionTimer;
+		actionTimerAttribute.maximumValue = actionToExecute.recovery || 0.5;
+		actionTimerAttribute.currentValue = 0;
 	}
 }
 

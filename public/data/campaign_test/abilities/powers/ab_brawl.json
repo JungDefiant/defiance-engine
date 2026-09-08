@@ -7,16 +7,22 @@
 	"castSfxURL": "",
 	"hitSfxURL": "",
 	"trigger": "onActionExecute",
-	"descriptors": ["power", "single", "melee", "impact", "innate", "attack"],
+	"descriptors": [
+		"power",
+		"single",
+		"melee",
+		"impact",
+		"innate",
+		"attack"
+	],
 	"target": "single_en",
-	"recovery": 4,
+	"recovery": 2,
 	"cost": 0,
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"min": 2,
-				"max": 6
+				"amount": 8
 			}
 		},
 		{
@@ -24,9 +30,9 @@
 			"variables": {
 				"effects": [
 					{
-						"id": "extraDamageMultiplier",
+						"id": "damage",
 						"variables": {
-							"amount": 0.25
+							"amount": 8
 						}
 					}
 				]

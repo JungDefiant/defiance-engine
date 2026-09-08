@@ -78,10 +78,10 @@ export async function startCombat(encId: string): Promise<void> {
 
 	for (const eid of query(gameScene.world, [actorStateComponentArray])) {
 		const actorData = actorStateComponentArray[eid];
-		const rcvyAttr = actorData.attributes.recovery;
+		const actionTimerAttribute = actorData.attributes.actionTimer;
 		const initRange = Math.random() * START_RECOVERY_RANGE;
-		rcvyAttr.maximumValue = START_RECOVERY + initRange;
-		rcvyAttr.currentValue = 0;
+		actionTimerAttribute.maximumValue = START_RECOVERY + initRange;
+		actionTimerAttribute.currentValue = 0;
 	}
 
 	controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
