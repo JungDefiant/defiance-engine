@@ -231,7 +231,7 @@ export enum AbilityTrigger {
 }
 
 export enum AbilityDescriptor {
-	// Ability Type
+	// Type
 	power = "power",
 	feat = "feat",
 	basic = "basic",
@@ -242,13 +242,20 @@ export enum AbilityDescriptor {
 	direct = "direct",
 	ranged = "ranged",
 	melee = "melee",
-	// Effect Type
+	// Type
 	impact = "impact",
 	lethal = "lethal",
-	// Source Type
+	burn = "burn",
+	toxic = "toxic",
+	psychic = "psychic",
+	// Type
 	innate = "innate",
 	weapon = "weapon",
 	device = "device",
+	mutation = "mutation",
+	technique = "technique",
+	invocation = "invocation",
+	cybernetic = "cybernetic",
 	// Trigger
 	attack = "attack",
 	action = "action",

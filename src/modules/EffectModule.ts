@@ -7,23 +7,23 @@ import ActorStateComponent, {
 	EffectVariable,
 } from "src/components/ActorStateComponent";
 import { Themes } from "src/gui/Themes";
+import { EffectFeedbackDetails } from "src/types/AbilityTypes";
 import { clamp } from "./Utils";
 import { addFloatingTextRQE } from "./RenderModule";
 import { defeatActor } from "./CombatModule";
 import { getUserInterfaceState } from "./GameStateModule";
 import { getAbilityEffectProcessor } from "./ProcessorModule";
+import {
+	EffectFeedbackStyle,
+	EffectFeedbackStyles,
+} from "src/types/UserInterfaceTypes";
 
 export interface EffectFunctionProps {
 	source: ActorStateComponent;
 	target: ActorStateComponent;
 	descriptors: AbilityDescriptor[];
 	effectVariables: { [index: string]: EffectVariable };
-}
-
-export interface EffectFeedbackDetails {
-	floatingText: string;
-	floatingTextColor: string;
-	combatLogText: string;
+	effectFeedbackDetails: EffectFeedbackDetails;
 }
 
 export function processAbilityEffects(
@@ -32,12 +32,19 @@ export function processAbilityEffects(
 	abilityData: AbilityData,
 	context?: { [index: string]: EffectVariable },
 ) {
-	let effectFeedbackDetails;
+	const effectFeedbackDetails: EffectFeedbackDetails = {
+		sourceName: sourceData.name,
+		targetName: targetData.name,
+		criticalHits: 0,
+		totalDamage: 0,
+		totalHealing: 0,
+		statusEffects: new Set<string>(),
+	};
 	const userInterfaceState = getUserInterfaceState();
 	abilityData.effectData.forEach((effectData) => {
 		const effectProcessor =
 			getAbilityEffectProcessor().getProcessorFunction(effectData.id);
-		effectFeedbackDetails = effectProcessor({
+		effectProcessor({
 			source: sourceData,
 			target: targetData,
 			descriptors: abilityData.descriptors,
@@ -45,18 +52,68 @@ export function processAbilityEffects(
 				...effectData.variables,
 				...context,
 			},
+			effectFeedbackDetails,
 		});
-		effectFeedbackDetails.forEach((effectFeedbackDetails) => {
-			addFloatingTextRQE(
-				targetData.entityId,
-				effectFeedbackDetails.floatingText,
-				effectFeedbackDetails.floatingTextColor,
-			);
-			userInterfaceState.combatHud.addCombatLogEntry(
-				`${sourceData.name} (${abilityData.name})`,
-				effectFeedbackDetails.combatLogText,
-			);
-		});
+	});
+
+	if (effectFeedbackDetails.criticalHits > 0) {
+		const effectFeedbackStyle = EffectFeedbackStyles.get(
+			"critical",
+		) as EffectFeedbackStyle;
+		addFloatingTextRQE(
+			targetData.entityId,
+			effectFeedbackStyle.floatingText(effectFeedbackDetails),
+			effectFeedbackStyle.floatingTextColor,
+		);
+		userInterfaceState.combatHud.addCombatLogEntry(
+			`${sourceData.name} (${abilityData.name})`,
+			effectFeedbackStyle.combatLogText(effectFeedbackDetails),
+		);
+	}
+
+	if (effectFeedbackDetails.totalDamage > 0) {
+		const effectFeedbackStyle = EffectFeedbackStyles.get(
+			"damage",
+		) as EffectFeedbackStyle;
+		addFloatingTextRQE(
+			targetData.entityId,
+			effectFeedbackStyle.floatingText(effectFeedbackDetails),
+			effectFeedbackStyle.floatingTextColor,
+		);
+		userInterfaceState.combatHud.addCombatLogEntry(
+			`${sourceData.name} (${abilityData.name})`,
+			effectFeedbackStyle.combatLogText(effectFeedbackDetails),
+		);
+	}
+
+	if (effectFeedbackDetails.totalHealing > 0) {
+		const effectFeedbackStyle = EffectFeedbackStyles.get(
+			"healing",
+		) as EffectFeedbackStyle;
+		addFloatingTextRQE(
+			targetData.entityId,
+			effectFeedbackStyle.floatingText(effectFeedbackDetails),
+			effectFeedbackStyle.floatingTextColor,
+		);
+		userInterfaceState.combatHud.addCombatLogEntry(
+			`${sourceData.name} (${abilityData.name})`,
+			effectFeedbackStyle.combatLogText(effectFeedbackDetails),
+		);
+	}
+
+	effectFeedbackDetails.statusEffects.forEach((statusEffect) => {
+		const effectFeedbackStyle = EffectFeedbackStyles.get(
+			statusEffect,
+		) as EffectFeedbackStyle;
+		addFloatingTextRQE(
+			targetData.entityId,
+			effectFeedbackStyle.floatingText(effectFeedbackDetails),
+			effectFeedbackStyle.floatingTextColor,
+		);
+		userInterfaceState.combatHud.addCombatLogEntry(
+			`${sourceData.name} (${abilityData.name})`,
+			effectFeedbackStyle.combatLogText(effectFeedbackDetails),
+		);
 	});
 }
 
@@ -74,9 +131,7 @@ export function triggerFeatEffects(
 	});
 }
 
-export function applyDamageEffect(
-	props: EffectFunctionProps,
-): EffectFeedbackDetails[] {
+export function applyDamageEffect(props: EffectFunctionProps) {
 	const targetLifeAttribute = props.target.attributes.life;
 	const targetResistAttribute = props.target.attributes.resist;
 
@@ -124,19 +179,10 @@ export function applyDamageEffect(
 		defeatActor(props.target);
 	}
 
-	const damageString = totalDamage.toString();
-	return [
-		{
-			floatingText: damageString,
-			floatingTextColor: Themes.secondary2,
-			combatLogText: `Inflicts ${damageString} Damage to ${props.target.name}!`,
-		},
-	];
+	props.effectFeedbackDetails.totalDamage += totalDamage;
 }
 
-export function applyHealEffect(
-	props: EffectFunctionProps,
-): EffectFeedbackDetails[] {
+export function applyHealEffect(props: EffectFunctionProps) {
 	const targetLifeAttribute = props.target.attributes.life;
 	const healing = props.effectVariables["healing"] as number;
 
@@ -158,51 +204,32 @@ export function applyHealEffect(
 		targetLifeAttribute.maximumValue,
 	);
 
-	const healingString = healing.toString();
-	return [
-		{
-			floatingText: healingString,
-			floatingTextColor: Themes.success,
-			combatLogText: `Restores ${healingString} Life to ${props.target.name}.`,
-		},
-	];
+	props.effectFeedbackDetails.totalHealing += healing;
 }
 
-export function applyStatusEffect(
-	props: EffectFunctionProps,
-): EffectFeedbackDetails[] {
+export function applyStatusEffect(props: EffectFunctionProps) {
 	const statusId = props.effectVariables["statusId"] as string;
-	return [
-		{
-			floatingText: statusId,
-			floatingTextColor: Themes.success,
-			combatLogText: `Inflicts ${statusId} to ${props.target.name}.`,
-		},
-	];
+	props.effectFeedbackDetails.statusEffects.add(statusId);
 }
 
-export function applyCriticalEffect(
-	props: EffectFunctionProps,
-): EffectFeedbackDetails[] {
+export function applyCriticalEffect(props: EffectFunctionProps) {
 	const criticalAttribute = props.source.attributes.critical;
 	const criticalEffects = props.effectVariables["effects"] as EffectData[];
 	const criticalRoll = RandomRange(1, 100) / 100;
 	if (criticalRoll <= criticalAttribute.currentValue) {
-		const criticalEffectFeedbackDetails: EffectFeedbackDetails[] = [];
 		criticalEffects.forEach((effectData) => {
 			const effectProcessor =
 				getAbilityEffectProcessor().getProcessorFunction(effectData.id);
-			const effectFeedbackDetails = effectProcessor({
+			effectProcessor({
 				source: props.source,
 				target: props.target,
 				descriptors: props.descriptors,
 				effectVariables: {
 					...effectData.variables,
 				},
+				effectFeedbackDetails: props.effectFeedbackDetails,
 			});
-			criticalEffectFeedbackDetails.push(...effectFeedbackDetails);
 		});
-		return criticalEffectFeedbackDetails;
+		props.effectFeedbackDetails.criticalHits += 1;
 	}
-	return [];
 }

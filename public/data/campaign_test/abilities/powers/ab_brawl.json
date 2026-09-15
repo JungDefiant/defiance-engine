@@ -16,13 +16,13 @@
 		"attack"
 	],
 	"target": "single_en",
-	"recovery": 2,
+	"recovery": 4,
 	"cost": 0,
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"amount": 8
+				"amount": 4
 			}
 		},
 		{
@@ -32,7 +32,7 @@
 					{
 						"id": "damage",
 						"variables": {
-							"amount": 8
+							"amount": 4
 						}
 					}
 				]

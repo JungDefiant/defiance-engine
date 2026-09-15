@@ -10,7 +10,7 @@ import {
 } from "@babylonjs/gui";
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
-import { ActionSlot } from "src/gui/elements/ActionSlot";
+import { ActionSlot } from "src/gui/abstract/ActionSlot";
 import { getPublicRoot } from "src/modules/Utils";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import { startQueueActionPlayer } from "src/modules/CombatModule";
