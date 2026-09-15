@@ -6,12 +6,9 @@ import {
 	applyHealEffect,
 	applyStatusEffect,
 	EffectFunctionProps,
-	EffectFeedbackDetails,
 } from "src/modules/EffectModule";
 
-export type AbilityEffectFunction = (
-	props: EffectFunctionProps,
-) => EffectFeedbackDetails[];
+export type AbilityEffectFunction = (props: EffectFunctionProps) => void;
 
 export class AbilityEffectProcessor implements Processor {
 	private processorFunctions: Record<
