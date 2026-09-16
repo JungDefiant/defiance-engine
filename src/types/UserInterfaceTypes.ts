@@ -19,7 +19,7 @@ export const EffectFeedbackStyles = new Map<string, EffectFeedbackStyle>([
 		{
 			floatingTextColor: Themes.secondary2,
 			floatingText: (context: EffectFeedbackDetails) => {
-				return `CRIT${context.criticalHits > 1 && ` x${context.criticalHits}`}!`;
+				return `CRIT${context.criticalHits > 1 ? ` x${context.criticalHits}` : ""}!`;
 			},
 			combatLogText: (context) => {
 				if (context.criticalHits == 1) {

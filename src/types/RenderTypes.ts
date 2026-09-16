@@ -113,7 +113,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 				},
 			);
 			floatingTextUI.topInPixels = 0;
-			floatingTextUI.widthInPixels = 128;
+			floatingTextUI.widthInPixels = 400;
 			floatingTextUI.heightInPixels = 128;
 			floatingTextUI.color = this.color;
 			floatingTextUI.alpha = 1;

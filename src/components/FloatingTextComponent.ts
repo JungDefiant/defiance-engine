@@ -1,4 +1,4 @@
-import { TextBlock } from "@babylonjs/gui";
+import { Control, TextBlock } from "@babylonjs/gui";
 import { Component } from "./Component";
 import { EntityId } from "bitecs";
 
@@ -19,6 +19,7 @@ export default class FloatingTextComponent
 		this.fadeRate = props?.fadeRate || 1;
 		this.textSpeed = props?.textSpeed || 1;
 		this.targetEntityId = props?.targetEntityId || -1;
+		this.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 	}
 
 	public getValue(): TextBlock {
