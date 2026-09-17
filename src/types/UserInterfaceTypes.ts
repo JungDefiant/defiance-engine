@@ -35,7 +35,7 @@ export const EffectFeedbackStyles = new Map<string, EffectFeedbackStyle>([
 	[
 		"damage",
 		{
-			floatingTextColor: Themes.neutral1,
+			floatingTextColor: Themes.neutral2,
 			floatingText: (context: EffectFeedbackDetails) => {
 				return `${context.totalDamage}`;
 			},
