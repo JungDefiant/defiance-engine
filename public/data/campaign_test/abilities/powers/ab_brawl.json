@@ -16,8 +16,9 @@
 		"attack"
 	],
 	"target": "single_en",
-	"recovery": 4,
+	"recoveryTime": 4,
 	"cost": 0,
+	"costAttribute": "",
 	"effectData": [
 		{
 			"id": "damage",

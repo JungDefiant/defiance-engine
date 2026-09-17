@@ -1,14 +1,20 @@
 import { inject } from "tsyringe";
 import GameSystem from "src/systems/GameSystem";
 import { query } from "bitecs";
-import ActorStateComponent from "src/components/ActorStateComponent";
+import ActorStateComponent, {
+	AbilityTrigger,
+} from "src/components/ActorStateComponent";
 import {
 	PAUSE_GAMEOVER,
 	PAUSE_RENDERQUEUE,
 	PAUSE_VICTORYSCREEN,
 } from "src/constants/GeneralConstants";
 import { decideNPCAction } from "src/modules/CombatModule";
-import { processAbilityEffects } from "src/modules/EffectModule";
+import {
+	processAbilityEffects,
+	spendAbilityCost,
+	triggerFeatEffects,
+} from "src/modules/EffectModule";
 import { addAbilityRQEs, startRenderQueue } from "src/modules/RenderModule";
 import { GameScene } from "src/scenes/GameScene";
 import {
@@ -63,7 +69,7 @@ export default class CombatManagerSystem implements GameSystem {
 					actionTimerAttribute.maximumValue
 			) {
 				controlState.actionPauseSet.add(PAUSE_RENDERQUEUE);
-				Promise.resolve(this.executeQueuedAction(actorData)).then(
+				Promise.resolve(this.performQueuedAction(actorData)).then(
 					() => {
 						if (gameplayState.enemyEntityIds.includes(eid)) {
 							decideNPCAction(actorData);
@@ -75,14 +81,14 @@ export default class CombatManagerSystem implements GameSystem {
 		}
 	}
 
-	private async executeQueuedAction(
+	private async performQueuedAction(
 		sourceActorState: ActorStateComponent,
 	): Promise<void> {
 		const controlState = getControlState();
 		const actorStateComponentArray = getActorStateComponentArray();
 
-		const actionToExecute = await sourceActorState.queuedAction;
-		if (!actionToExecute) {
+		const actionToPerform = await sourceActorState.queuedAction;
+		if (!actionToPerform) {
 			controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 			return;
 		}
@@ -93,7 +99,32 @@ export default class CombatManagerSystem implements GameSystem {
 			sourceActorState.entityId,
 			actionTargetIds,
 			sourceActorState,
-			actionToExecute,
+			actionToPerform,
+		);
+
+		const actionContext = {
+			target: `${actionToPerform.target}`,
+			cost: actionToPerform.cost || 0,
+			costAttribute: actionToPerform.costAttribute || "",
+			recoveryTime: actionToPerform.recoveryTime || 0,
+			descriptors: actionToPerform.descriptors,
+			effects: actionToPerform.effectData,
+		};
+
+		const isAbilityCostSpent = spendAbilityCost(
+			sourceActorState,
+			actionContext,
+		);
+		if (!isAbilityCostSpent) {
+			//
+			return;
+		}
+
+		triggerFeatEffects(
+			sourceActorState,
+			sourceActorState,
+			AbilityTrigger.onActionPerform,
+			actionContext,
 		);
 
 		actionTargetIds.forEach((eid) => {
@@ -101,14 +132,15 @@ export default class CombatManagerSystem implements GameSystem {
 			processAbilityEffects(
 				sourceActorState,
 				targetActorState,
-				actionToExecute,
+				actionToPerform,
+				actionContext,
 			);
 		});
 
 		startRenderQueue();
 
 		const actionTimerAttribute = sourceActorState.attributes.actionTimer;
-		actionTimerAttribute.maximumValue = actionToExecute.recovery || 0.5;
+		actionTimerAttribute.maximumValue = actionToPerform.recoveryTime || 0.5;
 		actionTimerAttribute.currentValue = 0;
 	}
 }

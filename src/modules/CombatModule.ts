@@ -166,7 +166,7 @@ export async function startQueueActionPlayer(
 		? actorData.itemData && actorData.itemData[actionInd]
 		: actorData.powerData[actionInd])) as AbilityData;
 
-	if (actionData.trigger != AbilityTrigger.onActionExecute) {
+	if (actionData.trigger != AbilityTrigger.onActionPerform) {
 		return;
 	}
 
