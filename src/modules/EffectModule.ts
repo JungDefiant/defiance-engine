@@ -215,7 +215,7 @@ export function applyStatusEffect(props: EffectFunctionProps) {
 export function applyCriticalEffect(props: EffectFunctionProps) {
 	const criticalAttribute = props.source.attributes.critical;
 	const criticalEffects = props.effectVariables["effects"] as EffectData[];
-	const criticalRoll = RandomRange(1, 100) / 100;
+	const criticalRoll = Math.round(RandomRange(1, 100)) / 100;
 	if (criticalRoll <= criticalAttribute.currentValue) {
 		criticalEffects.forEach((effectData) => {
 			const effectProcessor =

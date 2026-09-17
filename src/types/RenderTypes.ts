@@ -1,6 +1,7 @@
 import { TextBlock } from "@babylonjs/gui";
 import { addComponent, addEntity, query, removeEntity, set } from "bitecs";
 import FloatingTextComponent from "src/components/FloatingTextComponent";
+import { easeInExpo, easeOutExpo } from "src/constants/Utilities";
 import { Themes } from "src/gui/Themes";
 import {
 	getCharacterSpriteComponentArray,
@@ -72,6 +73,8 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 	public readonly isBlocking: boolean;
 	public readonly duration?: number | undefined;
 
+	public currentLifetime: number = 0;
+
 	public constructor(
 		targetEntityIds: number[],
 		text: string,
@@ -112,13 +115,16 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 					targetEntityId: entityId,
 				},
 			);
-			floatingTextUI.topInPixels = 0;
-			floatingTextUI.widthInPixels = 128;
+			floatingTextUI.widthInPixels = 400;
 			floatingTextUI.heightInPixels = 128;
 			floatingTextUI.color = this.color;
 			floatingTextUI.alpha = 1;
+			floatingTextUI.topInPixels = 0;
 			floatingTextUI.linkOffsetYInPixels = 0;
 			floatingTextUI.style = Themes.typography.header1;
+			floatingTextUI.shadowOffsetY = 2;
+			floatingTextUI.shadowBlur = 4;
+			floatingTextUI.shadowColor = Themes.primary3;
 
 			if (gameplayState.playerEntityIds.includes(entityId)) {
 				const playerGUI = playerGuiComponentArray[entityId];
@@ -147,13 +153,15 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 			floatingTextComponentArray,
 		])) {
 			const floatingText = floatingTextComponentArray[entityId];
-
-			floatingText.alpha = Math.max(
-				floatingText.alpha - floatingText.fadeRate * deltaTime,
+			this.currentLifetime += deltaTime;
+			const normalizedLifetime =
+				this.currentLifetime / (this.duration || this.currentLifetime);
+			const easingFactor = easeInExpo(normalizedLifetime);
+			const newAlpha = Math.max(
+				floatingText.alpha - floatingText.fadeRate * easingFactor,
 				0,
 			);
-
-			// floatingText.topInPixels -= floatingText.textSpeed * deltaTime;
+			floatingText.alpha = newAlpha;
 		}
 	}
 	public clearRenderQueueState(renderQueueState: RenderQueueState): void {
