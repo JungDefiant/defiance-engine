@@ -29,7 +29,7 @@ import {
 } from "./ComponentModule";
 import { setCombatGameMode, setExploreGameMode } from "./SceneModule";
 import {
-	clearControlActionPause,
+	clearActionPause,
 	resetCombatModeActionManager,
 } from "./ControlModule";
 import { checkEventByTrigger } from "./EventModule";
@@ -94,7 +94,7 @@ export function endCombat() {
 	clearCombatHudEntries();
 	disposeEnemyEntities();
 	resetPlayerActorState();
-	clearControlActionPause();
+	clearActionPause();
 	resetCombatStateToInactive();
 	setExploreGameMode();
 	checkEventByTrigger("OnCombatEnd");

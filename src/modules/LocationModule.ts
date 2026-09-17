@@ -13,7 +13,10 @@ import {
 } from "@babylonjs/core";
 import { Button, Control, Vector2WithInfo } from "@babylonjs/gui";
 import { getPublicRoot } from "./Utils";
-import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
+import {
+	BASE_MOVEMENT_SPEED,
+	PAUSE_LOCATIONTRANSITION,
+} from "src/constants/GeneralConstants";
 import { addComponent, set } from "bitecs";
 import { getAllSceneNodes, getSceneNode } from "./SceneModule";
 import {
@@ -29,6 +32,11 @@ import {
 } from "./ComponentModule";
 import { startDialogue } from "./DialogueModule";
 import { checkEventByTrigger } from "./EventModule";
+import {
+	attachCameraControl,
+	clearControlPause,
+	detachCameraControl,
+} from "./ControlModule";
 
 export async function loadLocation(
 	locationId: string,
@@ -196,11 +204,17 @@ export async function transitionToNewLocation(destinationId: string) {
 
 	const viewNode = await getSceneNode(newLocation.exploreViewNodeId);
 	if (viewNode && gameScene.activeCamera) {
+		detachCameraControl();
+		controlState.controlPauseSet.add(PAUSE_LOCATIONTRANSITION);
+		const camera = gameScene.activeCamera as UniversalCamera;
+		camera.target = viewNode.getPositionExpressedInLocalSpace();
 		const entityMovement = new EntityMovementComponent(
-			gameScene.activeCamera.position,
+			camera.position,
 			viewNode.getPositionExpressedInLocalSpace(),
 			BASE_MOVEMENT_SPEED,
 			() => {
+				attachCameraControl();
+				clearControlPause();
 				finishTransitionToNewLocation();
 			},
 		);

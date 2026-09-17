@@ -4,10 +4,9 @@ import {
 	ExecuteCodeAction,
 	UniversalCamera,
 } from "@babylonjs/core";
-import GameplayState from "src/states/GameplayState";
-import { getGameCanvas } from "./SceneModule";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
+import { getGameCanvas } from "./SceneModule";
 import {
 	resetTargeting,
 	setTacticalPause,
@@ -22,21 +21,24 @@ import {
 import { setSelectedCharacter } from "./CharacterModule";
 import { getComponentRegistry } from "./ComponentModule";
 
-export function clearControlActionPause() {
+export function clearActionPause() {
 	const controlState = getControlState();
 	if (controlState.actionPauseSet.size > 0) {
 		controlState.actionPauseSet.clear();
 	}
 }
 
-export function resetExploreModeControls() {
-	const gameScene = getGameScene();
-	const userInterfaceState = getUserInterfaceState();
+export function clearControlPause() {
 	const controlState = getControlState();
+	if (controlState.controlPauseSet.size > 0) {
+		controlState.controlPauseSet.clear();
+	}
+}
 
-	const camera = gameScene.activeCamera as UniversalCamera;
+export function attachCameraControl(): boolean {
 	const gameCanvas = getGameCanvas();
-
+	const gameScene = getGameScene();
+	const camera = gameScene.activeCamera as UniversalCamera;
 	if (camera && gameCanvas) {
 		camera.attachControl(gameCanvas);
 		gameScene.onPointerObservable.add((eventData) => {
@@ -44,6 +46,28 @@ export function resetExploreModeControls() {
 			// For blocking out horizontal rotation, simply use y instead of x
 			camera.cameraRotation.x = 0;
 		});
+		return true;
+	} else {
+		return false;
+	}
+}
+
+export function detachCameraControl(): boolean {
+	const gameScene = getGameScene();
+	const camera = gameScene.activeCamera as UniversalCamera;
+	if (camera) {
+		camera.detachControl();
+		return true;
+	} else {
+		return false;
+	}
+}
+
+export function resetExploreModeControls() {
+	const userInterfaceState = getUserInterfaceState();
+	const controlState = getControlState();
+
+	if (attachCameraControl()) {
 		userInterfaceState.sceneGUI.rootContainer.isVisible = true;
 		controlState.exploreGUIControls.forEach((child) => {
 			child.isVisible = true;
@@ -53,7 +77,6 @@ export function resetExploreModeControls() {
 
 export function resetExploreModeActionManager() {
 	const gameScene = getGameScene();
-	const gameplayState = getGameplayState();
 	const controlState = getControlState();
 
 	if (controlState.actionManager) {
@@ -69,7 +92,7 @@ export function resetExploreModeActionManager() {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: controlState.controlSettings.switchPlayerLeft,
 			},
-			getSwitchPlayerFunction(gameplayState, false),
+			getSwitchPlayerFunction(false),
 		),
 	);
 
@@ -79,7 +102,7 @@ export function resetExploreModeActionManager() {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: controlState.controlSettings.switchPlayerRight,
 			},
-			getSwitchPlayerFunction(gameplayState, true),
+			getSwitchPlayerFunction(true),
 		),
 	);
 
@@ -88,13 +111,10 @@ export function resetExploreModeActionManager() {
 }
 
 export function resetCombatModeControls() {
-	const gameScene = getGameScene();
 	const userInterfaceState = getUserInterfaceState();
 	const controlState = getControlState();
-	const camera = gameScene.activeCamera as UniversalCamera;
 
-	if (camera) {
-		camera.detachControl();
+	if (detachCameraControl()) {
 		userInterfaceState.sceneGUI.rootContainer.isVisible = true;
 		controlState.exploreGUIControls.forEach((child) => {
 			child.isVisible = false;
@@ -131,6 +151,9 @@ export async function resetCombatModeActionManager() {
 					parameter: controlState.controlSettings.powerActions[i],
 				},
 				() => {
+					if (controlState.controlPauseSet.size > 0) {
+						return;
+					}
 					startQueueActionPlayer(actorState.entityId, i);
 				},
 			),
@@ -147,6 +170,9 @@ export async function resetCombatModeActionManager() {
 							controlState.controlSettings.deviceActions[i],
 					},
 					() => {
+						if (controlState.controlPauseSet.size > 0) {
+							return;
+						}
 						startQueueActionPlayer(actorState.entityId, i);
 					},
 				),
@@ -161,6 +187,9 @@ export async function resetCombatModeActionManager() {
 				parameter: controlState.controlSettings.tacticalPause,
 			},
 			() => {
+				if (controlState.controlPauseSet.size > 0) {
+					return;
+				}
 				setTacticalPause(
 					!controlState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
 				);
@@ -174,7 +203,7 @@ export async function resetCombatModeActionManager() {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: controlState.controlSettings.switchPlayerLeft,
 			},
-			getSwitchPlayerFunction(gameplayState, false, true),
+			getSwitchPlayerFunction(false, true),
 		),
 	);
 
@@ -184,7 +213,7 @@ export async function resetCombatModeActionManager() {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: controlState.controlSettings.switchPlayerRight,
 			},
-			getSwitchPlayerFunction(gameplayState, true, true),
+			getSwitchPlayerFunction(true, true),
 		),
 	);
 
@@ -207,11 +236,15 @@ export function resetDialogueModeControls() {
 }
 
 function getSwitchPlayerFunction(
-	gameplayState: GameplayState,
 	isRightSelection: boolean,
 	isCombatMode?: boolean,
 ): (evt: ActionEvent) => void {
 	return () => {
+		const gameplayState = getGameplayState();
+		const controlState = getControlState();
+		if (controlState.controlPauseSet.size > 0) {
+			return;
+		}
 		let currentSelectedPlayerEntityIdIndex =
 			gameplayState.playerEntityIds.findIndex(
 				(x) => x === gameplayState.selectedPlayerEID,
