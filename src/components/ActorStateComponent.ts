@@ -5,12 +5,13 @@ import { getPublicRoot } from "src/modules/Utils";
 import CampaignState from "src/states/CampaignState";
 import { Component } from "./Component";
 
-const BASE_REGEN_TICKS: number = 4;
-const BASE_RECOVERY_TICKS: number = 4;
+const BASE_LIFE_REGEN_TICKS: number = 4;
+const BASE_WILL_REGEN_TICKS: number = 4;
 const BASE_ATTRIBUTES = {
-	life: 60,
+	lifePoints: 60,
 	lifePerPoint: 10,
 	willPerPoint: 5,
+	itemPoints: 40,
 	speed: 0.6,
 	speedPerPoint: 0.1,
 	defensePerPoint: 0.02,
@@ -18,6 +19,23 @@ const BASE_ATTRIBUTES = {
 	damage: -0.4,
 	damagePerPoint: 0.1,
 };
+
+export interface LoadedAbilityJson {
+	id: string;
+	name: string;
+	backstory: string;
+	description: string;
+	spriteUrl: string;
+	attributes: {
+		might: number;
+		impulse: number;
+		guile: number;
+		heart: number;
+	};
+	powerIds: string[];
+	featIds: string[];
+	tactics: TacticsData[];
+}
 
 export default class ActorStateComponent implements Component {
 	entityId: EntityId;
@@ -38,7 +56,7 @@ export default class ActorStateComponent implements Component {
 	tactics?: TacticsData[];
 	queuedAction?: Nullable<AbilityData>;
 
-	public constructor(entityId: number, initialData: any) {
+	public constructor(entityId: number, initialData: LoadedAbilityJson) {
 		this.entityId = entityId;
 		this.id = initialData.id;
 		this.name = initialData.name;
@@ -51,7 +69,7 @@ export default class ActorStateComponent implements Component {
 		const initialGuileValue = initialData.attributes.guile;
 		const initialHeartValue = initialData.attributes.heart;
 		const initialLifeValue =
-			BASE_ATTRIBUTES.life +
+			BASE_ATTRIBUTES.lifePoints +
 			BASE_ATTRIBUTES.lifePerPoint * initialMightValue;
 		const initialWillValue =
 			BASE_ATTRIBUTES.willPerPoint * initialHeartValue;
@@ -84,15 +102,20 @@ export default class ActorStateComponent implements Component {
 				maximumValue: initialHeartValue,
 				currentValue: initialHeartValue,
 			} as ActorAttribute,
-			life: {
+			lifePoints: {
 				baseValue: initialLifeValue,
 				maximumValue: initialLifeValue,
 				currentValue: initialLifeValue,
 			} as ActorAttribute,
-			will: {
+			willPoints: {
 				baseValue: initialWillValue,
 				maximumValue: initialWillValue,
 				currentValue: initialWillValue,
+			} as ActorAttribute,
+			itemPoints: {
+				baseValue: BASE_ATTRIBUTES.itemPoints,
+				maximumValue: BASE_ATTRIBUTES.itemPoints,
+				currentValue: BASE_ATTRIBUTES.itemPoints,
 			} as ActorAttribute,
 			speed: {
 				baseValue: initialSpeedValue,
@@ -114,12 +137,12 @@ export default class ActorStateComponent implements Component {
 				maximumValue: 0,
 				currentValue: 0,
 			} as ActorAttribute,
-			regen: {
+			lifeRegen: {
 				baseValue: 1,
 				maximumValue: 1,
 				currentValue: 1,
 			} as ActorAttribute,
-			recovery: {
+			willRegen: {
 				baseValue: 1,
 				maximumValue: 1,
 				currentValue: 1,
@@ -129,35 +152,57 @@ export default class ActorStateComponent implements Component {
 				maximumValue: 0,
 				currentValue: 0,
 			} as ActorAttribute,
-			regenTimer: {
-				baseValue: BASE_REGEN_TICKS,
-				maximumValue: BASE_REGEN_TICKS,
+			lifeRegenTimer: {
+				baseValue: BASE_LIFE_REGEN_TICKS,
+				maximumValue: BASE_LIFE_REGEN_TICKS,
 				currentValue: 0,
 			} as ActorAttribute,
-			recoveryTimer: {
-				baseValue: BASE_RECOVERY_TICKS,
-				maximumValue: BASE_RECOVERY_TICKS,
+			willRegenTimer: {
+				baseValue: BASE_WILL_REGEN_TICKS,
+				maximumValue: BASE_WILL_REGEN_TICKS,
 				currentValue: 0,
+			} as ActorAttribute,
+			willCostPerSecond: {
+				baseValue: 0,
+				maximumValue: 0,
+				currentValue: 0,
+			} as ActorAttribute,
+			willCostTimer: {
+				baseValue: 1,
+				maximumValue: 1,
+				currentValue: 1,
 			} as ActorAttribute,
 		};
 
 		const campaignState = container.resolve(CampaignState);
-		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
+		const thisActorState = this;
 
-		this.powerData = initialData.abilityIds.map(
-			async (powerDataId: string) => {
-				const response = await fetch(
-					`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${powerDataId}.json`,
-				);
-				const abData = await response.json();
+		for (let i = 0; i < initialData.powerIds.length; i++) {
+			const powerId = initialData.powerIds[i];
+			fetch(
+				`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${powerId}.json`,
+			)
+				.then((response) => {
+					return response.json();
+				})
+				.then((abilityData) => {
+					thisActorState.powerData.push(abilityData);
+				});
+		}
 
-				return abData as AbilityData;
-			},
-		);
+		for (let i = 0; i < initialData.featIds.length; i++) {
+			const featId = initialData.featIds[i];
+			fetch(
+				`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/feats/${featId}.json`,
+			)
+				.then((response) => {
+					return response.json();
+				})
+				.then((abilityData) => {
+					thisActorState.featData.push(abilityData);
+				});
+		}
 
-		// newActorData.itemData = initData.itemIds.map((el: string) => {
-		// 	return this.actionData.get(el);
-		// });
 		this.tactics = initialData.tactics;
 	}
 
@@ -190,12 +235,10 @@ export interface AbilityData {
 	descriptors: AbilityDescriptor[];
 	target: AbilityTarget;
 	effectData: EffectData[];
-	recovery?: number;
+	recoveryTime?: number;
 	cost?: number;
-	rechargeTime: number;
+	costAttribute?: string;
 	itemId?: string;
-	isConsumable?: boolean;
-	isToggle?: boolean;
 	iconURL?: string;
 	castVfxURL?: string;
 	hitVfxURL?: string;
@@ -206,6 +249,7 @@ export interface AbilityData {
 export type EffectVariable =
 	| string
 	| number
+	| boolean
 	| string[]
 	| number[]
 	| EffectData[];
@@ -224,10 +268,14 @@ export interface TacticsData {
 }
 
 export enum AbilityTrigger {
-	onActionExecute = "onActionExecute",
-	onActorEffectTaken = "onActorEffectTaken",
-	onActorEffectInflicted = "onActorEffectInflicted",
-	onActorDefeated = "onActorDefeated",
+	onActionPerform = "onActionPerform",
+	onActorResistEffect = "onActorResistEffect",
+	onActorInflictDamage = "onActorInflictDamage",
+	onActorGrantHealing = "onActorGrantHealing",
+	onActorLifeModify = "onActorLifeModify",
+	onActorDefeat = "onActorDefeated",
+	onActorRollCriticalHit = "onActorRollCriticalHit",
+	onActorScoreCriticalHit = "onActorScoreCriticalHit",
 }
 
 export enum AbilityDescriptor {
@@ -256,9 +304,10 @@ export enum AbilityDescriptor {
 	technique = "technique",
 	invocation = "invocation",
 	cybernetic = "cybernetic",
-	// Trigger
+	// Form
 	attack = "attack",
 	action = "action",
+	toggle = "toggle",
 }
 
 export enum AbilityTarget {

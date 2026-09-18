@@ -11,10 +11,10 @@
 		"guile": 4,
 		"heart": 4
 	},
-	"abilityIds": [
-		"ab_brawl"
+	"powerIds": [
+		"power_brawl"
 	],
-	"itemIds": [],
+	"featIds": [],
 	"tactics": [
 		{
 			"target": "single_en",

@@ -28,19 +28,23 @@ export default class ActorStateSystem implements GameSystem {
 			if (actorState.isDefeated) {
 				return;
 			}
-			this.tickAction(deltaTime, actorState);
-			this.tickRegen(deltaTime, actorState);
-			this.tickRecovery(deltaTime, actorState);
+			this.tickActionTimer(deltaTime, actorState);
+			this.tickLifeRegen(deltaTime, actorState);
+			this.tickWillRegen(deltaTime, actorState);
+			this.tickWillCostPerSecond(deltaTime, actorState);
 		}
 	}
 
-	private tickAction(deltaTime: number, actorData: ActorStateComponent) {
-		if (!actorData.queuedAction) {
+	private tickActionTimer(
+		deltaTime: number,
+		actorState: ActorStateComponent,
+	) {
+		if (!actorState.queuedAction) {
 			return;
 		}
 
-		const actionTimerAttribute = actorData.attributes.actionTimer;
-		const speedAttribute = actorData.attributes.speed;
+		const actionTimerAttribute = actorState.attributes.actionTimer;
+		const speedAttribute = actorState.attributes.speed;
 
 		if (
 			actionTimerAttribute.currentValue <
@@ -56,42 +60,71 @@ export default class ActorStateSystem implements GameSystem {
 		}
 	}
 
-	private tickRegen(deltaTime: number, actorData: ActorStateComponent) {
-		const regenTimerAttribute = actorData.attributes.regenTimer;
-		const lifeAttribute = actorData.attributes.life;
+	private tickLifeRegen(deltaTime: number, actorState: ActorStateComponent) {
+		const lifeRegenTimerAttribute = actorState.attributes.lifeRegenTimer;
+		const lifeAttribute = actorState.attributes.lifePoints;
 
 		if (lifeAttribute.currentValue < lifeAttribute.maximumValue) {
-			regenTimerAttribute.currentValue += deltaTime;
+			lifeRegenTimerAttribute.currentValue += deltaTime;
 
 			if (
-				regenTimerAttribute.currentValue >=
-				regenTimerAttribute.maximumValue
+				lifeRegenTimerAttribute.currentValue >=
+				lifeRegenTimerAttribute.maximumValue
 			) {
 				lifeAttribute.currentValue = Math.min(
 					lifeAttribute.currentValue + 1,
 					lifeAttribute.maximumValue,
 				);
-				regenTimerAttribute.currentValue = 0;
+				lifeRegenTimerAttribute.currentValue = 0;
 			}
 		}
 	}
 
-	private tickRecovery(deltaTime: number, actorData: ActorStateComponent) {
-		const recoveryTimerAttribute = actorData.attributes.recoveryTimer;
-		const willAttribute = actorData.attributes.will;
+	private tickWillRegen(deltaTime: number, actorState: ActorStateComponent) {
+		const willRegenTimerAttribute = actorState.attributes.willRegenTimer;
+		const willAttribute = actorState.attributes.willPoints;
 
 		if (willAttribute.currentValue < willAttribute.maximumValue) {
-			recoveryTimerAttribute.currentValue += deltaTime;
+			willRegenTimerAttribute.currentValue += deltaTime;
 
 			if (
-				recoveryTimerAttribute.currentValue >=
-				recoveryTimerAttribute.maximumValue
+				willRegenTimerAttribute.currentValue >=
+				willRegenTimerAttribute.maximumValue
 			) {
 				willAttribute.currentValue = Math.min(
 					willAttribute.currentValue + 1,
 					willAttribute.maximumValue,
 				);
-				recoveryTimerAttribute.currentValue = 0;
+				willRegenTimerAttribute.currentValue = 0;
+			}
+		}
+	}
+
+	private tickWillCostPerSecond(
+		deltaTime: number,
+		actorData: ActorStateComponent,
+	) {
+		const willCostPerSecondAttribute =
+			actorData.attributes.willCostPerSecond;
+		const willCostTimerAttribute = actorData.attributes.willCostTimer;
+		const willAttribute = actorData.attributes.willPoints;
+
+		if (willCostPerSecondAttribute.currentValue > 0) {
+			willCostTimerAttribute.currentValue += deltaTime;
+
+			if (
+				willCostTimerAttribute.currentValue >=
+				willCostTimerAttribute.maximumValue
+			) {
+				willAttribute.currentValue = Math.max(
+					willAttribute.currentValue -
+						willCostPerSecondAttribute.currentValue,
+					0,
+				);
+			}
+
+			if (willAttribute.currentValue === 0) {
+				// Disable toggles
 			}
 		}
 	}

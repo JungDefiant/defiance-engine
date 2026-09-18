@@ -25,7 +25,7 @@ export default class CombatHUD implements IHUD {
 	private combatLogStack: Nullable<StackPanel> = null;
 	private combatLogScrollbar: Nullable<ScrollBar> = null;
 
-	private abilitySlots: ActionSlot[] = [];
+	private powerSlots: ActionSlot[] = [];
 	private deviceSlots: ActionSlot[] = [];
 	private messageDisplayText: Nullable<TextBlock> = null;
 
@@ -67,34 +67,40 @@ export default class CombatHUD implements IHUD {
 		return this.rootContainer;
 	}
 
-	public async setActionBar(actorState: ActorStateComponent): Promise<void> {
+	public setActionBar(actorState: ActorStateComponent): void {
 		const controlState = getControlState();
 
 		if (!actorState) {
 			return;
 		}
 
-		for (let i = 0; i < this.abilitySlots.length; i++) {
-			const abilityData = await actorState.powerData[i];
-			const abilitySlot = this.abilitySlots[i];
-			if (!abilitySlot) {
+		for (let i = 0; i < this.powerSlots.length; i++) {
+			const powerData = actorState.powerData[i];
+			if (!powerData) {
+				break;
+			}
+
+			const powerSlot = this.powerSlots[i];
+			if (!powerSlot) {
 				continue;
 			}
 
-			if (abilityData) {
-				abilitySlot.setActionSlotIcon(abilityData.iconURL as string);
-				abilitySlot.setOnClickEvent(() =>
+			console.log("POWER DATA", powerData);
+
+			if (powerData) {
+				powerSlot.setActionSlotIcon(powerData.iconURL as string);
+				powerSlot.setOnClickEvent(() =>
 					startQueueActionPlayer(actorState.entityId, i),
 				);
-				abilitySlot.setActionLabelText(
+				powerSlot.setActionLabelText(
 					String.fromCharCode(
 						controlState.controlSettings.powerActions[i],
 					).toUpperCase(),
 				);
 			} else {
-				abilitySlot.setActionSlotIcon("");
-				abilitySlot.setOnClickEvent(() => {});
-				abilitySlot.setActionLabelText("");
+				powerSlot.setActionSlotIcon("");
+				powerSlot.setOnClickEvent(() => {});
+				powerSlot.setActionLabelText("");
 			}
 		}
 
@@ -103,7 +109,11 @@ export default class CombatHUD implements IHUD {
 		}
 
 		for (let i = 0; i < this.deviceSlots.length; i++) {
-			const deviceData = await actorState.itemData[i];
+			const deviceData = actorState.itemData[i];
+			if (!deviceData) {
+				break;
+			}
+
 			const deviceSlot = this.deviceSlots[i];
 			if (!deviceSlot) {
 				continue;
@@ -232,7 +242,7 @@ export default class CombatHUD implements IHUD {
 				() => {},
 			);
 			actionAbilityStack.addControl(actionSlot.rootContainer);
-			this.abilitySlots.push(actionSlot);
+			this.powerSlots.push(actionSlot);
 		}
 
 		const actionDeviceStack = new StackPanel(this.actionDeviceStackName);

@@ -1,4 +1,9 @@
-export type AbilityEffectType = "damage" | "healing" | "status" | "critical";
+export type AbilityEffectType =
+	| "damage"
+	| "healing"
+	| "status"
+	| "critical"
+	| "modifyContextVariable";
 
 export interface EffectFeedbackDetails {
 	sourceName: string;

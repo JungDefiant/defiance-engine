@@ -122,7 +122,7 @@ export function resetCombatModeControls() {
 	}
 }
 
-export async function resetCombatModeActionManager() {
+export function resetCombatModeActionManager() {
 	const gameScene = getGameScene();
 	const gameplayState = getGameplayState();
 	const controlState = getControlState();
@@ -132,7 +132,7 @@ export async function resetCombatModeActionManager() {
 			ActorStateComponent.name,
 			gameplayState.selectedPlayerEID,
 		);
-	await userInterfaceState.combatHud.setActionBar(actorState);
+	userInterfaceState.combatHud.setActionBar(actorState);
 
 	resetTargeting();
 
@@ -154,7 +154,7 @@ export async function resetCombatModeActionManager() {
 					if (controlState.controlPauseSet.size > 0) {
 						return;
 					}
-					startQueueActionPlayer(actorState.entityId, i);
+					startQueueActionPlayer(actorState.entityId, i, false);
 				},
 			),
 		);
@@ -173,7 +173,7 @@ export async function resetCombatModeActionManager() {
 						if (controlState.controlPauseSet.size > 0) {
 							return;
 						}
-						startQueueActionPlayer(actorState.entityId, i);
+						startQueueActionPlayer(actorState.entityId, i, true);
 					},
 				),
 			);

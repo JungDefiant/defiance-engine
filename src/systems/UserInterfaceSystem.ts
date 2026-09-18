@@ -55,13 +55,13 @@ export default class UserInterfaceSystem implements GameSystem {
 		);
 
 		playerGui.setLifeBarFill(
-			playerActorState.attributes.life.currentValue,
-			playerActorState.attributes.life.maximumValue,
+			playerActorState.attributes.lifePoints.currentValue,
+			playerActorState.attributes.lifePoints.maximumValue,
 		);
 
 		playerGui.setWillBarFill(
-			playerActorState.attributes.will.currentValue,
-			playerActorState.attributes.will.maximumValue,
+			playerActorState.attributes.willPoints.currentValue,
+			playerActorState.attributes.willPoints.maximumValue,
 		);
 	}
 
@@ -74,8 +74,8 @@ export default class UserInterfaceSystem implements GameSystem {
 			enemyActorState.attributes.actionTimer.maximumValue,
 		);
 		enemyGui.setLifeBarFill(
-			enemyActorState.attributes.life.currentValue,
-			enemyActorState.attributes.life.maximumValue,
+			enemyActorState.attributes.lifePoints.currentValue,
+			enemyActorState.attributes.lifePoints.maximumValue,
 		);
 	}
 }

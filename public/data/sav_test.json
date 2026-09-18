@@ -12,24 +12,23 @@
       "primaryColor": "",
       "spriteUrl": "spr_sentineltest.png",
       "attributes": {
-        "life": 200,
-        "will": 4,
-        "speed": 10,
-        "defense": 10,
-        "critical": 10,
-        "regen": 10
+        "might": 4,
+        "impulse": 4,
+        "guile": 4,
+        "heart": 4
       },
       "affinityId": "",
-      "abilityIds": [
-        "ab_brawl"
+      "powerIds": [
+        "power_pulserifle"
       ],
-      "itemIds": [
-        ""
+      "featIds": [
+        "feat_improvedaccuracy"
       ],
       "tactics": [
         {
-          "trigger": "",
-          "action": ""
+          "condition": "lowestLife",
+          "actionType": "power",
+          "actionIndex": 0
         }
       ]
     }

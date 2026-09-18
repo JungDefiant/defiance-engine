@@ -1,39 +1,37 @@
 {
-	"id": "ab_pulserifle",
-	"name": "Pulse Rifle",
+	"id": "power_brawl",
+	"name": "Brawl",
 	"description": "",
-	"iconURL": "sprites/gui/icons/weapons/icon_pulserifle.png",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
 	"hitSfxURL": "",
-	"trigger": "onActionExecute",
+	"trigger": "onActionPerform",
 	"descriptors": [
 		"power",
 		"single",
-		"ranged",
-		"lethal",
-		"weapon",
+		"melee",
+		"impact",
+		"innate",
 		"attack"
 	],
 	"target": "single_en",
-	"recovery": 4,
-	"cost": 0,
+	"recoveryTime": 4,
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"amount": 12
+				"baseDamage": 4
 			}
 		},
 		{
 			"id": "critical",
 			"variables": {
-				"effects": [
+				"onCriticalHitEffects": [
 					{
 						"id": "damage",
 						"variables": {
-							"amount": 8
+							"baseDamage": 4
 						}
 					}
 				]
