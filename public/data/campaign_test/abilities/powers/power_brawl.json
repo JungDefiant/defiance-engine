@@ -1,12 +1,12 @@
 {
-	"id": "ab_brawl",
+	"id": "power_brawl",
 	"name": "Brawl",
 	"description": "",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
 	"hitSfxURL": "",
-	"trigger": "onActionExecute",
+	"trigger": "onActionPerform",
 	"descriptors": [
 		"power",
 		"single",
@@ -17,23 +17,21 @@
 	],
 	"target": "single_en",
 	"recoveryTime": 4,
-	"cost": 0,
-	"costAttribute": "",
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"amount": 4
+				"baseDamage": 4
 			}
 		},
 		{
 			"id": "critical",
 			"variables": {
-				"effects": [
+				"onCriticalHitEffects": [
 					{
 						"id": "damage",
 						"variables": {
-							"amount": 4
+							"baseDamage": 4
 						}
 					}
 				]

@@ -1,5 +1,5 @@
 {
-	"id": "ab_pulserifle",
+	"id": "power_pulserifle",
 	"name": "Pulse Rifle",
 	"description": "",
 	"iconURL": "sprites/gui/icons/weapons/icon_pulserifle.png",
@@ -7,7 +7,7 @@
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
 	"hitSfxURL": "",
-	"trigger": "onActionExecute",
+	"trigger": "onActionPerform",
 	"descriptors": [
 		"power",
 		"single",
@@ -17,14 +17,12 @@
 		"attack"
 	],
 	"target": "single_en",
-	"recovery": 4,
-	"cost": 0,
-	"costAttribute": "",
+	"recoveryTime": 4,
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"amount": 12
+				"baseDamage": 12
 			}
 		},
 		{
@@ -34,7 +32,7 @@
 					{
 						"id": "damage",
 						"variables": {
-							"amount": 8
+							"baseDamage": 8
 						}
 					}
 				]

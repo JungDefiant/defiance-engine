@@ -62,7 +62,7 @@ export default class ActorStateSystem implements GameSystem {
 
 	private tickLifeRegen(deltaTime: number, actorState: ActorStateComponent) {
 		const lifeRegenTimerAttribute = actorState.attributes.lifeRegenTimer;
-		const lifeAttribute = actorState.attributes.life;
+		const lifeAttribute = actorState.attributes.lifePoints;
 
 		if (lifeAttribute.currentValue < lifeAttribute.maximumValue) {
 			lifeRegenTimerAttribute.currentValue += deltaTime;
@@ -82,7 +82,7 @@ export default class ActorStateSystem implements GameSystem {
 
 	private tickWillRegen(deltaTime: number, actorState: ActorStateComponent) {
 		const willRegenTimerAttribute = actorState.attributes.willRegenTimer;
-		const willAttribute = actorState.attributes.will;
+		const willAttribute = actorState.attributes.willPoints;
 
 		if (willAttribute.currentValue < willAttribute.maximumValue) {
 			willRegenTimerAttribute.currentValue += deltaTime;
@@ -107,7 +107,7 @@ export default class ActorStateSystem implements GameSystem {
 		const willCostPerSecondAttribute =
 			actorData.attributes.willCostPerSecond;
 		const willCostTimerAttribute = actorData.attributes.willCostTimer;
-		const willAttribute = actorData.attributes.will;
+		const willAttribute = actorData.attributes.willPoints;
 
 		if (willCostPerSecondAttribute.currentValue > 0) {
 			willCostTimerAttribute.currentValue += deltaTime;

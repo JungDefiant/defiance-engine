@@ -20,6 +20,23 @@ const BASE_ATTRIBUTES = {
 	damagePerPoint: 0.1,
 };
 
+export interface LoadedAbilityJson {
+	id: string;
+	name: string;
+	backstory: string;
+	description: string;
+	spriteUrl: string;
+	attributes: {
+		might: number;
+		impulse: number;
+		guile: number;
+		heart: number;
+	};
+	powerIds: string[];
+	featIds: string[];
+	tactics: TacticsData[];
+}
+
 export default class ActorStateComponent implements Component {
 	entityId: EntityId;
 	id: string = "";
@@ -39,7 +56,7 @@ export default class ActorStateComponent implements Component {
 	tactics?: TacticsData[];
 	queuedAction?: Nullable<AbilityData>;
 
-	public constructor(entityId: number, initialData: any) {
+	public constructor(entityId: number, initialData: LoadedAbilityJson) {
 		this.entityId = entityId;
 		this.id = initialData.id;
 		this.name = initialData.name;
@@ -158,22 +175,34 @@ export default class ActorStateComponent implements Component {
 		};
 
 		const campaignState = container.resolve(CampaignState);
-		// newActorData.affinityData = this.affinityData.get(initData.affinityId);
+		const thisActorState = this;
 
-		this.powerData = initialData.abilityIds.map(
-			async (powerDataId: string) => {
-				const response = await fetch(
-					`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${powerDataId}.json`,
-				);
-				const abData = await response.json();
+		for (let i = 0; i < initialData.powerIds.length; i++) {
+			const powerId = initialData.powerIds[i];
+			fetch(
+				`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${powerId}.json`,
+			)
+				.then((response) => {
+					return response.json();
+				})
+				.then((abilityData) => {
+					thisActorState.powerData.push(abilityData);
+				});
+		}
 
-				return abData as AbilityData;
-			},
-		);
+		for (let i = 0; i < initialData.featIds.length; i++) {
+			const featId = initialData.featIds[i];
+			fetch(
+				`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/feats/${featId}.json`,
+			)
+				.then((response) => {
+					return response.json();
+				})
+				.then((abilityData) => {
+					thisActorState.featData.push(abilityData);
+				});
+		}
 
-		// newActorData.itemData = initData.itemIds.map((el: string) => {
-		// 	return this.actionData.get(el);
-		// });
 		this.tactics = initialData.tactics;
 	}
 

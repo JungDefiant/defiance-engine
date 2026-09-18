@@ -1,0 +1,29 @@
+{
+	"id": "feat_improvedaccuracy",
+	"name": "Improved Accuracy",
+	"description": "",
+	"castVfxURL": "",
+	"hitVfxURL": "vfx/vfx_test",
+	"castSfxURL": "",
+	"hitSfxURL": "",
+	"trigger": "onActorInflictDamage",
+	"descriptors": [
+		"feat",
+		"technique"
+	],
+	"target": "self",
+	"effectData": [
+		{
+			"id": "modifyContextVariable",
+			"variables": {
+				"requiredDescriptors": [
+					"ranged",
+					"attack"
+				],
+				"contextObjectName": "damageContext",
+				"contextVariableName": "damageMultiplier",
+				"variableModifier": 0.2
+			}
+		}
+	]
+}

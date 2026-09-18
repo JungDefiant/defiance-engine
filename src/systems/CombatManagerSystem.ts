@@ -23,6 +23,7 @@ import {
 	getUserInterfaceState,
 } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
+import { AbilityContext, ActionContext } from "src/types/ContextTypes";
 
 export default class CombatManagerSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -69,13 +70,11 @@ export default class CombatManagerSystem implements GameSystem {
 					actionTimerAttribute.maximumValue
 			) {
 				controlState.actionPauseSet.add(PAUSE_RENDERQUEUE);
-				Promise.resolve(this.performQueuedAction(actorData)).then(
-					() => {
-						if (gameplayState.enemyEntityIds.includes(eid)) {
-							decideNPCAction(actorData);
-						}
-					},
-				);
+				this.performQueuedAction(actorData).then(() => {
+					if (gameplayState.enemyEntityIds.includes(eid)) {
+						decideNPCAction(actorData);
+					}
+				});
 				return;
 			}
 		}
@@ -102,29 +101,37 @@ export default class CombatManagerSystem implements GameSystem {
 			actionToPerform,
 		);
 
-		const actionContext = {
+		const abilityContext = {
 			target: `${actionToPerform.target}`,
+			descriptors: actionToPerform.descriptors,
+			effects: actionToPerform.effectData,
+		} as AbilityContext;
+
+		abilityContext.actionContext = {
 			cost: actionToPerform.cost || 0,
 			costAttribute: actionToPerform.costAttribute || "",
 			recoveryTime: actionToPerform.recoveryTime || 0,
-			descriptors: actionToPerform.descriptors,
-			effects: actionToPerform.effectData,
-		};
+		} as ActionContext;
 
-		const isAbilityCostSpent = spendAbilityCost(
-			sourceActorState,
-			actionContext,
-		);
-		if (!isAbilityCostSpent) {
-			//
-			return;
+		if (
+			abilityContext.actionContext.cost &&
+			abilityContext.actionContext.costAttribute
+		) {
+			const isAbilityCostSpent = spendAbilityCost(
+				sourceActorState,
+				abilityContext,
+			);
+			if (!isAbilityCostSpent) {
+				//
+				return;
+			}
 		}
 
 		triggerFeatEffects(
 			sourceActorState,
 			sourceActorState,
 			AbilityTrigger.onActionPerform,
-			actionContext,
+			abilityContext,
 		);
 
 		actionTargetIds.forEach((eid) => {
@@ -133,7 +140,7 @@ export default class CombatManagerSystem implements GameSystem {
 				sourceActorState,
 				targetActorState,
 				actionToPerform,
-				actionContext,
+				abilityContext,
 			);
 		});
 

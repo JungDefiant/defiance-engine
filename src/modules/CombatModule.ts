@@ -74,7 +74,7 @@ export async function startCombat(encId: string): Promise<void> {
 		decideNPCAction(enActorData);
 	}
 
-	await resetCombatModeActionManager();
+	resetCombatModeActionManager();
 
 	for (const eid of query(gameScene.world, [actorStateComponentArray])) {
 		const actorData = actorStateComponentArray[eid];
@@ -162,11 +162,11 @@ export async function startQueueActionPlayer(
 			ActorStateComponent.name,
 			eid,
 		);
-	const actionData = (await (isItem
-		? actorData.itemData && actorData.itemData[actionInd]
-		: actorData.powerData[actionInd])) as AbilityData;
+	const actionData = (
+		isItem ? actorData.itemData[actionInd] : actorData.powerData[actionInd]
+	) as AbilityData;
 
-	if (actionData.trigger != AbilityTrigger.onActionPerform) {
+	if (!actionData || actionData.trigger != AbilityTrigger.onActionPerform) {
 		return;
 	}
 

@@ -6,7 +6,6 @@ import ActorStateComponent, {
 	EffectData,
 	EffectVariable,
 } from "src/components/ActorStateComponent";
-import { Themes } from "src/gui/Themes";
 import { EffectFeedbackDetails } from "src/types/AbilityTypes";
 import { clamp } from "./Utils";
 import { addFloatingTextRQE } from "./RenderModule";
@@ -18,11 +17,17 @@ import {
 	EffectFeedbackStyles,
 } from "src/types/UserInterfaceTypes";
 import UserInterfaceState from "src/states/UserInterfaceState";
+import {
+	AbilityContext,
+	CriticalHitContext,
+	DamageContext,
+	HealingContext,
+} from "src/types/ContextTypes";
 
 export interface EffectFunctionProps {
 	source: ActorStateComponent;
 	target: ActorStateComponent;
-	descriptors: AbilityDescriptor[];
+	abilityContext: AbilityContext;
 	effectVariables: { [index: string]: EffectVariable };
 	effectFeedbackDetails: EffectFeedbackDetails;
 }
@@ -31,7 +36,7 @@ export function processAbilityEffects(
 	sourceState: ActorStateComponent,
 	targetState: ActorStateComponent,
 	abilityData: AbilityData,
-	context: { [index: string]: EffectVariable },
+	context: AbilityContext,
 ) {
 	const userInterfaceState = getUserInterfaceState();
 
@@ -44,20 +49,20 @@ export function processAbilityEffects(
 		statusEffects: new Set<string>(),
 	};
 
-	const effects = (context.effects as EffectData[]) || [];
-	const descriptors = (context.descriptors as AbilityDescriptor[]) || [];
+	const abilityEffects = abilityData.effectData;
+	context.effects = abilityEffects;
 
-	effects.forEach((effect) => {
-		const effectProcessor =
-			getAbilityEffectProcessor().getProcessorFunction(effect.id);
+	const abilityEffectProcessor = getAbilityEffectProcessor();
+
+	abilityEffects.forEach((effect) => {
+		const effectProcessor = abilityEffectProcessor.getProcessorFunction(
+			effect.id,
+		);
 		effectProcessor({
 			source: sourceState,
 			target: targetState,
-			descriptors,
-			effectVariables: {
-				...effect.variables,
-				...context,
-			},
+			abilityContext: context,
+			effectVariables: effect.variables,
 			effectFeedbackDetails,
 		});
 	});
@@ -121,15 +126,19 @@ export function processAbilityEffects(
 
 export function spendAbilityCost(
 	source: ActorStateComponent,
-	context: { [index: string]: EffectVariable },
+	context: AbilityContext,
 ): boolean {
-	const abilityCost = (context.cost as number) || 0;
-	const costAttributeName = (context.costAttribute as string) || "";
-	const costAttribute = source.attributes[costAttributeName];
-	const descriptors = (context.descriptors as string[]) || [];
-	const isToggle = descriptors.includes(AbilityDescriptor.toggle);
+	const actionContext = context.actionContext;
+	if (!actionContext) {
+		return false;
+	}
 
-	if (costAttribute.currentValue < abilityCost) {
+	const abilityCost = (actionContext.cost as number) || 0;
+	const costAttributeName = (actionContext.costAttribute as string) || "";
+	const costAttribute = source.attributes[costAttributeName];
+	const isToggle = context.descriptors.includes(AbilityDescriptor.toggle);
+
+	if (!costAttribute || costAttribute.currentValue < abilityCost) {
 		return false;
 	}
 
@@ -172,12 +181,17 @@ export function triggerFeatEffects(
 	sourceState: ActorStateComponent,
 	targetState: ActorStateComponent,
 	trigger: AbilityTrigger,
-	context: { [index: string]: EffectVariable },
+	context: AbilityContext,
 ) {
 	const triggeredFeats = sourceState.featData.filter(
 		(x) => x.trigger === trigger,
 	);
 	triggeredFeats.forEach((feat) => {
+		const abilityContext = { ...context };
+		abilityContext.target = `${feat.target}`;
+		abilityContext.descriptors = feat.descriptors;
+		abilityContext.effects = feat.effectData;
+		console.log("ABILITY CONTEXT", abilityContext);
 		processAbilityEffects(sourceState, targetState, feat, context);
 	});
 }
@@ -185,81 +199,92 @@ export function triggerFeatEffects(
 export function endToggles(sourceState: ActorStateComponent) {}
 
 export function applyDamageEffect(props: EffectFunctionProps) {
-	const targetLifeAttribute = props.target.attributes.life;
-	const targetResistAttribute = props.target.attributes.resist;
+	const abilityContext = props.abilityContext;
+	let damageContext = abilityContext.damageContext;
+	if (!damageContext) {
+		const baseDamage = props.effectVariables["baseDamage"] || 0;
+		damageContext = {
+			baseDamage,
+			totalDamage: 0,
+			damageMultiplier: 1,
+			targetResist: 1,
+		} as DamageContext;
+		abilityContext.damageContext = damageContext;
+	}
 
-	const damageAmount = props.effectVariables["amount"] as number;
-
-	const damageContext = {
-		effect: "damage",
-		damage: damageAmount,
-		damageMultiplier: 1,
-		targetResist: targetResistAttribute.currentValue,
-	};
+	const targetLifeAttribute = props.target.attributes.lifePoints;
+	damageContext.targetResist = props.target.attributes.resist.currentValue;
 
 	triggerFeatEffects(
 		props.target,
 		props.source,
 		AbilityTrigger.onActorResistEffect,
-		damageContext,
+		abilityContext,
 	);
 
 	triggerFeatEffects(
 		props.source,
 		props.target,
 		AbilityTrigger.onActorInflictDamage,
-		damageContext,
+		abilityContext,
 	);
 
-	const totalDamageMultiplier =
-		1 - Math.max(0, Math.min(damageContext.targetResist / 100, 100));
+	if (damageContext.targetResist >= 0) {
+		damageContext.damageMultiplier =
+			damageContext.damageMultiplier * (1 + damageContext.targetResist);
+	} else {
+		damageContext.damageMultiplier =
+			damageContext.damageMultiplier *
+			(1 / (1 + Math.abs(damageContext.targetResist)));
+	}
 
-	const totalDamage = Math.floor(
-		damageContext.damage * totalDamageMultiplier,
+	damageContext.totalDamage = Math.max(
+		Math.floor(damageContext.baseDamage * damageContext.damageMultiplier),
+		1,
 	);
+
 	targetLifeAttribute.currentValue = clamp(
-		targetLifeAttribute.currentValue - totalDamage,
+		targetLifeAttribute.currentValue - damageContext.totalDamage,
 		0,
 		targetLifeAttribute.maximumValue,
 	);
-
-	const damageTakenContext = {
-		effect: "damage",
-		totalDamage,
-	};
 
 	triggerFeatEffects(
 		props.target,
 		props.source,
 		AbilityTrigger.onActorLifeModify,
-		damageTakenContext,
+		abilityContext,
 	);
 
 	if (targetLifeAttribute.currentValue === 0) {
 		defeatActor(props.target);
 	}
 
-	props.effectFeedbackDetails.totalDamage += damageTakenContext.totalDamage;
+	props.effectFeedbackDetails.totalDamage += damageContext.totalDamage;
 }
 
 export function applyHealEffect(props: EffectFunctionProps) {
-	const targetLifeAttribute = props.target.attributes.life;
-	const healing = props.effectVariables["healing"] as number;
+	const abilityContext = props.abilityContext;
+	let healingContext = abilityContext.healingContext;
+	if (!healingContext) {
+		const baseHealing = props.effectVariables["baseHealing"] || 0;
+		healingContext = {
+			baseHealing,
+		} as HealingContext;
+		abilityContext.healingContext = healingContext;
+	}
 
-	const healingContext = {
-		effect: "healing",
-		healing,
-	};
+	const targetLifeAttribute = props.target.attributes.lifePoints;
 
 	triggerFeatEffects(
 		props.source,
 		props.target,
 		AbilityTrigger.onActorGrantHealing,
-		healingContext,
+		abilityContext,
 	);
 
 	targetLifeAttribute.currentValue = clamp(
-		targetLifeAttribute.currentValue + healingContext.healing,
+		targetLifeAttribute.currentValue + healingContext.baseHealing,
 		0,
 		targetLifeAttribute.maximumValue,
 	);
@@ -268,20 +293,35 @@ export function applyHealEffect(props: EffectFunctionProps) {
 		props.target,
 		props.source,
 		AbilityTrigger.onActorLifeModify,
-		healingContext,
+		abilityContext,
 	);
 
-	props.effectFeedbackDetails.totalHealing += healingContext.healing;
+	props.effectFeedbackDetails.totalHealing += healingContext.baseHealing;
 }
 
 export function applyStatusEffect(props: EffectFunctionProps) {
-	const statusId = props.effectVariables["statusId"] as string;
-	props.effectFeedbackDetails.statusEffects.add(statusId);
+	const abilityContext = props.abilityContext;
+	const statusEffectContext = abilityContext.statusEffectContext;
+	if (!statusEffectContext) {
+		return;
+	}
+	props.effectFeedbackDetails.statusEffects.add(statusEffectContext.statusId);
 }
 
 export function applyCriticalEffect(props: EffectFunctionProps) {
+	const abilityContext = props.abilityContext;
+	let criticalHitContext = abilityContext.criticalHitContext;
+	if (!criticalHitContext) {
+		const onCriticalHitEffects =
+			props.effectVariables["onCriticalHitEffects"] || [];
+		criticalHitContext = {
+			onCriticalHitEffects,
+		} as CriticalHitContext;
+		abilityContext.criticalHitContext = criticalHitContext;
+	}
+
 	const criticalAttribute = props.source.attributes.critical;
-	const criticalEffects = props.effectVariables["effects"] as EffectData[];
+	const criticalEffects = criticalHitContext.onCriticalHitEffects;
 	const criticalEffectContext = {
 		effect: "critical",
 		criticalRating: criticalAttribute.currentValue,
@@ -291,7 +331,7 @@ export function applyCriticalEffect(props: EffectFunctionProps) {
 		props.source,
 		props.target,
 		AbilityTrigger.onActorRollCriticalHit,
-		criticalEffectContext,
+		abilityContext,
 	);
 
 	const criticalRoll = Math.round(RandomRange(1, 100)) / 100;
@@ -301,7 +341,7 @@ export function applyCriticalEffect(props: EffectFunctionProps) {
 			props.source,
 			props.target,
 			AbilityTrigger.onActorScoreCriticalHit,
-			criticalEffectContext,
+			abilityContext,
 		);
 		criticalEffectContext.criticalEffects.forEach((effectData) => {
 			const effectProcessor =
@@ -309,13 +349,38 @@ export function applyCriticalEffect(props: EffectFunctionProps) {
 			effectProcessor({
 				source: props.source,
 				target: props.target,
-				descriptors: props.descriptors,
-				effectVariables: {
-					...effectData.variables,
-				},
+				abilityContext,
+				effectVariables: effectData.variables,
 				effectFeedbackDetails: props.effectFeedbackDetails,
 			});
 		});
 		props.effectFeedbackDetails.criticalHits += 1;
 	}
+}
+
+export function applyModifyContextVariable(props: EffectFunctionProps) {
+	const abilityContext = props.abilityContext;
+	const requiredDescriptors =
+		(props.effectVariables.requiredDescriptors as string[]) || [];
+	const contextObjectName =
+		(props.effectVariables.contextObjectName as string) || "";
+	const contextVariableName =
+		(props.effectVariables.contextVariableName as string) || "";
+	const variableModifier =
+		(props.effectVariables.variableModifier as number) || 0;
+
+	for (let i = 0; i < requiredDescriptors.length; i++) {
+		if (!abilityContext.descriptors.includes(requiredDescriptors[i])) {
+			return;
+		}
+	}
+
+	const contextObject = (Object.entries(abilityContext).find(
+		(x) => x[0] === contextObjectName,
+	) || ["", null])[1];
+	if (!contextObject || !contextObject[contextVariableName]) {
+		return;
+	}
+
+	contextObject[contextVariableName] += variableModifier;
 }

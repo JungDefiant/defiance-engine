@@ -80,6 +80,6 @@ export function setSelectedCharacter(eid: EntityId, isCombatMode?: boolean) {
 
 	if (isCombatMode) {
 		resetCombatModeControls();
-		Promise.resolve(resetCombatModeActionManager());
+		resetCombatModeActionManager();
 	}
 }

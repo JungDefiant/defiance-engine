@@ -4,6 +4,7 @@ import {
 	applyCriticalEffect,
 	applyDamageEffect,
 	applyHealEffect,
+	applyModifyContextVariable,
 	applyStatusEffect,
 	EffectFunctionProps,
 } from "src/modules/EffectModule";
@@ -23,6 +24,8 @@ export class AbilityEffectProcessor implements Processor {
 			status: (props: EffectFunctionProps) => applyStatusEffect(props),
 			critical: (props: EffectFunctionProps) =>
 				applyCriticalEffect(props),
+			modifyContextVariable: (props: EffectFunctionProps) =>
+				applyModifyContextVariable(props),
 		};
 	}
 

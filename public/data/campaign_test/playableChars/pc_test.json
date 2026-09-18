@@ -8,19 +8,18 @@
 	"attributes": {
 		"might": 4,
 		"impulse": 4,
-		"guile": 4,
+		"guile": 10,
 		"heart": 4
 	},
 	"affinityId": "",
-	"abilityIds": [
-		"ab_pulserifle"
+	"powerIds": [
+		"power_pulserifle"
 	],
-	"itemIds": [
-		""
+	"featIds": [
+		"feat_improvedaccuracy"
 	],
 	"tactics": [
 		{
-			"target": "single_en",
 			"condition": "lowestLife",
 			"actionType": "power",
 			"actionIndex": 0
