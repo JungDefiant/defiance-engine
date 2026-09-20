@@ -22,8 +22,9 @@ import StickerImageComponent from "src/components/StickerImageComponent";
 import TransformNodeComponent from "src/components/TransformNodeComponent";
 import RenderState from "src/states/RenderState";
 import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
-import { AbilityEffectProcessor } from "src/processors/AbilityEffectProcessor";
 import { GameEventProcessor } from "src/processors/GameEventProcessor";
+import { AbilityEffectApplicationProcessor } from "src/processors/AbilityEffectApplicationProcessor";
+import { AbilityEffectCalculationProcessor } from "src/processors/AbilityEffectCalculationProcessor";
 
 // The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
@@ -37,7 +38,11 @@ export const SYSTEM_TOKENS = [
 
 export const FACTORY_TOKENS = [EnemyFactory, PlayerFactory, StickerFactory];
 
-export const PROCESSOR_TOKENS = [AbilityEffectProcessor, GameEventProcessor];
+export const PROCESSOR_TOKENS = [
+	AbilityEffectApplicationProcessor,
+	AbilityEffectCalculationProcessor,
+	GameEventProcessor,
+];
 
 export const COMPONENT_TOKENS = [
 	ActorStateComponent,

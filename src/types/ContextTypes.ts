@@ -1,20 +1,38 @@
-import { EffectData } from "src/components/ActorStateComponent";
+import { EntityId } from "bitecs";
+import { AbilityDescriptor, EffectData } from "./AbilityTypes";
 
-export interface AbilityContext {
+export type AttackRollResult = "hit" | "crit" | "graze";
+
+export interface AbilityTargetContext {
+	abilityName: string;
 	target: string;
-	descriptors: string[];
+	descriptors: AbilityDescriptor[];
 	effects: EffectData[];
 	actionContext?: ActionContext;
+	attackContext?: AttackContext;
 	damageContext?: DamageContext;
 	healingContext?: HealingContext;
-	statusEffectContext?: StatusEffectContext;
-	criticalHitContext?: CriticalHitContext;
+	statusEffectContexts?: Map<string, StatusEffectContext>;
+}
+
+export interface EffectFeedbackContext {
+	abilityName: string;
+	sourceName: string;
+	targetName: string;
+	targetEntityId: EntityId;
+	abilityContext: AbilityTargetContext;
 }
 
 export interface ActionContext {
 	cost: number;
 	costAttribute: string;
 	recoveryTime: number;
+}
+
+export interface AttackContext {
+	attackRoll: number;
+	attackRollResult: AttackRollResult;
+	// attackRollChances: Map<AttackRollResult, number>;
 }
 
 export interface DamageContext {
@@ -31,8 +49,4 @@ export interface HealingContext {
 export interface StatusEffectContext {
 	statusId: string;
 	duration: number;
-}
-
-export interface CriticalHitContext {
-	onCriticalHitEffects: EffectData[];
 }

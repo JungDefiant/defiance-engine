@@ -24,19 +24,6 @@
 			"variables": {
 				"baseDamage": 12
 			}
-		},
-		{
-			"id": "critical",
-			"variables": {
-				"effects": [
-					{
-						"id": "damage",
-						"variables": {
-							"baseDamage": 8
-						}
-					}
-				]
-			}
 		}
 	]
 }

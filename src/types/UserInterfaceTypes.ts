@@ -1,5 +1,8 @@
-import type { EffectFeedbackDetails } from "./AbilityTypes";
+import type { AbilityEffectType } from "./AbilityTypes";
 import { Themes } from "src/gui/Themes";
+import { EffectFeedbackContext } from "./ContextTypes";
+
+export type EffectFeedbackType = "attackRoll" | "damage" | "healing" | "surge";
 
 export interface ActorGUI {
 	setActBarFill(currValue: number, maxValue: number): void;
@@ -9,26 +12,40 @@ export interface ActorGUI {
 
 export interface EffectFeedbackStyle {
 	floatingTextColor: string;
-	floatingText: (context: EffectFeedbackDetails) => string;
-	combatLogText: (context: EffectFeedbackDetails) => string;
+	floatingText: (context: EffectFeedbackContext) => string;
+	combatLogText: (context: EffectFeedbackContext) => string;
 }
 
-export const EffectFeedbackStyles = new Map<string, EffectFeedbackStyle>([
+export const EffectFeedbackStyles = new Map<
+	EffectFeedbackType,
+	EffectFeedbackStyle
+>([
 	[
-		"critical",
+		"attackRoll",
 		{
 			floatingTextColor: Themes.secondary2,
-			floatingText: (context: EffectFeedbackDetails) => {
-				return `CRIT${context.criticalHits > 1 ? ` x${context.criticalHits}` : ""}!`;
-			},
-			combatLogText: (context) => {
-				if (context.criticalHits == 1) {
-					return `${context.sourceName} inflicts a critical hit.`;
-				} else if (context.criticalHits > 1) {
-					return `${context.sourceName} inflicts ${context.criticalHits} critical hits.`;
+			floatingText: (context: EffectFeedbackContext) => {
+				const attackContext = context.abilityContext.attackContext;
+				if (
+					!attackContext ||
+					attackContext.attackRollResult === "hit"
+				) {
+					return "";
 				}
 
-				return "";
+				return `${attackContext.attackRollResult.toUpperCase()}!`;
+			},
+			combatLogText: (context: EffectFeedbackContext) => {
+				const attackContext = context.abilityContext.attackContext;
+				if (
+					!attackContext ||
+					attackContext.attackRollResult === "hit"
+				) {
+					return "";
+				}
+
+				const attackRollResultFeedback = `${String(attackContext.attackRollResult).charAt(0).toUpperCase()}${String(attackContext.attackRollResult).slice(1)}`;
+				return `inflicts a ${attackRollResultFeedback}!`;
 			},
 		},
 	],
@@ -36,11 +53,19 @@ export const EffectFeedbackStyles = new Map<string, EffectFeedbackStyle>([
 		"damage",
 		{
 			floatingTextColor: Themes.neutral2,
-			floatingText: (context: EffectFeedbackDetails) => {
-				return `${context.totalDamage}`;
+			floatingText: (context: EffectFeedbackContext) => {
+				const damageContext = context.abilityContext.damageContext;
+				if (!damageContext) {
+					return "";
+				}
+				return `${damageContext.totalDamage}`;
 			},
 			combatLogText: (context) => {
-				return `${context.sourceName} inflicts ${context.totalDamage} damage to ${context.targetName}.`;
+				const damageContext = context.abilityContext.damageContext;
+				if (!damageContext) {
+					return "";
+				}
+				return `inflicts ${damageContext.totalDamage} damage to ${context.targetName}.`;
 			},
 		},
 	],
@@ -48,11 +73,19 @@ export const EffectFeedbackStyles = new Map<string, EffectFeedbackStyle>([
 		"healing",
 		{
 			floatingTextColor: Themes.success,
-			floatingText: (context: EffectFeedbackDetails) => {
-				return `${context.totalHealing}`;
+			floatingText: (context: EffectFeedbackContext) => {
+				const healingContext = context.abilityContext.healingContext;
+				if (!healingContext) {
+					return "";
+				}
+				return `${healingContext.baseHealing}`;
 			},
 			combatLogText: (context) => {
-				return `${context.sourceName} restores ${context.totalHealing} Life Points to ${context.targetName}.`;
+				const healingContext = context.abilityContext.healingContext;
+				if (!healingContext) {
+					return "";
+				}
+				return `restores ${healingContext.baseHealing} Life Points to ${context.targetName}.`;
 			},
 		},
 	],
@@ -60,11 +93,11 @@ export const EffectFeedbackStyles = new Map<string, EffectFeedbackStyle>([
 		"surge",
 		{
 			floatingTextColor: Themes.secondary3,
-			floatingText: (context: EffectFeedbackDetails) => {
+			floatingText: (context: EffectFeedbackContext) => {
 				return `SURGE`;
 			},
 			combatLogText: (context) => {
-				return `${context.targetName} gains the Surge status.`;
+				return `gains the Surge status.`;
 			},
 		},
 	],

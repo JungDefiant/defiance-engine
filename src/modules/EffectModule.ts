@@ -1,58 +1,104 @@
-import { RandomRange } from "@babylonjs/core";
-import ActorStateComponent, {
+import ActorStateComponent from "src/components/ActorStateComponent";
+import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTrigger,
-	EffectData,
 	EffectVariable,
-} from "src/components/ActorStateComponent";
-import { EffectFeedbackDetails } from "src/types/AbilityTypes";
+} from "src/types/AbilityTypes";
 import { clamp } from "./Utils";
-import { addFloatingTextRQE } from "./RenderModule";
 import { defeatActor } from "./CombatModule";
-import { getUserInterfaceState } from "./GameStateModule";
-import { getAbilityEffectProcessor } from "./ProcessorModule";
 import {
-	EffectFeedbackStyle,
-	EffectFeedbackStyles,
-} from "src/types/UserInterfaceTypes";
-import UserInterfaceState from "src/states/UserInterfaceState";
+	getAbilityEffectCalculationProcessor,
+	getAbilityEffectApplicationProcessor,
+} from "./ProcessorModule";
 import {
-	AbilityContext,
-	CriticalHitContext,
+	AbilityTargetContext,
+	AttackContext,
 	DamageContext,
 	HealingContext,
+	StatusEffectContext,
 } from "src/types/ContextTypes";
+import {
+	ActorAttribute,
+	ActorAttributeModifier,
+} from "src/types/AttributeTypes";
+import {
+	BASE_CRITCHANCE,
+	BASE_GRAZECHANCE,
+	BASE_HITCHANCE,
+	MAX_ATTACKRESULTCHANCE,
+	MIN_ATTACKRESULTCHANCE,
+} from "src/constants/CombatConstants";
+import { RandomRange } from "babylonjs";
 
-export interface EffectFunctionProps {
+export interface EffectCalculationFunctionProps {
 	source: ActorStateComponent;
 	target: ActorStateComponent;
-	abilityContext: AbilityContext;
+	abilityContext: AbilityTargetContext;
 	effectVariables: { [index: string]: EffectVariable };
-	effectFeedbackDetails: EffectFeedbackDetails;
 }
 
-export function processAbilityEffects(
+export interface EffectApplicationFunctionProps {
+	source: ActorStateComponent;
+	target: ActorStateComponent;
+	abilityContext: AbilityTargetContext;
+}
+
+export function calculateTotalAttributeValue(
+	attribute: ActorAttribute,
+	descriptors: AbilityDescriptor[],
+): number {
+	const modifiers = attribute.modifiers.filter((modifier) => {
+		for (const descriptor of modifier.descriptors) {
+			if (!descriptors.includes(descriptor)) {
+				return false;
+			}
+		}
+
+		return true;
+	});
+
+	let attributeCurrentValue = attribute.currentValue;
+	for (const modifier of modifiers) {
+		attributeCurrentValue += modifier.amount;
+	}
+
+	return attributeCurrentValue;
+}
+
+export function calculateAbilityEffects(
 	sourceState: ActorStateComponent,
 	targetState: ActorStateComponent,
 	abilityData: AbilityData,
-	context: AbilityContext,
+	context: AbilityTargetContext,
 ) {
-	const userInterfaceState = getUserInterfaceState();
-
-	const effectFeedbackDetails: EffectFeedbackDetails = {
-		sourceName: sourceState.name,
-		targetName: targetState.name,
-		criticalHits: 0,
-		totalDamage: 0,
-		totalHealing: 0,
-		statusEffects: new Set<string>(),
-	};
-
 	const abilityEffects = abilityData.effectData;
 	context.effects = abilityEffects;
 
-	const abilityEffectProcessor = getAbilityEffectProcessor();
+	const abilityEffectCalculationProcessor =
+		getAbilityEffectCalculationProcessor();
+
+	abilityEffects.forEach((effect) => {
+		const effectProcessor =
+			abilityEffectCalculationProcessor.getProcessorFunction(effect.id);
+		effectProcessor({
+			source: sourceState,
+			target: targetState,
+			abilityContext: context,
+			effectVariables: effect.variables,
+		});
+	});
+}
+
+export function applyAbilityEffects(
+	sourceState: ActorStateComponent,
+	targetState: ActorStateComponent,
+	abilityData: AbilityData,
+	context: AbilityTargetContext,
+) {
+	const abilityEffects = abilityData.effectData;
+	context.effects = abilityEffects;
+	const abilityEffectProcessor = getAbilityEffectApplicationProcessor();
 
 	abilityEffects.forEach((effect) => {
 		const effectProcessor = abilityEffectProcessor.getProcessorFunction(
@@ -62,71 +108,70 @@ export function processAbilityEffects(
 			source: sourceState,
 			target: targetState,
 			abilityContext: context,
-			effectVariables: effect.variables,
-			effectFeedbackDetails,
-		});
-	});
-
-	if (effectFeedbackDetails.criticalHits > 0) {
-		const effectFeedbackStyle = EffectFeedbackStyles.get(
-			"critical",
-		) as EffectFeedbackStyle;
-		addEffectFeedbackRenderQueueEntries({
-			targetData: targetState,
-			effectFeedbackStyle,
-			effectFeedbackDetails,
-			userInterfaceState,
-			sourceData: sourceState,
-			abilityData,
-		});
-	}
-
-	if (effectFeedbackDetails.totalDamage > 0) {
-		const effectFeedbackStyle = EffectFeedbackStyles.get(
-			"damage",
-		) as EffectFeedbackStyle;
-		addEffectFeedbackRenderQueueEntries({
-			targetData: targetState,
-			effectFeedbackStyle,
-			effectFeedbackDetails,
-			userInterfaceState,
-			sourceData: sourceState,
-			abilityData,
-		});
-	}
-
-	if (effectFeedbackDetails.totalHealing > 0) {
-		const effectFeedbackStyle = EffectFeedbackStyles.get(
-			"healing",
-		) as EffectFeedbackStyle;
-		addEffectFeedbackRenderQueueEntries({
-			targetData: targetState,
-			effectFeedbackStyle,
-			effectFeedbackDetails,
-			userInterfaceState,
-			sourceData: sourceState,
-			abilityData,
-		});
-	}
-
-	effectFeedbackDetails.statusEffects.forEach((statusEffect) => {
-		const effectFeedbackStyle = EffectFeedbackStyles.get(
-			statusEffect,
-		) as EffectFeedbackStyle;
-		addEffectFeedbackRenderQueueEntries({
-			targetData: targetState,
-			effectFeedbackStyle,
-			effectFeedbackDetails,
-			userInterfaceState,
-			sourceData: sourceState,
-			abilityData,
 		});
 	});
 }
 
+export function performAttackRoll(
+	sourceState: ActorStateComponent,
+	targetState: ActorStateComponent,
+	context: AbilityTargetContext,
+) {
+	const sourceTotalOffense = calculateTotalAttributeValue(
+		sourceState.attributes.offense,
+		context.descriptors,
+	);
+
+	const sourceTotalDefense = calculateTotalAttributeValue(
+		targetState.attributes.defense,
+		context.descriptors,
+	);
+
+	let hitChance = BASE_HITCHANCE;
+	let grazeChance = Math.min(
+		BASE_GRAZECHANCE + (sourceTotalDefense - sourceTotalOffense),
+		MAX_ATTACKRESULTCHANCE,
+	);
+	let critChance = Math.min(
+		BASE_CRITCHANCE + (sourceTotalOffense - sourceTotalDefense),
+		MAX_ATTACKRESULTCHANCE,
+	);
+
+	if (grazeChance < MIN_ATTACKRESULTCHANCE) {
+		const grazeMinDifference = MIN_ATTACKRESULTCHANCE - grazeChance;
+		hitChance = Math.max(hitChance - grazeMinDifference, 0);
+		grazeChance = MIN_ATTACKRESULTCHANCE;
+	}
+
+	if (critChance < MIN_ATTACKRESULTCHANCE) {
+		const critMinDifference = MIN_ATTACKRESULTCHANCE - critChance;
+		hitChance = Math.max(hitChance - critMinDifference, 0);
+		critChance = MIN_ATTACKRESULTCHANCE;
+	}
+
+	const attackRoll = Math.round(RandomRange(1, 100));
+	let attackRollResult = "hit";
+	let abilityTrigger = AbilityTrigger.onActorAttackHit;
+	if (attackRoll <= grazeChance) {
+		attackRollResult = "graze";
+		abilityTrigger = AbilityTrigger.onActorAttackGraze;
+	} else if (attackRoll > grazeChance + hitChance) {
+		attackRollResult = "crit";
+		abilityTrigger = AbilityTrigger.onActorAttackCrit;
+	}
+
+	const attackContext = {
+		attackRoll,
+		attackRollResult,
+	} as AttackContext;
+	context.attackContext = attackContext;
+
+	triggerFeatEffects(sourceState, targetState, abilityTrigger, context);
+}
+
 export function spendAbilityCost(
 	source: ActorStateComponent,
-	context: AbilityContext,
+	context: AbilityTargetContext,
 ): boolean {
 	const actionContext = context.actionContext;
 	if (!actionContext) {
@@ -144,44 +189,20 @@ export function spendAbilityCost(
 
 	if (isToggle && costAttributeName === "willPoints") {
 		source.attributes.willCostPerSecond.currentValue += abilityCost;
-		return true;
 	} else {
 		costAttribute.currentValue = Math.max(
 			costAttribute.currentValue - abilityCost,
 			0,
 		);
-		return true;
 	}
-}
-
-interface EffectFeedbackRenderQueueEntriesProps {
-	targetData: ActorStateComponent;
-	effectFeedbackStyle: EffectFeedbackStyle;
-	effectFeedbackDetails: EffectFeedbackDetails;
-	userInterfaceState: UserInterfaceState;
-	sourceData: ActorStateComponent;
-	abilityData: AbilityData;
-}
-
-function addEffectFeedbackRenderQueueEntries(
-	props: EffectFeedbackRenderQueueEntriesProps,
-) {
-	addFloatingTextRQE(
-		props.targetData.entityId,
-		props.effectFeedbackStyle.floatingText(props.effectFeedbackDetails),
-		props.effectFeedbackStyle.floatingTextColor,
-	);
-	props.userInterfaceState.combatHud.addCombatLogEntry(
-		`${props.sourceData.name} (${props.abilityData.name})`,
-		props.effectFeedbackStyle.combatLogText(props.effectFeedbackDetails),
-	);
+	return true;
 }
 
 export function triggerFeatEffects(
 	sourceState: ActorStateComponent,
 	targetState: ActorStateComponent,
 	trigger: AbilityTrigger,
-	context: AbilityContext,
+	context: AbilityTargetContext,
 ) {
 	const triggeredFeats = sourceState.featData.filter(
 		(x) => x.trigger === trigger,
@@ -191,18 +212,17 @@ export function triggerFeatEffects(
 		abilityContext.target = `${feat.target}`;
 		abilityContext.descriptors = feat.descriptors;
 		abilityContext.effects = feat.effectData;
-		console.log("ABILITY CONTEXT", abilityContext);
-		processAbilityEffects(sourceState, targetState, feat, context);
+		applyAbilityEffects(sourceState, targetState, feat, context);
 	});
 }
 
 export function endToggles(sourceState: ActorStateComponent) {}
 
-export function applyDamageEffect(props: EffectFunctionProps) {
+export function calculateDamageEffect(props: EffectCalculationFunctionProps) {
 	const abilityContext = props.abilityContext;
 	let damageContext = abilityContext.damageContext;
 	if (!damageContext) {
-		const baseDamage = props.effectVariables["baseDamage"] || 0;
+		const baseDamage = props.effectVariables.baseDamage || 0;
 		damageContext = {
 			baseDamage,
 			totalDamage: 0,
@@ -212,8 +232,10 @@ export function applyDamageEffect(props: EffectFunctionProps) {
 		abilityContext.damageContext = damageContext;
 	}
 
-	const targetLifeAttribute = props.target.attributes.lifePoints;
-	damageContext.targetResist = props.target.attributes.resist.currentValue;
+	damageContext.targetResist = calculateTotalAttributeValue(
+		props.target.attributes.resist,
+		abilityContext.descriptors,
+	);
 
 	triggerFeatEffects(
 		props.target,
@@ -229,19 +251,37 @@ export function applyDamageEffect(props: EffectFunctionProps) {
 		abilityContext,
 	);
 
+	let resistMultiplier = 1;
 	if (damageContext.targetResist >= 0) {
-		damageContext.damageMultiplier =
-			damageContext.damageMultiplier * (1 + damageContext.targetResist);
+		resistMultiplier = 1 + damageContext.targetResist;
 	} else {
-		damageContext.damageMultiplier =
-			damageContext.damageMultiplier *
-			(1 / (1 + Math.abs(damageContext.targetResist)));
+		resistMultiplier = 1 / (1 + Math.abs(damageContext.targetResist));
 	}
 
-	damageContext.totalDamage = Math.max(
-		Math.floor(damageContext.baseDamage * damageContext.damageMultiplier),
-		1,
+	damageContext.totalDamage += Math.max(
+		Math.floor(damageContext.baseDamage * resistMultiplier),
+		0,
 	);
+}
+
+export function applyDamageEffect(props: EffectApplicationFunctionProps) {
+	const abilityContext = props.abilityContext;
+	const damageContext = abilityContext.damageContext;
+	if (!damageContext) {
+		return;
+	}
+
+	const attackContext = abilityContext.attackContext;
+	if (attackContext) {
+		const attackRollResult = attackContext.attackRollResult;
+		if (attackRollResult === "graze") {
+			damageContext.totalDamage *= 0.5;
+		} else if (attackRollResult === "crit") {
+			damageContext.totalDamage *= 2;
+		}
+	}
+
+	const targetLifeAttribute = props.target.attributes.lifePoints;
 
 	targetLifeAttribute.currentValue = clamp(
 		targetLifeAttribute.currentValue - damageContext.totalDamage,
@@ -259,22 +299,18 @@ export function applyDamageEffect(props: EffectFunctionProps) {
 	if (targetLifeAttribute.currentValue === 0) {
 		defeatActor(props.target);
 	}
-
-	props.effectFeedbackDetails.totalDamage += damageContext.totalDamage;
 }
 
-export function applyHealEffect(props: EffectFunctionProps) {
+export function calculateHealEffect(props: EffectCalculationFunctionProps) {
 	const abilityContext = props.abilityContext;
 	let healingContext = abilityContext.healingContext;
 	if (!healingContext) {
-		const baseHealing = props.effectVariables["baseHealing"] || 0;
+		const baseHealing = props.effectVariables.baseHealing || 0;
 		healingContext = {
 			baseHealing,
 		} as HealingContext;
 		abilityContext.healingContext = healingContext;
 	}
-
-	const targetLifeAttribute = props.target.attributes.lifePoints;
 
 	triggerFeatEffects(
 		props.source,
@@ -282,6 +318,16 @@ export function applyHealEffect(props: EffectFunctionProps) {
 		AbilityTrigger.onActorGrantHealing,
 		abilityContext,
 	);
+}
+
+export function applyHealEffect(props: EffectApplicationFunctionProps) {
+	const abilityContext = props.abilityContext;
+	const healingContext = abilityContext.healingContext;
+	if (!healingContext) {
+		return;
+	}
+
+	const targetLifeAttribute = props.target.attributes.lifePoints;
 
 	targetLifeAttribute.currentValue = clamp(
 		targetLifeAttribute.currentValue + healingContext.baseHealing,
@@ -295,73 +341,56 @@ export function applyHealEffect(props: EffectFunctionProps) {
 		AbilityTrigger.onActorLifeModify,
 		abilityContext,
 	);
-
-	props.effectFeedbackDetails.totalHealing += healingContext.baseHealing;
 }
 
-export function applyStatusEffect(props: EffectFunctionProps) {
+export function calculateStatusEffect(props: EffectCalculationFunctionProps) {
 	const abilityContext = props.abilityContext;
-	const statusEffectContext = abilityContext.statusEffectContext;
-	if (!statusEffectContext) {
+	let statusEffectContexts = abilityContext.statusEffectContexts;
+	if (!statusEffectContexts) {
+		statusEffectContexts = new Map<string, StatusEffectContext>();
+		abilityContext.statusEffectContexts = statusEffectContexts;
+	}
+
+	const newStatusEffectContext = {
+		statusId: props.effectVariables.statusId,
+		duration: props.effectVariables.duration,
+	} as StatusEffectContext;
+	statusEffectContexts.set(
+		newStatusEffectContext.statusId,
+		newStatusEffectContext,
+	);
+}
+
+export function applyStatusEffect(props: EffectApplicationFunctionProps) {
+	const abilityContext = props.abilityContext;
+	const statusEffectContexts = abilityContext.statusEffectContexts;
+	if (!statusEffectContexts) {
 		return;
 	}
-	props.effectFeedbackDetails.statusEffects.add(statusEffectContext.statusId);
 }
 
-export function applyCriticalEffect(props: EffectFunctionProps) {
-	const abilityContext = props.abilityContext;
-	let criticalHitContext = abilityContext.criticalHitContext;
-	if (!criticalHitContext) {
-		const onCriticalHitEffects =
-			props.effectVariables["onCriticalHitEffects"] || [];
-		criticalHitContext = {
-			onCriticalHitEffects,
-		} as CriticalHitContext;
-		abilityContext.criticalHitContext = criticalHitContext;
-	}
+export function calculateAttributeModifier(
+	props: EffectCalculationFunctionProps,
+) {
+	const descriptors =
+		(props.effectVariables.descriptors as AbilityDescriptor[]) || [];
+	const attributeName = (props.effectVariables.attributeName as string) || "";
+	const amount = (props.effectVariables.amount as number) || 0;
+	const duration = (props.effectVariables.duration as number) || 0;
 
-	const criticalAttribute = props.source.attributes.critical;
-	const criticalEffects = criticalHitContext.onCriticalHitEffects;
-	const criticalEffectContext = {
-		effect: "critical",
-		criticalRating: criticalAttribute.currentValue,
-		criticalEffects,
-	};
-	triggerFeatEffects(
-		props.source,
-		props.target,
-		AbilityTrigger.onActorRollCriticalHit,
-		abilityContext,
-	);
-
-	const criticalRoll = Math.round(RandomRange(1, 100)) / 100;
-
-	if (criticalRoll <= criticalEffectContext.criticalRating) {
-		triggerFeatEffects(
-			props.source,
-			props.target,
-			AbilityTrigger.onActorScoreCriticalHit,
-			abilityContext,
-		);
-		criticalEffectContext.criticalEffects.forEach((effectData) => {
-			const effectProcessor =
-				getAbilityEffectProcessor().getProcessorFunction(effectData.id);
-			effectProcessor({
-				source: props.source,
-				target: props.target,
-				abilityContext,
-				effectVariables: effectData.variables,
-				effectFeedbackDetails: props.effectFeedbackDetails,
-			});
-		});
-		props.effectFeedbackDetails.criticalHits += 1;
-	}
+	props.target.attributes[attributeName].modifiers.push({
+		descriptors,
+		amount,
+	} as ActorAttributeModifier);
 }
 
-export function applyModifyContextVariable(props: EffectFunctionProps) {
+export function calculateContextVariableModifier(
+	props: EffectCalculationFunctionProps,
+) {
 	const abilityContext = props.abilityContext;
 	const requiredDescriptors =
-		(props.effectVariables.requiredDescriptors as string[]) || [];
+		(props.effectVariables.requiredDescriptors as AbilityDescriptor[]) ||
+		[];
 	const contextObjectName =
 		(props.effectVariables.contextObjectName as string) || "";
 	const contextVariableName =
@@ -369,8 +398,8 @@ export function applyModifyContextVariable(props: EffectFunctionProps) {
 	const variableModifier =
 		(props.effectVariables.variableModifier as number) || 0;
 
-	for (let i = 0; i < requiredDescriptors.length; i++) {
-		if (!abilityContext.descriptors.includes(requiredDescriptors[i])) {
+	for (const requiredDescriptor of requiredDescriptors) {
+		if (!abilityContext.descriptors.includes(requiredDescriptor)) {
 			return;
 		}
 	}

@@ -1,9 +1,7 @@
 import { inject } from "tsyringe";
 import GameSystem from "src/systems/GameSystem";
 import { query } from "bitecs";
-import ActorStateComponent, {
-	AbilityTrigger,
-} from "src/components/ActorStateComponent";
+import ActorStateComponent from "src/components/ActorStateComponent";
 import {
 	PAUSE_GAMEOVER,
 	PAUSE_RENDERQUEUE,
@@ -11,11 +9,18 @@ import {
 } from "src/constants/GeneralConstants";
 import { decideNPCAction } from "src/modules/CombatModule";
 import {
-	processAbilityEffects,
+	applyAbilityEffects,
+	calculateAbilityEffects,
+	performAttackRoll,
 	spendAbilityCost,
 	triggerFeatEffects,
 } from "src/modules/EffectModule";
-import { addAbilityRQEs, startRenderQueue } from "src/modules/RenderModule";
+import {
+	renderAbilityEffects,
+	renderCastHitVFX as renderCastAndHitVFX,
+	renderMessageDisplay,
+	startRenderQueue,
+} from "src/modules/RenderModule";
 import { GameScene } from "src/scenes/GameScene";
 import {
 	getControlState,
@@ -23,7 +28,12 @@ import {
 	getUserInterfaceState,
 } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
-import { AbilityContext, ActionContext } from "src/types/ContextTypes";
+import { AbilityTargetContext, ActionContext } from "src/types/ContextTypes";
+import {
+	AbilityData,
+	AbilityDescriptor,
+	AbilityTrigger,
+} from "src/types/AbilityTypes";
 
 export default class CombatManagerSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -94,18 +104,19 @@ export default class CombatManagerSystem implements GameSystem {
 
 		const actionTargetIds = sourceActorState.currentTargetEIDs;
 
-		addAbilityRQEs(
+		renderMessageDisplay(sourceActorState, actionToPerform);
+
+		renderCastAndHitVFX(
+			actionToPerform,
 			sourceActorState.entityId,
 			actionTargetIds,
-			sourceActorState,
-			actionToPerform,
 		);
 
 		const abilityContext = {
 			target: `${actionToPerform.target}`,
 			descriptors: actionToPerform.descriptors,
 			effects: actionToPerform.effectData,
-		} as AbilityContext;
+		} as AbilityTargetContext;
 
 		abilityContext.actionContext = {
 			cost: actionToPerform.cost || 0,
@@ -136,10 +147,29 @@ export default class CombatManagerSystem implements GameSystem {
 
 		actionTargetIds.forEach((eid) => {
 			const targetActorState = actorStateComponentArray[eid];
-			processAbilityEffects(
+			if (this.hasAttackRoll(actionToPerform)) {
+				performAttackRoll(
+					sourceActorState,
+					targetActorState,
+					abilityContext,
+				);
+			}
+			calculateAbilityEffects(
 				sourceActorState,
 				targetActorState,
 				actionToPerform,
+				abilityContext,
+			);
+			applyAbilityEffects(
+				sourceActorState,
+				targetActorState,
+				actionToPerform,
+				abilityContext,
+			);
+			renderAbilityEffects(
+				actionToPerform.name,
+				sourceActorState,
+				targetActorState,
 				abilityContext,
 			);
 		});
@@ -149,6 +179,17 @@ export default class CombatManagerSystem implements GameSystem {
 		const actionTimerAttribute = sourceActorState.attributes.actionTimer;
 		actionTimerAttribute.maximumValue = actionToPerform.recoveryTime || 0.5;
 		actionTimerAttribute.currentValue = 0;
+	}
+
+	private hasAttackRoll(actionToPerform: AbilityData): boolean {
+		return (
+			(actionToPerform.descriptors.includes(AbilityDescriptor.attack) &&
+				actionToPerform.descriptors.includes(
+					AbilityDescriptor.ranged,
+				)) ||
+			(actionToPerform.descriptors.includes(AbilityDescriptor.attack) &&
+				actionToPerform.descriptors.includes(AbilityDescriptor.melee))
+		);
 	}
 }
 

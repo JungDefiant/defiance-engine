@@ -85,8 +85,6 @@ export default class CombatHUD implements IHUD {
 				continue;
 			}
 
-			console.log("POWER DATA", powerData);
-
 			if (powerData) {
 				powerSlot.setActionSlotIcon(powerData.iconURL as string);
 				powerSlot.setOnClickEvent(() =>
@@ -151,7 +149,7 @@ export default class CombatHUD implements IHUD {
 	}
 
 	public addCombatLogEntry(source: string, text: string) {
-		if (!this.combatLogStack) {
+		if (!this.combatLogStack || text === "") {
 			return;
 		}
 

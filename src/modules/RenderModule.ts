@@ -1,14 +1,23 @@
 import { EntityId } from "bitecs";
-import ActorStateComponent, {
-	AbilityData,
-} from "src/components/ActorStateComponent";
 import {
 	RenderQueueEntry,
 	RenderQueueEntryFloatingText,
 	RenderQueueEntryMessageDisplay,
 	RenderQueueEntrySpecialFX,
 } from "src/types/RenderTypes";
-import { getRenderState } from "./GameStateModule";
+import { getRenderState, getUserInterfaceState } from "./GameStateModule";
+import {
+	EffectFeedbackStyle,
+	EffectFeedbackStyles,
+	EffectFeedbackType,
+} from "src/types/UserInterfaceTypes";
+import UserInterfaceState from "src/states/UserInterfaceState";
+import {
+	AbilityTargetContext,
+	EffectFeedbackContext,
+} from "src/types/ContextTypes";
+import ActorStateComponent from "src/components/ActorStateComponent";
+import { AbilityData } from "src/types/AbilityTypes";
 
 export function addFloatingTextRQE(
 	targetEntityId: number,
@@ -26,9 +35,7 @@ export function addFloatingTextRQE(
 	addRenderQueueEntry(floatingTextRqe);
 }
 
-export function addAbilityRQEs(
-	sourceEntityId: EntityId,
-	targetEntityIds: EntityId[],
+export function renderMessageDisplay(
 	sourceData: ActorStateComponent,
 	actionData: AbilityData,
 ) {
@@ -39,7 +46,13 @@ export function addAbilityRQEs(
 	);
 
 	addRenderQueueEntry(messageDisplayRenderQueueEntry);
+}
 
+export function renderCastHitVFX(
+	actionData: AbilityData,
+	sourceEntityId: number,
+	targetEntityIds: number[],
+) {
 	if (actionData.castVfxURL && actionData.castSfxURL) {
 		const castAbilitySpecialFxRenderQueueEntry =
 			new RenderQueueEntrySpecialFX(
@@ -65,6 +78,97 @@ export function addAbilityRQEs(
 
 		addRenderQueueEntry(hitAbilitySpecialFxRenderQueueEntry);
 	}
+}
+
+export function renderAbilityEffects(
+	abilityName: string,
+	sourceState: ActorStateComponent,
+	targetState: ActorStateComponent,
+	context: AbilityTargetContext,
+) {
+	const userInterfaceState = getUserInterfaceState();
+
+	const effectFeedbackContext: EffectFeedbackContext = {
+		abilityName: abilityName,
+		sourceName: sourceState.name,
+		targetName: targetState.name,
+		targetEntityId: targetState.entityId,
+		abilityContext: context,
+	};
+
+	if (context.attackContext) {
+		const effectFeedbackStyle = EffectFeedbackStyles.get(
+			"attackRoll",
+		) as EffectFeedbackStyle;
+		addEffectFeedbackRenderQueueEntries({
+			effectFeedbackStyle,
+			effectFeedbackContext,
+			userInterfaceState,
+		});
+	}
+
+	if (context.damageContext) {
+		const effectFeedbackStyle = EffectFeedbackStyles.get(
+			"damage",
+		) as EffectFeedbackStyle;
+		addEffectFeedbackRenderQueueEntries({
+			effectFeedbackStyle,
+			effectFeedbackContext,
+			userInterfaceState,
+		});
+	}
+
+	if (context.healingContext) {
+		const effectFeedbackStyle = EffectFeedbackStyles.get(
+			"healing",
+		) as EffectFeedbackStyle;
+		addEffectFeedbackRenderQueueEntries({
+			effectFeedbackStyle,
+			effectFeedbackContext,
+			userInterfaceState,
+		});
+	}
+
+	if (context.statusEffectContexts) {
+		context.statusEffectContexts.forEach((statusEffect) => {
+			const statusEffectFeedbackType =
+				statusEffect.statusId as EffectFeedbackType;
+			if (
+				!statusEffectFeedbackType ||
+				!EffectFeedbackStyles.has(statusEffectFeedbackType)
+			) {
+				return;
+			}
+			const effectFeedbackStyle = EffectFeedbackStyles.get(
+				statusEffectFeedbackType,
+			) as EffectFeedbackStyle;
+			addEffectFeedbackRenderQueueEntries({
+				effectFeedbackStyle,
+				effectFeedbackContext,
+				userInterfaceState,
+			});
+		});
+	}
+}
+
+interface EffectFeedbackRenderQueueEntriesProps {
+	userInterfaceState: UserInterfaceState;
+	effectFeedbackStyle: EffectFeedbackStyle;
+	effectFeedbackContext: EffectFeedbackContext;
+}
+
+function addEffectFeedbackRenderQueueEntries(
+	props: EffectFeedbackRenderQueueEntriesProps,
+) {
+	addFloatingTextRQE(
+		props.effectFeedbackContext.targetEntityId,
+		props.effectFeedbackStyle.floatingText(props.effectFeedbackContext),
+		props.effectFeedbackStyle.floatingTextColor,
+	);
+	props.userInterfaceState.combatHud.addCombatLogEntry(
+		`${props.effectFeedbackContext.sourceName} (${props.effectFeedbackContext.abilityName})`,
+		props.effectFeedbackStyle.combatLogText(props.effectFeedbackContext),
+	);
 }
 
 export function startRenderQueue(): void {

@@ -5,10 +5,6 @@ import {
 	PAUSE_TACTICALPAUSE,
 } from "src/constants/GeneralConstants";
 import ActorStateComponent, {
-	AbilityData,
-	AbilityDescriptor,
-	AbilityTarget,
-	AbilityTrigger,
 	TacticsCondition,
 	TacticsData,
 } from "src/components/ActorStateComponent";
@@ -41,6 +37,12 @@ import {
 } from "src/constants/CombatConstants";
 import { disposeEnemyEntities, resetPlayerActorState } from "./CharacterModule";
 import { clearCombatHudEntries } from "./UserInterfaceModule";
+import {
+	AbilityData,
+	AbilityDescriptor,
+	AbilityTarget,
+	AbilityTrigger,
+} from "src/types/AbilityTypes";
 
 export async function startCombat(encId: string): Promise<void> {
 	const gameScene = getGameScene();

@@ -23,19 +23,6 @@
 			"variables": {
 				"baseDamage": 4
 			}
-		},
-		{
-			"id": "critical",
-			"variables": {
-				"onCriticalHitEffects": [
-					{
-						"id": "damage",
-						"variables": {
-							"baseDamage": 4
-						}
-					}
-				]
-			}
 		}
 	]
 }

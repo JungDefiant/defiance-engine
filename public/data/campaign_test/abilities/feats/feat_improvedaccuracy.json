@@ -6,7 +6,7 @@
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
 	"hitSfxURL": "",
-	"trigger": "onActorInflictDamage",
+	"trigger": "alwaysActive",
 	"descriptors": [
 		"feat",
 		"technique"
@@ -14,15 +14,15 @@
 	"target": "self",
 	"effectData": [
 		{
-			"id": "modifyContextVariable",
+			"id": "attributeModifier",
 			"variables": {
-				"requiredDescriptors": [
+				"descriptors": [
 					"ranged",
 					"attack"
 				],
-				"contextObjectName": "damageContext",
-				"contextVariableName": "damageMultiplier",
-				"variableModifier": 0.2
+				"attributeName": "offense",
+				"amount": 8,
+				"duration": 0
 			}
 		}
 	]
