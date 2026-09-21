@@ -17,7 +17,7 @@ export default class FloatingTextComponent
 	) {
 		super(name, text);
 		this.fadeRate = props?.fadeRate || 1;
-		this.fadeCurve = props?.textSpeed || 1;
+		this.fadeCurve = props?.fadeCurve || 1;
 		this.targetEntityId = props?.targetEntityId || -1;
 		this.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 	}
@@ -29,6 +29,6 @@ export default class FloatingTextComponent
 
 export interface FloatingTextComponentProps {
 	fadeRate: number;
-	textSpeed: number;
+	fadeCurve: number;
 	targetEntityId: EntityId;
 }

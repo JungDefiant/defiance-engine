@@ -1,0 +1,43 @@
+{
+	"id": "power_furiousstrike",
+	"name": "Furious Strike",
+	"description": "",
+	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
+	"castVfxURL": "",
+	"hitVfxURL": "vfx/vfx_test",
+	"castSfxURL": "",
+	"hitSfxURL": "",
+	"trigger": "onActionPerform",
+	"descriptors": [
+		"power",
+		"technique",
+		"onHit"
+	],
+	"target": "self",
+	"recoveryTime": 2,
+	"cost": 10,
+	"costAttribute": "willPoints",
+	"effectData": [
+		{
+			"id": "onHit",
+			"variables": {
+				"onHitEffects": [
+					{
+						"id": "damage",
+						"variables": {
+							"baseDamage": 16
+						}
+					},
+					{
+						"id": "status",
+						"variables": {
+							"id": "surge",
+							"duration": 4,
+							"isTargetingSource": true
+						}
+					}
+				]
+			}
+		}
+	]
+}

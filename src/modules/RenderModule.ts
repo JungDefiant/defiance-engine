@@ -29,7 +29,7 @@ export function addFloatingTextRQE(
 		text,
 		color,
 		true,
-		1,
+		0.75,
 	);
 
 	addRenderQueueEntry(floatingTextRqe);

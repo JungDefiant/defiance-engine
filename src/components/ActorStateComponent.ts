@@ -28,7 +28,7 @@ const BASE_ATTRIBUTES = {
 	lifePerPoint: 10,
 	willPerPoint: 5,
 	itemPoints: 40,
-	speed: 0.6,
+	speed: -0.4,
 	speedPerPoint: 0.1,
 	defensePerPoint: 2,
 	offensePerPoint: 2,

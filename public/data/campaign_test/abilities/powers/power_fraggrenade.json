@@ -1,6 +1,6 @@
 {
-	"id": "power_pulserifle",
-	"name": "Pulse Rifle",
+	"id": "power_fraggrenade",
+	"name": "Frag Grenade",
 	"description": "",
 	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
 	"castVfxURL": "",
@@ -10,19 +10,22 @@
 	"trigger": "onActionPerform",
 	"descriptors": [
 		"power",
-		"single",
+		"group",
 		"ranged",
 		"lethal",
-		"weapon",
+		"device",
+		"grenade",
 		"attack"
 	],
-	"target": "single_en",
+	"target": "group_en",
 	"recoveryTime": 4,
+	"cost": 10,
+	"costAttribute": "itemPoints",
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 12
+				"baseDamage": 16
 			}
 		}
 	]

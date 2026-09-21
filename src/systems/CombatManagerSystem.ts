@@ -11,6 +11,7 @@ import { decideNPCAction } from "src/modules/CombatModule";
 import {
 	applyAbilityEffects,
 	calculateAbilityEffects,
+	calculateTotalAttributeValue,
 	performAttackRoll,
 	spendAbilityCost,
 	triggerFeatEffects,
@@ -176,8 +177,27 @@ export default class CombatManagerSystem implements GameSystem {
 
 		startRenderQueue();
 
+		this.resetActionTimer(sourceActorState, actionToPerform);
+	}
+
+	private resetActionTimer(
+		sourceActorState: ActorStateComponent,
+		actionToPerform: AbilityData,
+	) {
+		let recoveryTimeMultiplier = 1;
+		const totalSpeedValue = calculateTotalAttributeValue(
+			sourceActorState.attributes.speed,
+			actionToPerform.descriptors,
+		);
+		if (totalSpeedValue < 0) {
+			recoveryTimeMultiplier = 1 + Math.abs(totalSpeedValue);
+		} else {
+			recoveryTimeMultiplier = 1 / (1 + totalSpeedValue);
+		}
+		const totalRecoveryTime =
+			(actionToPerform.recoveryTime || 0.5) * recoveryTimeMultiplier;
 		const actionTimerAttribute = sourceActorState.attributes.actionTimer;
-		actionTimerAttribute.maximumValue = actionToPerform.recoveryTime || 0.5;
+		actionTimerAttribute.maximumValue = Math.max(totalRecoveryTime, 0.5);
 		actionTimerAttribute.currentValue = 0;
 	}
 

@@ -111,7 +111,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 				this.text,
 				{
 					fadeRate: 1,
-					textSpeed: 0,
+					fadeCurve: 0,
 					targetEntityId: entityId,
 				},
 			);
