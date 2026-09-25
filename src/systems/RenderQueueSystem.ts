@@ -56,8 +56,9 @@ export default class RenderQueueSystem implements GameSystem {
 					renderQueueState.renderQueueEntry.initRenderQueueState(
 						renderQueueState,
 					),
-				);
-				renderQueueState.init = true;
+				).then(() => {
+					renderQueueState.init = true;
+				});
 			}
 
 			renderQueueState.timeAccumulated += deltaTime;

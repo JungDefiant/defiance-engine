@@ -61,7 +61,10 @@ export class StickerFactory implements EntityFactory {
 		);
 
 		if (stickerProps.animation) {
-			const newAnim = this.createImageAnimation(newSticker, stickerProps);
+			const newAnim = await this.createImageAnimation(
+				newSticker,
+				stickerProps,
+			);
 			addComponent(
 				gameScene.world,
 				newEntity,

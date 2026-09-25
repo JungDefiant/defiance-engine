@@ -253,28 +253,33 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 			getCharacterSpriteComponentArray();
 
 		for (const targetEntityId of this.targetEntityIds) {
-			const stickerImageEntityId =
-				await stickerFactory.createEntityFromFile(this.vfxUrl);
-			renderQueueState.entityIds.push(stickerImageEntityId);
+			stickerFactory
+				.createEntityFromFile(this.vfxUrl)
+				.then((stickerImageEntityId) => {
+					renderQueueState.entityIds.push(stickerImageEntityId);
 
-			const stickerImage =
-				getStickerImageComponentArray()[stickerImageEntityId];
+					const stickerImage =
+						getStickerImageComponentArray()[stickerImageEntityId];
 
-			const imageAnimation =
-				getImageAnimationComponentArray()[stickerImageEntityId];
-			if (imageAnimation) {
-				imageAnimation.isActive = false;
-			}
+					const imageAnimation =
+						getImageAnimationComponentArray()[stickerImageEntityId];
+					if (imageAnimation) {
+						imageAnimation.isActive = false;
+					}
 
-			if (gameplayState.playerEntityIds.includes(targetEntityId)) {
-				const playerGUI = playerGuiComponentArray[targetEntityId];
-				playerGUI.getRoot().addControl(stickerImage);
-			} else {
-				const targetSprite =
-					characterSpriteComponentArray[targetEntityId];
-				userInterfaceState.sceneGUI.addControl(stickerImage);
-				stickerImage.linkWithMesh(targetSprite.getValue());
-			}
+					if (
+						gameplayState.playerEntityIds.includes(targetEntityId)
+					) {
+						const playerGUI =
+							playerGuiComponentArray[targetEntityId];
+						playerGUI.getRoot().addControl(stickerImage);
+					} else {
+						const targetSprite =
+							characterSpriteComponentArray[targetEntityId];
+						userInterfaceState.sceneGUI.addControl(stickerImage);
+						stickerImage.linkWithMesh(targetSprite.getValue());
+					}
+				});
 		}
 	}
 
@@ -284,17 +289,8 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 	): void {
 		for (const entityId of renderQueueState.entityIds) {
 			const stickerImage = getStickerImageComponentArray()[entityId];
-			this.currentLifetime += deltaTime;
 			const delay = this.delay || 0;
-			if (this.currentLifetime > delay) {
-				stickerImage.isVisible = false;
-
-				const imageAnimation =
-					getImageAnimationComponentArray()[entityId];
-				if (imageAnimation) {
-					imageAnimation.isActive = false;
-				}
-			} else {
+			if (renderQueueState.timeAccumulated > delay) {
 				stickerImage.isVisible = true;
 
 				const imageAnimation =
@@ -302,8 +298,14 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 				if (imageAnimation) {
 					imageAnimation.isActive = true;
 				}
+			} else {
+				stickerImage.isVisible = false;
 
-				continue;
+				const imageAnimation =
+					getImageAnimationComponentArray()[entityId];
+				if (imageAnimation) {
+					imageAnimation.isActive = false;
+				}
 			}
 		}
 	}
