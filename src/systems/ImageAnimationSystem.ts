@@ -14,11 +14,18 @@ export default class ImageAnimationSystem implements GameSystem {
 		for (const eid of query(this.gameScene.world, [
 			imageAnimationComponentArray,
 		])) {
-			(async () => {
-				const imageAnimationComponent =
-					await imageAnimationComponentArray[eid];
-				this.incrementAnimationCell(deltaTime, imageAnimationComponent);
-			})();
+			Promise.resolve(imageAnimationComponentArray[eid]).then(
+				(imageAnimationComponent) => {
+					if (!imageAnimationComponent.isActive) {
+						return;
+					}
+
+					this.incrementAnimationCell(
+						deltaTime,
+						imageAnimationComponent,
+					);
+				},
+			);
 		}
 	}
 

@@ -28,8 +28,9 @@ export function addFloatingTextRQE(
 		[targetEntityId],
 		text,
 		color,
-		true,
-		0.75,
+		false,
+		1,
+		0.5 * (getRenderState().currentRenderQueue.length - 1 || 0),
 	);
 
 	addRenderQueueEntry(floatingTextRqe);
@@ -72,8 +73,8 @@ export function renderCastHitVFX(
 				targetEntityIds,
 				actionData.hitVfxURL,
 				actionData.hitSfxURL || "",
-				false,
-				1,
+				true,
+				0.5,
 			);
 
 		addRenderQueueEntry(hitAbilitySpecialFxRenderQueueEntry);
@@ -96,7 +97,10 @@ export function renderAbilityEffects(
 		abilityContext: context,
 	};
 
-	if (context.attackContext) {
+	if (
+		context.attackContext &&
+		context.attackContext.attackRollResult !== "hit"
+	) {
 		const effectFeedbackStyle = EffectFeedbackStyles.get(
 			"attackRoll",
 		) as EffectFeedbackStyle;

@@ -7,8 +7,8 @@
 	"spriteUrl": "spr_sentineltest.png",
 	"attributes": {
 		"might": 4,
-		"impulse": 4,
-		"guile": 10,
+		"impulse": 100,
+		"guile": 4,
 		"heart": 4
 	},
 	"affinityId": "",
