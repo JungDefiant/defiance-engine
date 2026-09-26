@@ -20,7 +20,16 @@ export default class ImageAnimationSystem implements GameSystem {
 				return;
 			}
 
+			this.checkAnimationCellProperties(imageAnimationComponent);
 			this.incrementAnimationCell(deltaTime, imageAnimationComponent);
+		}
+	}
+
+	private checkAnimationCellProperties(
+		imageAnimation: ImageAnimationComponent,
+	) {
+		if (!imageAnimation.maximumCells || !imageAnimation.timePerCell) {
+			imageAnimation.resetCellProperties();
 		}
 	}
 
@@ -38,12 +47,5 @@ export default class ImageAnimationSystem implements GameSystem {
 		if (spriteSheet.cellId > imageAnimation.maximumCells) {
 			spriteSheet.cellId = 1;
 		}
-
-		console.log(
-			"IMAGE ANIMATION",
-			imageAnimation.accumulatedTime,
-			imageAnimation.timePerCell,
-			spriteSheet.cellId,
-		);
 	}
 }

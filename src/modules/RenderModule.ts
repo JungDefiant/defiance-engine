@@ -24,7 +24,7 @@ export function addFloatingTextRQE(
 	text: string,
 	color: string,
 ) {
-	const floatingTextRqe = new RenderQueueEntryFloatingText(
+	const floatingTextRenderQueueEntry = new RenderQueueEntryFloatingText(
 		[targetEntityId],
 		text,
 		color,
@@ -33,7 +33,7 @@ export function addFloatingTextRQE(
 		0.5 * (getRenderState().currentRenderQueue.length - 1 || 0),
 	);
 
-	addRenderQueueEntry(floatingTextRqe);
+	addRenderQueueEntry(floatingTextRenderQueueEntry);
 }
 
 export function renderMessageDisplay(

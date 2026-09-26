@@ -3,10 +3,11 @@ import { Component } from "./Component";
 
 export class ImageAnimationComponent implements Component {
 	spriteSheet: Image;
-	maximumCells: number;
-	timePerCell: number;
-	accumulatedTime: number;
-	isActive: boolean;
+	maximumCells: number = 0;
+	timePerCell: number = 0;
+	animationSpeed: number = 0;
+	accumulatedTime: number = 0;
+	isActive: boolean = false;
 
 	constructor(_spriteSheet: Image, _animProps: SpriteAnimationProps) {
 		this.spriteSheet = _spriteSheet;
@@ -16,16 +17,22 @@ export class ImageAnimationComponent implements Component {
 		this.spriteSheet.topInPixels = _animProps.imageTop;
 		this.spriteSheet.leftInPixels = _animProps.imageLeft;
 
-		const sourceWidth = this.spriteSheet.imageWidth;
-		const sourceHeight = this.spriteSheet.imageHeight;
+		this.accumulatedTime = 0;
+		this.animationSpeed = _animProps.animationSpeed;
+		this.isActive = _animProps.isActive;
+
+		this.resetCellProperties();
+	}
+
+	public resetCellProperties() {
+		const sourceWidth = this.spriteSheet.domImage.naturalWidth;
+		const sourceHeight = this.spriteSheet.domImage.naturalHeight;
 		const cellWidth = this.spriteSheet.cellWidth;
 		const cellHeight = this.spriteSheet.cellHeight;
 		this.maximumCells =
 			Math.floor(sourceWidth / cellWidth) *
 			Math.floor(sourceHeight / cellHeight);
-		this.timePerCell = this.maximumCells / _animProps.animationSpeed;
-		this.accumulatedTime = 0;
-		this.isActive = _animProps.isActive;
+		this.timePerCell = this.maximumCells / this.animationSpeed;
 	}
 
 	public getValue(): ImageAnimationComponent {

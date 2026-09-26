@@ -7,7 +7,7 @@
 	"spriteUrl": "spr_sentineltest.png",
 	"attributes": {
 		"might": 4,
-		"impulse": 100,
+		"impulse": 4,
 		"guile": 4,
 		"heart": 4
 	},
