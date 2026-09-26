@@ -1,6 +1,5 @@
 import {
 	AdvancedDynamicTexture,
-	Button,
 	Image,
 	Control,
 	StackPanel,
@@ -18,7 +17,6 @@ import {
 import { getPublicRoot } from "src/modules/Utils";
 import { startGame } from "src/modules/InitModule";
 import { createButton } from "src/modules/UserInterfaceModule";
-import AudioState from "src/states/AudioState";
 
 export class MainMenuScreen {
 	private root: AdvancedDynamicTexture;
@@ -26,7 +24,6 @@ export class MainMenuScreen {
 	private music: Nullable<StreamingSound> = null;
 
 	public constructor(scene: Scene) {
-		const env = import.meta.env;
 		this.root = AdvancedDynamicTexture.CreateFullscreenUI(
 			"ui_main",
 			true,
