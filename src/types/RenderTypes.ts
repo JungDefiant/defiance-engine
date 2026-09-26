@@ -6,6 +6,7 @@ import { Themes } from "src/gui/Themes";
 import {
 	getCharacterSpriteComponentArray,
 	getFloatingTextComponentArray,
+	getImageAnimationComponentArray,
 	getPlayerGuiComponentArray,
 	getStickerImageComponentArray,
 } from "src/modules/ComponentModule";
@@ -31,8 +32,9 @@ export class RenderQueueState {
 export interface RenderQueueEntry {
 	readonly isBlocking: boolean;
 	readonly duration?: number;
-	initRenderQueueEntry(renderQueueState: RenderQueueState): Promise<void>;
-	tickRenderQueueEntry(
+	readonly delay?: number;
+	initRenderQueueState(renderQueueState: RenderQueueState): Promise<void>;
+	tickRenderQueueState(
 		renderQueueState: RenderQueueState,
 		deltaTime: number,
 	): void;
@@ -43,22 +45,31 @@ export class RenderQueueEntryMessageDisplay implements RenderQueueEntry {
 	public readonly text: string;
 	public readonly isBlocking: boolean;
 	public readonly duration?: number | undefined;
+	public readonly delay?: number | undefined;
 
-	public constructor(text: string, isBlocking: boolean, duration?: number) {
+	public constructor(
+		text: string,
+		isBlocking: boolean,
+		duration?: number,
+		delay?: number,
+	) {
 		this.text = text;
 		this.isBlocking = isBlocking;
 		if (duration) {
 			this.duration = duration;
 		}
+		if (delay) {
+			this.delay = delay;
+		}
 	}
-	public async initRenderQueueEntry(
+	public async initRenderQueueState(
 		renderQueueState: RenderQueueState,
 	): Promise<void> {
 		const userInterfaceState = getUserInterfaceState();
 		userInterfaceState.combatHud.setMessageDisplay(true, this.text);
 	}
 
-	public tickRenderQueueEntry(renderQueueState: RenderQueueState): void {}
+	public tickRenderQueueState(renderQueueState: RenderQueueState): void {}
 
 	public clearRenderQueueState(renderQueueState: RenderQueueState): void {
 		const userInterfaceState = getUserInterfaceState();
@@ -72,8 +83,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 	public readonly color: string;
 	public readonly isBlocking: boolean;
 	public readonly duration?: number | undefined;
-
-	public currentLifetime: number = 0;
+	public readonly delay?: number | undefined;
 
 	public constructor(
 		targetEntityIds: number[],
@@ -81,6 +91,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 		color: string,
 		isBlocking: boolean,
 		duration?: number,
+		delay?: number,
 	) {
 		this.targetEntityIds = targetEntityIds;
 		this.text = text;
@@ -89,9 +100,12 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 		if (duration) {
 			this.duration = duration;
 		}
+		if (delay) {
+			this.delay = delay;
+		}
 	}
 
-	public async initRenderQueueEntry(
+	public async initRenderQueueState(
 		renderQueueState: RenderQueueState,
 	): Promise<void> {
 		const gameScene = getGameScene();
@@ -111,7 +125,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 				this.text,
 				{
 					fadeRate: 1,
-					textSpeed: 0,
+					fadeCurve: 0,
 					targetEntityId: entityId,
 				},
 			);
@@ -125,6 +139,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 			floatingTextUI.shadowOffsetY = 2;
 			floatingTextUI.shadowBlur = 4;
 			floatingTextUI.shadowColor = Themes.primary3;
+			floatingTextUI.isVisible = false;
 
 			if (gameplayState.playerEntityIds.includes(entityId)) {
 				const playerGUI = playerGuiComponentArray[entityId];
@@ -143,19 +158,32 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 		}
 	}
 
-	public tickRenderQueueEntry(
+	public tickRenderQueueState(
 		renderQueueState: RenderQueueState,
 		deltaTime: number,
 	): void {
 		const floatingTextComponentArray = getFloatingTextComponentArray();
 
-		for (const entityId of query(getGameScene().world, [
-			floatingTextComponentArray,
-		])) {
+		for (const entityId of renderQueueState.entityIds) {
 			const floatingText = floatingTextComponentArray[entityId];
-			this.currentLifetime += deltaTime;
+			if (!floatingText) {
+				continue;
+			}
+			const timeAccumulated = renderQueueState.timeAccumulated;
+			const duration = this.duration || 0;
+			const delay = this.delay || 0;
+			if (timeAccumulated > delay) {
+				floatingText.isVisible = true;
+			} else if (timeAccumulated >= duration + delay) {
+				continue;
+			} else {
+				floatingText.isVisible = false;
+			}
+			const adjustedTimeAccumulated = timeAccumulated - delay;
 			const normalizedLifetime =
-				this.currentLifetime / (this.duration || this.currentLifetime);
+				Math.max(adjustedTimeAccumulated, 0) /
+				(duration > 0 ? duration : adjustedTimeAccumulated);
+
 			const easingFactor = easeInExpo(normalizedLifetime);
 			const newAlpha = Math.max(
 				floatingText.alpha - floatingText.fadeRate * easingFactor,
@@ -164,18 +192,21 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 			floatingText.alpha = newAlpha;
 		}
 	}
+
 	public clearRenderQueueState(renderQueueState: RenderQueueState): void {
 		const world = getGameScene().world;
-		const userInterfaceState = getUserInterfaceState();
 		const floatingTextComponentArray = getFloatingTextComponentArray();
+		const entitiesToRemove = [];
 
 		for (const entityId of renderQueueState.entityIds) {
 			const floatingText = floatingTextComponentArray[entityId];
 			if (!floatingText) {
 				continue;
 			}
-			userInterfaceState.sceneGUI.removeControl(floatingText);
-			floatingText.dispose();
+			entitiesToRemove.push(entityId);
+		}
+
+		for (const entityId of entitiesToRemove) {
 			removeEntity(world, entityId);
 		}
 	}
@@ -187,6 +218,9 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 	public readonly audioUrl: string;
 	public readonly isBlocking: boolean;
 	public readonly duration?: number | undefined;
+	public readonly delay?: number | undefined;
+
+	public currentLifetime: number = 0;
 
 	public constructor(
 		targetEntityIds: number[],
@@ -194,6 +228,7 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 		audioUrl: string,
 		isBlocking: boolean,
 		duration?: number,
+		delay?: number,
 	) {
 		this.targetEntityIds = targetEntityIds;
 		this.vfxUrl = vfxUrl;
@@ -202,9 +237,12 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 		if (duration) {
 			this.duration = duration;
 		}
+		if (delay) {
+			this.delay = delay;
+		}
 	}
 
-	public async initRenderQueueEntry(
+	public async initRenderQueueState(
 		renderQueueState: RenderQueueState,
 	): Promise<void> {
 		const stickerFactory = getStickerFactory();
@@ -215,29 +253,62 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 			getCharacterSpriteComponentArray();
 
 		for (const targetEntityId of this.targetEntityIds) {
-			const stickerImageEntityId =
-				await stickerFactory.createEntityFromFile(this.vfxUrl);
-			renderQueueState.entityIds.push(stickerImageEntityId);
+			stickerFactory
+				.createEntityFromFile(this.vfxUrl)
+				.then((stickerImageEntityId) => {
+					renderQueueState.entityIds.push(stickerImageEntityId);
 
-			const stickerImage =
-				getStickerImageComponentArray()[stickerImageEntityId];
+					const stickerImage =
+						getStickerImageComponentArray()[stickerImageEntityId];
 
-			if (gameplayState.playerEntityIds.includes(targetEntityId)) {
-				const playerGUI = playerGuiComponentArray[targetEntityId];
-				playerGUI.getRoot().addControl(stickerImage);
-			} else {
-				const targetSprite =
-					characterSpriteComponentArray[targetEntityId];
-				userInterfaceState.sceneGUI.addControl(stickerImage);
-				stickerImage.linkWithMesh(targetSprite.getValue());
-			}
+					const imageAnimation =
+						getImageAnimationComponentArray()[stickerImageEntityId];
+					if (imageAnimation) {
+						imageAnimation.isActive = false;
+					}
+
+					if (
+						gameplayState.playerEntityIds.includes(targetEntityId)
+					) {
+						const playerGUI =
+							playerGuiComponentArray[targetEntityId];
+						playerGUI.getRoot().addControl(stickerImage);
+					} else {
+						const targetSprite =
+							characterSpriteComponentArray[targetEntityId];
+						userInterfaceState.sceneGUI.addControl(stickerImage);
+						stickerImage.linkWithMesh(targetSprite.getValue());
+					}
+				});
 		}
 	}
 
-	public tickRenderQueueEntry(
+	public tickRenderQueueState(
 		renderQueueState: RenderQueueState,
 		deltaTime: number,
-	): void {}
+	): void {
+		for (const entityId of renderQueueState.entityIds) {
+			const stickerImage = getStickerImageComponentArray()[entityId];
+			const delay = this.delay || 0;
+			if (renderQueueState.timeAccumulated > delay) {
+				stickerImage.isVisible = true;
+
+				const imageAnimation =
+					getImageAnimationComponentArray()[entityId];
+				if (imageAnimation) {
+					imageAnimation.isActive = true;
+				}
+			} else {
+				stickerImage.isVisible = false;
+
+				const imageAnimation =
+					getImageAnimationComponentArray()[entityId];
+				if (imageAnimation) {
+					imageAnimation.isActive = false;
+				}
+			}
+		}
+	}
 
 	public clearRenderQueueState(renderQueueState: RenderQueueState): void {
 		const world = getGameScene().world;
@@ -266,11 +337,11 @@ export class RenderQueueEntryWaitUntilDone implements RenderQueueEntry {
 			this.duration = duration;
 		}
 	}
-	public async initRenderQueueEntry(
+	public async initRenderQueueState(
 		renderQueueState: RenderQueueState,
 	): Promise<void> {}
 
-	public tickRenderQueueEntry(
+	public tickRenderQueueState(
 		renderQueueState: RenderQueueState,
 		deltaTime: number,
 	): void {}

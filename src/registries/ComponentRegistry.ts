@@ -32,7 +32,6 @@ export class ComponentRegistry {
 		observe(this.world, onRemove(componentArray), async (eid: EntityId) => {
 			const component = await componentArray[eid];
 			component.dispose();
-			componentArray.splice(eid);
 		});
 	}
 

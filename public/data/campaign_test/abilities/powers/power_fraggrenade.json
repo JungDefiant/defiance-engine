@@ -1,7 +1,8 @@
 {
-	"id": "power_brawl",
-	"name": "Brawl",
+	"id": "power_fraggrenade",
+	"name": "Frag Grenade",
 	"description": "",
+	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
@@ -9,19 +10,22 @@
 	"trigger": "onActionPerform",
 	"descriptors": [
 		"power",
-		"single",
-		"melee",
-		"impact",
-		"innate",
+		"group",
+		"ranged",
+		"lethal",
+		"device",
+		"grenade",
 		"attack"
 	],
-	"target": "single_en",
+	"target": "group_en",
 	"recoveryTime": 4,
+	"cost": 10,
+	"costAttribute": "itemPoints",
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 4
+				"baseDamage": 16
 			}
 		}
 	]

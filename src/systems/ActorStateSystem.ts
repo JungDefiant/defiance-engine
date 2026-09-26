@@ -44,15 +44,13 @@ export default class ActorStateSystem implements GameSystem {
 		}
 
 		const actionTimerAttribute = actorState.attributes.actionTimer;
-		const speedAttribute = actorState.attributes.speed;
 
 		if (
 			actionTimerAttribute.currentValue <
 			actionTimerAttribute.maximumValue
 		) {
-			const amount = deltaTime * speedAttribute.currentValue;
 			const newActionTimerAttributeValue =
-				actionTimerAttribute.currentValue + amount;
+				actionTimerAttribute.currentValue + deltaTime;
 			actionTimerAttribute.currentValue = Math.min(
 				newActionTimerAttributeValue,
 				actionTimerAttribute.maximumValue,

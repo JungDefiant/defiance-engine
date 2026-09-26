@@ -14,11 +14,13 @@ export default class ImageAnimationSystem implements GameSystem {
 		for (const eid of query(this.gameScene.world, [
 			imageAnimationComponentArray,
 		])) {
-			(async () => {
-				const imageAnimationComponent =
-					await imageAnimationComponentArray[eid];
-				this.incrementAnimationCell(deltaTime, imageAnimationComponent);
-			})();
+			const imageAnimationComponent = imageAnimationComponentArray[eid];
+
+			if (!imageAnimationComponent.isActive) {
+				return;
+			}
+
+			this.incrementAnimationCell(deltaTime, imageAnimationComponent);
 		}
 	}
 
@@ -36,5 +38,12 @@ export default class ImageAnimationSystem implements GameSystem {
 		if (spriteSheet.cellId > imageAnimation.maximumCells) {
 			spriteSheet.cellId = 1;
 		}
+
+		console.log(
+			"IMAGE ANIMATION",
+			imageAnimation.accumulatedTime,
+			imageAnimation.timePerCell,
+			spriteSheet.cellId,
+		);
 	}
 }

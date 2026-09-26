@@ -4,6 +4,22 @@ import { Nullable } from "@babylonjs/core";
 import { getPublicRoot } from "src/modules/Utils";
 import CampaignState from "src/states/CampaignState";
 import { Component } from "./Component";
+import {
+	AbilityData,
+	AbilityDescriptor,
+	AbilityTrigger,
+	EffectData,
+} from "src/types/AbilityTypes";
+import {
+	ActorAttribute,
+	AffinityData,
+	AttributeSet,
+} from "src/types/AttributeTypes";
+import {
+	applyAbilityEffects,
+	calculateAbilityEffects,
+} from "src/modules/EffectModule";
+import { AbilityTargetContext } from "src/types/ContextTypes";
 
 const BASE_LIFE_REGEN_TICKS: number = 4;
 const BASE_WILL_REGEN_TICKS: number = 4;
@@ -12,12 +28,10 @@ const BASE_ATTRIBUTES = {
 	lifePerPoint: 10,
 	willPerPoint: 5,
 	itemPoints: 40,
-	speed: 0.6,
+	speed: -0.4,
 	speedPerPoint: 0.1,
-	defensePerPoint: 0.02,
-	criticalPerPoint: 0.02,
-	damage: -0.4,
-	damagePerPoint: 0.1,
+	defensePerPoint: 2,
+	offensePerPoint: 2,
 };
 
 export interface LoadedAbilityJson {
@@ -77,100 +91,154 @@ export default class ActorStateComponent implements Component {
 			BASE_ATTRIBUTES.speed +
 			BASE_ATTRIBUTES.speedPerPoint * initialImpulseValue;
 		const initialDefenseValue =
-			BASE_ATTRIBUTES.defensePerPoint * initialImpulseValue;
-		const initialCriticalValue =
-			BASE_ATTRIBUTES.criticalPerPoint * initialGuileValue;
+			BASE_ATTRIBUTES.defensePerPoint * initialGuileValue;
 
 		this.attributes = {
 			might: {
 				baseValue: initialMightValue,
 				maximumValue: initialMightValue,
 				currentValue: initialMightValue,
+				modifiers: [],
 			} as ActorAttribute,
 			impulse: {
 				baseValue: initialImpulseValue,
 				maximumValue: initialImpulseValue,
 				currentValue: initialImpulseValue,
+				modifiers: [],
 			} as ActorAttribute,
 			guile: {
 				baseValue: initialGuileValue,
 				maximumValue: initialGuileValue,
 				currentValue: initialGuileValue,
+				modifiers: [],
 			} as ActorAttribute,
 			heart: {
 				baseValue: initialHeartValue,
 				maximumValue: initialHeartValue,
 				currentValue: initialHeartValue,
+				modifiers: [],
 			} as ActorAttribute,
 			lifePoints: {
 				baseValue: initialLifeValue,
 				maximumValue: initialLifeValue,
 				currentValue: initialLifeValue,
+				modifiers: [],
 			} as ActorAttribute,
 			willPoints: {
 				baseValue: initialWillValue,
 				maximumValue: initialWillValue,
 				currentValue: initialWillValue,
+				modifiers: [],
 			} as ActorAttribute,
 			itemPoints: {
 				baseValue: BASE_ATTRIBUTES.itemPoints,
 				maximumValue: BASE_ATTRIBUTES.itemPoints,
 				currentValue: BASE_ATTRIBUTES.itemPoints,
+				modifiers: [],
 			} as ActorAttribute,
 			speed: {
 				baseValue: initialSpeedValue,
 				maximumValue: initialSpeedValue,
 				currentValue: initialSpeedValue,
+				modifiers: [],
+			} as ActorAttribute,
+			offense: {
+				baseValue: 0,
+				maximumValue: 0,
+				currentValue: 0,
+				modifiers: [
+					{
+						descriptors: ["melee", "attack"],
+						amount:
+							BASE_ATTRIBUTES.offensePerPoint * initialMightValue,
+					},
+					{
+						descriptors: ["ranged", "attack"],
+						amount:
+							BASE_ATTRIBUTES.offensePerPoint *
+							initialImpulseValue,
+					},
+					{
+						descriptors: ["device"],
+						amount:
+							BASE_ATTRIBUTES.offensePerPoint * initialGuileValue,
+					},
+					{
+						descriptors: ["cybernetic"],
+						amount:
+							BASE_ATTRIBUTES.offensePerPoint * initialGuileValue,
+					},
+					{
+						descriptors: ["mutation"],
+						amount:
+							BASE_ATTRIBUTES.offensePerPoint * initialHeartValue,
+					},
+					{
+						descriptors: ["invocation"],
+						amount:
+							BASE_ATTRIBUTES.offensePerPoint * initialHeartValue,
+					},
+				],
 			} as ActorAttribute,
 			defense: {
 				baseValue: initialDefenseValue,
 				maximumValue: initialDefenseValue,
 				currentValue: initialDefenseValue,
+				modifiers: [],
 			} as ActorAttribute,
-			critical: {
-				baseValue: initialCriticalValue,
-				maximumValue: initialCriticalValue,
-				currentValue: initialCriticalValue,
+			damage: {
+				baseValue: 0,
+				maximumValue: 0,
+				currentValue: 0,
+				modifiers: [],
 			} as ActorAttribute,
 			resist: {
 				baseValue: 0,
 				maximumValue: 0,
 				currentValue: 0,
+				modifiers: [],
 			} as ActorAttribute,
 			lifeRegen: {
 				baseValue: 1,
 				maximumValue: 1,
 				currentValue: 1,
+				modifiers: [],
 			} as ActorAttribute,
 			willRegen: {
 				baseValue: 1,
 				maximumValue: 1,
 				currentValue: 1,
+				modifiers: [],
 			} as ActorAttribute,
 			actionTimer: {
 				baseValue: 0,
 				maximumValue: 0,
 				currentValue: 0,
+				modifiers: [],
 			} as ActorAttribute,
 			lifeRegenTimer: {
 				baseValue: BASE_LIFE_REGEN_TICKS,
 				maximumValue: BASE_LIFE_REGEN_TICKS,
 				currentValue: 0,
+				modifiers: [],
 			} as ActorAttribute,
 			willRegenTimer: {
 				baseValue: BASE_WILL_REGEN_TICKS,
 				maximumValue: BASE_WILL_REGEN_TICKS,
 				currentValue: 0,
+				modifiers: [],
 			} as ActorAttribute,
 			willCostPerSecond: {
 				baseValue: 0,
 				maximumValue: 0,
 				currentValue: 0,
+				modifiers: [],
 			} as ActorAttribute,
 			willCostTimer: {
 				baseValue: 1,
 				maximumValue: 1,
 				currentValue: 1,
+				modifiers: [],
 			} as ActorAttribute,
 		};
 
@@ -200,6 +268,28 @@ export default class ActorStateComponent implements Component {
 				})
 				.then((abilityData) => {
 					thisActorState.featData.push(abilityData);
+					if (abilityData.trigger === AbilityTrigger.alwaysActive) {
+						const abilityContext = {
+							target: `${abilityData.target}`,
+							descriptors: abilityData.descriptors,
+							effects: abilityData.effectData,
+						} as AbilityTargetContext;
+						abilityContext.target = `${abilityData.target}`;
+						abilityContext.descriptors = abilityData.descriptors;
+						abilityContext.effects = abilityData.effectData;
+						calculateAbilityEffects(
+							this,
+							this,
+							abilityData,
+							abilityContext,
+						);
+						applyAbilityEffects(
+							this,
+							this,
+							abilityData,
+							abilityContext,
+						);
+					}
 				});
 		}
 
@@ -213,109 +303,10 @@ export default class ActorStateComponent implements Component {
 	public dispose(): void {}
 }
 
-export interface AttributeSet {
-	[index: string]: ActorAttribute;
-}
-
-export interface ActorAttribute {
-	baseValue: number;
-	currentValue: number;
-	maximumValue: number;
-}
-
-export interface AffinityData {
-	baseAttributes: ActorAttribute[];
-}
-
-export interface AbilityData {
-	id: string;
-	name: string;
-	description: string;
-	trigger: AbilityTrigger;
-	descriptors: AbilityDescriptor[];
-	target: AbilityTarget;
-	effectData: EffectData[];
-	recoveryTime?: number;
-	cost?: number;
-	costAttribute?: string;
-	itemId?: string;
-	iconURL?: string;
-	castVfxURL?: string;
-	hitVfxURL?: string;
-	castSfxURL?: string;
-	hitSfxURL?: string;
-}
-
-export type EffectVariable =
-	| string
-	| number
-	| boolean
-	| string[]
-	| number[]
-	| EffectData[];
-
-export interface EffectData {
-	id: string;
-	variables: {
-		[index: string]: EffectVariable;
-	};
-}
-
 export interface TacticsData {
 	condition: TacticsCondition;
 	actionType: AbilityDescriptor;
 	actionIndex: number;
-}
-
-export enum AbilityTrigger {
-	onActionPerform = "onActionPerform",
-	onActorResistEffect = "onActorResistEffect",
-	onActorInflictDamage = "onActorInflictDamage",
-	onActorGrantHealing = "onActorGrantHealing",
-	onActorLifeModify = "onActorLifeModify",
-	onActorDefeat = "onActorDefeated",
-	onActorRollCriticalHit = "onActorRollCriticalHit",
-	onActorScoreCriticalHit = "onActorScoreCriticalHit",
-}
-
-export enum AbilityDescriptor {
-	// Type
-	power = "power",
-	feat = "feat",
-	basic = "basic",
-	// Target
-	single = "single",
-	group = "group",
-	// Range
-	direct = "direct",
-	ranged = "ranged",
-	melee = "melee",
-	// Type
-	impact = "impact",
-	lethal = "lethal",
-	burn = "burn",
-	toxic = "toxic",
-	psychic = "psychic",
-	// Type
-	innate = "innate",
-	weapon = "weapon",
-	device = "device",
-	mutation = "mutation",
-	technique = "technique",
-	invocation = "invocation",
-	cybernetic = "cybernetic",
-	// Form
-	attack = "attack",
-	action = "action",
-	toggle = "toggle",
-}
-
-export enum AbilityTarget {
-	self = "self",
-	singleEnemy = "single_en",
-	groupEnemy = "group_en",
-	singleAlly = "single_al",
-	groupAlly = "group_en",
 }
 
 export enum TacticsCondition {

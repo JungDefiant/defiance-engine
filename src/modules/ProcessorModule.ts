@@ -1,4 +1,5 @@
-import { AbilityEffectProcessor } from "src/processors/AbilityEffectProcessor";
+import { AbilityEffectApplicationProcessor } from "src/processors/AbilityEffectApplicationProcessor";
+import { AbilityEffectCalculationProcessor } from "src/processors/AbilityEffectCalculationProcessor";
 import { GameEventProcessor } from "src/processors/GameEventProcessor";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 import { container } from "tsyringe";
@@ -8,10 +9,17 @@ export function getGameEventProcessor(): GameEventProcessor {
 	return processorRegistry.getProcessorByProcessorId(GameEventProcessor.name);
 }
 
-export function getAbilityEffectProcessor(): AbilityEffectProcessor {
+export function getAbilityEffectCalculationProcessor(): AbilityEffectCalculationProcessor {
 	const processorRegistry = container.resolve(ProcessorRegistry);
 	return processorRegistry.getProcessorByProcessorId(
-		AbilityEffectProcessor.name,
+		AbilityEffectCalculationProcessor.name,
+	);
+}
+
+export function getAbilityEffectApplicationProcessor(): AbilityEffectApplicationProcessor {
+	const processorRegistry = container.resolve(ProcessorRegistry);
+	return processorRegistry.getProcessorByProcessorId(
+		AbilityEffectApplicationProcessor.name,
 	);
 }
 

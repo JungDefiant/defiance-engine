@@ -61,7 +61,10 @@ export class StickerFactory implements EntityFactory {
 		);
 
 		if (stickerProps.animation) {
-			const newAnim = this.createImageAnimation(newSticker, stickerProps);
+			const newAnim = await this.createImageAnimation(
+				newSticker,
+				stickerProps,
+			);
 			addComponent(
 				gameScene.world,
 				newEntity,
@@ -81,7 +84,6 @@ export class StickerFactory implements EntityFactory {
 		newSticker.heightInPixels = props.height;
 		newSticker.topInPixels = props.top;
 		newSticker.leftInPixels = props.left;
-
 		return newSticker;
 	}
 
@@ -100,6 +102,7 @@ export class StickerFactory implements EntityFactory {
 			imageLeft: props.left,
 			animationSpeed: stickerAnimProps.speed || 0,
 			loop: stickerAnimProps.loop || false,
+			isActive: stickerAnimProps.isActive || true,
 		} as SpriteAnimationProps;
 
 		const newAnim = new ImageAnimationComponent(spriteSheet, newAnimProps);
@@ -121,5 +124,6 @@ interface StickerProps {
 		cellHeight: number;
 		loop: boolean;
 		speed: number;
+		isActive: boolean;
 	};
 }

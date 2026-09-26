@@ -2,7 +2,7 @@
 	"id": "power_pulserifle",
 	"name": "Pulse Rifle",
 	"description": "",
-	"iconURL": "sprites/gui/icons/weapons/icon_pulserifle.png",
+	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
@@ -23,19 +23,6 @@
 			"id": "damage",
 			"variables": {
 				"baseDamage": 12
-			}
-		},
-		{
-			"id": "critical",
-			"variables": {
-				"effects": [
-					{
-						"id": "damage",
-						"variables": {
-							"baseDamage": 8
-						}
-					}
-				]
 			}
 		}
 	]

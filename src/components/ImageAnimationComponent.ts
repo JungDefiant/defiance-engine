@@ -6,6 +6,7 @@ export class ImageAnimationComponent implements Component {
 	maximumCells: number;
 	timePerCell: number;
 	accumulatedTime: number;
+	isActive: boolean;
 
 	constructor(_spriteSheet: Image, _animProps: SpriteAnimationProps) {
 		this.spriteSheet = _spriteSheet;
@@ -15,8 +16,8 @@ export class ImageAnimationComponent implements Component {
 		this.spriteSheet.topInPixels = _animProps.imageTop;
 		this.spriteSheet.leftInPixels = _animProps.imageLeft;
 
-		const sourceWidth = this.spriteSheet.domImage.width;
-		const sourceHeight = this.spriteSheet.domImage.height;
+		const sourceWidth = this.spriteSheet.imageWidth;
+		const sourceHeight = this.spriteSheet.imageHeight;
 		const cellWidth = this.spriteSheet.cellWidth;
 		const cellHeight = this.spriteSheet.cellHeight;
 		this.maximumCells =
@@ -24,6 +25,7 @@ export class ImageAnimationComponent implements Component {
 			Math.floor(sourceHeight / cellHeight);
 		this.timePerCell = this.maximumCells / _animProps.animationSpeed;
 		this.accumulatedTime = 0;
+		this.isActive = _animProps.isActive;
 	}
 
 	public getValue(): ImageAnimationComponent {
@@ -42,4 +44,5 @@ export interface SpriteAnimationProps {
 	imageLeft: number;
 	animationSpeed: number;
 	loop: boolean;
+	isActive: boolean;
 }
