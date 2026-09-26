@@ -8,7 +8,7 @@
         {
             "title": "Page 2",
             "textBody": "Example text w/ image",
-            "imageSrc": "/sprites/enemies/spr_sentineltest.png"
+            "imageSrc": "sprites/characters/spr_sentineltest.png"
         },
         {
             "title": "Page 3",

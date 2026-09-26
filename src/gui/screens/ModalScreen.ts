@@ -33,6 +33,7 @@ export class ModalScreen {
 			Control.VERTICAL_ALIGNMENT_CENTER;
 		this.rootContainer.topInPixels = -80;
 		this.rootContainer.isVisible = false;
+		this.rootContainer.isPointerBlocker = true;
 
 		const stackPanel = new StackPanel("ui_modalStackPanel");
 		stackPanel.isVertical = true;
@@ -45,7 +46,7 @@ export class ModalScreen {
 
 		this.modalLabel = new TextBlock("ui_modalLabel", "");
 		this.modalLabel.color = Themes.neutral2;
-		this.modalLabel.style = Themes.typography.header2;
+		this.modalLabel.style = Themes.typography.header3;
 		this.modalLabel.heightInPixels = 64;
 		this.modalLabel.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		this.rootContainer.addControl(this.modalLabel);
@@ -56,7 +57,7 @@ export class ModalScreen {
 		textBodyPanel.adaptHeightToChildren = true;
 		textBodyPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 		textBodyPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		this.rootContainer.addControl(textBodyPanel); 
+		this.rootContainer.addControl(textBodyPanel);
 
 		this.modalImage = new Image("ui_modalImage", "");
 		this.modalImage.widthInPixels = 64;
@@ -191,6 +192,8 @@ export class ModalScreen {
 		if (currentPage.imageSrc) {
 			this.modalImage.source = currentPage.imageSrc;
 			this.modalImage.isVisible = true;
+			this.modalImage.widthInPixels = 150;
+			this.modalImage.heightInPixels = 150;
 			this.modalText.widthInPixels = 400;
 		} else {
 			this.modalImage.isVisible = false;
