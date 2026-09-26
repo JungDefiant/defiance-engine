@@ -289,9 +289,21 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 	): void {
 		for (const entityId of renderQueueState.entityIds) {
 			const stickerImage = getStickerImageComponentArray()[entityId];
+			const duration = this.duration || 0;
 			const delay = this.delay || 0;
 			if (renderQueueState.timeAccumulated > delay) {
 				stickerImage.isVisible = true;
+				const adjustedTimeAccumulated =
+					renderQueueState.timeAccumulated - delay;
+				const normalizedLifetime =
+					Math.max(adjustedTimeAccumulated, 0) /
+					(duration > 0 ? duration : adjustedTimeAccumulated);
+				const easingFactor = easeInExpo(normalizedLifetime);
+				const newAlpha = Math.max(
+					stickerImage.alpha - normalizedLifetime * easingFactor,
+					0,
+				);
+				stickerImage.alpha = newAlpha;
 
 				const imageAnimation =
 					getImageAnimationComponentArray()[entityId];

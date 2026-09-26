@@ -70,6 +70,7 @@ import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
+import { AssetsManager, Scene } from "babylonjs";
 
 export async function initGameScene(sceneId: string) {
 	const engine = container.resolve(Engine);

@@ -12,6 +12,8 @@ import {
 	getStickerImageComponentArray,
 } from "src/modules/ComponentModule";
 import { Nullable } from "@babylonjs/core";
+import { LoadSmartAssetAsync } from "babylonjs/pure";
+import { Scene } from "babylonjs";
 
 const PRELOAD_STICKERS = ["vfx/vfx_test"];
 
