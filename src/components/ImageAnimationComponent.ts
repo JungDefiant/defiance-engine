@@ -16,8 +16,8 @@ export class ImageAnimationComponent implements Component {
 		this.spriteSheet.topInPixels = _animProps.imageTop;
 		this.spriteSheet.leftInPixels = _animProps.imageLeft;
 
-		const sourceWidth = this.spriteSheet.domImage.width;
-		const sourceHeight = this.spriteSheet.domImage.height;
+		const sourceWidth = this.spriteSheet.imageWidth;
+		const sourceHeight = this.spriteSheet.imageHeight;
 		const cellWidth = this.spriteSheet.cellWidth;
 		const cellHeight = this.spriteSheet.cellHeight;
 		this.maximumCells =

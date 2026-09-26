@@ -84,7 +84,6 @@ export class StickerFactory implements EntityFactory {
 		newSticker.heightInPixels = props.height;
 		newSticker.topInPixels = props.top;
 		newSticker.leftInPixels = props.left;
-
 		return newSticker;
 	}
 
