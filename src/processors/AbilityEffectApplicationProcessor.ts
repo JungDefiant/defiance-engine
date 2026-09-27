@@ -1,15 +1,14 @@
 import { Processor } from "./Processor";
-import { AbilityEffectType } from "src/types/AbilityTypes";
+import {
+	AbilityEffectApplicationFunction,
+	AbilityEffectType,
+	EffectApplicationFunctionProps,
+} from "src/types/AbilityTypes";
 import {
 	applyDamageEffect,
 	applyHealEffect,
 	applyStatusEffect,
-	EffectApplicationFunctionProps,
 } from "src/modules/EffectModule";
-
-export type AbilityEffectApplicationFunction = (
-	props: EffectApplicationFunctionProps,
-) => void;
 
 export class AbilityEffectApplicationProcessor implements Processor {
 	private processorFunctions: Record<

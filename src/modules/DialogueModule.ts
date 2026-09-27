@@ -1,10 +1,11 @@
+import { TransformNode, UniversalCamera, Vector3 } from "@babylonjs/core";
+import grammar from "src/parser/DialogueParser.ohm-bundle";
 import {
 	ConditionFunction,
 	DialogueLine,
 	DialogueNode,
 	DialogueOptionLine,
 } from "src/types/GameTypes";
-import { startCombat } from "./CombatModule";
 import {
 	getCampaignState,
 	getControlState,
@@ -13,13 +14,13 @@ import {
 	getUserInterfaceState,
 } from "./GameStateModule";
 import DialogueHUD from "src/gui/DialogueHUD";
-import { TransformNode, UniversalCamera, Vector3 } from "@babylonjs/core";
-import grammar from "src/parser/DialogueParser.ohm-bundle";
-import { getPublicRoot } from "./Utils";
 import { PAUSE_DIALOGUE } from "src/constants/GeneralConstants";
+import { getPublicRoot } from "./Utils";
+import { startCombat } from "./CombatModule";
 import { setDialogueGameMode, setExploreGameMode } from "./SceneModule";
 import { checkEventByTrigger } from "./EventModule";
-import { getTransformNodeComponentArray } from "./ComponentModule";
+import { getDialogueCommandProcessor } from "./ProcessorModule";
+import { DialogueCommandVariable } from "src/types/DialogueTypes";
 
 export async function loadDialogueMap(dialogueId: string): Promise<void> {
 	const dialogueState = getDialogueState();
@@ -214,28 +215,14 @@ export function runCommand(id: number, line: DialogueLine) {
 		return;
 	}
 
-	switch (line.cmd) {
-		case "setnumbervar":
-			setNumberVariableDialogueCommand(
-				line.vars[0] as string,
-				line.vars[1] as number,
-			);
-			break;
-		case "setstringvar":
-			setStringVariableDialogueCommand(
-				line.vars[0] as string,
-				line.vars[1] as string,
-			);
-			break;
-		case "movecam":
-			moveCameraDialogueCommand(
-				line.vars[0] as Vector3,
-				line.vars[1] as Vector3,
-			);
-			break;
-		case "startcombat":
-			startCombatDialogueCommand(line.vars[0] as string);
-			return;
+	const dialogueCommand = getDialogueCommandProcessor().getProcessorFunction(
+		line.cmd,
+	);
+
+	dialogueCommand(line.vars);
+
+	if (line.cmd === "startcombat") {
+		return;
 	}
 
 	const nextLineId = id + 1;
@@ -248,25 +235,35 @@ export function runCommand(id: number, line: DialogueLine) {
 	runLine(nextLineId);
 }
 
-function setFlagDialogueCommand(flag: string) {}
+export function setFlagDialogueCommand(flag: string) {}
 
-function setStringVariableDialogueCommand(name: string, value: string) {
+export function setStringVariableDialogueCommand(
+	vars: DialogueCommandVariable[],
+) {
+	const name = vars[0] as string;
+	const value = vars[1] as string;
 	const campaignState = getCampaignState();
 	campaignState.storyVariableMap.set(name, value);
 }
 
-function setNumberVariableDialogueCommand(name: string, value: number) {
+export function setNumberVariableDialogueCommand(
+	vars: DialogueCommandVariable[],
+) {
+	const name = vars[0] as string;
+	const value = vars[1] as number;
 	const campaignState = getCampaignState();
 	campaignState.storyVariableMap.set(name, value);
 }
 
-function moveCameraDialogueCommand(position: Vector3, target: Vector3) {}
+export function moveCameraDialogueCommand(position: Vector3, target: Vector3) {}
 
-function setSpeakerDialogueCommand(charId: string) {}
+export function setSpeakerDialogueCommand(charId: string) {}
 
-function playSoundDialogueCommand(soundUrl: string) {}
+export function playSoundDialogueCommand(soundUrl: string) {}
 
-function startCombatDialogueCommand(encounterId: string) {
+export function startCombatDialogueCommand(vars: DialogueCommandVariable[]) {
+	const encounterId = vars[0] as string;
+	console.log("ENCOUNTER ID", encounterId);
 	endDialogue(false);
 	startCombat(encounterId);
 }

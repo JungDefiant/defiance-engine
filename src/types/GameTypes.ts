@@ -2,6 +2,7 @@ import { Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Control } from "@babylonjs/gui";
 import { GameScene } from "src/scenes/GameScene";
 import { GameEvent } from "src/types/EventTypes";
+import { DialogueCommandVariable } from "./DialogueTypes";
 
 export class ControlSettings {
 	powerActions: number[] = [
@@ -87,7 +88,7 @@ export interface DialogueLine {
 	text?: string;
 	options?: DialogueOptionLine[];
 	cmd?: string;
-	vars?: (string | number | Vector3)[];
+	vars?: DialogueCommandVariable[];
 }
 
 export type DialogueLineType =

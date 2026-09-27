@@ -1,3 +1,6 @@
+import ActorStateComponent from "src/components/ActorStateComponent";
+import { AbilityTargetContext } from "./ContextTypes";
+
 export type AbilityEffectType =
 	| "damage"
 	| "healing"
@@ -51,6 +54,27 @@ export enum AbilityTrigger {
 	onActorAttackHit = "onActorAttackHit",
 	onActorAttackCrit = "onActorAttackCrit",
 }
+
+export interface EffectCalculationFunctionProps {
+	source: ActorStateComponent;
+	target: ActorStateComponent;
+	abilityContext: AbilityTargetContext;
+	effectVariables: { [index: string]: EffectVariable };
+}
+
+export interface EffectApplicationFunctionProps {
+	source: ActorStateComponent;
+	target: ActorStateComponent;
+	abilityContext: AbilityTargetContext;
+}
+
+export type AbilityEffectCalculationFunction = (
+	props: EffectCalculationFunctionProps,
+) => void;
+
+export type AbilityEffectApplicationFunction = (
+	props: EffectApplicationFunctionProps,
+) => void;
 
 export enum AbilityDescriptor {
 	// Type

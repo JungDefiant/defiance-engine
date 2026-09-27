@@ -3,7 +3,8 @@ import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTrigger,
-	EffectVariable,
+	EffectApplicationFunctionProps,
+	EffectCalculationFunctionProps,
 } from "src/types/AbilityTypes";
 import { clamp } from "./Utils";
 import { defeatActor } from "./CombatModule";
@@ -30,19 +31,6 @@ import {
 	MIN_ATTACKRESULTCHANCE,
 } from "src/constants/CombatConstants";
 import { RandomRange } from "babylonjs";
-
-export interface EffectCalculationFunctionProps {
-	source: ActorStateComponent;
-	target: ActorStateComponent;
-	abilityContext: AbilityTargetContext;
-	effectVariables: { [index: string]: EffectVariable };
-}
-
-export interface EffectApplicationFunctionProps {
-	source: ActorStateComponent;
-	target: ActorStateComponent;
-	abilityContext: AbilityTargetContext;
-}
 
 export function calculateTotalAttributeValue(
 	attribute: ActorAttribute,
