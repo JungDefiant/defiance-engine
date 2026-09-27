@@ -140,6 +140,7 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 			floatingTextUI.shadowBlur = 4;
 			floatingTextUI.shadowColor = Themes.primary3;
 			floatingTextUI.isVisible = false;
+			floatingTextUI.isPointerBlocker = false;
 
 			if (gameplayState.playerEntityIds.includes(entityId)) {
 				const playerGUI = playerGuiComponentArray[entityId];

@@ -66,7 +66,7 @@ export default class ActorStateComponent implements Component {
 	isPlayer: boolean = false;
 	isDefeated: boolean = false;
 	affinityData?: AffinityData;
-	itemData?: AbilityData[];
+	equipmentData?: AbilityData[];
 	tactics?: TacticsData[];
 	queuedAction?: Nullable<AbilityData>;
 

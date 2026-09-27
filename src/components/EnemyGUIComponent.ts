@@ -189,6 +189,10 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		this.targetingUI.onPointerClickObservable.addOnce(() => newCallback());
 	}
 
+	public removeTargetingCallback(): void {
+		this.targetingUI.onPointerClickObservable.clear();
+	}
+
 	public setVisibleTargetingUI(isVisible: boolean): void {
 		this.targetingUI.isVisible = isVisible;
 	}

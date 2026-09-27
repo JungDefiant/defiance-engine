@@ -12,7 +12,7 @@ export class ControlSettings {
 		"D".charCodeAt(0),
 		"F".charCodeAt(0),
 	];
-	deviceActions: number[] = [
+	equipmentActions: number[] = [
 		"1".charCodeAt(0),
 		"2".charCodeAt(0),
 		"3".charCodeAt(0),

@@ -8,6 +8,7 @@ import ActorStateComponent from "src/components/ActorStateComponent";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
 import { getGameCanvas } from "./SceneModule";
 import {
+	endPlayerActionTargeting,
 	resetTargeting,
 	setTacticalPause,
 	startQueueActionPlayer,
@@ -19,7 +20,11 @@ import {
 	getUserInterfaceState,
 } from "./GameStateModule";
 import { setSelectedCharacter } from "./CharacterModule";
-import { getComponentRegistry } from "./ComponentModule";
+import {
+	getComponentRegistry,
+	getEnemyGuiComponentArray,
+} from "./ComponentModule";
+import ControlState from "src/states/ControlState";
 
 export function clearActionPause() {
 	const controlState = getControlState();
@@ -131,7 +136,7 @@ export function resetCombatModeActionManager() {
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.name,
 			gameplayState.selectedPlayerEID,
-		);
+		) as ActorStateComponent;
 	userInterfaceState.combatHud.setActionBar(actorState);
 
 	resetTargeting();
@@ -151,29 +156,23 @@ export function resetCombatModeActionManager() {
 					parameter: controlState.controlSettings.powerActions[i],
 				},
 				() => {
-					if (controlState.controlPauseSet.size > 0) {
-						return;
-					}
-					startQueueActionPlayer(actorState.entityId, i, false);
+					startQueueAction(i, actorState, controlState);
 				},
 			),
 		);
 	}
 
-	if (actorState.itemData) {
-		for (let i = 0; i < actorState.itemData.length; i++) {
+	if (actorState.equipmentData) {
+		for (let i = 0; i < actorState.equipmentData.length; i++) {
 			actionManager.registerAction(
 				new ExecuteCodeAction(
 					{
 						trigger: ActionManager.OnKeyDownTrigger,
 						parameter:
-							controlState.controlSettings.deviceActions[i],
+							controlState.controlSettings.equipmentActions[i],
 					},
 					() => {
-						if (controlState.controlPauseSet.size > 0) {
-							return;
-						}
-						startQueueActionPlayer(actorState.entityId, i, true);
+						startQueueAction(i, actorState, controlState);
 					},
 				),
 			);
@@ -235,6 +234,21 @@ export function resetDialogueModeControls() {
 	}
 }
 
+function startQueueAction(
+	actionIndex: number,
+	actorState: ActorStateComponent,
+	controlState: ControlState,
+) {
+	if (controlState.controlPauseSet.size > 0) {
+		return;
+	}
+	if (controlState.isTargetingAction) {
+		endPlayerActionTargeting(getEnemyGuiComponentArray());
+	} else {
+		startQueueActionPlayer(actorState.entityId, actionIndex, false);
+	}
+}
+
 function getSwitchPlayerFunction(
 	isRightSelection: boolean,
 	isCombatMode?: boolean,
@@ -256,6 +270,9 @@ function getSwitchPlayerFunction(
 			gameplayState.playerEntityIds.length - 1
 		) {
 			newSelectedPlayerEntityIdIndex = 0;
+		}
+		if (isCombatMode && controlState.isTargetingAction) {
+			endPlayerActionTargeting(getEnemyGuiComponentArray());
 		}
 		setSelectedCharacter(
 			gameplayState.playerEntityIds[newSelectedPlayerEntityIdIndex],
