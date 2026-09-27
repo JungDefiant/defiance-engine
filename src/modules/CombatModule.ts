@@ -43,6 +43,7 @@ import {
 	AbilityTarget,
 	AbilityTrigger,
 } from "src/types/AbilityTypes";
+import EnemyGUIComponent from "src/components/EnemyGUIComponent";
 
 export async function startCombat(encId: string): Promise<void> {
 	const gameScene = getGameScene();
@@ -157,15 +158,17 @@ export function resetTargeting() {
 export async function startQueueActionPlayer(
 	eid: EntityId,
 	actionInd: number,
-	isItem?: boolean,
+	isEquipment?: boolean,
 ): Promise<void> {
 	const actorData =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.name,
 			eid,
-		);
+		) as ActorStateComponent;
 	const actionData = (
-		isItem ? actorData.itemData[actionInd] : actorData.powerData[actionInd]
+		isEquipment && actorData.equipmentData
+			? actorData.equipmentData[actionInd]
+			: actorData.powerData[actionInd]
 	) as AbilityData;
 
 	if (!actionData || actionData.trigger != AbilityTrigger.onActionPerform) {
@@ -179,6 +182,8 @@ function setPlayerActionTargeting(
 	sourceEid: EntityId,
 	actionData: AbilityData,
 ): void {
+	const controlState = getControlState();
+	controlState.isTargetingAction = true;
 	const enemyGuiComponentArray = getEnemyGuiComponentArray();
 	if (actionData.target === AbilityTarget.singleEnemy) {
 		for (const eid of query(getGameScene().world, [
@@ -187,12 +192,22 @@ function setPlayerActionTargeting(
 			const enemyGUI = enemyGuiComponentArray[eid];
 			enemyGUI.setVisibleTargetingUI(true);
 			enemyGUI.setTargetingCallback(() => {
+				endPlayerActionTargeting(enemyGuiComponentArray);
 				finishQueueAction(actionData, sourceEid, [eid]);
-				enemyGuiComponentArray.forEach((gui) =>
-					gui.setVisibleTargetingUI(false),
-				);
 			});
 		}
+	}
+}
+
+export function endPlayerActionTargeting(
+	enemyGuiComponentArray: EnemyGUIComponent[],
+) {
+	const controlState = getControlState();
+	controlState.isTargetingAction = false;
+	for (const eid of query(getGameScene().world, [enemyGuiComponentArray])) {
+		const enemyGUI = enemyGuiComponentArray[eid];
+		enemyGUI.setVisibleTargetingUI(false);
+		enemyGUI.removeTargetingCallback();
 	}
 }
 
@@ -209,8 +224,8 @@ export async function decideNPCAction(actorState: ActorStateComponent) {
 	for (const entry of tactics) {
 		const newActionData =
 			(entry.actionType === AbilityDescriptor.device &&
-				actorState.itemData &&
-				(await actorState.itemData[entry.actionIndex])) ||
+				actorState.equipmentData &&
+				(await actorState.equipmentData[entry.actionIndex])) ||
 			(AbilityDescriptor.power &&
 				(await actorState.powerData[entry.actionIndex]));
 

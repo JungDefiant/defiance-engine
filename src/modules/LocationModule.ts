@@ -205,6 +205,7 @@ export async function transitionToNewLocation(destinationId: string) {
 	const viewNode = await getSceneNode(newLocation.exploreViewNodeId);
 	if (viewNode && gameScene.activeCamera) {
 		detachCameraControl();
+		setLastExploreViewTarget();
 		controlState.controlPauseSet.add(PAUSE_LOCATIONTRANSITION);
 		const camera = gameScene.activeCamera as UniversalCamera;
 		camera.target = viewNode.getPositionExpressedInLocalSpace();
@@ -216,6 +217,7 @@ export async function transitionToNewLocation(destinationId: string) {
 				attachCameraControl();
 				clearControlPause();
 				finishTransitionToNewLocation();
+				camera.target = gameScene.lastExploreViewTarget;
 			},
 		);
 		const entityMovementComponentArray = getEntityMovementComponentArray();

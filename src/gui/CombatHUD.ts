@@ -102,12 +102,12 @@ export default class CombatHUD implements IHUD {
 			}
 		}
 
-		if (!actorState.itemData) {
+		if (!actorState.equipmentData) {
 			return;
 		}
 
 		for (let i = 0; i < this.deviceSlots.length; i++) {
-			const deviceData = actorState.itemData[i];
+			const deviceData = actorState.equipmentData[i];
 			if (!deviceData) {
 				break;
 			}
@@ -126,7 +126,7 @@ export default class CombatHUD implements IHUD {
 				);
 				deviceSlot.setActionLabelText(
 					String.fromCharCode(
-						controlState.controlSettings.deviceActions[i],
+						controlState.controlSettings.equipmentActions[i],
 					).toUpperCase(),
 				);
 			} else {
