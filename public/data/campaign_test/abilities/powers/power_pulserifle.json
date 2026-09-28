@@ -9,11 +9,11 @@
 	"hitSfxURL": "",
 	"trigger": "onActionPerform",
 	"descriptors": [
-		"power",
+		"weapon",
 		"single",
 		"ranged",
 		"lethal",
-		"weapon",
+		"equipment",
 		"attack"
 	],
 	"target": "single_en",

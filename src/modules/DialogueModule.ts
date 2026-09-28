@@ -22,252 +22,6 @@ import { checkEventByTrigger } from "./EventModule";
 import { getDialogueCommandProcessor } from "./ProcessorModule";
 import { DialogueCommandVariable } from "src/types/DialogueTypes";
 
-export async function loadDialogueMap(dialogueId: string): Promise<void> {
-	const dialogueState = getDialogueState();
-	const campaignState = getCampaignState();
-
-	if (!dialogueState.semantics) {
-		return;
-	}
-
-	const response = await fetch(
-		`${getPublicRoot()}/data/${campaignState.campaignId}/dialogues/${dialogueId}.txt`,
-	);
-	const rawData = await response.text();
-	if (!rawData) {
-		return;
-	}
-
-	const matchResult = grammar.match(String.raw`${rawData}`);
-	if (matchResult.failed()) {
-		console.error("Match Result failed", matchResult.message);
-	} else if (matchResult.succeeded()) {
-		const dialogueNodes = dialogueState
-			.semantics(matchResult)
-			.eval() as DialogueNode[];
-		dialogueNodes.forEach((node) => {
-			dialogueState.dialogueMap.set(node.name, node);
-		});
-	}
-}
-
-export async function startDialogue(
-	dialogueNodeId: string,
-	startDialogueProps?: {
-		interactablePositionNode: TransformNode;
-		viewPositionNode: TransformNode;
-	},
-): Promise<void> {
-	const gameScene = getGameScene();
-	const userInterfaceState = getUserInterfaceState();
-	const dialogueState = getDialogueState();
-	const controlState = getControlState();
-	const dialogueHud = userInterfaceState.dialogueHud;
-	const camera = gameScene.activeCamera as UniversalCamera;
-
-	if (!dialogueHud || !camera) {
-		return;
-	}
-
-	if (!dialogueState.dialogueMap.has(dialogueNodeId)) {
-		return;
-	}
-
-	controlState.actionPauseSet.add(PAUSE_DIALOGUE);
-
-	if (startDialogueProps) {
-		camera.position =
-			startDialogueProps.viewPositionNode.getPositionExpressedInLocalSpace();
-		camera.setTarget(
-			startDialogueProps.interactablePositionNode.getAbsolutePosition(),
-		);
-	}
-
-	setDialogueGameMode();
-	dialogueHud.clearEntryStacks();
-
-	startDialogueNode(dialogueNodeId);
-}
-
-export function startDialogueNode(node: string) {
-	const dialogueState = getDialogueState();
-
-	if (!dialogueState.dialogueMap.has(node)) {
-		return;
-	}
-
-	const dialogueNode = dialogueState.dialogueMap.get(node) as DialogueNode;
-	dialogueState.activeDialogue = dialogueNode;
-	runLine(0);
-}
-
-export function runLine(id: number) {
-	const dialogueState = getDialogueState();
-	const userInterfaceState = getUserInterfaceState();
-
-	// Get dialogue HUD
-	if (!dialogueState.activeDialogue) {
-		endDialogue(true);
-		return;
-	}
-
-	const dialogueHud = userInterfaceState.dialogueHud;
-	const line = dialogueState.activeDialogue.lines[id];
-
-	if (!dialogueHud) {
-		endDialogue(true);
-		return;
-	}
-
-	if (!line) {
-		dialogueHud.addExitEntry();
-		return;
-	}
-
-	switch (line.type) {
-		case "Line":
-			if (line.condition()) {
-				displayTextLine(id, line, dialogueHud);
-			} else {
-				const nextLineId = id + 1;
-				runLine(nextLineId);
-			}
-			break;
-		case "Options":
-			displayOptionsLine(line, dialogueHud);
-			break;
-		case "Cmd":
-			if (line.condition()) {
-				runCommand(id, line);
-			} else {
-				const nextLineId = id + 1;
-				runLine(nextLineId);
-			}
-			break;
-	}
-}
-
-export function endDialogue(switchToExploreMode: boolean) {
-	const controlState = getControlState();
-
-	controlState.actionPauseSet.delete(PAUSE_DIALOGUE);
-	if (switchToExploreMode) {
-		setExploreGameMode();
-	}
-
-	checkEventByTrigger("OnDialogueEnd");
-}
-
-export function displayTextLine(
-	id: number,
-	line: DialogueLine,
-	dialogueHud: DialogueHUD,
-) {
-	const dialogueState = getDialogueState();
-
-	if (!dialogueState.activeDialogue || !line.text) {
-		return;
-	}
-
-	const character = line.character;
-	if (character) {
-		// Gets sprite in the scene matching the character name
-		// Moves camera to target the sprite
-	}
-
-	if (line.text) {
-		// Display text entry for dialogue
-		dialogueHud.addTextDialogueEntry(line);
-	}
-
-	const nextLineId = id + 1;
-	const nextLine = dialogueState.activeDialogue?.lines[nextLineId];
-	if (!nextLine) {
-		dialogueHud.addExitEntry();
-	} else if (nextLine.type === "Options") {
-		runLine(nextLineId);
-	} else {
-		dialogueHud.addContinueEntry(id, nextLineId);
-	}
-}
-
-export function displayOptionsLine(line: DialogueLine, dlgHud: DialogueHUD) {
-	if (!line.options) {
-		return;
-	}
-
-	const options = line.options;
-	if (!options || options.length < 1) {
-		// Set end dialogue button
-		console.warn("No options found, exiting dialogue");
-		dlgHud.addExitEntry();
-	} else {
-		// Set choices GUI
-		dlgHud.addChoiceEntries(options);
-	}
-}
-
-export function runCommand(id: number, line: DialogueLine) {
-	const dialogueState = getDialogueState();
-
-	if (!dialogueState.activeDialogue || !line.cmd || !line.vars) {
-		endDialogue(true);
-		return;
-	}
-
-	const dialogueCommand = getDialogueCommandProcessor().getProcessorFunction(
-		line.cmd,
-	);
-
-	dialogueCommand(line.vars);
-
-	if (line.cmd === "startcombat") {
-		return;
-	}
-
-	const nextLineId = id + 1;
-	const nextLine = dialogueState.activeDialogue.lines[nextLineId];
-	if (!nextLine) {
-		endDialogue(true);
-		return;
-	}
-
-	runLine(nextLineId);
-}
-
-export function setFlagDialogueCommand(flag: string) {}
-
-export function setStringVariableDialogueCommand(
-	vars: DialogueCommandVariable[],
-) {
-	const name = vars[0] as string;
-	const value = vars[1] as string;
-	const campaignState = getCampaignState();
-	campaignState.storyVariableMap.set(name, value);
-}
-
-export function setNumberVariableDialogueCommand(
-	vars: DialogueCommandVariable[],
-) {
-	const name = vars[0] as string;
-	const value = vars[1] as number;
-	const campaignState = getCampaignState();
-	campaignState.storyVariableMap.set(name, value);
-}
-
-export function moveCameraDialogueCommand(position: Vector3, target: Vector3) {}
-
-export function setSpeakerDialogueCommand(charId: string) {}
-
-export function playSoundDialogueCommand(soundUrl: string) {}
-
-export function startCombatDialogueCommand(vars: DialogueCommandVariable[]) {
-	const encounterId = vars[0] as string;
-	console.log("ENCOUNTER ID", encounterId);
-	endDialogue(false);
-	startCombat(encounterId);
-}
-
 export function initSemantics() {
 	const dialogueState = getDialogueState();
 	const campaignState = getCampaignState();
@@ -552,4 +306,283 @@ export function initSemantics() {
 			},
 		},
 	);
+}
+
+export async function loadDialogueMap(dialogueId: string): Promise<void> {
+	const dialogueState = getDialogueState();
+	const campaignState = getCampaignState();
+
+	if (!dialogueState.semantics) {
+		return;
+	}
+
+	const response = await fetch(
+		`${getPublicRoot()}/data/${campaignState.campaignId}/dialogues/${dialogueId}.txt`,
+	);
+	const rawData = await response.text();
+	if (!rawData) {
+		return;
+	}
+
+	const matchResult = grammar.match(String.raw`${rawData}`);
+	if (matchResult.failed()) {
+		console.error("Match Result failed", matchResult.message);
+	} else if (matchResult.succeeded()) {
+		const dialogueNodes = dialogueState
+			.semantics(matchResult)
+			.eval() as DialogueNode[];
+		dialogueNodes.forEach((node) => {
+			dialogueState.dialogueMap.set(node.name, node);
+		});
+	}
+}
+
+export async function startDialogue(
+	dialogueNodeId: string,
+	startDialogueProps?: {
+		interactablePositionNode: TransformNode;
+		viewPositionNode: TransformNode;
+	},
+): Promise<void> {
+	const gameScene = getGameScene();
+	const userInterfaceState = getUserInterfaceState();
+	const dialogueState = getDialogueState();
+	const controlState = getControlState();
+	const dialogueHud = userInterfaceState.dialogueHud;
+	const camera = gameScene.activeCamera as UniversalCamera;
+
+	if (!dialogueHud || !camera) {
+		return;
+	}
+
+	if (!dialogueState.dialogueMap.has(dialogueNodeId)) {
+		return;
+	}
+
+	controlState.actionPauseSet.add(PAUSE_DIALOGUE);
+
+	if (startDialogueProps) {
+		camera.position =
+			startDialogueProps.viewPositionNode.getPositionExpressedInLocalSpace();
+		camera.setTarget(
+			startDialogueProps.interactablePositionNode.getAbsolutePosition(),
+		);
+	}
+
+	setDialogueGameMode();
+	dialogueHud.clearEntryStacks();
+
+	startDialogueNode(dialogueNodeId);
+}
+
+export function startDialogueNode(node: string) {
+	const dialogueState = getDialogueState();
+
+	if (!dialogueState.dialogueMap.has(node)) {
+		return;
+	}
+
+	const dialogueNode = dialogueState.dialogueMap.get(node) as DialogueNode;
+	dialogueState.activeDialogue = dialogueNode;
+	runLine(0);
+}
+
+export function runLine(id: number) {
+	const dialogueState = getDialogueState();
+	const userInterfaceState = getUserInterfaceState();
+
+	// Get dialogue HUD
+	if (!dialogueState.activeDialogue) {
+		endDialogue(true);
+		return;
+	}
+
+	const dialogueHud = userInterfaceState.dialogueHud;
+	const line = dialogueState.activeDialogue.lines[id];
+
+	if (!dialogueHud) {
+		endDialogue(true);
+		return;
+	}
+
+	if (!line) {
+		dialogueHud.addExitEntry();
+		return;
+	}
+
+	switch (line.type) {
+		case "Line":
+			if (line.condition()) {
+				displayTextLine(id, line, dialogueHud);
+			} else {
+				const nextLineId = id + 1;
+				runLine(nextLineId);
+			}
+			break;
+		case "Options":
+			displayOptionsLine(line, dialogueHud);
+			break;
+		case "Cmd":
+			if (line.condition()) {
+				runCommand(id, line);
+			} else {
+				const nextLineId = id + 1;
+				runLine(nextLineId);
+			}
+			break;
+	}
+}
+
+export function endDialogue(switchToExploreMode: boolean) {
+	const controlState = getControlState();
+
+	controlState.actionPauseSet.delete(PAUSE_DIALOGUE);
+	if (switchToExploreMode) {
+		setExploreGameMode();
+	}
+
+	checkEventByTrigger("OnDialogueEnd");
+}
+
+export function displayTextLine(
+	id: number,
+	line: DialogueLine,
+	dialogueHud: DialogueHUD,
+) {
+	const dialogueState = getDialogueState();
+
+	if (!dialogueState.activeDialogue || !line.text) {
+		return;
+	}
+
+	const character = line.character;
+	if (character) {
+		// Gets sprite in the scene matching the character name
+		// Moves camera to target the sprite
+	}
+
+	if (line.text) {
+		// Display text entry for dialogue
+		dialogueHud.addTextDialogueEntry(line);
+	}
+
+	const nextLineId = id + 1;
+	const nextLine = dialogueState.activeDialogue?.lines[nextLineId];
+	if (!nextLine) {
+		dialogueHud.addExitEntry();
+	} else if (nextLine.type === "Options") {
+		runLine(nextLineId);
+	} else {
+		dialogueHud.addContinueEntry(id, nextLineId);
+	}
+}
+
+export function displayOptionsLine(line: DialogueLine, dlgHud: DialogueHUD) {
+	if (!line.options) {
+		return;
+	}
+
+	const options = line.options;
+	if (!options || options.length < 1) {
+		// Set end dialogue button
+		console.warn("No options found, exiting dialogue");
+		dlgHud.addExitEntry();
+	} else {
+		// Set choices GUI
+		dlgHud.addChoiceEntries(options);
+	}
+}
+
+export function runCommand(id: number, line: DialogueLine) {
+	const dialogueState = getDialogueState();
+
+	if (!dialogueState.activeDialogue || !line.cmd || !line.vars) {
+		endDialogue(true);
+		return;
+	}
+
+	const dialogueCommand = getDialogueCommandProcessor().getProcessorFunction(
+		line.cmd,
+	);
+
+	dialogueCommand(line.vars);
+
+	if (line.cmd === "startcombat") {
+		return;
+	}
+
+	const nextLineId = id + 1;
+	const nextLine = dialogueState.activeDialogue.lines[nextLineId];
+	if (!nextLine) {
+		endDialogue(true);
+		return;
+	}
+
+	runLine(nextLineId);
+}
+
+export function setFlagDialogueCommand(flag: string) {}
+
+export function setStringVariableDialogueCommand(
+	vars: DialogueCommandVariable[],
+) {
+	const name = vars[0] as string;
+	const value = vars[1] as string;
+	const campaignState = getCampaignState();
+	campaignState.storyVariableMap.set(name, value);
+}
+
+export function setNumberVariableDialogueCommand(
+	vars: DialogueCommandVariable[],
+) {
+	const name = vars[0] as string;
+	const value = vars[1] as number;
+	const campaignState = getCampaignState();
+	campaignState.storyVariableMap.set(name, value);
+}
+
+export function modifyNumberVariableDialogueCommand(
+	vars: DialogueCommandVariable[],
+) {
+	const name = vars[0] as string;
+	const amount = vars[1] as number;
+	const campaignState = getCampaignState();
+	const storyVariableValue = campaignState.storyVariableMap.get(
+		name,
+	) as number;
+	if (storyVariableValue) {
+		campaignState.storyVariableMap.set(name, storyVariableValue + amount);
+	}
+}
+
+export function playSoundDialogueCommand(vars: DialogueCommandVariable[]) {}
+
+export function playMusicDialogueCommand(vars: DialogueCommandVariable[]) {}
+
+export function showBackgroundImageDialogueCommand(
+	vars: DialogueCommandVariable[],
+) {}
+
+export function moveCameraDialogueCommand(vars: DialogueCommandVariable[]) {}
+
+export function shakeCameraDialogueCommand(vars: DialogueCommandVariable[]) {}
+
+export function fadeInCameraDialogueCommand(vars: DialogueCommandVariable[]) {}
+
+export function fadeOutCameraDialogueCommand(vars: DialogueCommandVariable[]) {}
+
+export function moveToNodeDialogueCommand(vars: DialogueCommandVariable[]) {}
+
+export function setViewTargetDialogueCommand(vars: DialogueCommandVariable[]) {}
+
+export function setSpeakerDialogueCommand(vars: DialogueCommandVariable[]) {}
+
+export function startCombatDialogueCommand(vars: DialogueCommandVariable[]) {
+	const encounterId = vars[0] as string;
+	endDialogue(false);
+	startCombat(encounterId);
+}
+
+export function startCutsceneDialogueCommand(vars: DialogueCommandVariable[]) {
+	// To be implemented with cutscene system
 }
