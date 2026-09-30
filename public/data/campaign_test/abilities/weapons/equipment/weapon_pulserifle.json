@@ -1,5 +1,5 @@
 {
-	"id": "power_pulserifle",
+	"id": "weapon_pulserifle",
 	"name": "Pulse Rifle",
 	"description": "",
 	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
@@ -9,11 +9,11 @@
 	"hitSfxURL": "",
 	"trigger": "onActionPerform",
 	"descriptors": [
-		"power",
+		"weapon",
 		"single",
 		"ranged",
 		"lethal",
-		"weapon",
+		"equipment",
 		"attack"
 	],
 	"target": "single_en",

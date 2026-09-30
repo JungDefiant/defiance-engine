@@ -1,5 +1,5 @@
 {
-	"id": "power_brawl",
+	"id": "weapon_brawl",
 	"name": "Brawl",
 	"description": "",
 	"castVfxURL": "",
@@ -8,11 +8,10 @@
 	"hitSfxURL": "",
 	"trigger": "onActionPerform",
 	"descriptors": [
-		"power",
+		"weapon",
 		"single",
 		"melee",
 		"impact",
-		"innate",
 		"attack"
 	],
 	"target": "single_en",

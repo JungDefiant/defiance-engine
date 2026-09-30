@@ -39,6 +39,13 @@ export interface EffectData {
 	};
 }
 
+export enum ActionSlotKey {
+	weapon = "weapon",
+	power = "power",
+	accessory = "accessory",
+	item = "item",
+}
+
 export enum AbilityTrigger {
 	alwaysActive = "alwaysActive",
 	onActionPerform = "onActionPerform",

@@ -13,14 +13,14 @@
 		"group",
 		"ranged",
 		"lethal",
-		"device",
+		"equipment",
 		"grenade",
 		"attack"
 	],
 	"target": "group_en",
 	"recoveryTime": 4,
 	"cost": 10,
-	"costAttribute": "itemPoints",
+	"costAttribute": "willPoints",
 	"effectData": [
 		{
 			"id": "damage",

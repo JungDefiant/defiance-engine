@@ -12,12 +12,14 @@
 		"heart": 4
 	},
 	"affinityId": "",
+	"weaponId": "equipment/weapon_pulserifle",
 	"powerIds": [
-		"power_pulserifle"
+		"equipment/power_fraggrenade"
 	],
 	"featIds": [
 		"feat_improvedaccuracy"
 	],
+	"itemIds": [],
 	"tactics": [
 		{
 			"condition": "lowestLife",

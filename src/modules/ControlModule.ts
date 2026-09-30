@@ -25,6 +25,7 @@ import {
 	getEnemyGuiComponentArray,
 } from "./ComponentModule";
 import ControlState from "src/states/ControlState";
+import { ActionSlotKey } from "src/types/AbilityTypes";
 
 export function clearActionPause() {
 	const controlState = getControlState();
@@ -148,31 +149,100 @@ export function resetCombatModeActionManager() {
 
 	const actionManager = new ActionManager(gameScene);
 
-	for (let i = 0; i < actorState.powerData.length; i++) {
+	const weaponData = actorState.actionData.get(ActionSlotKey.weapon);
+	const weaponActionMapArray = controlState.controlSettings.actionMap.get(
+		ActionSlotKey.weapon,
+	);
+	if (weaponData && weaponActionMapArray) {
 		actionManager.registerAction(
 			new ExecuteCodeAction(
 				{
 					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: controlState.controlSettings.powerActions[i],
+					parameter: weaponActionMapArray[0],
 				},
 				() => {
-					startQueueAction(i, actorState, controlState);
+					startQueueAction(
+						ActionSlotKey.weapon,
+						0,
+						actorState,
+						controlState,
+					);
 				},
 			),
 		);
 	}
 
-	if (actorState.equipmentData) {
-		for (let i = 0; i < actorState.equipmentData.length; i++) {
+	const powerDataArray = actorState.actionData.get(ActionSlotKey.power);
+	const powerActionMapArray = controlState.controlSettings.actionMap.get(
+		ActionSlotKey.power,
+	);
+	if (powerDataArray && powerActionMapArray) {
+		for (let i = 0; i < powerDataArray.length; i++) {
+			if (!powerActionMapArray[i]) {
+				break;
+			}
+
 			actionManager.registerAction(
 				new ExecuteCodeAction(
 					{
 						trigger: ActionManager.OnKeyDownTrigger,
-						parameter:
-							controlState.controlSettings.equipmentActions[i],
+						parameter: powerActionMapArray[i],
 					},
 					() => {
-						startQueueAction(i, actorState, controlState);
+						startQueueAction(
+							ActionSlotKey.power,
+							i,
+							actorState,
+							controlState,
+						);
+					},
+				),
+			);
+		}
+	}
+
+	const accessoryData = actorState.actionData.get(ActionSlotKey.accessory);
+	const accessoryActionMapArray = controlState.controlSettings.actionMap.get(
+		ActionSlotKey.accessory,
+	);
+	if (accessoryData && accessoryActionMapArray) {
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: accessoryActionMapArray[0],
+				},
+				() => {
+					startQueueAction(
+						ActionSlotKey.accessory,
+						0,
+						actorState,
+						controlState,
+					);
+				},
+			),
+		);
+	}
+
+	const itemDataArray = actorState.actionData.get(ActionSlotKey.item);
+	const itemActionMapArray = controlState.controlSettings.actionMap.get(
+		ActionSlotKey.item,
+	);
+	if (itemDataArray && itemActionMapArray) {
+		for (let i = 0; i < itemDataArray.length; i++) {
+			actionManager.registerAction(
+				new ExecuteCodeAction(
+					{
+						trigger: ActionManager.OnKeyDownTrigger,
+						parameter: itemActionMapArray[i],
+					},
+					() => {
+						startQueueAction(
+							ActionSlotKey.item,
+							i,
+							actorState,
+							controlState,
+						);
 					},
 				),
 			);
@@ -235,6 +305,7 @@ export function resetDialogueModeControls() {
 }
 
 function startQueueAction(
+	actionSlotKey: ActionSlotKey,
 	actionIndex: number,
 	actorState: ActorStateComponent,
 	controlState: ControlState,
@@ -245,7 +316,7 @@ function startQueueAction(
 	if (controlState.isTargetingAction) {
 		endPlayerActionTargeting(getEnemyGuiComponentArray());
 	} else {
-		startQueueActionPlayer(actorState.entityId, actionIndex, false);
+		startQueueActionPlayer(actorState.entityId, actionSlotKey, actionIndex);
 	}
 }
 

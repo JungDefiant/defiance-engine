@@ -42,6 +42,7 @@ import {
 	AbilityDescriptor,
 	AbilityTarget,
 	AbilityTrigger,
+	ActionSlotKey,
 } from "src/types/AbilityTypes";
 import EnemyGUIComponent from "src/components/EnemyGUIComponent";
 
@@ -157,20 +158,20 @@ export function resetTargeting() {
 
 export async function startQueueActionPlayer(
 	eid: EntityId,
-	actionInd: number,
-	isEquipment?: boolean,
+	actionSlotKey: ActionSlotKey,
+	index: number,
 ): Promise<void> {
 	const actorData =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.name,
 			eid,
 		) as ActorStateComponent;
-	const actionData = (
-		isEquipment && actorData.equipmentData
-			? actorData.equipmentData[actionInd]
-			: actorData.powerData[actionInd]
-	) as AbilityData;
+	const actionDataArray = actorData.actionData.get(actionSlotKey);
+	if (!actionDataArray) {
+		return;
+	}
 
+	const actionData = actionDataArray[index] as AbilityData;
 	if (!actionData || actionData.trigger != AbilityTrigger.onActionPerform) {
 		return;
 	}
@@ -218,44 +219,41 @@ export async function decideNPCAction(actorState: ActorStateComponent) {
 		return;
 	}
 
-	let actionData;
+	let decidedActionData;
 	let targetEids: EntityId[] = [];
 
 	for (const entry of tactics) {
-		const newActionData =
-			(entry.actionType === AbilityDescriptor.device &&
-				actorState.equipmentData &&
-				(await actorState.equipmentData[entry.actionIndex])) ||
-			(AbilityDescriptor.power &&
-				(await actorState.powerData[entry.actionIndex]));
-
-		if (!newActionData) {
+		const actionDataArray = actorState.actionData.get(entry.actionSlotKey);
+		if (!actionDataArray) {
 			continue;
 		}
 
-		const isActionValid = newActionData.descriptors.includes(
-			entry.actionType,
-		);
+		const actionData = actionDataArray[entry.actionIndex];
+		if (!actionData) {
+			continue;
+		}
+
+		const isActionValid = actionData.descriptors.includes(entry.actionType);
 
 		if (!isActionValid) {
 			continue;
 		}
 
 		const targets = getTargetsBasedOnCondition(
-			newActionData,
+			actionData,
 			entry,
 			actorState.entityId,
 		);
 
 		if (targets.length > 0) {
 			targetEids = [...targets];
-			actionData = newActionData;
+			decidedActionData = actionData;
 			break;
 		}
 	}
 
-	if (actionData) {
-		finishQueueAction(actionData, actorState.entityId, targetEids);
+	if (decidedActionData) {
+		finishQueueAction(decidedActionData, actorState.entityId, targetEids);
 	}
 }
 

@@ -8,6 +8,7 @@ import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTrigger,
+	ActionSlotKey,
 	EffectData,
 } from "src/types/AbilityTypes";
 import {
@@ -20,6 +21,7 @@ import {
 	calculateAbilityEffects,
 } from "src/modules/EffectModule";
 import { AbilityTargetContext } from "src/types/ContextTypes";
+import { ActionSlot } from "src/gui/abstract/ActionSlot";
 
 const BASE_LIFE_REGEN_TICKS: number = 4;
 const BASE_WILL_REGEN_TICKS: number = 4;
@@ -46,9 +48,11 @@ export interface LoadedAbilityJson {
 		guile: number;
 		heart: number;
 	};
+	weaponId: string;
 	powerIds: string[];
 	featIds: string[];
-	tactics: TacticsData[];
+	itemIds?: string[];
+	tactics?: TacticsData[];
 }
 
 export default class ActorStateComponent implements Component {
@@ -59,14 +63,14 @@ export default class ActorStateComponent implements Component {
 	description: string = "";
 	spriteUrl: string = "";
 	attributes: AttributeSet = {};
-	powerData: AbilityData[] = [];
+	actionData: Map<ActionSlotKey, AbilityData[]> = new Map();
 	featData: AbilityData[] = [];
 	currentTargetEIDs: number[] = [];
 	currentStatuses: EffectData[] = [];
 	isPlayer: boolean = false;
 	isDefeated: boolean = false;
 	affinityData?: AffinityData;
-	equipmentData?: AbilityData[];
+	// equippedItemData?: ItemData[];
 	tactics?: TacticsData[];
 	queuedAction?: Nullable<AbilityData>;
 
@@ -148,33 +152,33 @@ export default class ActorStateComponent implements Component {
 				currentValue: 0,
 				modifiers: [
 					{
-						descriptors: ["melee", "attack"],
+						descriptors: ["melee", "weapon"],
 						amount:
 							BASE_ATTRIBUTES.offensePerPoint * initialMightValue,
 					},
 					{
-						descriptors: ["ranged", "attack"],
+						descriptors: ["ranged", "weapon"],
 						amount:
 							BASE_ATTRIBUTES.offensePerPoint *
 							initialImpulseValue,
 					},
 					{
-						descriptors: ["device"],
+						descriptors: ["equipment", "power"],
 						amount:
 							BASE_ATTRIBUTES.offensePerPoint * initialGuileValue,
 					},
 					{
-						descriptors: ["cybernetic"],
+						descriptors: ["cybernetic", "power"],
 						amount:
 							BASE_ATTRIBUTES.offensePerPoint * initialGuileValue,
 					},
 					{
-						descriptors: ["mutation"],
+						descriptors: ["mutation", "power"],
 						amount:
 							BASE_ATTRIBUTES.offensePerPoint * initialHeartValue,
 					},
 					{
-						descriptors: ["invocation"],
+						descriptors: ["invocation", "power"],
 						amount:
 							BASE_ATTRIBUTES.offensePerPoint * initialHeartValue,
 					},
@@ -245,53 +249,88 @@ export default class ActorStateComponent implements Component {
 		const campaignState = container.resolve(CampaignState);
 		const thisActorState = this;
 
-		for (let i = 0; i < initialData.powerIds.length; i++) {
-			const powerId = initialData.powerIds[i];
-			fetch(
-				`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${powerId}.json`,
-			)
-				.then((response) => {
-					return response.json();
-				})
-				.then((abilityData) => {
-					thisActorState.powerData.push(abilityData);
+		fetch(
+			`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/weapons/${initialData.weaponId}.json`,
+		)
+			.then((response) => response.json())
+			.then((weaponAbilityData) => {
+				thisActorState.actionData.set(ActionSlotKey.weapon, [
+					weaponAbilityData,
+				]);
+			});
+
+		const allPowerPromises = Promise.all(
+			initialData.powerIds.map((powerId) => {
+				return fetch(
+					`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${powerId}.json`,
+				).then((response) => response.json());
+			}),
+		);
+
+		allPowerPromises.then((allPowerData) => {
+			allPowerData.forEach((powerData) => {
+				let actionPowerData = thisActorState.actionData.get(
+					ActionSlotKey.power,
+				);
+				if (!actionPowerData) {
+					actionPowerData = [];
+					thisActorState.actionData.set(
+						ActionSlotKey.power,
+						actionPowerData,
+					);
+				}
+
+				actionPowerData.push(powerData);
+			});
+		});
+
+		if (initialData.itemIds) {
+			const allItemPromises = Promise.all(
+				initialData.itemIds.map((itemId) => {
+					return fetch(
+						`${getPublicRoot()}/data/${campaignState.campaignId}/items/${itemId}.json`,
+					).then((response) => response.json());
+				}),
+			);
+
+			allItemPromises.then((allItemData) => {
+				allItemData.forEach((itemData) => {
+					// TO DO: Implement EquippedItemData interface during Inventory system build
+					// thisActorState.equippedItemData.push(itemData);
 				});
+			});
 		}
 
-		for (let i = 0; i < initialData.featIds.length; i++) {
-			const featId = initialData.featIds[i];
-			fetch(
-				`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/feats/${featId}.json`,
-			)
-				.then((response) => {
-					return response.json();
-				})
-				.then((abilityData) => {
-					thisActorState.featData.push(abilityData);
-					if (abilityData.trigger === AbilityTrigger.alwaysActive) {
-						const abilityContext = {
-							target: `${abilityData.target}`,
-							descriptors: abilityData.descriptors,
-							effects: abilityData.effectData,
-						} as AbilityTargetContext;
-						abilityContext.target = `${abilityData.target}`;
-						abilityContext.descriptors = abilityData.descriptors;
-						abilityContext.effects = abilityData.effectData;
-						calculateAbilityEffects(
-							this,
-							this,
-							abilityData,
-							abilityContext,
-						);
-						applyAbilityEffects(
-							this,
-							this,
-							abilityData,
-							abilityContext,
-						);
-					}
-				});
-		}
+		const allFeatPromises = Promise.all(
+			initialData.featIds.map((featId) => {
+				return fetch(
+					`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/feats/${featId}.json`,
+				).then((response) => response.json());
+			}),
+		);
+
+		allFeatPromises.then((allFeatData) => {
+			allFeatData.forEach((featData) => {
+				thisActorState.featData.push(featData);
+				if (featData.trigger === AbilityTrigger.alwaysActive) {
+					const abilityContext = {
+						target: `${featData.target}`,
+						descriptors: featData.descriptors,
+						effects: featData.effectData,
+					} as AbilityTargetContext;
+					abilityContext.target = `${featData.target}`;
+					abilityContext.descriptors = featData.descriptors;
+					abilityContext.effects = featData.effectData;
+					calculateAbilityEffects(
+						this,
+						this,
+						featData,
+						abilityContext,
+					);
+					applyAbilityEffects(this, this, featData, abilityContext);
+				}
+			});
+		});
 
 		this.tactics = initialData.tactics;
 	}
@@ -306,6 +345,7 @@ export default class ActorStateComponent implements Component {
 export interface TacticsData {
 	condition: TacticsCondition;
 	actionType: AbilityDescriptor;
+	actionSlotKey: ActionSlotKey;
 	actionIndex: number;
 }
 
