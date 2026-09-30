@@ -8,7 +8,7 @@ import ActorStateComponent from "src/components/ActorStateComponent";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
 import { getGameCanvas } from "./SceneModule";
 import {
-	endPlayerActionTargeting,
+	endPlayerEnemyActionTargeting,
 	resetTargeting,
 	setTacticalPause,
 	startQueueActionPlayer,
@@ -314,7 +314,7 @@ function startQueueAction(
 		return;
 	}
 	if (controlState.isTargetingAction) {
-		endPlayerActionTargeting(getEnemyGuiComponentArray());
+		endPlayerEnemyActionTargeting(getEnemyGuiComponentArray());
 	} else {
 		startQueueActionPlayer(actorState.entityId, actionSlotKey, actionIndex);
 	}
@@ -343,7 +343,7 @@ function getSwitchPlayerFunction(
 			newSelectedPlayerEntityIdIndex = 0;
 		}
 		if (isCombatMode && controlState.isTargetingAction) {
-			endPlayerActionTargeting(getEnemyGuiComponentArray());
+			endPlayerEnemyActionTargeting(getEnemyGuiComponentArray());
 		}
 		setSelectedCharacter(
 			gameplayState.playerEntityIds[newSelectedPlayerEntityIdIndex],

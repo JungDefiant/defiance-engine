@@ -93,8 +93,8 @@ export enum AbilityDescriptor {
 
 export enum AbilityTarget {
 	self = "self",
-	singleEnemy = "single_en",
-	groupEnemy = "group_en",
-	singleAlly = "single_al",
-	groupAlly = "group_en",
+	singleEnemy = "single_enemy",
+	groupEnemy = "group_enemy",
+	singleAlly = "single_ally",
+	groupAlly = "group_ally",
 }

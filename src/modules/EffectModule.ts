@@ -171,17 +171,12 @@ export function performAttackRoll(
 
 export function spendAbilityCost(
 	source: ActorStateComponent,
-	context: AbilityTargetContext,
+	actionData: AbilityData,
 ): boolean {
-	const actionContext = context.actionContext;
-	if (!actionContext) {
-		return false;
-	}
-
-	const abilityCost = (actionContext.cost as number) || 0;
-	const costAttributeName = (actionContext.costAttribute as string) || "";
+	const abilityCost = (actionData.cost as number) || 0;
+	const costAttributeName = (actionData.costAttribute as string) || "";
 	const costAttribute = source.attributes[costAttributeName];
-	const isToggle = context.descriptors.includes(AbilityDescriptor.toggle);
+	const isToggle = actionData.descriptors.includes(AbilityDescriptor.toggle);
 
 	if (!costAttribute || costAttribute.currentValue < abilityCost) {
 		return false;

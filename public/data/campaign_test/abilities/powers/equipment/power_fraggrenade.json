@@ -2,7 +2,7 @@
 	"id": "power_fraggrenade",
 	"name": "Frag Grenade",
 	"description": "",
-	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
+	"iconURL": "sprites/gui/icons/abilities/powers/equipment/icon_fraggrenade.png",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
@@ -17,7 +17,7 @@
 		"grenade",
 		"attack"
 	],
-	"target": "group_en",
+	"target": "group_enemy",
 	"recoveryTime": 4,
 	"cost": 10,
 	"costAttribute": "willPoints",

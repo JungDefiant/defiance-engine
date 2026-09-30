@@ -16,7 +16,7 @@
 		"equipment",
 		"attack"
 	],
-	"target": "single_en",
+	"target": "single_enemy",
 	"recoveryTime": 4,
 	"effectData": [
 		{

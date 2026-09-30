@@ -74,6 +74,25 @@ export default class CombatManagerSystem implements GameSystem {
 		for (const eid of query(this.gameScene.world, [actorStateComponents])) {
 			const actorData = actorStateComponents[eid];
 			const actionTimerAttribute = actorData.attributes.actionTimer;
+			const actionQueuedAction = actorData.queuedAction;
+
+			if (
+				!actionQueuedAction ||
+				actionTimerAttribute.currentValue !==
+					actionTimerAttribute.maximumValue
+			) {
+				continue;
+			}
+
+			if (actionQueuedAction.cost && actionQueuedAction.costAttribute) {
+				const isAbilityCostSpent = spendAbilityCost(
+					actorData,
+					actionQueuedAction,
+				);
+				if (!isAbilityCostSpent) {
+					continue;
+				}
+			}
 
 			if (
 				actorData.queuedAction &&
@@ -83,7 +102,7 @@ export default class CombatManagerSystem implements GameSystem {
 				controlState.actionPauseSet.add(PAUSE_RENDERQUEUE);
 				this.performQueuedAction(actorData).then(() => {
 					if (gameplayState.enemyEntityIds.includes(eid)) {
-						decideNPCAction(actorData);
+						Promise.resolve(decideNPCAction(actorData));
 					}
 				});
 				return;
@@ -103,7 +122,9 @@ export default class CombatManagerSystem implements GameSystem {
 			return;
 		}
 
-		const actionTargetIds = sourceActorState.currentTargetEIDs;
+		const actionTargetIds = [
+			...new Set(sourceActorState.currentTargetEIDs),
+		];
 
 		renderMessageDisplay(sourceActorState, actionToPerform);
 
@@ -125,26 +146,14 @@ export default class CombatManagerSystem implements GameSystem {
 			recoveryTime: actionToPerform.recoveryTime || 0,
 		} as ActionContext;
 
-		if (
-			abilityContext.actionContext.cost &&
-			abilityContext.actionContext.costAttribute
-		) {
-			const isAbilityCostSpent = spendAbilityCost(
-				sourceActorState,
-				abilityContext,
-			);
-			if (!isAbilityCostSpent) {
-				//
-				return;
-			}
-		}
-
 		triggerFeatEffects(
 			sourceActorState,
 			sourceActorState,
 			AbilityTrigger.onActionPerform,
 			abilityContext,
 		);
+
+		console.log("ACTION TARGET IDS", actionTargetIds);
 
 		actionTargetIds.forEach((eid) => {
 			const targetActorState = actorStateComponentArray[eid];
