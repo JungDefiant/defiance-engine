@@ -29,11 +29,16 @@ import {
 	getUserInterfaceState,
 } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
-import { AbilityTargetContext, ActionContext } from "src/types/ContextTypes";
+import {
+	AbilityContext,
+	AbilityTargetContext,
+	ActionContext,
+} from "src/types/ContextTypes";
 import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTrigger,
+	EffectFunctionProps,
 } from "src/types/AbilityTypes";
 
 export default class CombatManagerSystem implements GameSystem {
@@ -74,6 +79,39 @@ export default class CombatManagerSystem implements GameSystem {
 		for (const eid of query(this.gameScene.world, [actorStateComponents])) {
 			const actorData = actorStateComponents[eid];
 			const actionTimerAttribute = actorData.attributes.actionTimer;
+			const actionQueuedAction = actorData.queuedAction;
+
+			if (
+				!actionQueuedAction ||
+				!(actorData.currentTargetEIDs.length > 0) ||
+				actionTimerAttribute.currentValue !==
+					actionTimerAttribute.maximumValue
+			) {
+				continue;
+			}
+
+			actorData.currentTargetEIDs = actorData.currentTargetEIDs.filter(
+				(targetEid) => {
+					return !actorStateComponents[targetEid].isDefeated;
+				},
+			);
+
+			if (actorData.currentTargetEIDs.length < 1) {
+				if (actorData.queuedAction) {
+					actorData.queuedAction = null;
+				}
+				continue;
+			}
+
+			if (actionQueuedAction.cost && actionQueuedAction.costAttribute) {
+				const isAbilityCostSpent = spendAbilityCost(
+					actorData,
+					actionQueuedAction,
+				);
+				if (!isAbilityCostSpent) {
+					continue;
+				}
+			}
 
 			if (
 				actorData.queuedAction &&
@@ -81,11 +119,13 @@ export default class CombatManagerSystem implements GameSystem {
 					actionTimerAttribute.maximumValue
 			) {
 				controlState.actionPauseSet.add(PAUSE_RENDERQUEUE);
-				this.performQueuedAction(actorData).then(() => {
-					if (gameplayState.enemyEntityIds.includes(eid)) {
-						decideNPCAction(actorData);
-					}
-				});
+				Promise.resolve(
+					this.performQueuedAction(actorData).then(() => {
+						if (gameplayState.enemyEntityIds.includes(eid)) {
+							Promise.resolve(decideNPCAction(actorData));
+						}
+					}),
+				);
 				return;
 			}
 		}
@@ -103,7 +143,9 @@ export default class CombatManagerSystem implements GameSystem {
 			return;
 		}
 
-		const actionTargetIds = sourceActorState.currentTargetEIDs;
+		const actionTargetIds = [
+			...new Set(sourceActorState.currentTargetEIDs),
+		];
 
 		renderMessageDisplay(sourceActorState, actionToPerform);
 
@@ -113,71 +155,61 @@ export default class CombatManagerSystem implements GameSystem {
 			actionTargetIds,
 		);
 
-		const abilityContext = {
-			target: `${actionToPerform.target}`,
-			descriptors: actionToPerform.descriptors,
-			effects: actionToPerform.effectData,
-		} as AbilityTargetContext;
+		console.log("ACTION TARGET IDS", actionTargetIds);
 
-		abilityContext.actionContext = {
-			cost: actionToPerform.cost || 0,
-			costAttribute: actionToPerform.costAttribute || "",
-			recoveryTime: actionToPerform.recoveryTime || 0,
-		} as ActionContext;
-
-		if (
-			abilityContext.actionContext.cost &&
-			abilityContext.actionContext.costAttribute
-		) {
-			const isAbilityCostSpent = spendAbilityCost(
-				sourceActorState,
-				abilityContext,
-			);
-			if (!isAbilityCostSpent) {
-				//
-				return;
-			}
-		}
-
+		let abilityContext = this.createNewAbilityContext(actionToPerform);
 		triggerFeatEffects(
-			sourceActorState,
-			sourceActorState,
+			{
+				source: sourceActorState,
+				target: sourceActorState,
+				abilityContext,
+				abilityTargetIndex: 0,
+			},
 			AbilityTrigger.onActionPerform,
-			abilityContext,
 		);
 
 		actionTargetIds.forEach((eid) => {
 			const targetActorState = actorStateComponentArray[eid];
-			if (this.hasAttackRoll(actionToPerform)) {
-				performAttackRoll(
-					sourceActorState,
-					targetActorState,
-					abilityContext,
-				);
-			}
-			calculateAbilityEffects(
-				sourceActorState,
-				targetActorState,
-				actionToPerform,
+			abilityContext.abilityTargetContexts[eid] = {};
+			this.executeAbilityEffects({
+				source: sourceActorState,
+				target: targetActorState,
 				abilityContext,
-			);
-			applyAbilityEffects(
-				sourceActorState,
-				targetActorState,
-				actionToPerform,
-				abilityContext,
-			);
-			renderAbilityEffects(
-				actionToPerform.name,
-				sourceActorState,
-				targetActorState,
-				abilityContext,
-			);
+				abilityTargetIndex: eid,
+			});
 		});
 
 		startRenderQueue();
 
 		this.resetActionTimer(sourceActorState, actionToPerform);
+	}
+
+	private createNewAbilityContext(
+		actionToPerform: AbilityData,
+	): AbilityContext {
+		let abilityContext = {
+			abilityName: actionToPerform.name,
+			target: `${actionToPerform.target}`,
+			descriptors: actionToPerform.descriptors,
+			effects: actionToPerform.effectData,
+			abilityTargetContexts: [],
+			actionContext: {
+				cost: actionToPerform.cost || 0,
+				costAttribute: actionToPerform.costAttribute || "",
+				recoveryTime: actionToPerform.recoveryTime || 0,
+			},
+		};
+
+		return abilityContext;
+	}
+
+	private executeAbilityEffects(props: EffectFunctionProps) {
+		if (this.hasAttackRoll(props.abilityContext.descriptors)) {
+			performAttackRoll(props);
+		}
+		calculateAbilityEffects(props);
+		applyAbilityEffects(props);
+		renderAbilityEffects(props);
 	}
 
 	private resetActionTimer(
@@ -201,14 +233,12 @@ export default class CombatManagerSystem implements GameSystem {
 		actionTimerAttribute.currentValue = 0;
 	}
 
-	private hasAttackRoll(actionToPerform: AbilityData): boolean {
+	private hasAttackRoll(actionDescriptors: AbilityDescriptor[]): boolean {
 		return (
-			(actionToPerform.descriptors.includes(AbilityDescriptor.attack) &&
-				actionToPerform.descriptors.includes(
-					AbilityDescriptor.ranged,
-				)) ||
-			(actionToPerform.descriptors.includes(AbilityDescriptor.attack) &&
-				actionToPerform.descriptors.includes(AbilityDescriptor.melee))
+			(actionDescriptors.includes(AbilityDescriptor.attack) &&
+				actionDescriptors.includes(AbilityDescriptor.ranged)) ||
+			(actionDescriptors.includes(AbilityDescriptor.attack) &&
+				actionDescriptors.includes(AbilityDescriptor.melee))
 		);
 	}
 }

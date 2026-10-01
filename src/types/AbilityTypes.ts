@@ -1,3 +1,6 @@
+import ActorStateComponent from "src/components/ActorStateComponent";
+import { AbilityContext } from "./ContextTypes";
+
 export type AbilityEffectType =
 	| "damage"
 	| "healing"
@@ -12,6 +15,13 @@ export type EffectVariable =
 	| string[]
 	| number[]
 	| EffectData[];
+
+export interface EffectFunctionProps {
+	source: ActorStateComponent;
+	target: ActorStateComponent;
+	abilityContext: AbilityContext;
+	abilityTargetIndex: number;
+}
 
 export interface AbilityData {
 	id: string;
@@ -37,6 +47,13 @@ export interface EffectData {
 	variables: {
 		[index: string]: EffectVariable;
 	};
+}
+
+export enum ActionSlotKey {
+	weapon = "weapon",
+	power = "power",
+	accessory = "accessory",
+	item = "item",
 }
 
 export enum AbilityTrigger {
@@ -86,8 +103,8 @@ export enum AbilityDescriptor {
 
 export enum AbilityTarget {
 	self = "self",
-	singleEnemy = "single_en",
-	groupEnemy = "group_en",
-	singleAlly = "single_al",
-	groupAlly = "group_en",
+	singleEnemy = "single_enemy",
+	groupEnemy = "group_enemy",
+	singleAlly = "single_ally",
+	groupAlly = "group_ally",
 }

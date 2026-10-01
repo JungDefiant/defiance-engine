@@ -16,6 +16,7 @@ import { setSelectedCharacter } from "src/modules/CharacterModule";
 
 export default class PlayerGUIComponent implements ActorGUI, Component {
 	private rootContainer: Container;
+	private targetingUI: Image;
 	private backgroundUI: Rectangle;
 	private charNameBgUI: Rectangle;
 	private charNameUI: TextBlock;
@@ -43,6 +44,24 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		this.rootContainer.top = -5;
 		this.rootContainer.verticalAlignment =
 			Control.VERTICAL_ALIGNMENT_BOTTOM;
+
+		this.targetingUI = new Image(
+			`ui_enBattlerTargetings_${eid}`,
+			"sprites/particles/magic_03.png",
+		);
+		this.targetingUI.widthInPixels = 96;
+		this.targetingUI.heightInPixels = 96;
+		this.targetingUI.shadowOffsetX = 1;
+		this.targetingUI.shadowOffsetY = 1;
+		this.targetingUI.onPointerEnterObservable.add(() => {
+			this.targetingUI.shadowColor = "red";
+		});
+		this.targetingUI.onPointerOutObservable.add(() => {
+			this.targetingUI.shadowColor = "#00000000";
+		});
+		this.targetingUI.onPointerClickObservable.add(() => {});
+		this.targetingUI.isVisible = false;
+		this.rootContainer.addControl(this.targetingUI);
 
 		this.backgroundUI = new Rectangle("ui_playerBgUI_" + eid);
 		this.backgroundUI.width = 1;
@@ -426,5 +445,17 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		barValueUI.color = color;
 		barValueUI.style = style;
 		return barValueUI;
+	}
+
+	public setTargetingCallback(newCallback: Function): void {
+		this.targetingUI.onPointerClickObservable.addOnce(() => newCallback());
+	}
+
+	public removeTargetingCallback(): void {
+		this.targetingUI.onPointerClickObservable.clear();
+	}
+
+	public setVisibleTargetingUI(isVisible: boolean): void {
+		this.targetingUI.isVisible = isVisible;
 	}
 }

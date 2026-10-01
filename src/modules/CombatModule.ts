@@ -12,6 +12,21 @@ import { CombatState } from "src/systems/CombatManagerSystem";
 import { container } from "tsyringe";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import {
+	BASE_SPAWN_POSITION,
+	SPAWN_OFFSET,
+	START_RECOVERY,
+	START_RECOVERY_RANGE,
+} from "src/constants/CombatConstants";
+import {
+	AbilityData,
+	AbilityTarget,
+	AbilityTrigger,
+	ActionSlotKey,
+} from "src/types/AbilityTypes";
+import EnemyGUIComponent from "src/components/EnemyGUIComponent";
+import { disposeEnemyEntities, resetPlayerActorState } from "./CharacterModule";
+import { clearCombatHudEntries } from "./UserInterfaceModule";
+import {
 	getControlState,
 	getGameplayState,
 	getGameScene,
@@ -22,6 +37,7 @@ import {
 	getActorStateComponentArray,
 	getComponentRegistry,
 	getEnemyGuiComponentArray,
+	getPlayerGuiComponentArray,
 } from "./ComponentModule";
 import { setCombatGameMode, setExploreGameMode } from "./SceneModule";
 import {
@@ -29,21 +45,7 @@ import {
 	resetCombatModeActionManager,
 } from "./ControlModule";
 import { checkEventByTrigger } from "./EventModule";
-import {
-	BASE_SPAWN_POSITION,
-	SPAWN_OFFSET,
-	START_RECOVERY,
-	START_RECOVERY_RANGE,
-} from "src/constants/CombatConstants";
-import { disposeEnemyEntities, resetPlayerActorState } from "./CharacterModule";
-import { clearCombatHudEntries } from "./UserInterfaceModule";
-import {
-	AbilityData,
-	AbilityDescriptor,
-	AbilityTarget,
-	AbilityTrigger,
-} from "src/types/AbilityTypes";
-import EnemyGUIComponent from "src/components/EnemyGUIComponent";
+import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 
 export async function startCombat(encId: string): Promise<void> {
 	const gameScene = getGameScene();
@@ -74,7 +76,7 @@ export async function startCombat(encId: string): Promise<void> {
 		enActorData.name = enActorData.name.concat(
 			` ${String.fromCharCode(65 + i)}`,
 		);
-		decideNPCAction(enActorData);
+		await decideNPCAction(enActorData);
 	}
 
 	resetCombatModeActionManager();
@@ -157,20 +159,20 @@ export function resetTargeting() {
 
 export async function startQueueActionPlayer(
 	eid: EntityId,
-	actionInd: number,
-	isEquipment?: boolean,
+	actionSlotKey: ActionSlotKey,
+	index: number,
 ): Promise<void> {
 	const actorData =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.name,
 			eid,
 		) as ActorStateComponent;
-	const actionData = (
-		isEquipment && actorData.equipmentData
-			? actorData.equipmentData[actionInd]
-			: actorData.powerData[actionInd]
-	) as AbilityData;
+	const actionDataArray = actorData.actionData.get(actionSlotKey);
+	if (!actionDataArray) {
+		return;
+	}
 
+	const actionData = actionDataArray[index] as AbilityData;
 	if (!actionData || actionData.trigger != AbilityTrigger.onActionPerform) {
 		return;
 	}
@@ -184,22 +186,47 @@ function setPlayerActionTargeting(
 ): void {
 	const controlState = getControlState();
 	controlState.isTargetingAction = true;
-	const enemyGuiComponentArray = getEnemyGuiComponentArray();
 	if (actionData.target === AbilityTarget.singleEnemy) {
+		const enemyGuiComponentArray = getEnemyGuiComponentArray();
 		for (const eid of query(getGameScene().world, [
 			enemyGuiComponentArray,
 		])) {
 			const enemyGUI = enemyGuiComponentArray[eid];
 			enemyGUI.setVisibleTargetingUI(true);
 			enemyGUI.setTargetingCallback(() => {
-				endPlayerActionTargeting(enemyGuiComponentArray);
+				endPlayerEnemyActionTargeting(enemyGuiComponentArray);
 				finishQueueAction(actionData, sourceEid, [eid]);
 			});
 		}
+	} else if (actionData.target === AbilityTarget.singleAlly) {
+		const allyGuiComponentArray = getPlayerGuiComponentArray();
+		for (const eid of query(getGameScene().world, [
+			allyGuiComponentArray,
+		])) {
+			if (eid === sourceEid) {
+				continue;
+			}
+			const allyGUI = allyGuiComponentArray[eid];
+			allyGUI.setVisibleTargetingUI(true);
+			allyGUI.setTargetingCallback(() => {
+				endPlayerAllyActionTargeting(allyGuiComponentArray);
+				finishQueueAction(actionData, sourceEid, [eid]);
+			});
+		}
+	} else if (actionData.target === AbilityTarget.groupEnemy) {
+		const enemyEntityIds = getGameplayState().enemyEntityIds;
+		finishQueueAction(actionData, sourceEid, enemyEntityIds);
+	} else if (actionData.target === AbilityTarget.groupAlly) {
+		const allyEnemyIds = getGameplayState().playerEntityIds.filter(
+			(eid) => eid != sourceEid,
+		);
+		finishQueueAction(actionData, sourceEid, allyEnemyIds);
+	} else if (actionData.target === AbilityTarget.self) {
+		finishQueueAction(actionData, sourceEid, [sourceEid]);
 	}
 }
 
-export function endPlayerActionTargeting(
+export function endPlayerEnemyActionTargeting(
 	enemyGuiComponentArray: EnemyGUIComponent[],
 ) {
 	const controlState = getControlState();
@@ -211,6 +238,18 @@ export function endPlayerActionTargeting(
 	}
 }
 
+export function endPlayerAllyActionTargeting(
+	allyGuiComponentArray: PlayerGUIComponent[],
+) {
+	const controlState = getControlState();
+	controlState.isTargetingAction = false;
+	for (const eid of query(getGameScene().world, [allyGuiComponentArray])) {
+		const allyGUI = allyGuiComponentArray[eid];
+		allyGUI.setVisibleTargetingUI(false);
+		allyGUI.removeTargetingCallback();
+	}
+}
+
 export async function decideNPCAction(actorState: ActorStateComponent) {
 	const tactics = actorState.tactics;
 
@@ -218,44 +257,41 @@ export async function decideNPCAction(actorState: ActorStateComponent) {
 		return;
 	}
 
-	let actionData;
+	let decidedActionData;
 	let targetEids: EntityId[] = [];
 
 	for (const entry of tactics) {
-		const newActionData =
-			(entry.actionType === AbilityDescriptor.device &&
-				actorState.equipmentData &&
-				(await actorState.equipmentData[entry.actionIndex])) ||
-			(AbilityDescriptor.power &&
-				(await actorState.powerData[entry.actionIndex]));
-
-		if (!newActionData) {
+		const actionDataArray = actorState.actionData.get(entry.actionSlotKey);
+		if (!actionDataArray) {
 			continue;
 		}
 
-		const isActionValid = newActionData.descriptors.includes(
-			entry.actionType,
-		);
+		const actionData = actionDataArray[entry.actionIndex];
+		if (!actionData) {
+			continue;
+		}
+
+		const isActionValid = actionData.descriptors.includes(entry.actionType);
 
 		if (!isActionValid) {
 			continue;
 		}
 
 		const targets = getTargetsBasedOnCondition(
-			newActionData,
+			actionData,
 			entry,
 			actorState.entityId,
 		);
 
 		if (targets.length > 0) {
-			targetEids = [...targets];
-			actionData = newActionData;
+			targetEids = targets;
+			decidedActionData = actionData;
 			break;
 		}
 	}
 
-	if (actionData) {
-		finishQueueAction(actionData, actorState.entityId, targetEids);
+	if (decidedActionData) {
+		finishQueueAction(decidedActionData, actorState.entityId, targetEids);
 	}
 }
 

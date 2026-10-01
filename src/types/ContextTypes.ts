@@ -3,12 +3,16 @@ import { AbilityDescriptor, EffectData } from "./AbilityTypes";
 
 export type AttackRollResult = "hit" | "crit" | "graze";
 
-export interface AbilityTargetContext {
+export interface AbilityContext {
 	abilityName: string;
 	target: string;
 	descriptors: AbilityDescriptor[];
 	effects: EffectData[];
+	abilityTargetContexts: AbilityTargetContext[];
 	actionContext?: ActionContext;
+}
+
+export interface AbilityTargetContext {
 	attackContext?: AttackContext;
 	damageContext?: DamageContext;
 	healingContext?: HealingContext;
@@ -20,7 +24,7 @@ export interface EffectFeedbackContext {
 	sourceName: string;
 	targetName: string;
 	targetEntityId: EntityId;
-	abilityContext: AbilityTargetContext;
+	abilityContext: AbilityContext;
 }
 
 export interface ActionContext {

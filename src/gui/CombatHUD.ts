@@ -11,10 +11,12 @@ import {
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/abstract/ActionSlot";
-import { getPublicRoot } from "src/modules/Utils";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import { startQueueActionPlayer } from "src/modules/CombatModule";
 import { getControlState } from "src/modules/GameStateModule";
+import ControlState from "src/states/ControlState";
+import { ActionSlotKey } from "src/types/AbilityTypes";
+import { EntityId } from "bitecs";
 
 export default class CombatHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;
@@ -25,8 +27,10 @@ export default class CombatHUD implements IHUD {
 	private combatLogStack: Nullable<StackPanel> = null;
 	private combatLogScrollbar: Nullable<ScrollBar> = null;
 
+	private weaponSlot: Nullable<ActionSlot> = null;
+	private accessorySlot: Nullable<ActionSlot> = null;
 	private powerSlots: ActionSlot[] = [];
-	private deviceSlots: ActionSlot[] = [];
+	private itemSlots: ActionSlot[] = [];
 	private messageDisplayText: Nullable<TextBlock> = null;
 
 	private readonly actionAbilityStackName = "ui_actionAbilityStack";
@@ -74,67 +78,69 @@ export default class CombatHUD implements IHUD {
 			return;
 		}
 
-		for (let i = 0; i < this.powerSlots.length; i++) {
-			const powerData = actorState.powerData[i];
-			if (!powerData) {
-				break;
-			}
-
-			const powerSlot = this.powerSlots[i];
-			if (!powerSlot) {
-				continue;
-			}
-
-			if (powerData) {
-				powerSlot.setActionSlotIcon(powerData.iconURL as string);
-				powerSlot.setOnClickEvent(() =>
-					startQueueActionPlayer(actorState.entityId, i),
-				);
-				powerSlot.setActionLabelText(
-					String.fromCharCode(
-						controlState.controlSettings.powerActions[i],
-					).toUpperCase(),
-				);
-			} else {
-				powerSlot.setActionSlotIcon("");
-				powerSlot.setOnClickEvent(() => {});
-				powerSlot.setActionLabelText("");
-			}
+		const actionWeaponData = actorState.actionData.get(
+			ActionSlotKey.weapon,
+		);
+		if (actionWeaponData && this.weaponSlot) {
+			const weaponData = actionWeaponData[0];
+			this.assignActionSlot(
+				this.weaponSlot,
+				ActionSlotKey.weapon,
+				0,
+				(weaponData.iconURL as string) || "",
+				actorState.entityId,
+				controlState,
+			);
 		}
 
-		if (!actorState.equipmentData) {
+		const actionPowerData = actorState.actionData.get(ActionSlotKey.power);
+		if (actionPowerData) {
+			for (let i = 0; i < this.powerSlots.length; i++) {
+				const powerSlot = this.powerSlots[i];
+				if (!powerSlot) {
+					continue;
+				}
+
+				const powerData = actionPowerData[i];
+				if (powerData) {
+					this.assignActionSlot(
+						powerSlot,
+						ActionSlotKey.power,
+						i,
+						(powerData.iconURL as string) || "",
+						actorState.entityId,
+						controlState,
+					);
+				} else {
+					powerSlot.setActionSlotIcon("");
+					powerSlot.setOnClickEvent(() => {});
+					powerSlot.setActionLabelText("");
+				}
+			}
+		}
+	}
+
+	private assignActionSlot(
+		actionSlot: ActionSlot,
+		actionSlotKey: ActionSlotKey,
+		actionIndex: number,
+		iconUrl: string,
+		actorEntityId: EntityId,
+		controlState: ControlState,
+	) {
+		const actionMap =
+			controlState.controlSettings.actionMap.get(actionSlotKey);
+		if (!actionMap || !actionMap[actionIndex]) {
 			return;
 		}
 
-		for (let i = 0; i < this.deviceSlots.length; i++) {
-			const deviceData = actorState.equipmentData[i];
-			if (!deviceData) {
-				break;
-			}
-
-			const deviceSlot = this.deviceSlots[i];
-			if (!deviceSlot) {
-				continue;
-			}
-
-			if (deviceData) {
-				deviceSlot.setActionSlotIcon(
-					`${getPublicRoot()}${deviceData.iconURL as string}`,
-				);
-				deviceSlot.setOnClickEvent(() =>
-					startQueueActionPlayer(actorState.entityId, i),
-				);
-				deviceSlot.setActionLabelText(
-					String.fromCharCode(
-						controlState.controlSettings.equipmentActions[i],
-					).toUpperCase(),
-				);
-			} else {
-				deviceSlot.setActionSlotIcon("");
-				deviceSlot.setOnClickEvent(() => {});
-				deviceSlot.setActionLabelText("");
-			}
-		}
+		actionSlot.setActionSlotIcon(iconUrl);
+		actionSlot.setOnClickEvent(() =>
+			startQueueActionPlayer(actorEntityId, actionSlotKey, actionIndex),
+		);
+		actionSlot.setActionLabelText(
+			String.fromCharCode(actionMap[actionIndex]).toUpperCase(),
+		);
 	}
 
 	public setMessageDisplay(show: boolean, message?: string) {
@@ -233,32 +239,48 @@ export default class CombatHUD implements IHUD {
 		actionAbilityStack.adaptHeightToChildren = true;
 		actionGrid.addControl(actionAbilityStack, 1, 0);
 
-		for (let i = 0; i < 8; i++) {
+		let allAbilityActionSlots = [];
+		for (let i = 0; i < 4; i++) {
 			const actionSlot = new ActionSlot(
 				`ui_abilityslot_${i}`,
 				"",
 				() => {},
 			);
 			actionAbilityStack.addControl(actionSlot.rootContainer);
-			this.powerSlots.push(actionSlot);
+			allAbilityActionSlots.push(actionSlot);
 		}
 
-		const actionDeviceStack = new StackPanel(this.actionDeviceStackName);
-		actionDeviceStack.isVertical = false;
-		actionDeviceStack.spacing = 4;
-		actionDeviceStack.adaptWidthToChildren = true;
-		actionDeviceStack.adaptHeightToChildren = true;
-		actionGrid.addControl(actionDeviceStack, 1, 1);
+		this.weaponSlot = allAbilityActionSlots[0];
+		this.powerSlots = [
+			allAbilityActionSlots[1],
+			allAbilityActionSlots[2],
+			allAbilityActionSlots[3],
+		];
 
+		const actionItemStack = new StackPanel(this.actionDeviceStackName);
+		actionItemStack.isVertical = false;
+		actionItemStack.spacing = 4;
+		actionItemStack.adaptWidthToChildren = true;
+		actionItemStack.adaptHeightToChildren = true;
+		actionGrid.addControl(actionItemStack, 1, 1);
+
+		let allItemActionSlots = [];
 		for (let i = 0; i < 4; i++) {
 			const actionSlot = new ActionSlot(
 				`ui_deviceslot_${i}`,
 				"",
 				() => {},
 			);
-			actionDeviceStack.addControl(actionSlot.rootContainer);
-			this.deviceSlots.push(actionSlot);
+			actionItemStack.addControl(actionSlot.rootContainer);
+			allItemActionSlots.push(actionSlot);
 		}
+
+		this.accessorySlot = allItemActionSlots[0];
+		this.itemSlots = [
+			allItemActionSlots[1],
+			allItemActionSlots[2],
+			allItemActionSlots[3],
+		];
 
 		return actionBarUI;
 	}

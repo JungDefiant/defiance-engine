@@ -3,16 +3,14 @@ import {
 	AbilityData,
 	AbilityDescriptor,
 	AbilityTrigger,
+	EffectFunctionProps,
 	EffectVariable,
 } from "src/types/AbilityTypes";
-import { clamp } from "./Utils";
-import { defeatActor } from "./CombatModule";
 import {
 	getAbilityEffectCalculationProcessor,
 	getAbilityEffectApplicationProcessor,
 } from "./ProcessorModule";
 import {
-	AbilityTargetContext,
 	AttackContext,
 	DamageContext,
 	HealingContext,
@@ -29,20 +27,9 @@ import {
 	MAX_ATTACKRESULTCHANCE,
 	MIN_ATTACKRESULTCHANCE,
 } from "src/constants/CombatConstants";
+import { clamp } from "./Utils";
+import { defeatActor } from "./CombatModule";
 import { RandomRange } from "babylonjs";
-
-export interface EffectCalculationFunctionProps {
-	source: ActorStateComponent;
-	target: ActorStateComponent;
-	abilityContext: AbilityTargetContext;
-	effectVariables: { [index: string]: EffectVariable };
-}
-
-export interface EffectApplicationFunctionProps {
-	source: ActorStateComponent;
-	target: ActorStateComponent;
-	abilityContext: AbilityTargetContext;
-}
 
 export function calculateTotalAttributeValue(
 	attribute: ActorAttribute,
@@ -66,14 +53,8 @@ export function calculateTotalAttributeValue(
 	return attributeCurrentValue;
 }
 
-export function calculateAbilityEffects(
-	sourceState: ActorStateComponent,
-	targetState: ActorStateComponent,
-	abilityData: AbilityData,
-	context: AbilityTargetContext,
-) {
-	const abilityEffects = abilityData.effectData;
-	context.effects = abilityEffects;
+export function calculateAbilityEffects(props: EffectFunctionProps) {
+	const abilityEffects = props.abilityContext.effects;
 
 	const abilityEffectCalculationProcessor =
 		getAbilityEffectCalculationProcessor();
@@ -81,50 +62,31 @@ export function calculateAbilityEffects(
 	abilityEffects.forEach((effect) => {
 		const effectProcessor =
 			abilityEffectCalculationProcessor.getProcessorFunction(effect.id);
-		effectProcessor({
-			source: sourceState,
-			target: targetState,
-			abilityContext: context,
-			effectVariables: effect.variables,
-		});
+		effectProcessor(props, effect.variables);
 	});
 }
 
-export function applyAbilityEffects(
-	sourceState: ActorStateComponent,
-	targetState: ActorStateComponent,
-	abilityData: AbilityData,
-	context: AbilityTargetContext,
-) {
-	const abilityEffects = abilityData.effectData;
-	context.effects = abilityEffects;
+export function applyAbilityEffects(props: EffectFunctionProps) {
+	const abilityEffects = props.abilityContext.effects;
 	const abilityEffectProcessor = getAbilityEffectApplicationProcessor();
 
 	abilityEffects.forEach((effect) => {
 		const effectProcessor = abilityEffectProcessor.getProcessorFunction(
 			effect.id,
 		);
-		effectProcessor({
-			source: sourceState,
-			target: targetState,
-			abilityContext: context,
-		});
+		effectProcessor(props);
 	});
 }
 
-export function performAttackRoll(
-	sourceState: ActorStateComponent,
-	targetState: ActorStateComponent,
-	context: AbilityTargetContext,
-) {
+export function performAttackRoll(props: EffectFunctionProps) {
 	const sourceTotalOffense = calculateTotalAttributeValue(
-		sourceState.attributes.offense,
-		context.descriptors,
+		props.source.attributes.offense,
+		props.abilityContext.descriptors,
 	);
 
 	const sourceTotalDefense = calculateTotalAttributeValue(
-		targetState.attributes.defense,
-		context.descriptors,
+		props.target.attributes.defense,
+		props.abilityContext.descriptors,
 	);
 
 	let hitChance = BASE_HITCHANCE;
@@ -164,24 +126,29 @@ export function performAttackRoll(
 		attackRoll,
 		attackRollResult,
 	} as AttackContext;
-	context.attackContext = attackContext;
+	props.abilityContext.abilityTargetContexts[
+		props.abilityTargetIndex
+	].attackContext = attackContext;
 
-	triggerFeatEffects(sourceState, targetState, abilityTrigger, context);
+	triggerFeatEffects(
+		{
+			target: props.target,
+			source: props.source,
+			abilityContext: props.abilityContext,
+			abilityTargetIndex: props.abilityTargetIndex,
+		},
+		abilityTrigger,
+	);
 }
 
 export function spendAbilityCost(
 	source: ActorStateComponent,
-	context: AbilityTargetContext,
+	actionData: AbilityData,
 ): boolean {
-	const actionContext = context.actionContext;
-	if (!actionContext) {
-		return false;
-	}
-
-	const abilityCost = (actionContext.cost as number) || 0;
-	const costAttributeName = (actionContext.costAttribute as string) || "";
+	const abilityCost = (actionData.cost as number) || 0;
+	const costAttributeName = (actionData.costAttribute as string) || "";
 	const costAttribute = source.attributes[costAttributeName];
-	const isToggle = context.descriptors.includes(AbilityDescriptor.toggle);
+	const isToggle = actionData.descriptors.includes(AbilityDescriptor.toggle);
 
 	if (!costAttribute || costAttribute.currentValue < abilityCost) {
 		return false;
@@ -199,56 +166,69 @@ export function spendAbilityCost(
 }
 
 export function triggerFeatEffects(
-	sourceState: ActorStateComponent,
-	targetState: ActorStateComponent,
+	props: EffectFunctionProps,
 	trigger: AbilityTrigger,
-	context: AbilityTargetContext,
 ) {
-	const triggeredFeats = sourceState.featData.filter(
+	const triggeredFeats = props.source.featData.filter(
 		(x) => x.trigger === trigger,
 	);
 	triggeredFeats.forEach((feat) => {
-		const abilityContext = { ...context };
+		const abilityContext = { ...props.abilityContext };
 		abilityContext.target = `${feat.target}`;
 		abilityContext.descriptors = feat.descriptors;
 		abilityContext.effects = feat.effectData;
-		applyAbilityEffects(sourceState, targetState, feat, context);
+		applyAbilityEffects({
+			source: props.source,
+			target: props.target,
+			abilityContext: props.abilityContext,
+			abilityTargetIndex: props.abilityTargetIndex,
+		});
 	});
 }
 
 export function endToggles(sourceState: ActorStateComponent) {}
 
-export function calculateDamageEffect(props: EffectCalculationFunctionProps) {
-	const abilityContext = props.abilityContext;
-	let damageContext = abilityContext.damageContext;
+export function calculateDamageEffect(
+	props: EffectFunctionProps,
+	effectVariables: { [index: string]: EffectVariable },
+) {
+	const abilityTargetContext =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex];
+	let damageContext = abilityTargetContext.damageContext;
 	if (!damageContext) {
-		const baseDamage = props.effectVariables.baseDamage || 0;
+		const baseDamage = effectVariables.baseDamage || 0;
 		damageContext = {
 			baseDamage,
 			totalDamage: 0,
 			damageMultiplier: 1,
 			targetResist: 1,
 		} as DamageContext;
-		abilityContext.damageContext = damageContext;
+		abilityTargetContext.damageContext = damageContext;
 	}
 
 	damageContext.targetResist = calculateTotalAttributeValue(
 		props.target.attributes.resist,
-		abilityContext.descriptors,
+		props.abilityContext.descriptors,
 	);
 
 	triggerFeatEffects(
-		props.target,
-		props.source,
-		AbilityTrigger.onActorResistEffect,
-		abilityContext,
-	);
-
-	triggerFeatEffects(
-		props.source,
-		props.target,
+		{
+			target: props.target,
+			source: props.source,
+			abilityContext: props.abilityContext,
+			abilityTargetIndex: props.abilityTargetIndex,
+		},
 		AbilityTrigger.onActorInflictDamage,
-		abilityContext,
+	);
+
+	triggerFeatEffects(
+		{
+			target: props.target,
+			source: props.source,
+			abilityContext: props.abilityContext,
+			abilityTargetIndex: props.abilityTargetIndex,
+		},
+		AbilityTrigger.onActorResistEffect,
 	);
 
 	let resistMultiplier = 1;
@@ -264,14 +244,15 @@ export function calculateDamageEffect(props: EffectCalculationFunctionProps) {
 	);
 }
 
-export function applyDamageEffect(props: EffectApplicationFunctionProps) {
-	const abilityContext = props.abilityContext;
-	const damageContext = abilityContext.damageContext;
+export function applyDamageEffect(props: EffectFunctionProps) {
+	const abilityTargetContext =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex];
+	const damageContext = abilityTargetContext.damageContext;
 	if (!damageContext) {
 		return;
 	}
 
-	const attackContext = abilityContext.attackContext;
+	const attackContext = abilityTargetContext.attackContext;
 	if (attackContext) {
 		const attackRollResult = attackContext.attackRollResult;
 		if (attackRollResult === "graze") {
@@ -290,10 +271,13 @@ export function applyDamageEffect(props: EffectApplicationFunctionProps) {
 	);
 
 	triggerFeatEffects(
-		props.target,
-		props.source,
+		{
+			target: props.target,
+			source: props.source,
+			abilityContext: props.abilityContext,
+			abilityTargetIndex: props.abilityTargetIndex,
+		},
 		AbilityTrigger.onActorLifeModify,
-		abilityContext,
 	);
 
 	if (targetLifeAttribute.currentValue === 0) {
@@ -301,28 +285,36 @@ export function applyDamageEffect(props: EffectApplicationFunctionProps) {
 	}
 }
 
-export function calculateHealEffect(props: EffectCalculationFunctionProps) {
-	const abilityContext = props.abilityContext;
-	let healingContext = abilityContext.healingContext;
+export function calculateHealEffect(
+	props: EffectFunctionProps,
+	effectVariables: { [index: string]: EffectVariable },
+) {
+	const abilityTargetContext =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex];
+	let healingContext = abilityTargetContext.healingContext;
 	if (!healingContext) {
-		const baseHealing = props.effectVariables.baseHealing || 0;
+		const baseHealing = effectVariables.baseHealing || 0;
 		healingContext = {
 			baseHealing,
 		} as HealingContext;
-		abilityContext.healingContext = healingContext;
+		abilityTargetContext.healingContext = healingContext;
 	}
 
 	triggerFeatEffects(
-		props.source,
-		props.target,
+		{
+			target: props.target,
+			source: props.source,
+			abilityContext: props.abilityContext,
+			abilityTargetIndex: props.abilityTargetIndex,
+		},
 		AbilityTrigger.onActorGrantHealing,
-		abilityContext,
 	);
 }
 
-export function applyHealEffect(props: EffectApplicationFunctionProps) {
-	const abilityContext = props.abilityContext;
-	const healingContext = abilityContext.healingContext;
+export function applyHealEffect(props: EffectFunctionProps) {
+	const abilityTargetContext =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex];
+	const healingContext = abilityTargetContext.healingContext;
 	if (!healingContext) {
 		return;
 	}
@@ -336,24 +328,31 @@ export function applyHealEffect(props: EffectApplicationFunctionProps) {
 	);
 
 	triggerFeatEffects(
-		props.target,
-		props.source,
+		{
+			target: props.target,
+			source: props.source,
+			abilityContext: props.abilityContext,
+			abilityTargetIndex: props.abilityTargetIndex,
+		},
 		AbilityTrigger.onActorLifeModify,
-		abilityContext,
 	);
 }
 
-export function calculateStatusEffect(props: EffectCalculationFunctionProps) {
-	const abilityContext = props.abilityContext;
-	let statusEffectContexts = abilityContext.statusEffectContexts;
+export function calculateStatusEffect(
+	props: EffectFunctionProps,
+	effectVariables: { [index: string]: EffectVariable },
+) {
+	const abilityTargetContext =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex];
+	let statusEffectContexts = abilityTargetContext.statusEffectContexts;
 	if (!statusEffectContexts) {
 		statusEffectContexts = new Map<string, StatusEffectContext>();
-		abilityContext.statusEffectContexts = statusEffectContexts;
+		abilityTargetContext.statusEffectContexts = statusEffectContexts;
 	}
 
 	const newStatusEffectContext = {
-		statusId: props.effectVariables.statusId,
-		duration: props.effectVariables.duration,
+		statusId: effectVariables.statusId,
+		duration: effectVariables.duration,
 	} as StatusEffectContext;
 	statusEffectContexts.set(
 		newStatusEffectContext.statusId,
@@ -361,22 +360,24 @@ export function calculateStatusEffect(props: EffectCalculationFunctionProps) {
 	);
 }
 
-export function applyStatusEffect(props: EffectApplicationFunctionProps) {
-	const abilityContext = props.abilityContext;
-	const statusEffectContexts = abilityContext.statusEffectContexts;
+export function applyStatusEffect(props: EffectFunctionProps) {
+	const abilityTargetContext =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex];
+	const statusEffectContexts = abilityTargetContext.statusEffectContexts;
 	if (!statusEffectContexts) {
 		return;
 	}
 }
 
 export function calculateAttributeModifier(
-	props: EffectCalculationFunctionProps,
+	props: EffectFunctionProps,
+	effectVariables: { [index: string]: EffectVariable },
 ) {
 	const descriptors =
-		(props.effectVariables.descriptors as AbilityDescriptor[]) || [];
-	const attributeName = (props.effectVariables.attributeName as string) || "";
-	const amount = (props.effectVariables.amount as number) || 0;
-	const duration = (props.effectVariables.duration as number) || 0;
+		(effectVariables.descriptors as AbilityDescriptor[]) || [];
+	const attributeName = (effectVariables.attributeName as string) || "";
+	const amount = (effectVariables.amount as number) || 0;
+	const duration = (effectVariables.duration as number) || 0;
 
 	props.target.attributes[attributeName].modifiers.push({
 		descriptors,
@@ -385,18 +386,17 @@ export function calculateAttributeModifier(
 }
 
 export function calculateContextVariableModifier(
-	props: EffectCalculationFunctionProps,
+	props: EffectFunctionProps,
+	effectVariables: { [index: string]: EffectVariable },
 ) {
 	const abilityContext = props.abilityContext;
 	const requiredDescriptors =
-		(props.effectVariables.requiredDescriptors as AbilityDescriptor[]) ||
-		[];
+		(effectVariables.requiredDescriptors as AbilityDescriptor[]) || [];
 	const contextObjectName =
-		(props.effectVariables.contextObjectName as string) || "";
+		(effectVariables.contextObjectName as string) || "";
 	const contextVariableName =
-		(props.effectVariables.contextVariableName as string) || "";
-	const variableModifier =
-		(props.effectVariables.variableModifier as number) || 0;
+		(effectVariables.contextVariableName as string) || "";
+	const variableModifier = (effectVariables.variableModifier as number) || 0;
 
 	for (const requiredDescriptor of requiredDescriptors) {
 		if (!abilityContext.descriptors.includes(requiredDescriptor)) {
