@@ -1,14 +1,14 @@
 import { Processor } from "./Processor";
-import { AbilityEffectType } from "src/types/AbilityTypes";
+import { AbilityEffectType, EffectVariable } from "src/types/AbilityTypes";
 import {
 	applyDamageEffect,
 	applyHealEffect,
 	applyStatusEffect,
-	EffectApplicationFunctionProps,
+	EffectFunctionProps,
 } from "src/modules/EffectModule";
 
 export type AbilityEffectApplicationFunction = (
-	props: EffectApplicationFunctionProps,
+	props: EffectFunctionProps,
 ) => void;
 
 export class AbilityEffectApplicationProcessor implements Processor {
@@ -19,16 +19,11 @@ export class AbilityEffectApplicationProcessor implements Processor {
 
 	public constructor() {
 		this.processorFunctions = {
-			damage: (props: EffectApplicationFunctionProps) =>
-				applyDamageEffect(props),
-			healing: (props: EffectApplicationFunctionProps) =>
-				applyHealEffect(props),
-			status: (props: EffectApplicationFunctionProps) =>
-				applyStatusEffect(props),
-			attributeModifier: (props: EffectApplicationFunctionProps) => {},
-			modifyContextVariable: (
-				props: EffectApplicationFunctionProps,
-			) => {},
+			damage: (props: EffectFunctionProps) => applyDamageEffect(props),
+			healing: (props: EffectFunctionProps) => applyHealEffect(props),
+			status: (props: EffectFunctionProps) => applyStatusEffect(props),
+			attributeModifier: (props: EffectFunctionProps) => {},
+			modifyContextVariable: (props: EffectFunctionProps) => {},
 		};
 	}
 
@@ -42,9 +37,7 @@ export class AbilityEffectApplicationProcessor implements Processor {
 
 	public removeProcessorFunction(key: string): void {
 		const parsedKey = key as AbilityEffectType;
-		this.processorFunctions[parsedKey] = (
-			props: EffectApplicationFunctionProps,
-		) => {};
+		this.processorFunctions[parsedKey] = (props: EffectFunctionProps) => {};
 	}
 
 	public getProcessorFunction(key: string): AbilityEffectApplicationFunction {

@@ -13,13 +13,13 @@ import {
 } from "src/types/UserInterfaceTypes";
 import UserInterfaceState from "src/states/UserInterfaceState";
 import {
-	AbilityTargetContext,
 	EffectFeedbackContext,
+	StatusEffectContext,
 } from "src/types/ContextTypes";
 import ActorStateComponent from "src/components/ActorStateComponent";
-import { AbilityData } from "src/types/AbilityTypes";
+import { AbilityData, EffectFunctionProps } from "src/types/AbilityTypes";
 
-export function addFloatingTextRQE(
+export function addFloatingTextRenderQueueEntry(
 	targetEntityId: number,
 	text: string,
 	color: string,
@@ -81,26 +81,21 @@ export function renderCastHitVFX(
 	}
 }
 
-export function renderAbilityEffects(
-	abilityName: string,
-	sourceState: ActorStateComponent,
-	targetState: ActorStateComponent,
-	context: AbilityTargetContext,
-) {
+export function renderAbilityEffects(props: EffectFunctionProps) {
 	const userInterfaceState = getUserInterfaceState();
 
 	const effectFeedbackContext: EffectFeedbackContext = {
-		abilityName: abilityName,
-		sourceName: sourceState.name,
-		targetName: targetState.name,
-		targetEntityId: targetState.entityId,
-		abilityContext: context,
+		abilityName: props.abilityContext.abilityName,
+		sourceName: props.source.name,
+		targetName: props.target.name,
+		targetEntityId: props.target.entityId,
+		abilityContext: props.abilityContext,
 	};
 
-	if (
-		context.attackContext &&
-		context.attackContext.attackRollResult !== "hit"
-	) {
+	const attackContext =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex]
+			.attackContext;
+	if (attackContext && attackContext.attackRollResult !== "hit") {
 		const effectFeedbackStyle = EffectFeedbackStyles.get(
 			"attackRoll",
 		) as EffectFeedbackStyle;
@@ -111,7 +106,11 @@ export function renderAbilityEffects(
 		});
 	}
 
-	if (context.damageContext) {
+	const damageContext =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex]
+			.damageContext;
+
+	if (damageContext) {
 		const effectFeedbackStyle = EffectFeedbackStyles.get(
 			"damage",
 		) as EffectFeedbackStyle;
@@ -122,7 +121,10 @@ export function renderAbilityEffects(
 		});
 	}
 
-	if (context.healingContext) {
+	const healingContext =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex]
+			.healingContext;
+	if (healingContext) {
 		const effectFeedbackStyle = EffectFeedbackStyles.get(
 			"healing",
 		) as EffectFeedbackStyle;
@@ -133,8 +135,11 @@ export function renderAbilityEffects(
 		});
 	}
 
-	if (context.statusEffectContexts) {
-		context.statusEffectContexts.forEach((statusEffect) => {
+	const statusEffectContexts =
+		props.abilityContext.abilityTargetContexts[props.abilityTargetIndex]
+			.statusEffectContexts;
+	if (statusEffectContexts) {
+		statusEffectContexts.forEach((statusEffect: StatusEffectContext) => {
 			const statusEffectFeedbackType =
 				statusEffect.statusId as EffectFeedbackType;
 			if (
@@ -164,7 +169,7 @@ interface EffectFeedbackRenderQueueEntriesProps {
 function addEffectFeedbackRenderQueueEntries(
 	props: EffectFeedbackRenderQueueEntriesProps,
 ) {
-	addFloatingTextRQE(
+	addFloatingTextRenderQueueEntry(
 		props.effectFeedbackContext.targetEntityId,
 		props.effectFeedbackStyle.floatingText(props.effectFeedbackContext),
 		props.effectFeedbackStyle.floatingTextColor,

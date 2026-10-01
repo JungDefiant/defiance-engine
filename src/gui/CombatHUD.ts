@@ -11,12 +11,11 @@ import {
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/abstract/ActionSlot";
-import { getPublicRoot } from "src/modules/Utils";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import { startQueueActionPlayer } from "src/modules/CombatModule";
 import { getControlState } from "src/modules/GameStateModule";
 import ControlState from "src/states/ControlState";
-import { AbilityData, ActionSlotKey } from "src/types/AbilityTypes";
+import { ActionSlotKey } from "src/types/AbilityTypes";
 import { EntityId } from "bitecs";
 
 export default class CombatHUD implements IHUD {

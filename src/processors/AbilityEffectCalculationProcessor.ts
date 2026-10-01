@@ -1,16 +1,18 @@
 import { Processor } from "./Processor";
-import { AbilityEffectType } from "src/types/AbilityTypes";
+import { AbilityEffectType, EffectVariable } from "src/types/AbilityTypes";
 import {
 	calculateAttributeModifier,
 	calculateContextVariableModifier,
 	calculateDamageEffect,
 	calculateHealEffect,
 	calculateStatusEffect,
-	EffectCalculationFunctionProps,
+	EffectFunctionProps,
 } from "src/modules/EffectModule";
+import { Effect } from "babylonjs";
 
 export type AbilityEffectCalculationFunction = (
-	props: EffectCalculationFunctionProps,
+	props: EffectFunctionProps,
+	effectVariables: { [index: string]: EffectVariable },
 ) => void;
 
 export class AbilityEffectCalculationProcessor implements Processor {
@@ -21,16 +23,26 @@ export class AbilityEffectCalculationProcessor implements Processor {
 
 	public constructor() {
 		this.processorFunctions = {
-			damage: (props: EffectCalculationFunctionProps) =>
-				calculateDamageEffect(props),
-			healing: (props: EffectCalculationFunctionProps) =>
-				calculateHealEffect(props),
-			status: (props: EffectCalculationFunctionProps) =>
-				calculateStatusEffect(props),
-			attributeModifier: (props: EffectCalculationFunctionProps) =>
-				calculateAttributeModifier(props),
-			modifyContextVariable: (props: EffectCalculationFunctionProps) =>
-				calculateContextVariableModifier(props),
+			damage: (
+				props: EffectFunctionProps,
+				effectVariables: { [index: string]: EffectVariable },
+			) => calculateDamageEffect(props, effectVariables),
+			healing: (
+				props: EffectFunctionProps,
+				effectVariables: { [index: string]: EffectVariable },
+			) => calculateHealEffect(props, effectVariables),
+			status: (
+				props: EffectFunctionProps,
+				effectVariables: { [index: string]: EffectVariable },
+			) => calculateStatusEffect(props, effectVariables),
+			attributeModifier: (
+				props: EffectFunctionProps,
+				effectVariables: { [index: string]: EffectVariable },
+			) => calculateAttributeModifier(props, effectVariables),
+			modifyContextVariable: (
+				props: EffectFunctionProps,
+				effectVariables: { [index: string]: EffectVariable },
+			) => calculateContextVariableModifier(props, effectVariables),
 		};
 	}
 
@@ -44,9 +56,7 @@ export class AbilityEffectCalculationProcessor implements Processor {
 
 	public removeProcessorFunction(key: string): void {
 		const parsedKey = key as AbilityEffectType;
-		this.processorFunctions[parsedKey] = (
-			props: EffectCalculationFunctionProps,
-		) => [];
+		this.processorFunctions[parsedKey] = (props: EffectFunctionProps) => [];
 	}
 
 	public getProcessorFunction(key: string): AbilityEffectCalculationFunction {

@@ -20,7 +20,7 @@ import {
 	applyAbilityEffects,
 	calculateAbilityEffects,
 } from "src/modules/EffectModule";
-import { AbilityTargetContext } from "src/types/ContextTypes";
+import { AbilityContext, AbilityTargetContext } from "src/types/ContextTypes";
 import { ActionSlot } from "src/gui/abstract/ActionSlot";
 
 const BASE_LIFE_REGEN_TICKS: number = 4;
@@ -317,17 +317,22 @@ export default class ActorStateComponent implements Component {
 						target: `${featData.target}`,
 						descriptors: featData.descriptors,
 						effects: featData.effectData,
-					} as AbilityTargetContext;
+					} as AbilityContext;
 					abilityContext.target = `${featData.target}`;
 					abilityContext.descriptors = featData.descriptors;
 					abilityContext.effects = featData.effectData;
-					calculateAbilityEffects(
-						this,
-						this,
-						featData,
+					calculateAbilityEffects({
+						source: this,
+						target: this,
 						abilityContext,
-					);
-					applyAbilityEffects(this, this, featData, abilityContext);
+						abilityTargetIndex: 0,
+					});
+					applyAbilityEffects({
+						source: this,
+						target: this,
+						abilityContext,
+						abilityTargetIndex: 0,
+					});
 				}
 			});
 		});

@@ -19,7 +19,7 @@
 		{
 			"target": "single_enemy",
 			"condition": "random",
-			"actionType": "power",
+			"actionType": "weapon",
 			"actionIndex": 0
 		}
 	]

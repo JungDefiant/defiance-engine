@@ -1,4 +1,3 @@
-import type { AbilityEffectType } from "./AbilityTypes";
 import { Themes } from "src/gui/Themes";
 import { EffectFeedbackContext } from "./ContextTypes";
 
@@ -25,7 +24,10 @@ export const EffectFeedbackStyles = new Map<
 		{
 			floatingTextColor: Themes.secondary2,
 			floatingText: (context: EffectFeedbackContext) => {
-				const attackContext = context.abilityContext.attackContext;
+				const attackContext =
+					context.abilityContext.abilityTargetContexts[
+						context.targetEntityId
+					].attackContext;
 				if (
 					!attackContext ||
 					attackContext.attackRollResult === "hit"
@@ -36,7 +38,10 @@ export const EffectFeedbackStyles = new Map<
 				return `${attackContext.attackRollResult.toUpperCase()}!`;
 			},
 			combatLogText: (context: EffectFeedbackContext) => {
-				const attackContext = context.abilityContext.attackContext;
+				const attackContext =
+					context.abilityContext.abilityTargetContexts[
+						context.targetEntityId
+					].attackContext;
 				if (
 					!attackContext ||
 					attackContext.attackRollResult === "hit"
@@ -54,14 +59,20 @@ export const EffectFeedbackStyles = new Map<
 		{
 			floatingTextColor: Themes.neutral2,
 			floatingText: (context: EffectFeedbackContext) => {
-				const damageContext = context.abilityContext.damageContext;
+				const damageContext =
+					context.abilityContext.abilityTargetContexts[
+						context.targetEntityId
+					].damageContext;
 				if (!damageContext) {
 					return "";
 				}
 				return `${damageContext.totalDamage}`;
 			},
 			combatLogText: (context) => {
-				const damageContext = context.abilityContext.damageContext;
+				const damageContext =
+					context.abilityContext.abilityTargetContexts[
+						context.targetEntityId
+					].damageContext;
 				if (!damageContext) {
 					return "";
 				}
@@ -74,14 +85,20 @@ export const EffectFeedbackStyles = new Map<
 		{
 			floatingTextColor: Themes.success,
 			floatingText: (context: EffectFeedbackContext) => {
-				const healingContext = context.abilityContext.healingContext;
+				const healingContext =
+					context.abilityContext.abilityTargetContexts[
+						context.targetEntityId
+					].healingContext;
 				if (!healingContext) {
 					return "";
 				}
 				return `${healingContext.baseHealing}`;
 			},
 			combatLogText: (context) => {
-				const healingContext = context.abilityContext.healingContext;
+				const healingContext =
+					context.abilityContext.abilityTargetContexts[
+						context.targetEntityId
+					].healingContext;
 				if (!healingContext) {
 					return "";
 				}

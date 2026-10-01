@@ -1,3 +1,6 @@
+import ActorStateComponent from "src/components/ActorStateComponent";
+import { AbilityContext } from "./ContextTypes";
+
 export type AbilityEffectType =
 	| "damage"
 	| "healing"
@@ -12,6 +15,13 @@ export type EffectVariable =
 	| string[]
 	| number[]
 	| EffectData[];
+
+export interface EffectFunctionProps {
+	source: ActorStateComponent;
+	target: ActorStateComponent;
+	abilityContext: AbilityContext;
+	abilityTargetIndex: number;
+}
 
 export interface AbilityData {
 	id: string;
