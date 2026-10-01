@@ -25,6 +25,7 @@ import UserInterfaceSystem from "src/systems/UserInterfaceSystem";
 import { GameEventProcessor } from "src/processors/GameEventProcessor";
 import { AbilityEffectApplicationProcessor } from "src/processors/AbilityEffectApplicationProcessor";
 import { AbilityEffectCalculationProcessor } from "src/processors/AbilityEffectCalculationProcessor";
+import { DialogueCommandProcessor } from "src/processors/DialogueCommandProcessor";
 
 // The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
@@ -42,6 +43,7 @@ export const PROCESSOR_TOKENS = [
 	AbilityEffectApplicationProcessor,
 	AbilityEffectCalculationProcessor,
 	GameEventProcessor,
+	DialogueCommandProcessor,
 ];
 
 export const COMPONENT_TOKENS = [

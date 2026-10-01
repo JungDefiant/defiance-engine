@@ -1,5 +1,6 @@
 import { AbilityEffectApplicationProcessor } from "src/processors/AbilityEffectApplicationProcessor";
 import { AbilityEffectCalculationProcessor } from "src/processors/AbilityEffectCalculationProcessor";
+import { DialogueCommandProcessor } from "src/processors/DialogueCommandProcessor";
 import { GameEventProcessor } from "src/processors/GameEventProcessor";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 import { container } from "tsyringe";
@@ -7,6 +8,13 @@ import { container } from "tsyringe";
 export function getGameEventProcessor(): GameEventProcessor {
 	const processorRegistry = container.resolve(ProcessorRegistry);
 	return processorRegistry.getProcessorByProcessorId(GameEventProcessor.name);
+}
+
+export function getDialogueCommandProcessor(): GameEventProcessor {
+	const processorRegistry = container.resolve(ProcessorRegistry);
+	return processorRegistry.getProcessorByProcessorId(
+		DialogueCommandProcessor.name,
+	);
 }
 
 export function getAbilityEffectCalculationProcessor(): AbilityEffectCalculationProcessor {
