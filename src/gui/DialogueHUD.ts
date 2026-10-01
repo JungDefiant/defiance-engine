@@ -5,7 +5,6 @@ import {
 	TextBlock,
 	StackPanel,
 	ScrollBar,
-	Button,
 } from "@babylonjs/gui";
 import type IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
@@ -13,7 +12,6 @@ import { type Nullable } from "@babylonjs/core";
 import StackPanelImage from "./abstract/StackPanelImage";
 import { getPublicRoot } from "src/modules/Utils";
 import { DialogueLine, DialogueOptionLine } from "src/types/GameTypes";
-import { playSFX } from "src/modules/AudioModule";
 import {
 	endDialogue,
 	runLine,
@@ -35,7 +33,9 @@ export default class DialogueHUD implements IHUD {
 	private readonly EMPTY_INPUT = "_";
 
 	public showHideHud(show: boolean): void {
-		this.rootContainer!.isVisible = show;
+		if (this.rootContainer) {
+			this.rootContainer.isVisible = show;
+		}
 	}
 
 	public createHudRoot(): Container {

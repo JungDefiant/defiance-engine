@@ -14,13 +14,27 @@ import {
 	getUserInterfaceState,
 } from "./GameStateModule";
 import DialogueHUD from "src/gui/DialogueHUD";
-import { PAUSE_DIALOGUE } from "src/constants/GeneralConstants";
+import {
+	BASE_MOVEMENT_SPEED,
+	PAUSE_DIALOGUE,
+} from "src/constants/GeneralConstants";
 import { getPublicRoot } from "./Utils";
 import { startCombat } from "./CombatModule";
-import { setDialogueGameMode, setExploreGameMode } from "./SceneModule";
+import {
+	getSceneNode,
+	setDialogueGameMode,
+	setExploreGameMode,
+} from "./SceneModule";
 import { checkEventByTrigger } from "./EventModule";
 import { getDialogueCommandProcessor } from "./ProcessorModule";
 import { DialogueCommandVariable } from "src/types/DialogueTypes";
+import { playMusic, playSFX } from "./AudioModule";
+import EntityMovementComponent from "src/components/EntityMovementComponent";
+import {
+	getCharacterSpriteComponentArray,
+	getEntityMovementComponentArray,
+} from "./ComponentModule";
+import { addComponent, set } from "bitecs";
 
 export function initSemantics() {
 	const dialogueState = getDialogueState();
@@ -521,66 +535,151 @@ export function runCommand(id: number, line: DialogueLine) {
 	runLine(nextLineId);
 }
 
-export function setFlagDialogueCommand(flag: string) {}
-
 export function setStringVariableDialogueCommand(
 	vars: DialogueCommandVariable[],
 ) {
-	const name = vars[0] as string;
-	const value = vars[1] as string;
-	const campaignState = getCampaignState();
-	campaignState.storyVariableMap.set(name, value);
+	const name = (vars[0] as string) || "";
+	const value = (vars[1] as string) || "";
+	if (name && value) {
+		const campaignState = getCampaignState();
+		campaignState.storyVariableMap.set(name, value);
+	}
 }
 
 export function setNumberVariableDialogueCommand(
 	vars: DialogueCommandVariable[],
 ) {
-	const name = vars[0] as string;
-	const value = vars[1] as number;
-	const campaignState = getCampaignState();
-	campaignState.storyVariableMap.set(name, value);
+	const name = (vars[0] as string) || "";
+	const value = (vars[1] as number) || 0;
+	if (name && value) {
+		const campaignState = getCampaignState();
+		campaignState.storyVariableMap.set(name, value);
+	}
 }
 
 export function modifyNumberVariableDialogueCommand(
 	vars: DialogueCommandVariable[],
 ) {
-	const name = vars[0] as string;
-	const amount = vars[1] as number;
-	const campaignState = getCampaignState();
-	const storyVariableValue = campaignState.storyVariableMap.get(
-		name,
-	) as number;
-	if (storyVariableValue) {
-		campaignState.storyVariableMap.set(name, storyVariableValue + amount);
+	const name = (vars[0] as string) || "";
+	const amount = (vars[1] as number) || 0;
+	if (name && amount) {
+		const campaignState = getCampaignState();
+		const storyVariableValue = campaignState.storyVariableMap.get(
+			name,
+		) as number;
+		if (storyVariableValue) {
+			campaignState.storyVariableMap.set(
+				name,
+				storyVariableValue + amount,
+			);
+		}
 	}
 }
 
-export function playSoundDialogueCommand(vars: DialogueCommandVariable[]) {}
+export function playSoundDialogueCommand(vars: DialogueCommandVariable[]) {
+	const soundKey = (vars[0] as string) || "";
+	if (soundKey) {
+		playSFX(soundKey);
+	}
+}
 
-export function playMusicDialogueCommand(vars: DialogueCommandVariable[]) {}
+export function playMusicDialogueCommand(vars: DialogueCommandVariable[]) {
+	const musicKey = (vars[0] as string) || "";
+	if (musicKey) {
+		playMusic(musicKey);
+	}
+}
 
-export function showBackgroundImageDialogueCommand(
-	vars: DialogueCommandVariable[],
-) {}
+export function showImageDialogueCommand(vars: DialogueCommandVariable[]) {
+	const imageKey = (vars[0] as string) || "";
+}
 
-export function moveCameraDialogueCommand(vars: DialogueCommandVariable[]) {}
+export function shakeCameraDialogueCommand(vars: DialogueCommandVariable[]) {
+	// To be implemented
+}
 
-export function shakeCameraDialogueCommand(vars: DialogueCommandVariable[]) {}
+export function fadeInCameraDialogueCommand(vars: DialogueCommandVariable[]) {
+	// To be implemented
+}
 
-export function fadeInCameraDialogueCommand(vars: DialogueCommandVariable[]) {}
+export function fadeOutCameraDialogueCommand(vars: DialogueCommandVariable[]) {
+	// To be implemented
+}
 
-export function fadeOutCameraDialogueCommand(vars: DialogueCommandVariable[]) {}
+export function moveToNodeDialogueCommand(vars: DialogueCommandVariable[]) {
+	const destinationNodeKey = (vars[0] as string) || "";
+	if (!destinationNodeKey) {
+		return;
+	}
 
-export function moveToNodeDialogueCommand(vars: DialogueCommandVariable[]) {}
+	const gameScene = getGameScene();
+	getSceneNode(destinationNodeKey).then((sceneNode) => {
+		if (!sceneNode) {
+			return;
+		}
 
-export function setViewTargetDialogueCommand(vars: DialogueCommandVariable[]) {}
+		const camera = gameScene.activeCamera as UniversalCamera;
+		camera.target = sceneNode.getPositionExpressedInLocalSpace();
+		const entityMovement = new EntityMovementComponent(
+			camera.position,
+			sceneNode.getPositionExpressedInLocalSpace(),
+			BASE_MOVEMENT_SPEED,
+			() => {},
+		);
+		const entityMovementComponentArray = getEntityMovementComponentArray();
+		addComponent(
+			gameScene.world,
+			gameScene.cameraEntityId,
+			set(entityMovementComponentArray, entityMovement),
+		);
+	});
+}
 
-export function setSpeakerDialogueCommand(vars: DialogueCommandVariable[]) {}
+export function setViewTargetDialogueCommand(vars: DialogueCommandVariable[]) {
+	const viewNodeKey = (vars[0] as string) || "";
+	if (!viewNodeKey) {
+		return;
+	}
+
+	const gameScene = getGameScene();
+	getSceneNode(viewNodeKey).then((sceneNode) => {
+		if (!sceneNode) {
+			return;
+		}
+
+		const camera = gameScene.activeCamera as UniversalCamera;
+		camera.target = sceneNode.getPositionExpressedInLocalSpace();
+	});
+}
+
+export function setSpeakerDialogueCommand(vars: DialogueCommandVariable[]) {
+	const speakerSpriteId = (vars[0] as string) || "";
+	if (!speakerSpriteId) {
+		return;
+	}
+
+	const gameScene = getGameScene();
+	const characterSprite = getCharacterSpriteComponentArray().find(
+		(sprite) => {
+			sprite.getValue().name === speakerSpriteId;
+		},
+	);
+	if (!characterSprite) {
+		return;
+	}
+
+	const camera = gameScene.activeCamera as UniversalCamera;
+	camera.target = characterSprite
+		.getValue()
+		.getPositionExpressedInLocalSpace();
+}
 
 export function startCombatDialogueCommand(vars: DialogueCommandVariable[]) {
-	const encounterId = vars[0] as string;
-	endDialogue(false);
-	startCombat(encounterId);
+	const encounterId = (vars[0] as string) || "";
+	if (encounterId) {
+		endDialogue(false);
+		startCombat(encounterId);
+	}
 }
 
 export function startCutsceneDialogueCommand(vars: DialogueCommandVariable[]) {

@@ -1,7 +1,13 @@
 import {
-	moveCameraDialogueCommand,
+	modifyNumberVariableDialogueCommand,
+	moveToNodeDialogueCommand,
+	playMusicDialogueCommand,
+	playSoundDialogueCommand,
 	setNumberVariableDialogueCommand,
+	setSpeakerDialogueCommand,
 	setStringVariableDialogueCommand,
+	setViewTargetDialogueCommand,
+	showImageDialogueCommand,
 	startCombatDialogueCommand,
 } from "src/modules/DialogueModule";
 import { DialogueCommand } from "src/types/DialogueTypes";
@@ -14,7 +20,13 @@ export class DialogueCommandProcessor implements Processor {
 		this.processorFunctions = {
 			setnumbervar: setNumberVariableDialogueCommand,
 			setstringvar: setStringVariableDialogueCommand,
-			movecam: moveCameraDialogueCommand,
+			modifynumbervar: modifyNumberVariableDialogueCommand,
+			playsound: playSoundDialogueCommand,
+			playmusic: playMusicDialogueCommand,
+			showimage: showImageDialogueCommand,
+			movetonode: moveToNodeDialogueCommand,
+			setspeaker: setSpeakerDialogueCommand,
+			setviewtarget: setViewTargetDialogueCommand,
 			startcombat: startCombatDialogueCommand,
 		};
 	}
