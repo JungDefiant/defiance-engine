@@ -36,6 +36,7 @@
 					]
 				}
 			],
+			"speakers": [],
 			"doors": [
 				{
 					"id": "door_t0_t1",
@@ -50,6 +51,22 @@
 			"combatViewNodeId": "loc1_view_combat",
 			"combatSpawnNodeId": "loc1_spawn_enemy",
 			"interactables": [],
+			"speakers": [
+				{
+					"id": "speaker_test",
+					"name": "test",
+					"description": "",
+					"dialogueNodeId": "ch0_start",
+					"sceneNodeId": "itr_speaker_example",
+					"spriteKey": "spr_sentineltest.png",
+					"speakerName": "test",
+					"speakerPositionOffset": [
+						0,
+						-0.28,
+						0
+					]
+				}
+			],
 			"doors": [
 				{
 					"id": "door_t1_t0",

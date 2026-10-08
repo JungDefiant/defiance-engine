@@ -4,7 +4,6 @@ import {
 	playMusicDialogueCommand,
 	playSoundDialogueCommand,
 	setNumberVariableDialogueCommand,
-	setSpeakerDialogueCommand,
 	setStringVariableDialogueCommand,
 	setViewTargetDialogueCommand,
 	showImageDialogueCommand,
@@ -25,7 +24,6 @@ export class DialogueCommandProcessor implements Processor {
 			playmusic: playMusicDialogueCommand,
 			showimage: showImageDialogueCommand,
 			movetonode: moveToNodeDialogueCommand,
-			setspeaker: setSpeakerDialogueCommand,
 			setviewtarget: setViewTargetDialogueCommand,
 			startcombat: startCombatDialogueCommand,
 		};

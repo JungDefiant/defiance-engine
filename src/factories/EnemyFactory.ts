@@ -1,8 +1,7 @@
-import { container, singleton } from "tsyringe";
+import { container } from "tsyringe";
 import { EntityFactory } from "src/factories/EntityFactory";
-import { addComponent, addEntity, EntityId, query, set } from "bitecs";
+import { addComponent, addEntity, EntityId, set } from "bitecs";
 import {
-	Mesh,
 	MeshBuilder,
 	Nullable,
 	PBRMaterial,
@@ -12,7 +11,6 @@ import {
 	Vector3,
 } from "@babylonjs/core";
 import { getPublicRoot } from "src/modules/Utils";
-import UserInterfaceState from "src/states/UserInterfaceState";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
 import ActorStateComponent from "src/components/ActorStateComponent";
@@ -82,11 +80,15 @@ export class EnemyFactory implements EntityFactory {
 		const enemyData = this.cache.get(fileName);
 		const gameScene = getGameScene();
 		const userInterfaceState = getUserInterfaceState();
-		const sceneNodes = await getAllSceneNodes(gameScene.mapModelId);
+		const sceneNodes = await getAllSceneNodes();
 		const currentLocation = gameScene.currentLocation;
 
 		if (!currentLocation) {
 			throw new Error("No location found!");
+		}
+
+		if (!sceneNodes) {
+			throw new Error("No scene nodes found!");
 		}
 
 		const spawnNode = sceneNodes.find(
@@ -170,6 +172,7 @@ export class EnemyFactory implements EntityFactory {
 
 		const characterSpriteComponent = new CharacterSpriteComponent(
 			enemyActorSprite,
+			`actor_${entityId}`,
 		);
 		return characterSpriteComponent;
 	}

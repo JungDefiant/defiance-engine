@@ -65,8 +65,8 @@ export default class DialogueHUD implements IHUD {
 		this.textEntryScrollbar!.isEnabled = show ? true : false;
 	}
 
-	public addTextDialogueEntry(dlgData: DialogueLine): void {
-		if (!dlgData || !this.textEntryStack) {
+	public addTextDialogueEntry(dialogueData: DialogueLine): void {
+		if (!dialogueData || !this.textEntryStack) {
 			return;
 		}
 
@@ -83,14 +83,13 @@ export default class DialogueHUD implements IHUD {
 		stackPanel.spacing = 4;
 		rootContainer.addControl(stackPanel);
 
-		const hasSpeaker =
-			dlgData.character && dlgData.character !== this.EMPTY_INPUT;
-		if (dlgData.character && hasSpeaker) {
+		const hasSpeaker = dialogueData.speakerName !== this.EMPTY_INPUT;
+		if (dialogueData.speakerName && hasSpeaker) {
 			stackPanel.source = `${getPublicRoot()}/sprites/dialogue/gui_textbox.png`;
 
 			const speakerLabel = new TextBlock(
-				"ui_speaker_" + dlgData.character.trim().toLowerCase(),
-				dlgData.character,
+				"ui_speaker_" + dialogueData.speakerName.trim().toLowerCase(),
+				dialogueData.speakerName,
 			);
 			speakerLabel.horizontalAlignment =
 				Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -110,7 +109,7 @@ export default class DialogueHUD implements IHUD {
 			rootContainer.thickness = 2;
 		}
 
-		const lineUI = new TextBlock("ui_line", dlgData.text);
+		const lineUI = new TextBlock("ui_line", dialogueData.text);
 		lineUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		lineUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		lineUI.color = Themes.primary3;

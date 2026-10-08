@@ -3,6 +3,7 @@ import { AdvancedDynamicTexture, Control } from "@babylonjs/gui";
 import { GameScene } from "src/scenes/GameScene";
 import { GameEvent } from "src/types/EventTypes";
 import { ActionSlotKey } from "./AbilityTypes";
+import { EntityId } from "bitecs";
 
 export class ControlSettings {
 	actionMap: Map<ActionSlotKey, number[]> = new Map([
@@ -49,8 +50,9 @@ export interface SceneLocation {
 	combatViewNodeId: string;
 	combatSpawnNodeId: string;
 	interactables: Interactable[];
+	speakers: Speaker[];
 	events: GameEvent[];
-	doors: DoorData[];
+	doors: LocationDoor[];
 }
 
 export interface Interactable {
@@ -63,7 +65,17 @@ export interface Interactable {
 	guiPositionOffset: number[];
 }
 
-export interface DoorData {
+export interface Speaker {
+	id: string;
+	name: string;
+	description: string;
+	dialogueNodeId: string;
+	sceneNodeId: string;
+	spriteKey: string;
+	speakerPositionOffset: number[];
+}
+
+export interface LocationDoor {
 	id: string;
 	destination: string;
 }
@@ -79,10 +91,15 @@ export interface DialogueNode {
 	lines: DialogueLine[];
 }
 
+export interface DialogueSpeaker {
+	name: string;
+	entityId: EntityId;
+}
+
 export interface DialogueLine {
 	type: DialogueLineType;
 	condition: ConditionFunction;
-	character?: string;
+	speakerName?: string;
 	text?: string;
 	options?: DialogueOptionLine[];
 	cmd?: string;

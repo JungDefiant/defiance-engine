@@ -8,7 +8,6 @@ export type DialogueCommand =
 	| "playmusic"
 	| "showimage"
 	| "movetonode"
-	| "setspeaker"
 	| "setviewtarget"
 	| "startcombat";
 

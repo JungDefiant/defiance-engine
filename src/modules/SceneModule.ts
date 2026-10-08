@@ -43,8 +43,7 @@ import {
 	DEFAULT_CAM_FOCALLENGTH,
 	DEFAULT_CAM_TARGET,
 } from "src/constants/GeneralConstants";
-import TransformNodeComponent from "src/components/TransformNodeComponent";
-import { addComponent, addEntity, EntityId, set } from "bitecs";
+import { addComponent, addEntity, EntityId } from "bitecs";
 import {
 	createUserInterfaceState,
 	loadModalMap,

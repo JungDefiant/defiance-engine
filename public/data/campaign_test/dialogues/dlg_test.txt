@@ -1,12 +1,12 @@
 ch0_start
 ===
-@_: Would you like to start combat?
+@test: Would you like to start combat?
 - Yes [ch1_start]
 - No [_]
 ===
 
 ch1_start
 ===
-@_: Alright, combat will start!
+@test: Alright, combat will start!
 >> startcombat (enc_test)
 ===

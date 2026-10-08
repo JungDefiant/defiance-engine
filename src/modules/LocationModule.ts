@@ -1,12 +1,17 @@
 import { clearSceneGUI } from "./UserInterfaceModule";
 import {
-	DoorData,
+	LocationDoor,
 	Interactable as Interactable,
 	NewLocationSceneParams,
 	SceneLocation,
+	Speaker,
 } from "src/types/GameTypes";
 import {
 	EventState,
+	MeshBuilder,
+	PBRMaterial,
+	Space,
+	Texture,
 	TransformNode,
 	UniversalCamera,
 	Vector3,
@@ -17,7 +22,7 @@ import {
 	BASE_MOVEMENT_SPEED,
 	PAUSE_LOCATIONTRANSITION,
 } from "src/constants/GeneralConstants";
-import { addComponent, set } from "bitecs";
+import { addComponent, addEntity, EntityId, set } from "bitecs";
 import { getAllSceneNodes, getSceneNode } from "./SceneModule";
 import {
 	getControlState,
@@ -27,6 +32,7 @@ import {
 import { resetExploreViewPosition } from "./CameraModule";
 import EntityMovementComponent from "src/components/EntityMovementComponent";
 import {
+	getCharacterSpriteComponentArray,
 	getEntityMovementComponentArray,
 	getTransformNodeComponentArray,
 } from "./ComponentModule";
@@ -37,6 +43,7 @@ import {
 	clearControlPause,
 	detachCameraControl,
 } from "./ControlModule";
+import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
 
 export async function loadLocation(
 	locationId: string,
@@ -55,6 +62,10 @@ export async function loadLocation(
 
 	locationData.interactables.forEach(async (itr) => {
 		await createLocationInteractable(itr, newLocationSceneParams);
+	});
+
+	locationData.speakers.forEach(async (speaker) => {
+		await createLocationSpeaker(speaker, newLocationSceneParams);
 	});
 
 	locationData.doors.forEach(async (door) => {
@@ -86,7 +97,10 @@ export async function createLocationInteractable(
 	button.height = 0.1125;
 	button.thickness = 0;
 	button.onPointerEnterObservable.add(
-		enableHighlightInfoUIFunction(interactable),
+		enableHighlightInfoUIFunction(
+			interactable.name,
+			interactable.description,
+		),
 	);
 	button.onPointerOutObservable.add(disableHighlightInfoUIFunction());
 	button.onPointerClickObservable.add(
@@ -95,6 +109,98 @@ export async function createLocationInteractable(
 	newLocationSceneParams.sceneGUI.addControl(button);
 	newLocationSceneParams.exploreGUIControls.push(button);
 	button.linkWithMesh(interactableNode);
+}
+
+export async function createLocationSpeaker(
+	speaker: Speaker,
+	newLocationSceneParams: NewLocationSceneParams,
+) {
+	const speakerNode = await getSceneNode(speaker.sceneNodeId);
+
+	if (!speakerNode) {
+		return;
+	}
+
+	const newSpeakerEntity = addEntity(newLocationSceneParams.gameScene.world);
+	const newSpeakerSprite = createSpeakerSprite(
+		newSpeakerEntity,
+		speakerNode,
+		speaker,
+	);
+	addComponent(
+		newLocationSceneParams.gameScene.world,
+		newSpeakerEntity,
+		set(getCharacterSpriteComponentArray(), newSpeakerSprite),
+	);
+
+	const button = Button.CreateImageOnlyButton(
+		speaker.id,
+		`${getPublicRoot()}/sprites/gui/icons/icon_interact.png`,
+	);
+	button.width = 0.075;
+	button.height = 0.1125;
+	button.thickness = 0;
+	button.onPointerEnterObservable.add(
+		enableHighlightInfoUIFunction(speaker.name, speaker.description),
+	);
+	button.onPointerOutObservable.add(disableHighlightInfoUIFunction());
+	button.onPointerClickObservable.add(() =>
+		startDialogue(speaker.dialogueNodeId),
+	);
+	newLocationSceneParams.sceneGUI.addControl(button);
+	newLocationSceneParams.exploreGUIControls.push(button);
+	button.linkWithMesh(newSpeakerSprite.getValue());
+}
+
+function createSpeakerSprite(
+	entityId: EntityId,
+	parentNode: TransformNode,
+	speaker: Speaker,
+): CharacterSpriteComponent {
+	const gameScene = getGameScene();
+
+	// Need to create this sprite as a CharacterSpriteComponent
+	const speakerSprite = MeshBuilder.CreatePlane(
+		`speakerSprite_${entityId}`,
+		{
+			width: 0.4,
+			height: 0.8,
+		},
+		gameScene,
+	);
+
+	const speakerSpriteMaterial = new PBRMaterial(
+		`mat_speakerSprite_${entityId}`,
+		gameScene,
+	);
+	speakerSprite.parent = parentNode;
+	speakerSprite.billboardMode = 7;
+	speakerSprite.rotate(Vector3.Forward(), Math.PI, Space.WORLD);
+	speakerSprite.setAbsolutePosition(
+		parentNode.absolutePosition.addInPlaceFromFloats(
+			speaker.speakerPositionOffset[0],
+			speaker.speakerPositionOffset[1],
+			speaker.speakerPositionOffset[2],
+		),
+	);
+
+	speakerSpriteMaterial.albedoTexture = new Texture(
+		`${getPublicRoot()}/sprites/characters/${speaker.spriteKey}`,
+		gameScene,
+	);
+	speakerSpriteMaterial.metallic = 0;
+	speakerSpriteMaterial.roughness = 0;
+	speakerSpriteMaterial.alphaCutOff = 0.4;
+	speakerSpriteMaterial.transparencyMode = 1;
+	speakerSpriteMaterial.useAlphaFromAlbedoTexture = true;
+
+	speakerSprite.material = speakerSpriteMaterial;
+
+	const characterSpriteComponent = new CharacterSpriteComponent(
+		speakerSprite,
+		`speaker_${speaker.name.toLowerCase()}`,
+	);
+	return characterSpriteComponent;
 }
 
 function startDialogueFromInteractableFunction(
@@ -109,7 +215,7 @@ function startDialogueFromInteractableFunction(
 
 		if (viewPositionNode) {
 			startDialogue(interactable.dialogueNodeId, {
-				interactablePositionNode: interactableNode,
+				objectPositionNode: interactableNode,
 				viewPositionNode,
 			});
 		}
@@ -125,13 +231,14 @@ function setLastExploreViewTarget() {
 }
 
 function enableHighlightInfoUIFunction(
-	interactable: Interactable,
+	highlightName: string,
+	highlightDescription: string,
 ): (eventData: Control, eventState: EventState) => void {
 	return () => {
 		const userInterfaceState = getUserInterfaceState();
 		userInterfaceState.exploreHud.updateHighlightInfoUI(
-			interactable.name,
-			interactable.description,
+			highlightName,
+			highlightDescription,
 		);
 	};
 }
@@ -229,7 +336,7 @@ export async function transitionToNewLocation(destinationId: string) {
 	}
 }
 export async function createLocationDoor(
-	doorData: DoorData,
+	doorData: LocationDoor,
 	newLocationSceneParams: NewLocationSceneParams,
 ) {
 	const sceneNode = await getSceneNode(doorData.id);

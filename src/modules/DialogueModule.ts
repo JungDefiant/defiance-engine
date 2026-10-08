@@ -31,10 +31,11 @@ import { DialogueCommandVariable } from "src/types/DialogueTypes";
 import { playMusic, playSFX } from "./AudioModule";
 import EntityMovementComponent from "src/components/EntityMovementComponent";
 import {
+	getActorStateComponentArray,
 	getCharacterSpriteComponentArray,
 	getEntityMovementComponentArray,
 } from "./ComponentModule";
-import { addComponent, set } from "bitecs";
+import { addComponent, EntityId, set } from "bitecs";
 
 export function initSemantics() {
 	const dialogueState = getDialogueState();
@@ -71,20 +72,20 @@ export function initSemantics() {
 	});
 
 	dialogueState.semantics.addOperation<DialogueLine>("getLine()", {
-		Line(_, char, __, txt) {
+		Line(_, speakerName, __, text) {
 			return {
 				type: "Line",
-				character: char.getString(),
-				text: txt.getString(),
+				speakerName: speakerName.getString(),
+				text: text.getString(),
 				condition: () => true,
 			} as DialogueLine;
 		},
-		Line_condition(cond, _, char, __, txt) {
+		Line_condition(cond, _, speakerName, __, text) {
 			const condition = cond.parseConditional();
 			const line = {
 				type: "Line",
-				character: char.getString(),
-				text: txt.getString(),
+				speakerName: speakerName.getString(),
+				text: text.getString(),
 				condition,
 			} as DialogueLine;
 			return line;
@@ -354,8 +355,8 @@ export async function loadDialogueMap(dialogueId: string): Promise<void> {
 export async function startDialogue(
 	dialogueNodeId: string,
 	startDialogueProps?: {
-		interactablePositionNode: TransformNode;
-		viewPositionNode: TransformNode;
+		objectPositionNode?: TransformNode;
+		viewPositionNode?: TransformNode;
 	},
 ): Promise<void> {
 	const gameScene = getGameScene();
@@ -376,11 +377,16 @@ export async function startDialogue(
 	controlState.actionPauseSet.add(PAUSE_DIALOGUE);
 
 	if (startDialogueProps) {
-		camera.position =
-			startDialogueProps.viewPositionNode.getPositionExpressedInLocalSpace();
-		camera.setTarget(
-			startDialogueProps.interactablePositionNode.getAbsolutePosition(),
-		);
+		if (startDialogueProps.viewPositionNode) {
+			camera.position =
+				startDialogueProps.viewPositionNode.getPositionExpressedInLocalSpace();
+		}
+
+		if (startDialogueProps.objectPositionNode) {
+			camera.setTarget(
+				startDialogueProps.objectPositionNode.getAbsolutePosition(),
+			);
+		}
 	}
 
 	setDialogueGameMode();
@@ -469,14 +475,29 @@ export function displayTextLine(
 		return;
 	}
 
-	const character = line.character;
-	if (character) {
-		// Gets sprite in the scene matching the character name
-		// Moves camera to target the sprite
+	if (line.speakerName) {
+		const characterId = `speaker_${line.speakerName.toLowerCase()}`;
+
+		const characterSprite = getCharacterSpriteComponentArray().find(
+			(sprite) => {
+				if (sprite) {
+					return sprite.getCharacterId() === characterId;
+				}
+				return false;
+			},
+		);
+
+		if (characterSprite) {
+			const camera = getGameScene().activeCamera as UniversalCamera;
+			if (camera) {
+				camera.target = characterSprite
+					.getValue()
+					.getAbsolutePosition();
+			}
+		}
 	}
 
 	if (line.text) {
-		// Display text entry for dialogue
 		dialogueHud.addTextDialogueEntry(line);
 	}
 
@@ -650,28 +671,6 @@ export function setViewTargetDialogueCommand(vars: DialogueCommandVariable[]) {
 		const camera = gameScene.activeCamera as UniversalCamera;
 		camera.target = sceneNode.getPositionExpressedInLocalSpace();
 	});
-}
-
-export function setSpeakerDialogueCommand(vars: DialogueCommandVariable[]) {
-	const speakerSpriteId = (vars[0] as string) || "";
-	if (!speakerSpriteId) {
-		return;
-	}
-
-	const gameScene = getGameScene();
-	const characterSprite = getCharacterSpriteComponentArray().find(
-		(sprite) => {
-			sprite.getValue().name === speakerSpriteId;
-		},
-	);
-	if (!characterSprite) {
-		return;
-	}
-
-	const camera = gameScene.activeCamera as UniversalCamera;
-	camera.target = characterSprite
-		.getValue()
-		.getPositionExpressedInLocalSpace();
 }
 
 export function startCombatDialogueCommand(vars: DialogueCommandVariable[]) {

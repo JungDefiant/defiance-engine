@@ -230,9 +230,9 @@ export function clearCombatHudEntries() {
 
 export function setUserInterfaceGameMode(newMode: GameMode) {
 	const userInterfaceState = getUserInterfaceState();
-	userInterfaceState.partyInfoHud.showHideHud(
-		newMode === "Combat" || newMode === "Explore",
-	);
+	// userInterfaceState.partyInfoHud.showHideHud(
+	// 	newMode === "Combat" || newMode === "Explore",
+	// );
 	userInterfaceState.exploreHud.showHideHud(newMode === "Explore");
 	userInterfaceState.dialogueHud.showHideHud(newMode === "Dialogue");
 	userInterfaceState.combatHud.showHideHud(newMode === "Combat");
