@@ -20,8 +20,7 @@ import {
 	applyAbilityEffects,
 	calculateAbilityEffects,
 } from "src/modules/EffectModule";
-import { AbilityContext, AbilityTargetContext } from "src/types/ContextTypes";
-import { ActionSlot } from "src/gui/abstract/ActionSlot";
+import { AbilityContext } from "src/types/ContextTypes";
 
 const BASE_LIFE_REGEN_TICKS: number = 4;
 const BASE_WILL_REGEN_TICKS: number = 4;

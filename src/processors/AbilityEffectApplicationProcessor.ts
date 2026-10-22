@@ -1,5 +1,5 @@
 import { Processor } from "./Processor";
-import { AbilityEffectType, EffectVariable } from "src/types/AbilityTypes";
+import { AbilityEffectType } from "src/types/AbilityTypes";
 import {
 	applyDamageEffect,
 	applyHealEffect,

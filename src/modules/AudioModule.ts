@@ -1,6 +1,5 @@
 import { CreateSoundAsync, CreateStreamingSoundAsync } from "@babylonjs/core";
 import { getAudioState, getCampaignState } from "./GameStateModule";
-import AudioState from "src/states/AudioState";
 
 export async function playSFX(sfxId: string, baseUrl: string) {
 	const audioState = getAudioState();

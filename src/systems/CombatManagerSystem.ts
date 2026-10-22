@@ -4,24 +4,20 @@ import { query } from "bitecs";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import {
 	PAUSE_GAMEOVER,
-	PAUSE_RENDERQUEUE,
 	PAUSE_VICTORYSCREEN,
 } from "src/constants/GeneralConstants";
-import { decideNPCAction } from "src/modules/CombatModule";
 import {
-	applyAbilityEffects,
-	calculateAbilityEffects,
-	calculateTotalAttributeValue,
-	performAttackRoll,
-	spendAbilityCost,
-	triggerFeatEffects,
-} from "src/modules/EffectModule";
+	createNewAbilityContext,
+	decideNPCAction,
+	startActionRecovery,
+} from "src/modules/CombatModule";
+import { spendAbilityCost, triggerFeatEffects } from "src/modules/EffectModule";
 import {
-	renderAbilityEffects,
 	renderCastHitVFX as renderCastAndHitVFX,
 	renderMessageDisplay,
 	startRenderQueue,
 } from "src/modules/RenderModule";
+import { spawnActionDeliveryProjectile } from "src/modules/Collision3DModule";
 import { GameScene } from "src/scenes/GameScene";
 import {
 	getControlState,
@@ -29,17 +25,7 @@ import {
 	getUserInterfaceState,
 } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
-import {
-	AbilityContext,
-	AbilityTargetContext,
-	ActionContext,
-} from "src/types/ContextTypes";
-import {
-	AbilityData,
-	AbilityDescriptor,
-	AbilityTrigger,
-	EffectFunctionProps,
-} from "src/types/AbilityTypes";
+import { AbilityTrigger } from "src/types/AbilityTypes";
 
 export default class CombatManagerSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -118,7 +104,6 @@ export default class CombatManagerSystem implements GameSystem {
 				actionTimerAttribute.currentValue ===
 					actionTimerAttribute.maximumValue
 			) {
-				controlState.actionPauseSet.add(PAUSE_RENDERQUEUE);
 				Promise.resolve(
 					this.performQueuedAction(actorData).then(() => {
 						if (gameplayState.enemyEntityIds.includes(eid)) {
@@ -134,12 +119,8 @@ export default class CombatManagerSystem implements GameSystem {
 	private async performQueuedAction(
 		sourceActorState: ActorStateComponent,
 	): Promise<void> {
-		const controlState = getControlState();
-		const actorStateComponentArray = getActorStateComponentArray();
-
 		const actionToPerform = await sourceActorState.queuedAction;
 		if (!actionToPerform) {
-			controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
 			return;
 		}
 
@@ -155,9 +136,7 @@ export default class CombatManagerSystem implements GameSystem {
 			actionTargetIds,
 		);
 
-		console.log("ACTION TARGET IDS", actionTargetIds);
-
-		let abilityContext = this.createNewAbilityContext(actionToPerform);
+		const abilityContext = createNewAbilityContext(actionToPerform);
 		triggerFeatEffects(
 			{
 				source: sourceActorState,
@@ -168,78 +147,15 @@ export default class CombatManagerSystem implements GameSystem {
 			AbilityTrigger.onActionPerform,
 		);
 
-		actionTargetIds.forEach((eid) => {
-			const targetActorState = actorStateComponentArray[eid];
-			abilityContext.abilityTargetContexts[eid] = {};
-			this.executeAbilityEffects({
-				source: sourceActorState,
-				target: targetActorState,
-				abilityContext,
-				abilityTargetIndex: eid,
-			});
-		});
+		spawnActionDeliveryProjectile(
+			sourceActorState.entityId,
+			actionToPerform,
+			actionTargetIds,
+		);
 
 		startRenderQueue();
 
-		this.resetActionTimer(sourceActorState, actionToPerform);
-	}
-
-	private createNewAbilityContext(
-		actionToPerform: AbilityData,
-	): AbilityContext {
-		let abilityContext = {
-			abilityName: actionToPerform.name,
-			target: `${actionToPerform.target}`,
-			descriptors: actionToPerform.descriptors,
-			effects: actionToPerform.effectData,
-			abilityTargetContexts: [],
-			actionContext: {
-				cost: actionToPerform.cost || 0,
-				costAttribute: actionToPerform.costAttribute || "",
-				recoveryTime: actionToPerform.recoveryTime || 0,
-			},
-		};
-
-		return abilityContext;
-	}
-
-	private executeAbilityEffects(props: EffectFunctionProps) {
-		if (this.hasAttackRoll(props.abilityContext.descriptors)) {
-			performAttackRoll(props);
-		}
-		calculateAbilityEffects(props);
-		applyAbilityEffects(props);
-		renderAbilityEffects(props);
-	}
-
-	private resetActionTimer(
-		sourceActorState: ActorStateComponent,
-		actionToPerform: AbilityData,
-	) {
-		let recoveryTimeMultiplier = 1;
-		const totalSpeedValue = calculateTotalAttributeValue(
-			sourceActorState.attributes.speed,
-			actionToPerform.descriptors,
-		);
-		if (totalSpeedValue < 0) {
-			recoveryTimeMultiplier = 1 + Math.abs(totalSpeedValue);
-		} else {
-			recoveryTimeMultiplier = 1 / (1 + totalSpeedValue);
-		}
-		const totalRecoveryTime =
-			(actionToPerform.recoveryTime || 0.5) * recoveryTimeMultiplier;
-		const actionTimerAttribute = sourceActorState.attributes.actionTimer;
-		actionTimerAttribute.maximumValue = Math.max(totalRecoveryTime, 0.5);
-		actionTimerAttribute.currentValue = 0;
-	}
-
-	private hasAttackRoll(actionDescriptors: AbilityDescriptor[]): boolean {
-		return (
-			(actionDescriptors.includes(AbilityDescriptor.attack) &&
-				actionDescriptors.includes(AbilityDescriptor.ranged)) ||
-			(actionDescriptors.includes(AbilityDescriptor.attack) &&
-				actionDescriptors.includes(AbilityDescriptor.melee))
-		);
+		startActionRecovery(sourceActorState, actionToPerform);
 	}
 }
 

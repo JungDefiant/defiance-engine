@@ -5,8 +5,8 @@ import {
 	CreateAudioEngineAsync,
 	Engine,
 	HemisphericLight,
-	ImportMeshAsync,
 	MeshBuilder,
+	PointerEventTypes,
 	StandardMaterial,
 	UniversalCamera,
 	Vector3,
@@ -28,23 +28,22 @@ import {
 	getControlState,
 	getGameScene,
 	getGameStateRegistry,
+	getGameplayState,
 	getUserInterfaceScene,
 	getUserInterfaceState,
 } from "./GameStateModule";
 import { getPublicRoot } from "./Utils";
 import {
-	GameMode,
 	LoadedSceneJson,
 	NewLocationSceneParams,
 } from "src/types/GameTypes";
 import { GameScene, GameSceneProps } from "src/scenes/GameScene";
 import { Themes } from "src/gui/Themes";
 import {
-	DEFAULT_CAM_FOCALLENGTH,
 	DEFAULT_CAM_TARGET,
+	ISO_CAM_OFFSET,
 } from "src/constants/GeneralConstants";
-import TransformNodeComponent from "src/components/TransformNodeComponent";
-import { addComponent, addEntity, EntityId, set } from "bitecs";
+import { addComponent, addEntity, EntityId } from "bitecs";
 import {
 	createUserInterfaceState,
 	loadModalMap,
@@ -71,6 +70,10 @@ import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 import { AssetsManager, Scene } from "babylonjs";
+import { initNavigation } from "./ActorNavigationModule";
+import { createEnvironment } from "./EnvironmentModule";
+import { startQueueActionPlayer } from "./CombatModule";
+import { ActionSlotKey } from "src/types/AbilityTypes";
 
 export async function initGameScene(sceneId: string) {
 	const engine = container.resolve(Engine);
@@ -80,6 +83,7 @@ export async function initGameScene(sceneId: string) {
 
 	createSkybox(newGameScene);
 	createSceneLight(newGameScene);
+	createEnvironment(newGameScene);
 
 	const newSystemRegistry = new SystemRegistry();
 	container.register(SystemRegistry, { useValue: newSystemRegistry });
@@ -109,6 +113,7 @@ export async function initGameScene(sceneId: string) {
 	newGameScene.cameraEntityId = createSceneCamera(newGameScene);
 	await createStartingLocation(newGameScene);
 	await playMusic(newGameScene.startMusicId);
+	initNavigation(newGameScene);
 	setExploreGameMode();
 }
 
@@ -238,23 +243,20 @@ export function createSceneCamera(scene: GameScene): EntityId {
 	const gameCanvas = getGameCanvas();
 
 	if (gameCanvas) {
+		const initialFocus = DEFAULT_CAM_TARGET;
 		const camera = new UniversalCamera(
-			"cam_explore",
-			Vector3.Zero(),
+			"cam_iso",
+			initialFocus.add(ISO_CAM_OFFSET),
 			scene,
 		);
-		camera.setFocalLength(DEFAULT_CAM_FOCALLENGTH);
-		camera.setTarget(DEFAULT_CAM_TARGET);
 		camera.minZ = 0;
 		camera.viewport = new Viewport(0, 0.1, 1, 1);
 		camera.inputs.clear();
-		camera.inputs.addMouse();
+		camera.setTarget(initialFocus);
 		camera.attachControl();
-		scene.onPointerObservable.add((eventData) => {
-			// This will block out vertical rotation
-			// For blocking out horizontal rotation, simply use y instead of x
-			camera.cameraRotation.x = 0;
-		});
+		scene.activeCamera = camera;
+
+		registerScenePointerBindings(scene, gameCanvas);
 
 		const newCameraEntityId = addEntity(scene.world);
 		addComponent(scene.world, newCameraEntityId, camera);
@@ -263,4 +265,68 @@ export function createSceneCamera(scene: GameScene): EntityId {
 	}
 
 	throw Error("No game canvas found!");
+}
+
+function registerScenePointerBindings(
+	scene: GameScene,
+	gameCanvas: HTMLCanvasElement,
+) {
+	gameCanvas.addEventListener("contextmenu", (pointerEvent) => {
+		pointerEvent.preventDefault();
+	});
+
+	gameCanvas.addEventListener("pointerdown", () => {
+		if (!document.fullscreenElement) {
+			document.documentElement.requestFullscreen().catch(() => {
+			});
+		}
+	});
+
+	scene.onPointerObservable.add((pointerInfo) => {
+		if (pointerInfo.type !== PointerEventTypes.POINTERDOWN) {
+			return;
+		}
+
+		const controlState = getControlState();
+		const gameplayState = getGameplayState();
+		if (
+			controlState.controlPauseSet.size > 0 ||
+			controlState.actionPauseSet.size > 0
+		) {
+			return;
+		}
+
+		const pointerButton = (pointerInfo.event as PointerEvent).button;
+
+		if (pointerButton === controlState.controlSettings.weaponMouseButton) {
+			const enemyPick = scene.pick(
+				scene.pointerX,
+				scene.pointerY,
+				(mesh) => mesh.name.startsWith("enBattlerSprite_"),
+			);
+			if (enemyPick?.hit && enemyPick.pickedMesh) {
+				const pickedEntityId = (
+					enemyPick.pickedMesh.metadata as
+						| Record<string, number>
+						| undefined
+				)?.entityId;
+				if (pickedEntityId !== undefined && pickedEntityId >= 0) {
+					gameplayState.selectedTargetEID = pickedEntityId;
+				}
+			}
+			startQueueActionPlayer(
+				gameplayState.selectedPlayerEID,
+				ActionSlotKey.weapon,
+				0,
+			);
+		} else if (
+			pointerButton === controlState.controlSettings.powerMouseButton
+		) {
+			startQueueActionPlayer(
+				gameplayState.selectedPlayerEID,
+				ActionSlotKey.power,
+				0,
+			);
+		}
+	});
 }

@@ -1,5 +1,4 @@
 import { Engine, Scene } from "@babylonjs/core";
-import { ShowInspector } from "@babylonjs/inspector";
 import { singleton } from "tsyringe";
 import type { SceneOptions } from "@babylonjs/core";
 

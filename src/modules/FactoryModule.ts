@@ -1,5 +1,4 @@
 import { PlayerFactory } from "src/factories/PlayerFactory";
-import { getGameScene } from "./GameStateModule";
 import { EnemyFactory } from "src/factories/EnemyFactory";
 import { StickerFactory } from "src/factories/StickerFactory";
 import { container } from "tsyringe";

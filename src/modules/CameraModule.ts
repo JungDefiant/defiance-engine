@@ -1,14 +1,26 @@
 import { TransformNode, UniversalCamera, Vector3 } from "@babylonjs/core";
-import { DEFAULT_CAM_TARGET } from "src/constants/GeneralConstants";
-import { GameScene } from "src/scenes/GameScene";
-import { container } from "tsyringe";
+import { ISO_CAM_OFFSET } from "src/constants/GeneralConstants";
 import { getSceneNode } from "./SceneModule";
 import { getGameScene } from "./GameStateModule";
 
+export function updateIsometricCameraFollow(focusPosition: Vector3) {
+	const gameScene = getGameScene();
+	const camera = gameScene.activeCamera as UniversalCamera;
+	if (!camera) {
+		return;
+	}
+
+	const focusTarget = new Vector3(
+		focusPosition.x,
+		focusPosition.y,
+		focusPosition.z,
+	);
+	camera.position.copyFrom(focusTarget.add(ISO_CAM_OFFSET));
+	camera.setTarget(focusTarget);
+}
+
 export async function resetExploreViewPosition() {
 	const gameScene = getGameScene();
-
-	const camera = gameScene.activeCamera as UniversalCamera;
 	const currentLocation = gameScene.currentLocation;
 	if (!currentLocation) {
 		console.warn("NO LOCATION DATA");
@@ -23,21 +35,12 @@ export async function resetExploreViewPosition() {
 
 	const viewNode = await getSceneNode(viewNodeId);
 	if (viewNode) {
-		resetCameraPositionToViewNode(viewNode, false);
+		updateIsometricCameraFollow(viewNode.getAbsolutePosition());
 	}
-
-	let camTarget = DEFAULT_CAM_TARGET;
-	if (gameScene.lastExploreViewTarget !== Vector3.Zero()) {
-		gameScene.lastExploreViewTarget.y = DEFAULT_CAM_TARGET.y;
-		camTarget = gameScene.lastExploreViewTarget;
-	}
-	camera.setTarget(camTarget);
 }
 
 export async function resetCombatViewPosition() {
-	const gameScene = container.resolve(GameScene);
-
-	const camera = gameScene.activeCamera as UniversalCamera;
+	const gameScene = getGameScene();
 	const currentLocation = gameScene.currentLocation;
 	if (!currentLocation) {
 		console.warn("NO LOCATION");
@@ -52,20 +55,7 @@ export async function resetCombatViewPosition() {
 
 	const viewNode = await getSceneNode(currentLocation.combatViewNodeId);
 	if (viewNode) {
-		resetCameraPositionToViewNode(viewNode, true);
-	}
-
-	gameScene.lastExploreViewTarget = camera.target;
-
-	let camTarget = DEFAULT_CAM_TARGET;
-	let spawnNode = await getSceneNode(currentLocation.combatSpawnNodeId);
-	if (spawnNode) {
-		camTarget = new Vector3(
-			spawnNode.getAbsolutePosition().x,
-			0.2,
-			spawnNode.getAbsolutePosition().z,
-		);
-		camera.setTarget(camTarget);
+		updateIsometricCameraFollow(viewNode.getAbsolutePosition());
 	}
 }
 
@@ -76,8 +66,9 @@ export function resetCameraPositionToViewNode(
 	const gameScene = getGameScene();
 	const activeCamera = gameScene.activeCamera;
 	if (activeCamera) {
-		activeCamera.position = useAbsolutePosition
+		const focusPosition = useAbsolutePosition
 			? viewNode.getAbsolutePosition()
 			: viewNode.getPositionExpressedInLocalSpace();
+		updateIsometricCameraFollow(focusPosition);
 	}
 }

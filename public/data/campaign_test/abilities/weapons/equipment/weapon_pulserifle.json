@@ -18,6 +18,11 @@
 	],
 	"target": "single_enemy",
 	"recoveryTime": 4,
+	"targetingShape": {
+		"type": "projectile",
+		"range": 20,
+		"radius": 0.15
+	},
 	"effectData": [
 		{
 			"id": "damage",

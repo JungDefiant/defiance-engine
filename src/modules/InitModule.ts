@@ -58,6 +58,9 @@ export function createNewEngine(): Engine {
 	window.addEventListener("resize", () => {
 		newEngine.resize();
 	});
+	document.addEventListener("fullscreenchange", () => {
+		newEngine.resize();
+	});
 	return newEngine;
 }
 

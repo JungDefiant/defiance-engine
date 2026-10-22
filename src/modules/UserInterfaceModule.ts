@@ -63,8 +63,8 @@ function createMainUI(uiScene: UserInterfaceScene) {
 		uiScene,
 		Texture.NEAREST_SAMPLINGMODE,
 	);
-	mainUI.idealWidth = 800;
-	mainUI.idealHeight = 600;
+	mainUI.idealWidth = 1000;
+	mainUI.idealHeight = 750;
 	return mainUI;
 }
 
@@ -75,8 +75,8 @@ function createSceneUI(scene: GameScene) {
 		scene,
 		Texture.NEAREST_SAMPLINGMODE,
 	);
-	sceneGUI.idealWidth = 800;
-	sceneGUI.idealHeight = 600;
+	sceneGUI.idealWidth = 1000;
+	sceneGUI.idealHeight = 750;
 	return sceneGUI;
 }
 

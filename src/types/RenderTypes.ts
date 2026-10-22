@@ -1,7 +1,6 @@
-import { TextBlock } from "@babylonjs/gui";
-import { addComponent, addEntity, query, removeEntity, set } from "bitecs";
+import { addComponent, addEntity, removeEntity, set } from "bitecs";
 import FloatingTextComponent from "src/components/FloatingTextComponent";
-import { easeInExpo, easeOutExpo } from "src/constants/Utilities";
+import { easeInExpo } from "src/constants/Utilities";
 import { Themes } from "src/gui/Themes";
 import {
 	getCharacterSpriteComponentArray,

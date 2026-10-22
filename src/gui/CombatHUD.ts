@@ -128,9 +128,12 @@ export default class CombatHUD implements IHUD {
 		actorEntityId: EntityId,
 		controlState: ControlState,
 	) {
-		const actionMap =
-			controlState.controlSettings.actionMap.get(actionSlotKey);
-		if (!actionMap || !actionMap[actionIndex]) {
+		const actionKeyLabel = getActionSlotKeyLabel(
+			actionSlotKey,
+			actionIndex,
+			controlState,
+		);
+		if (!actionKeyLabel) {
 			return;
 		}
 
@@ -138,9 +141,7 @@ export default class CombatHUD implements IHUD {
 		actionSlot.setOnClickEvent(() =>
 			startQueueActionPlayer(actorEntityId, actionSlotKey, actionIndex),
 		);
-		actionSlot.setActionLabelText(
-			String.fromCharCode(actionMap[actionIndex]).toUpperCase(),
-		);
+		actionSlot.setActionLabelText(actionKeyLabel);
 	}
 
 	public setMessageDisplay(show: boolean, message?: string) {
@@ -415,4 +416,30 @@ export default class CombatHUD implements IHUD {
 		this.combatLogScrollbar.alpha = show ? 1 : 0;
 		this.combatLogScrollbar.isEnabled = show ? true : false;
 	}
+}
+
+function getActionSlotKeyLabel(
+	actionSlotKey: ActionSlotKey,
+	actionIndex: number,
+	controlState: ControlState,
+): string | null {
+	if (actionSlotKey === ActionSlotKey.weapon) {
+		return "LMB";
+	}
+	if (actionSlotKey === ActionSlotKey.power) {
+		if (actionIndex === 0) {
+			return "RMB";
+		}
+		const powerKey = controlState.controlSettings.powerKeys[
+			actionIndex - 1
+		];
+		if (powerKey === undefined) {
+			return null;
+		}
+		if (powerKey === 16) {
+			return "SHIFT";
+		}
+		return String.fromCharCode(powerKey).toUpperCase();
+	}
+	return null;
 }

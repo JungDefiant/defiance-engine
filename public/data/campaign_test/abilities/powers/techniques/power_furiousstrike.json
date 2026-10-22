@@ -17,6 +17,11 @@
 	"recoveryTime": 2,
 	"cost": 10,
 	"costAttribute": "willPoints",
+	"targetingShape": {
+		"type": "beam",
+		"range": 8,
+		"radius": 0.6
+	},
 	"effectData": [
 		{
 			"id": "onHit",

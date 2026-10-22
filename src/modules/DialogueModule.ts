@@ -19,7 +19,6 @@ import { getPublicRoot } from "./Utils";
 import { PAUSE_DIALOGUE } from "src/constants/GeneralConstants";
 import { setDialogueGameMode, setExploreGameMode } from "./SceneModule";
 import { checkEventByTrigger } from "./EventModule";
-import { getTransformNodeComponentArray } from "./ComponentModule";
 
 export async function loadDialogueMap(dialogueId: string): Promise<void> {
 	const dialogueState = getDialogueState();

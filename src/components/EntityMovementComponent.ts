@@ -1,4 +1,4 @@
-import { TransformNode, Vector3 } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
 import { Component } from "./Component";
 
 export default class EntityMovementComponent implements Component {

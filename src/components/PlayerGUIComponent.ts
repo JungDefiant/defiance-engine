@@ -39,9 +39,9 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 
 	public constructor(eid: EntityId, charName: string, spriteSrc: string) {
 		this.rootContainer = new Container();
-		this.rootContainer.widthInPixels = 200;
-		this.rootContainer.heightInPixels = 200;
-		this.rootContainer.top = -5;
+		this.rootContainer.widthInPixels = 150;
+		this.rootContainer.heightInPixels = 150;
+		this.rootContainer.top = -4;
 		this.rootContainer.verticalAlignment =
 			Control.VERTICAL_ALIGNMENT_BOTTOM;
 
@@ -49,8 +49,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 			`ui_enBattlerTargetings_${eid}`,
 			"sprites/particles/magic_03.png",
 		);
-		this.targetingUI.widthInPixels = 96;
-		this.targetingUI.heightInPixels = 96;
+		this.targetingUI.widthInPixels = 72;
+		this.targetingUI.heightInPixels = 72;
 		this.targetingUI.shadowOffsetX = 1;
 		this.targetingUI.shadowOffsetY = 1;
 		this.targetingUI.onPointerEnterObservable.add(() => {
@@ -65,7 +65,7 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 
 		this.backgroundUI = new Rectangle("ui_playerBgUI_" + eid);
 		this.backgroundUI.width = 1;
-		this.backgroundUI.heightInPixels = 128;
+		this.backgroundUI.heightInPixels = 96;
 		this.backgroundUI.background = Themes.primary3;
 		this.backgroundUI.color = Themes.primary1;
 		this.backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
@@ -78,7 +78,7 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		const portraitUI = new Image("ui_portraitUI_" + eid, spriteSrc);
 		portraitUI.width = 1.25;
 		portraitUI.height = 2.5;
-		portraitUI.top = 285;
+		portraitUI.top = 214;
 		portraitUI.highlightColor = "";
 		portraitUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		portraitUI.detectPointerOnOpaqueOnly = true;
@@ -89,8 +89,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 
 		const rootStackPanel = new StackPanel("ui_rootStackPanel_" + eid);
 		rootStackPanel.width = 1;
-		rootStackPanel.heightInPixels = 130;
-		rootStackPanel.spacing = 8;
+		rootStackPanel.heightInPixels = 98;
+		rootStackPanel.spacing = 6;
 		rootStackPanel.isVertical = true;
 		rootStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		rootStackPanel.onPointerClickObservable.add(() => {
@@ -99,9 +99,9 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		this.rootContainer.addControl(rootStackPanel);
 
 		const iconStackPanel = new StackPanel("ui_barStackPanel_" + eid);
-		iconStackPanel.heightInPixels = 50;
+		iconStackPanel.heightInPixels = 38;
 		iconStackPanel.isVertical = false;
-		iconStackPanel.spacing = 100;
+		iconStackPanel.spacing = 75;
 		iconStackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		iconStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		rootStackPanel.addControl(iconStackPanel);
@@ -111,23 +111,23 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		barStackPanel.isVertical = true;
 		barStackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 		barStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		barStackPanel.paddingTopInPixels = -4;
+		barStackPanel.paddingTopInPixels = -3;
 		rootStackPanel.addControl(barStackPanel);
 
 		this.statusIconsUI = new Grid(`ui_playerStatusIcons_${eid}`);
-		this.statusIconsUI.widthInPixels = 60;
-		this.statusIconsUI.heightInPixels = 60;
+		this.statusIconsUI.widthInPixels = 45;
+		this.statusIconsUI.heightInPixels = 45;
 		this.statusIconsUI.horizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_LEFT;
 		for (let i = 0; i < 4; i++) {
-			this.statusIconsUI.addColumnDefinition(12, true);
-			this.statusIconsUI.addRowDefinition(12, true);
+			this.statusIconsUI.addColumnDefinition(9, true);
+			this.statusIconsUI.addRowDefinition(9, true);
 		}
 		iconStackPanel.addControl(this.statusIconsUI);
 
 		this.queueActionBgUI = new Rectangle(`ui_playerQueueActionBg_${eid}`);
-		this.queueActionBgUI.widthInPixels = 32;
-		this.queueActionBgUI.heightInPixels = 32;
+		this.queueActionBgUI.widthInPixels = 24;
+		this.queueActionBgUI.heightInPixels = 24;
 		this.queueActionBgUI.thickness = 1.2;
 		this.queueActionBgUI.color = Themes.primary1;
 		this.queueActionBgUI.background = Themes.primary3;
@@ -144,7 +144,7 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 
 		this.charNameBgUI = new Rectangle(`ui_${name}StatBarBgUI_${eid}`);
 		this.charNameBgUI.width = 1;
-		this.charNameBgUI.heightInPixels = 20;
+		this.charNameBgUI.heightInPixels = 15;
 		this.charNameBgUI.thickness = 1;
 		this.charNameBgUI.color = Themes.primary1;
 		this.charNameBgUI.background = Themes.primary3;
@@ -331,8 +331,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		}
 
 		const statusIcon = new Rectangle(`ui_statusIcon_${id}`);
-		statusIcon.widthInPixels = 12;
-		statusIcon.heightInPixels = 12;
+		statusIcon.widthInPixels = 9;
+		statusIcon.heightInPixels = 9;
 		statusIcon.thickness = 1;
 		statusIcon.color = Themes.primary1;
 		statusIcon.background = Themes.primary3;
@@ -364,8 +364,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		background: string,
 	): Rectangle {
 		const statBgUi = new Rectangle(`ui_${name}StatBarBgUI_${eid}`);
-		statBgUi.widthInPixels = 200;
-		statBgUi.heightInPixels = 18;
+		statBgUi.widthInPixels = 150;
+		statBgUi.heightInPixels = 14;
 		statBgUi.thickness = 1;
 		statBgUi.color = color;
 		statBgUi.background = background;
@@ -393,8 +393,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 			`ui_${name}StatLabelBgUI_${eid}`,
 			name.toUpperCase(),
 		);
-		statLabelUi.widthInPixels = 44;
-		statLabelUi.heightInPixels = 20;
+		statLabelUi.widthInPixels = 33;
+		statLabelUi.heightInPixels = 15;
 		statLabelUi.style = style;
 		statLabelUi.color = color;
 		statLabelUi.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -411,8 +411,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		background: string,
 	): Rectangle {
 		const bgUi = new Rectangle(`ui_${name}BarBgUI_${eid}`);
-		bgUi.widthInPixels = 110;
-		bgUi.heightInPixels = 12;
+		bgUi.widthInPixels = 82;
+		bgUi.heightInPixels = 9;
 		bgUi.thickness = 1.2;
 		bgUi.color = color;
 		bgUi.background = background;
@@ -440,8 +440,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		barValueUI.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
 		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-		barValueUI.widthInPixels = 24;
-		barValueUI.heightInPixels = 12;
+		barValueUI.widthInPixels = 18;
+		barValueUI.heightInPixels = 9;
 		barValueUI.color = color;
 		barValueUI.style = style;
 		return barValueUI;

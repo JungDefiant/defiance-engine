@@ -16,6 +16,11 @@
 	],
 	"target": "single_enemy",
 	"recoveryTime": 4,
+	"targetingShape": {
+		"type": "cone",
+		"range": 1.5,
+		"angle": 90
+	},
 	"effectData": [
 		{
 			"id": "damage",

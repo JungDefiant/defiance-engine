@@ -3,8 +3,7 @@ import { Container, Control, Rectangle, StackPanel } from "@babylonjs/gui";
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
 import { getPlayerGuiComponentArray } from "src/modules/ComponentModule";
-import { getGameplayState, getGameScene } from "src/modules/GameStateModule";
-import { container } from "tsyringe";
+import { getGameplayState } from "src/modules/GameStateModule";
 
 export default class PartyInfoHUD implements IHUD {
 	public rootContainer: Nullable<Container> = null;

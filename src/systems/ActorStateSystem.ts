@@ -39,10 +39,6 @@ export default class ActorStateSystem implements GameSystem {
 		deltaTime: number,
 		actorState: ActorStateComponent,
 	) {
-		if (!actorState.queuedAction) {
-			return;
-		}
-
 		const actionTimerAttribute = actorState.attributes.actionTimer;
 
 		if (
@@ -122,7 +118,6 @@ export default class ActorStateSystem implements GameSystem {
 			}
 
 			if (willAttribute.currentValue === 0) {
-				// Disable toggles
 			}
 		}
 	}

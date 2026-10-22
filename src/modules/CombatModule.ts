@@ -1,5 +1,5 @@
 import { RandomRange, Vector3 } from "@babylonjs/core";
-import { EntityId, query } from "bitecs";
+import { EntityId, query, removeEntity } from "bitecs";
 import {
 	PAUSE_RENDERQUEUE,
 	PAUSE_TACTICALPAUSE,
@@ -13,17 +13,27 @@ import { container } from "tsyringe";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import {
 	BASE_SPAWN_POSITION,
+	COMBAT_ENEMY_SPAWN_Z_OFFSET,
 	SPAWN_OFFSET,
 	START_RECOVERY,
 	START_RECOVERY_RANGE,
 } from "src/constants/CombatConstants";
 import {
 	AbilityData,
+	AbilityDescriptor,
 	AbilityTarget,
 	AbilityTrigger,
 	ActionSlotKey,
+	EffectFunctionProps,
 } from "src/types/AbilityTypes";
-import EnemyGUIComponent from "src/components/EnemyGUIComponent";
+import { AbilityContext } from "src/types/ContextTypes";
+import {
+	applyAbilityEffects,
+	calculateAbilityEffects,
+	calculateTotalAttributeValue,
+	performAttackRoll,
+} from "./EffectModule";
+import { renderAbilityEffects, startRenderQueue } from "./RenderModule";
 import { disposeEnemyEntities, resetPlayerActorState } from "./CharacterModule";
 import { clearCombatHudEntries } from "./UserInterfaceModule";
 import {
@@ -36,16 +46,18 @@ import { getEnemyFactory } from "./FactoryModule";
 import {
 	getActorStateComponentArray,
 	getComponentRegistry,
-	getEnemyGuiComponentArray,
-	getPlayerGuiComponentArray,
 } from "./ComponentModule";
+import {
+	getAbilityTargetsByShape,
+	spawnAbilityProjectile,
+	spawnActionDeliveryProjectile,
+} from "./Collision3DModule";
 import { setCombatGameMode, setExploreGameMode } from "./SceneModule";
 import {
 	clearActionPause,
 	resetCombatModeActionManager,
 } from "./ControlModule";
 import { checkEventByTrigger } from "./EventModule";
-import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 
 export async function startCombat(encId: string): Promise<void> {
 	const gameScene = getGameScene();
@@ -64,7 +76,9 @@ export async function startCombat(encId: string): Promise<void> {
 		const offsetVector = new Vector3(
 			0,
 			0,
-			(encounter.length - 1) * -SPAWN_OFFSET + i * SPAWN_OFFSET * 2,
+			COMBAT_ENEMY_SPAWN_Z_OFFSET +
+				(encounter.length - 1) * -SPAWN_OFFSET +
+				i * SPAWN_OFFSET * 2,
 		);
 		const spawnPosition = BASE_SPAWN_POSITION.add(offsetVector);
 		const newEnemy = await enemyFactory.createEntityFromFileAtPosition(
@@ -148,25 +162,19 @@ export function getTargetsBasedOnCondition(
 	return [];
 }
 
-export function resetTargeting() {
-	const enemyGuiComponentArray = getEnemyGuiComponentArray();
-	for (const eid of query(getGameScene().world, [enemyGuiComponentArray])) {
-		const enemyGUI = enemyGuiComponentArray[eid];
-		enemyGUI.setVisibleTargetingUI(false);
-		enemyGUI.setTargetingCallback(() => {});
-	}
-}
-
-export async function startQueueActionPlayer(
+export function startQueueActionPlayer(
 	eid: EntityId,
 	actionSlotKey: ActionSlotKey,
 	index: number,
-): Promise<void> {
+): void {
 	const actorData =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.name,
 			eid,
 		) as ActorStateComponent;
+	if (!actorData) {
+		return;
+	}
 	const actionDataArray = actorData.actionData.get(actionSlotKey);
 	if (!actionDataArray) {
 		return;
@@ -177,77 +185,24 @@ export async function startQueueActionPlayer(
 		return;
 	}
 
-	setPlayerActionTargeting(eid, actionData);
-}
+	const actionTimerAttribute = actorData.attributes.actionTimer;
+	if (
+		actionTimerAttribute.currentValue !== actionTimerAttribute.maximumValue
+	) {
+		return;
+	}
 
-function setPlayerActionTargeting(
-	sourceEid: EntityId,
-	actionData: AbilityData,
-): void {
-	const controlState = getControlState();
-	controlState.isTargetingAction = true;
-	if (actionData.target === AbilityTarget.singleEnemy) {
-		const enemyGuiComponentArray = getEnemyGuiComponentArray();
-		for (const eid of query(getGameScene().world, [
-			enemyGuiComponentArray,
-		])) {
-			const enemyGUI = enemyGuiComponentArray[eid];
-			enemyGUI.setVisibleTargetingUI(true);
-			enemyGUI.setTargetingCallback(() => {
-				endPlayerEnemyActionTargeting(enemyGuiComponentArray);
-				finishQueueAction(actionData, sourceEid, [eid]);
-			});
+	if (actionData.targetingShape?.type === "projectile") {
+		spawnAbilityProjectile(eid, actionData);
+	} else {
+		const targetEids = getAbilityTargetsByShape(eid, actionData);
+		if (targetEids.length === 0) {
+			return;
 		}
-	} else if (actionData.target === AbilityTarget.singleAlly) {
-		const allyGuiComponentArray = getPlayerGuiComponentArray();
-		for (const eid of query(getGameScene().world, [
-			allyGuiComponentArray,
-		])) {
-			if (eid === sourceEid) {
-				continue;
-			}
-			const allyGUI = allyGuiComponentArray[eid];
-			allyGUI.setVisibleTargetingUI(true);
-			allyGUI.setTargetingCallback(() => {
-				endPlayerAllyActionTargeting(allyGuiComponentArray);
-				finishQueueAction(actionData, sourceEid, [eid]);
-			});
-		}
-	} else if (actionData.target === AbilityTarget.groupEnemy) {
-		const enemyEntityIds = getGameplayState().enemyEntityIds;
-		finishQueueAction(actionData, sourceEid, enemyEntityIds);
-	} else if (actionData.target === AbilityTarget.groupAlly) {
-		const allyEnemyIds = getGameplayState().playerEntityIds.filter(
-			(eid) => eid != sourceEid,
-		);
-		finishQueueAction(actionData, sourceEid, allyEnemyIds);
-	} else if (actionData.target === AbilityTarget.self) {
-		finishQueueAction(actionData, sourceEid, [sourceEid]);
+		spawnActionDeliveryProjectile(eid, actionData, targetEids);
 	}
-}
 
-export function endPlayerEnemyActionTargeting(
-	enemyGuiComponentArray: EnemyGUIComponent[],
-) {
-	const controlState = getControlState();
-	controlState.isTargetingAction = false;
-	for (const eid of query(getGameScene().world, [enemyGuiComponentArray])) {
-		const enemyGUI = enemyGuiComponentArray[eid];
-		enemyGUI.setVisibleTargetingUI(false);
-		enemyGUI.removeTargetingCallback();
-	}
-}
-
-export function endPlayerAllyActionTargeting(
-	allyGuiComponentArray: PlayerGUIComponent[],
-) {
-	const controlState = getControlState();
-	controlState.isTargetingAction = false;
-	for (const eid of query(getGameScene().world, [allyGuiComponentArray])) {
-		const allyGUI = allyGuiComponentArray[eid];
-		allyGUI.setVisibleTargetingUI(false);
-		allyGUI.removeTargetingCallback();
-	}
+	startActionRecovery(actorData, actionData);
 }
 
 export async function decideNPCAction(actorState: ActorStateComponent) {
@@ -291,11 +246,11 @@ export async function decideNPCAction(actorState: ActorStateComponent) {
 	}
 
 	if (decidedActionData) {
-		finishQueueAction(decidedActionData, actorState.entityId, targetEids);
+		queueNPCAction(decidedActionData, actorState.entityId, targetEids);
 	}
 }
 
-function finishQueueAction(
+export function queueNPCAction(
 	actionData: AbilityData,
 	sourceEid: EntityId,
 	targetEids: EntityId[],
@@ -309,11 +264,102 @@ function finishQueueAction(
 	sourceActorState.currentTargetEIDs = targetEids;
 }
 
+export function createNewAbilityContext(
+	actionToPerform: AbilityData,
+): AbilityContext {
+	let abilityContext = {
+		abilityName: actionToPerform.name,
+		target: `${actionToPerform.target}`,
+		descriptors: actionToPerform.descriptors,
+		effects: actionToPerform.effectData,
+		abilityTargetContexts: [],
+		actionContext: {
+			cost: actionToPerform.cost || 0,
+			costAttribute: actionToPerform.costAttribute || "",
+			recoveryTime: actionToPerform.recoveryTime || 0,
+		},
+	};
+
+	return abilityContext;
+}
+
+export function applyActionEffects(
+	actionData: AbilityData,
+	sourceEid: EntityId,
+	targetEids: EntityId[],
+): void {
+	const actorStateComponentArray = getActorStateComponentArray();
+	const sourceActorState = actorStateComponentArray[sourceEid];
+	if (!sourceActorState) {
+		return;
+	}
+
+	const abilityContext = createNewAbilityContext(actionData);
+
+	targetEids.forEach((eid) => {
+		const targetActorState = actorStateComponentArray[eid];
+		if (!targetActorState || targetActorState.isDefeated) {
+			return;
+		}
+
+		abilityContext.abilityTargetContexts[eid] = {};
+		const effectProps = {
+			source: sourceActorState,
+			target: targetActorState,
+			abilityContext,
+			abilityTargetIndex: eid,
+		} as EffectFunctionProps;
+
+		if (hasActionAttackRoll(actionData.descriptors)) {
+			performAttackRoll(effectProps);
+		}
+		calculateAbilityEffects(effectProps);
+		applyAbilityEffects(effectProps);
+		renderAbilityEffects(effectProps);
+	});
+
+	startRenderQueue();
+}
+
+export function startActionRecovery(
+	sourceActorState: ActorStateComponent,
+	actionData: AbilityData,
+): void {
+	let recoveryTimeMultiplier = 1;
+	const totalSpeedValue = calculateTotalAttributeValue(
+		sourceActorState.attributes.speed,
+		actionData.descriptors,
+	);
+	if (totalSpeedValue < 0) {
+		recoveryTimeMultiplier = 1 + Math.abs(totalSpeedValue);
+	} else {
+		recoveryTimeMultiplier = 1 / (1 + totalSpeedValue);
+	}
+	const totalRecoveryTime =
+		(actionData.recoveryTime || 0.5) * recoveryTimeMultiplier;
+	const actionTimerAttribute = sourceActorState.attributes.actionTimer;
+	actionTimerAttribute.maximumValue = Math.max(totalRecoveryTime, 0.5);
+	actionTimerAttribute.currentValue = 0;
+}
+
+function hasActionAttackRoll(actionDescriptors: AbilityDescriptor[]): boolean {
+	return (
+		(actionDescriptors.includes(AbilityDescriptor.attack) &&
+			actionDescriptors.includes(AbilityDescriptor.ranged)) ||
+		(actionDescriptors.includes(AbilityDescriptor.attack) &&
+			actionDescriptors.includes(AbilityDescriptor.melee))
+	);
+}
+
 export function defeatActor(actor: ActorStateComponent) {
 	const gameplayState = getGameplayState();
 	const componentRegistry = container.resolve(ComponentRegistry);
 
 	actor.isDefeated = true;
+
+	if (gameplayState.selectedTargetEID === actor.entityId) {
+		gameplayState.selectedTargetEID = -1;
+	}
 
 	if (gameplayState.playerEntityIds.includes(actor.entityId)) {
 		for (let i = 0; i < gameplayState.playerEntityIds.length; i++) {
@@ -330,6 +376,12 @@ export function defeatActor(actor: ActorStateComponent) {
 
 		gameplayState.combatState = CombatState.Gameover;
 	} else {
+		const enemyIndex = gameplayState.enemyEntityIds.indexOf(actor.entityId);
+		if (enemyIndex >= 0) {
+			gameplayState.enemyEntityIds.splice(enemyIndex, 1);
+			removeEntity(getGameScene().world, actor.entityId);
+		}
+
 		for (let i = 0; i < gameplayState.enemyEntityIds.length; i++) {
 			let eid = gameplayState.enemyEntityIds[i];
 			let enemyData =

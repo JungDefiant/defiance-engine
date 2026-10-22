@@ -2,24 +2,22 @@ import { Vector3 } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Control } from "@babylonjs/gui";
 import { GameScene } from "src/scenes/GameScene";
 import { GameEvent } from "src/types/EventTypes";
-import { ActionSlotKey } from "./AbilityTypes";
 
 export class ControlSettings {
-	actionMap: Map<ActionSlotKey, number[]> = new Map([
-		[ActionSlotKey.weapon, ["Q".charCodeAt(0)]],
-		[
-			ActionSlotKey.power,
-			["W".charCodeAt(0), "E".charCodeAt(0), "R".charCodeAt(0)],
-		],
-		[ActionSlotKey.accessory, ["1".charCodeAt(0)]],
-		[
-			ActionSlotKey.item,
-			["2".charCodeAt(0), "3".charCodeAt(0), "4".charCodeAt(0)],
-		],
-	]);
+	movementForward: number = "W".charCodeAt(0);
+	movementBack: number = "S".charCodeAt(0);
+	movementLeft: number = "A".charCodeAt(0);
+	movementRight: number = "D".charCodeAt(0);
+	weaponMouseButton: number = 0;
+	powerMouseButton: number = 2;
+	powerKeys: number[] = [
+		"Q".charCodeAt(0),
+		"E".charCodeAt(0),
+		16,
+	];
+	switchPlayerNext: number = 9;
 	tacticalPause: number = 32;
-	switchPlayerLeft: number = "A".charCodeAt(0);
-	switchPlayerRight: number = "S".charCodeAt(0);
+	debugStartCombat: number = "C".charCodeAt(0);
 }
 
 export interface LoadedCampaignJson {

@@ -1,4 +1,3 @@
-import { FactoryRegistry } from "src/registries/FactoryRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameScene } from "src/scenes/GameScene";

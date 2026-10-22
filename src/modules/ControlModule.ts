@@ -4,27 +4,19 @@ import {
 	ExecuteCodeAction,
 	UniversalCamera,
 } from "@babylonjs/core";
-import ActorStateComponent from "src/components/ActorStateComponent";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
 import { getGameCanvas } from "./SceneModule";
-import {
-	endPlayerEnemyActionTargeting,
-	resetTargeting,
-	setTacticalPause,
-	startQueueActionPlayer,
-} from "./CombatModule";
+import { setTacticalPause, startQueueActionPlayer } from "./CombatModule";
 import {
 	getControlState,
-	getGameplayState,
 	getGameScene,
+	getGameplayState,
 	getUserInterfaceState,
 } from "./GameStateModule";
 import { setSelectedCharacter } from "./CharacterModule";
-import {
-	getComponentRegistry,
-	getEnemyGuiComponentArray,
-} from "./ComponentModule";
-import ControlState from "src/states/ControlState";
+import { getActorStateComponentArray } from "./ComponentModule";
+import { startCombat } from "./CombatModule";
+import ControlState, { MovementInputState } from "src/states/ControlState";
 import { ActionSlotKey } from "src/types/AbilityTypes";
 
 export function clearActionPause() {
@@ -47,11 +39,6 @@ export function attachCameraControl(): boolean {
 	const camera = gameScene.activeCamera as UniversalCamera;
 	if (camera && gameCanvas) {
 		camera.attachControl(gameCanvas);
-		gameScene.onPointerObservable.add((eventData) => {
-			// This will block out vertical rotation
-			// For blocking out horizontal rotation, simply use y instead of x
-			camera.cameraRotation.x = 0;
-		});
 		return true;
 	} else {
 		return false;
@@ -67,6 +54,105 @@ export function detachCameraControl(): boolean {
 	} else {
 		return false;
 	}
+}
+
+function resetMovementInput(controlState: ControlState) {
+	controlState.movementInput.forward = false;
+	controlState.movementInput.back = false;
+	controlState.movementInput.left = false;
+	controlState.movementInput.right = false;
+}
+
+function registerMovementInputBindings(
+	actionManager: ActionManager,
+	controlState: ControlState,
+) {
+	const movementKeys: [number, keyof MovementInputState][] = [
+		[controlState.controlSettings.movementForward, "forward"],
+		[controlState.controlSettings.movementBack, "back"],
+		[controlState.controlSettings.movementLeft, "left"],
+		[controlState.controlSettings.movementRight, "right"],
+	];
+
+	for (const [movementKey, movementFlag] of movementKeys) {
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: movementKey,
+				},
+				() => {
+					controlState.movementInput[movementFlag] = true;
+				},
+			),
+		);
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyUpTrigger,
+					parameter: movementKey,
+				},
+				() => {
+					controlState.movementInput[movementFlag] = false;
+				},
+			),
+		);
+	}
+}
+
+function startPlayerAction(actionSlotKey: ActionSlotKey, actionIndex: number) {
+	const controlState = getControlState();
+	const gameplayState = getGameplayState();
+	if (controlState.controlPauseSet.size > 0) {
+		return;
+	}
+	startQueueActionPlayer(
+		gameplayState.selectedPlayerEID,
+		actionSlotKey,
+		actionIndex,
+	);
+}
+
+function registerPowerKeyBindings(
+	actionManager: ActionManager,
+	controlState: ControlState,
+) {
+	controlState.controlSettings.powerKeys.forEach((powerKey, powerIndex) => {
+		actionManager.registerAction(
+			new ExecuteCodeAction(
+				{
+					trigger: ActionManager.OnKeyDownTrigger,
+					parameter: powerKey,
+				},
+				() => {
+					startPlayerAction(ActionSlotKey.power, powerIndex + 1);
+				},
+			),
+		);
+	});
+}
+
+function getSwitchPlayerFunction(
+	isCombatMode?: boolean,
+): (evt: ActionEvent) => void {
+	return () => {
+		const gameplayState = getGameplayState();
+		const controlState = getControlState();
+		if (controlState.controlPauseSet.size > 0) {
+			return;
+		}
+		const currentSelectedPlayerEntityIdIndex =
+			gameplayState.playerEntityIds.findIndex(
+				(x) => x === gameplayState.selectedPlayerEID,
+			);
+		const newSelectedPlayerEntityIdIndex =
+			(currentSelectedPlayerEntityIdIndex + 1) %
+			gameplayState.playerEntityIds.length;
+		setSelectedCharacter(
+			gameplayState.playerEntityIds[newSelectedPlayerEntityIdIndex],
+			isCombatMode,
+		);
+	};
 }
 
 export function resetExploreModeControls() {
@@ -90,13 +176,18 @@ export function resetExploreModeActionManager() {
 		controlState.actionManager = null;
 	}
 
+	resetMovementInput(controlState);
+
 	const actionManager = new ActionManager(gameScene);
+
+	registerMovementInputBindings(actionManager, controlState);
+	registerPowerKeyBindings(actionManager, controlState);
 
 	actionManager.registerAction(
 		new ExecuteCodeAction(
 			{
 				trigger: ActionManager.OnKeyDownTrigger,
-				parameter: controlState.controlSettings.switchPlayerLeft,
+				parameter: controlState.controlSettings.switchPlayerNext,
 			},
 			getSwitchPlayerFunction(false),
 		),
@@ -106,9 +197,21 @@ export function resetExploreModeActionManager() {
 		new ExecuteCodeAction(
 			{
 				trigger: ActionManager.OnKeyDownTrigger,
-				parameter: controlState.controlSettings.switchPlayerRight,
+				parameter: controlState.controlSettings.debugStartCombat,
 			},
-			getSwitchPlayerFunction(true),
+			() => {
+				if (
+					controlState.controlPauseSet.size > 0 ||
+					controlState.actionPauseSet.size > 0
+				) {
+					return;
+				}
+				const gameScene = getGameScene();
+				const firstEncounterId = Object.keys(gameScene.encounters)[0];
+				if (firstEncounterId) {
+					startCombat(firstEncounterId);
+				}
+			},
 		),
 	);
 
@@ -122,132 +225,46 @@ export function resetCombatModeControls() {
 
 	if (detachCameraControl()) {
 		userInterfaceState.sceneGUI.rootContainer.isVisible = true;
+
 		controlState.exploreGUIControls.forEach((child) => {
-			child.isVisible = false;
+			child.isVisible = true;
 		});
 	}
 }
 
 export function resetCombatModeActionManager() {
 	const gameScene = getGameScene();
-	const gameplayState = getGameplayState();
 	const controlState = getControlState();
 	const userInterfaceState = getUserInterfaceState();
+	const gameplayState = getGameplayState();
+	const actorStateComponentArray = getActorStateComponentArray();
 	const actorState =
-		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
-			ActorStateComponent.name,
-			gameplayState.selectedPlayerEID,
-		) as ActorStateComponent;
-	userInterfaceState.combatHud.setActionBar(actorState);
-
-	resetTargeting();
+		actorStateComponentArray[gameplayState.selectedPlayerEID];
+	if (actorState) {
+		userInterfaceState.combatHud.setActionBar(actorState);
+	}
 
 	if (controlState.actionManager) {
 		controlState.actionManager.dispose();
 		controlState.actionManager = null;
 	}
 
+	resetMovementInput(controlState);
+
 	const actionManager = new ActionManager(gameScene);
 
-	const weaponData = actorState.actionData.get(ActionSlotKey.weapon);
-	const weaponActionMapArray = controlState.controlSettings.actionMap.get(
-		ActionSlotKey.weapon,
-	);
-	if (weaponData && weaponActionMapArray) {
-		actionManager.registerAction(
-			new ExecuteCodeAction(
-				{
-					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: weaponActionMapArray[0],
-				},
-				() => {
-					startQueueAction(
-						ActionSlotKey.weapon,
-						0,
-						actorState,
-						controlState,
-					);
-				},
-			),
-		);
-	}
+	registerMovementInputBindings(actionManager, controlState);
+	registerPowerKeyBindings(actionManager, controlState);
 
-	const powerDataArray = actorState.actionData.get(ActionSlotKey.power);
-	const powerActionMapArray = controlState.controlSettings.actionMap.get(
-		ActionSlotKey.power,
+	actionManager.registerAction(
+		new ExecuteCodeAction(
+			{
+				trigger: ActionManager.OnKeyDownTrigger,
+				parameter: controlState.controlSettings.switchPlayerNext,
+			},
+			getSwitchPlayerFunction(true),
+		),
 	);
-	if (powerDataArray && powerActionMapArray) {
-		for (let i = 0; i < powerDataArray.length; i++) {
-			if (!powerActionMapArray[i]) {
-				break;
-			}
-
-			actionManager.registerAction(
-				new ExecuteCodeAction(
-					{
-						trigger: ActionManager.OnKeyDownTrigger,
-						parameter: powerActionMapArray[i],
-					},
-					() => {
-						startQueueAction(
-							ActionSlotKey.power,
-							i,
-							actorState,
-							controlState,
-						);
-					},
-				),
-			);
-		}
-	}
-
-	const accessoryData = actorState.actionData.get(ActionSlotKey.accessory);
-	const accessoryActionMapArray = controlState.controlSettings.actionMap.get(
-		ActionSlotKey.accessory,
-	);
-	if (accessoryData && accessoryActionMapArray) {
-		actionManager.registerAction(
-			new ExecuteCodeAction(
-				{
-					trigger: ActionManager.OnKeyDownTrigger,
-					parameter: accessoryActionMapArray[0],
-				},
-				() => {
-					startQueueAction(
-						ActionSlotKey.accessory,
-						0,
-						actorState,
-						controlState,
-					);
-				},
-			),
-		);
-	}
-
-	const itemDataArray = actorState.actionData.get(ActionSlotKey.item);
-	const itemActionMapArray = controlState.controlSettings.actionMap.get(
-		ActionSlotKey.item,
-	);
-	if (itemDataArray && itemActionMapArray) {
-		for (let i = 0; i < itemDataArray.length; i++) {
-			actionManager.registerAction(
-				new ExecuteCodeAction(
-					{
-						trigger: ActionManager.OnKeyDownTrigger,
-						parameter: itemActionMapArray[i],
-					},
-					() => {
-						startQueueAction(
-							ActionSlotKey.item,
-							i,
-							actorState,
-							controlState,
-						);
-					},
-				),
-			);
-		}
-	}
 
 	actionManager.registerAction(
 		new ExecuteCodeAction(
@@ -263,26 +280,6 @@ export function resetCombatModeActionManager() {
 					!controlState.actionPauseSet.has(PAUSE_TACTICALPAUSE),
 				);
 			},
-		),
-	);
-
-	actionManager.registerAction(
-		new ExecuteCodeAction(
-			{
-				trigger: ActionManager.OnKeyDownTrigger,
-				parameter: controlState.controlSettings.switchPlayerLeft,
-			},
-			getSwitchPlayerFunction(false, true),
-		),
-	);
-
-	actionManager.registerAction(
-		new ExecuteCodeAction(
-			{
-				trigger: ActionManager.OnKeyDownTrigger,
-				parameter: controlState.controlSettings.switchPlayerRight,
-			},
-			getSwitchPlayerFunction(true, true),
 		),
 	);
 
@@ -302,52 +299,4 @@ export function resetDialogueModeControls() {
 			child.isVisible = false;
 		});
 	}
-}
-
-function startQueueAction(
-	actionSlotKey: ActionSlotKey,
-	actionIndex: number,
-	actorState: ActorStateComponent,
-	controlState: ControlState,
-) {
-	if (controlState.controlPauseSet.size > 0) {
-		return;
-	}
-	if (controlState.isTargetingAction) {
-		endPlayerEnemyActionTargeting(getEnemyGuiComponentArray());
-	} else {
-		startQueueActionPlayer(actorState.entityId, actionSlotKey, actionIndex);
-	}
-}
-
-function getSwitchPlayerFunction(
-	isRightSelection: boolean,
-	isCombatMode?: boolean,
-): (evt: ActionEvent) => void {
-	return () => {
-		const gameplayState = getGameplayState();
-		const controlState = getControlState();
-		if (controlState.controlPauseSet.size > 0) {
-			return;
-		}
-		let currentSelectedPlayerEntityIdIndex =
-			gameplayState.playerEntityIds.findIndex(
-				(x) => x === gameplayState.selectedPlayerEID,
-			);
-		let newSelectedPlayerEntityIdIndex =
-			currentSelectedPlayerEntityIdIndex + (isRightSelection ? 1 : -1);
-		if (
-			newSelectedPlayerEntityIdIndex >
-			gameplayState.playerEntityIds.length - 1
-		) {
-			newSelectedPlayerEntityIdIndex = 0;
-		}
-		if (isCombatMode && controlState.isTargetingAction) {
-			endPlayerEnemyActionTargeting(getEnemyGuiComponentArray());
-		}
-		setSelectedCharacter(
-			gameplayState.playerEntityIds[newSelectedPlayerEntityIdIndex],
-			isCombatMode,
-		);
-	};
 }

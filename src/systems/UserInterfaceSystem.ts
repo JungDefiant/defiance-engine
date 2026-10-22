@@ -1,6 +1,5 @@
 import { inject } from "tsyringe";
 import GameSystem from "src/systems/GameSystem";
-import { Engine } from "@babylonjs/core";
 import { query } from "bitecs";
 import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 import ActorStateComponent from "src/components/ActorStateComponent";

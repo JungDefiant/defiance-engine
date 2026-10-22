@@ -4,18 +4,13 @@ import {
 	Rectangle,
 	Image,
 	StackPanel,
-	TextBlock,
-	Style,
 	Container,
 	AdvancedDynamicTexture,
 } from "@babylonjs/gui";
-import { container } from "tsyringe";
 import { EntityId } from "bitecs";
-import { Mesh } from "@babylonjs/core";
 import { Themes } from "../gui/Themes";
 import { ActorGUI } from "../types/UserInterfaceTypes";
 import { Component } from "./Component";
-import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import ActorStateComponent from "./ActorStateComponent";
 import { getComponentRegistry } from "src/modules/ComponentModule";
 import CharacterSpriteComponent from "./CharacterSpriteComponent";
@@ -27,7 +22,6 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 	private actBarFillUI: Rectangle;
 	private lifeBarBGUI: Rectangle;
 	private lifeBarFillUI: Rectangle;
-	private lifeBarValueUI: TextBlock;
 	private statusIconsUI: Grid;
 	private statusIcons: Map<string, Rectangle> = new Map<string, Rectangle>();
 
@@ -46,16 +40,16 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		this.rootContainer = new StackPanel(
 			`ui_enBattlerUI_${enemyActorState.id}_${eid}`,
 		);
-		this.rootContainer.widthInPixels = 120;
-		this.rootContainer.heightInPixels = 240;
+		this.rootContainer.widthInPixels = 24;
+		this.rootContainer.heightInPixels = 48;
 		sceneGUI.addControl(this.rootContainer);
 
 		this.targetingUI = new Image(
 			`ui_enBattlerTargetings_${eid}`,
 			"sprites/particles/magic_03.png",
 		);
-		this.targetingUI.widthInPixels = 96;
-		this.targetingUI.heightInPixels = 96;
+		this.targetingUI.widthInPixels = 20;
+		this.targetingUI.heightInPixels = 20;
 		this.targetingUI.shadowOffsetX = 1;
 		this.targetingUI.shadowOffsetY = 1;
 		this.targetingUI.onPointerEnterObservable.add(() => {
@@ -69,13 +63,13 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		this.rootContainer.addControl(this.targetingUI);
 
 		this.statusIconsUI = new Grid(`ui_enBattlerStatusIcons_${eid}`);
-		this.statusIconsUI.widthInPixels = 120;
-		this.statusIconsUI.heightInPixels = 24;
+		this.statusIconsUI.widthInPixels = 24;
+		this.statusIconsUI.heightInPixels = 5;
 		for (let i = 0; i < 2; i++) {
-			this.statusIconsUI.addRowDefinition(12, true);
+			this.statusIconsUI.addRowDefinition(2.5, true);
 		}
 		for (let i = 0; i < 8; i++) {
-			this.statusIconsUI.addColumnDefinition(12, true);
+			this.statusIconsUI.addColumnDefinition(3, true);
 		}
 		this.rootContainer.addControl(this.statusIconsUI);
 
@@ -109,16 +103,8 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		);
 		this.lifeBarBGUI.addControl(this.lifeBarFillUI);
 
-		this.lifeBarValueUI = this.createBarValueUI(
-			eid,
-			"lifeLabel",
-			Themes.neutral2,
-			Themes.typography.caption,
-		);
-		this.lifeBarBGUI.addControl(this.lifeBarValueUI);
-
 		this.rootContainer.linkWithMesh(enemySprite);
-		this.rootContainer.linkOffsetY = 40;
+		this.rootContainer.linkOffsetY = 8;
 	}
 
 	public getValue(): EnemyGUIComponent {
@@ -143,11 +129,8 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 	public setLifeBarFill(currValue: number, maxValue: number): void {
 		this.lifeBarFillUI.width = Math.max(
 			0,
-			Math.min(1, currValue / maxValue || 0) * 0.65,
+			Math.min(1, currValue / maxValue || 0),
 		);
-
-		const perc = Math.round((currValue / maxValue) * 100 || 0);
-		this.lifeBarValueUI.text = `${perc}%`;
 	}
 
 	public addStatusIcon(id: string, iconSrc: string): void {
@@ -159,8 +142,8 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		}
 
 		const statusIcon = new Rectangle(`ui_statusIcon_${id}`);
-		statusIcon.widthInPixels = 12;
-		statusIcon.heightInPixels = 12;
+		statusIcon.widthInPixels = 3;
+		statusIcon.heightInPixels = 3;
 		statusIcon.thickness = 1;
 		statusIcon.color = Themes.primary1;
 		statusIcon.background = Themes.primary3;
@@ -204,9 +187,9 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		background: string,
 	): Rectangle {
 		const barBGUI = new Rectangle(`ui_${name}_${eid}`);
-		barBGUI.widthInPixels = 100;
-		barBGUI.heightInPixels = 12;
-		barBGUI.thickness = 1.2;
+		barBGUI.widthInPixels = 20;
+		barBGUI.heightInPixels = 3;
+		barBGUI.thickness = 1;
 		barBGUI.color = color;
 		barBGUI.background = background;
 		return barBGUI;
@@ -224,24 +207,5 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		barFillUI.color = color;
 		barFillUI.background = color;
 		return barFillUI;
-	}
-
-	private createBarValueUI(
-		eid: EntityId,
-		name: string,
-		color: string,
-		style: Style,
-	) {
-		const barValueUI = new TextBlock(`ui_${name}BarUIValue_${eid}`);
-		barValueUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
-		barValueUI.textHorizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-		barValueUI.widthInPixels = 30;
-		barValueUI.heightInPixels = 14;
-		barValueUI.topInPixels = 2;
-		barValueUI.color = color;
-		barValueUI.style = style;
-		return barValueUI;
 	}
 }

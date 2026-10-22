@@ -9,7 +9,6 @@ import {
 	EventState,
 	TransformNode,
 	UniversalCamera,
-	Vector3,
 } from "@babylonjs/core";
 import { Button, Control, Vector2WithInfo } from "@babylonjs/gui";
 import { getPublicRoot } from "./Utils";
@@ -18,7 +17,7 @@ import {
 	PAUSE_LOCATIONTRANSITION,
 } from "src/constants/GeneralConstants";
 import { addComponent, set } from "bitecs";
-import { getAllSceneNodes, getSceneNode } from "./SceneModule";
+import { getSceneNode } from "./SceneModule";
 import {
 	getControlState,
 	getGameScene,
@@ -28,7 +27,6 @@ import { resetExploreViewPosition } from "./CameraModule";
 import EntityMovementComponent from "src/components/EntityMovementComponent";
 import {
 	getEntityMovementComponentArray,
-	getTransformNodeComponentArray,
 } from "./ComponentModule";
 import { startDialogue } from "./DialogueModule";
 import { checkEventByTrigger } from "./EventModule";
