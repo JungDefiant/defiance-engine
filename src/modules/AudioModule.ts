@@ -33,10 +33,15 @@ export async function playMusic(musicId: string) {
 		audioState.musicMap.set(musicId, music);
 	}
 
-	await audioState.audioEngine.unlockAsync();
 	if (audioState.currentMusic) {
 		audioState.currentMusic.stop();
 	}
 	audioState.currentMusic = music;
-	music.play();
+
+	void audioState.audioEngine
+		.unlockAsync()
+		.then(() => {
+			music.play();
+		})
+		.catch(() => {});
 }

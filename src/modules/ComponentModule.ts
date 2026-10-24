@@ -1,4 +1,3 @@
-import EntityMovementComponent from "src/components/EntityMovementComponent";
 import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import EnemyGUIComponent from "src/components/EnemyGUIComponent";
@@ -12,6 +11,7 @@ import TransformNodeComponent from "src/components/TransformNodeComponent";
 import ActorNavigationComponent from "src/components/ActorNavigationComponent";
 import ActorBehaviorComponent from "src/components/ActorBehaviorComponent";
 import CollisionComponent from "src/components/CollisionComponent";
+import ProjectileComponent from "src/components/ProjectileComponent";
 
 export function getComponentRegistry() {
 	return container.resolve(ComponentRegistry);
@@ -46,12 +46,6 @@ export function getCharacterSpriteComponentArray() {
 		CharacterSpriteComponent.name,
 	);
 }
-export function getEntityMovementComponentArray() {
-	return getComponentRegistry().getComponentArrayByComponentId<EntityMovementComponent>(
-		EntityMovementComponent.name,
-	);
-}
-
 export function getEnemyGuiComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<EnemyGUIComponent>(
 		EnemyGUIComponent.name,
@@ -85,5 +79,11 @@ export function getStickerImageComponentArray() {
 export function getTransformNodeComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<TransformNodeComponent>(
 		TransformNodeComponent.name,
+	);
+}
+
+export function getProjectileComponentArray() {
+	return getComponentRegistry().getComponentArrayByComponentId<ProjectileComponent>(
+		ProjectileComponent.name,
 	);
 }

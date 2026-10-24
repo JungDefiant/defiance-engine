@@ -3,67 +3,56 @@ import {
 	ICrowd,
 	Mesh,
 	Nullable,
-	RecastJSPlugin,
 	Scene,
 	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
+import {
+	CreateNavigationPluginAsync,
+	type RecastNavigationJSPluginV2,
+} from "@babylonjs/addons";
+import * as RecastNavigationCore from "recast-navigation";
+import * as RecastNavigationGenerators from "recast-navigation/generators";
 import { EntityId, addComponent, set } from "bitecs";
 import ActorNavigationComponent from "src/components/ActorNavigationComponent";
 import { getActorNavigationComponentArray } from "./ComponentModule";
-import { getGameScene } from "./GameStateModule";
+import {
+	getGameScene,
+	getGameStateRegistry,
+	getNavigationState,
+} from "./GameStateModule";
 import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
 import type { EnvironmentObstacleData } from "src/types/CollisionTypes";
-
-const NAVMESH_LOAD_TIMEOUT_MS = 5000;
-const NAVMESH_POLL_INTERVAL_MS = 100;
-const NAV_AGENT_RADIUS = 0.3;
-const NAV_AGENT_HEIGHT = 0.8;
-const NAV_CROWD_MAX_AGENTS = 20;
-const NAVMESH_GENERATOR_PARAMETERS = {
-	cs: 0.2,
-	ch: 0.2,
-	tileSize: 128,
-	walkableSlopeAngle: 45,
-	walkableHeight: 1,
-	walkableClimb: 1,
-	walkableRadius: 2,
-	walkableWaterLevel: 0,
-	minRegionArea: 2,
-	mergeRegionArea: 20,
-	maxEdgeLen: 12,
-	maxSimplificationError: 1.3,
-	maxVertsPerPoly: 6,
-	detailSampleDist: 6,
-	detailSampleMaxError: 1,
-};
-
-let navigationPlugin: Nullable<RecastJSPlugin> = null;
-let navigationCrowd: Nullable<ICrowd> = null;
-let isInitializingNavMesh = false;
-
-const navigationObstacles: EnvironmentObstacleData[] = [];
+import {
+	NAV_AGENT_HEIGHT,
+	NAV_AGENT_RADIUS,
+	NAV_CROWD_MAX_AGENTS,
+	NAVMESH_GENERATOR_PARAMETERS,
+	NAVMESH_LOAD_TIMEOUT_MS,
+	NAVMESH_POLL_INTERVAL_MS,
+} from "src/constants/NavigationConstants";
+import NavigationState from "src/states/NavigationState";
 
 export function registerNavigationObstacle(
 	obstacle: EnvironmentObstacleData,
 ): void {
-	navigationObstacles.push(obstacle);
+	getNavigationObstacles().push(obstacle);
 }
 
 export function getNavigationObstacles(): EnvironmentObstacleData[] {
-	return navigationObstacles;
+	return getNavigationState().navigationObstacles;
 }
 
 export function isNavigationReady(): boolean {
-	return navigationPlugin !== null;
+	return getNavigationState().navigationPlugin !== null;
 }
 
-export function getNavigationPlugin(): Nullable<RecastJSPlugin> {
-	return navigationPlugin;
+export function getNavigationPlugin(): Nullable<RecastNavigationJSPluginV2> {
+	return getNavigationState().navigationPlugin;
 }
 
 export function getNavigationCrowd(): Nullable<ICrowd> {
-	return navigationCrowd;
+	return getNavigationState().navigationCrowd;
 }
 
 function isExcludedFromNavMesh(mesh: AbstractMesh): boolean {
@@ -89,44 +78,45 @@ async function waitForSceneMeshes(scene: Scene): Promise<Mesh[]> {
 			setTimeout(resolve, NAVMESH_POLL_INTERVAL_MS),
 		);
 	}
-	return scene.meshes.filter((mesh) => !isExcludedFromNavMesh(mesh)) as Mesh[];
+	return scene.meshes.filter(
+		(mesh) => !isExcludedFromNavMesh(mesh),
+	) as Mesh[];
 }
 
 export async function initNavigation(scene: Scene): Promise<void> {
-	if (navigationPlugin || isInitializingNavMesh) {
+	if (getNavigationState().isInitializingNavMesh) {
 		return;
 	}
-	isInitializingNavMesh = true;
+	const previousNavigationState = getNavigationState();
+	const newNavigationState = new NavigationState();
+	newNavigationState.isInitializingNavMesh = true;
+	newNavigationState.navigationObstacles.push(
+		...previousNavigationState.navigationObstacles,
+	);
 
 	try {
-		const globalScope = window as unknown as Record<string, unknown>;
-		if (!globalScope.Recast) {
-			const recastModuleName = "recast-navigation";
-			const recastModule = (await import(
-				/* @vite-ignore */ recastModuleName
-			)) as Record<string, unknown>;
-			globalScope.Recast =
-				recastModule.Recast ?? recastModule.default ?? recastModule;
-		}
-
-		if (globalScope.Recast) {
-			const navMeshMeshes = await waitForSceneMeshes(scene);
-			const plugin = new RecastJSPlugin();
-			plugin.createNavMesh(
-				navMeshMeshes,
-				NAVMESH_GENERATOR_PARAMETERS,
-			);
-			navigationPlugin = plugin;
-			navigationCrowd = plugin.createCrowd(
-				NAV_CROWD_MAX_AGENTS,
-				NAV_AGENT_RADIUS,
-				scene,
-			);
-		} else {
-			console.warn(
-				"No recast.js runtime found; falling back to direct steering navigation.",
-			);
-		}
+		await RecastNavigationCore.init();
+		const navigationPlugin = await CreateNavigationPluginAsync({
+			instance: {
+				...RecastNavigationCore,
+				...RecastNavigationGenerators,
+			},
+		});
+		const navMeshMeshes = await waitForSceneMeshes(scene);
+		navigationPlugin.createNavMesh(
+			navMeshMeshes,
+			NAVMESH_GENERATOR_PARAMETERS,
+		);
+		newNavigationState.navigationCrowd = navigationPlugin.createCrowd(
+			NAV_CROWD_MAX_AGENTS,
+			NAV_AGENT_RADIUS,
+			scene,
+		);
+		newNavigationState.navigationPlugin = navigationPlugin;
+		getGameStateRegistry().registerNewGameState(
+			NavigationState.name,
+			newNavigationState,
+		);
 	} catch (error) {
 		console.warn(
 			"Failed to initialize recast.js navigation; falling back to direct steering navigation.",
@@ -134,7 +124,7 @@ export async function initNavigation(scene: Scene): Promise<void> {
 		);
 	}
 
-	isInitializingNavMesh = false;
+	newNavigationState.isInitializingNavMesh = false;
 }
 
 export function createNavigationAgent(
@@ -154,6 +144,7 @@ export function createNavigationAgent(
 		set(getActorNavigationComponentArray(), newNavigationComponent),
 	);
 
+	let navigationCrowd = getNavigationCrowd();
 	if (navigationCrowd) {
 		const agentParams = {
 			radius: NAV_AGENT_RADIUS,
@@ -201,11 +192,14 @@ export function navigateToPosition(
 	navigationComponent.onDestinationReachedEvent =
 		onDestinationReached ?? null;
 
-	if (navigationComponent.agentIndex >= 0 && navigationCrowd) {
-		navigationCrowd.agentGoto(
-			navigationComponent.agentIndex,
-			destination,
-		);
+	let navigationCrowd = getNavigationCrowd();
+	if (navigationCrowd) {
+		if (navigationComponent.agentIndex >= 0 && navigationCrowd) {
+			navigationCrowd.agentGoto(
+				navigationComponent.agentIndex,
+				destination,
+			);
+		}
 	}
 }
 
@@ -219,6 +213,7 @@ export function stopNavigation(entityId: EntityId): void {
 	navigationComponent.isNavigating = false;
 	navigationComponent.onDestinationReachedEvent = null;
 
+	let navigationCrowd = getNavigationCrowd();
 	if (navigationComponent.agentIndex >= 0 && navigationCrowd) {
 		navigationCrowd.agentGoto(
 			navigationComponent.agentIndex,
@@ -238,10 +233,8 @@ export function teleportNavigationAgent(
 
 	navigationComponent.position.copyFrom(position);
 
+	let navigationCrowd = getNavigationCrowd();
 	if (navigationComponent.agentIndex >= 0 && navigationCrowd) {
-		navigationCrowd.agentTeleport(
-			navigationComponent.agentIndex,
-			position,
-		);
+		navigationCrowd.agentTeleport(navigationComponent.agentIndex, position);
 	}
 }

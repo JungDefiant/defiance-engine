@@ -4,6 +4,7 @@ import {
 	CollisionBehaviorData,
 	CollisionShapeType,
 } from "src/types/CollisionTypes";
+import { DEFAULT_ACTOR_COLLISION_RADIUS } from "src/constants/NavigationConstants";
 
 export default class CollisionComponent implements Component {
 	entityId: EntityId;
@@ -14,7 +15,7 @@ export default class CollisionComponent implements Component {
 
 	constructor(
 		entityId: EntityId,
-		radius: number = 0.3,
+		radius: number = DEFAULT_ACTOR_COLLISION_RADIUS,
 		isBlocking: boolean = true,
 		collisionBehaviors: CollisionBehaviorData[] = [],
 	) {

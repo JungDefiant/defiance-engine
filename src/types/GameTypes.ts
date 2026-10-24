@@ -1,21 +1,17 @@
 import { Vector3 } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Control } from "@babylonjs/gui";
-import { GameScene } from "src/scenes/GameScene";
 import { GameEvent } from "src/types/EventTypes";
 
 export class ControlSettings {
-	movementForward: number = "W".charCodeAt(0);
-	movementBack: number = "S".charCodeAt(0);
-	movementLeft: number = "A".charCodeAt(0);
-	movementRight: number = "D".charCodeAt(0);
-	weaponMouseButton: number = 0;
-	powerMouseButton: number = 2;
+	targetMouseButton: number = 2;
+	moveMouseButton: number = 0;
 	powerKeys: number[] = [
 		"Q".charCodeAt(0),
+		"W".charCodeAt(0),
 		"E".charCodeAt(0),
-		16,
+		"R".charCodeAt(0),
 	];
-	switchPlayerNext: number = 9;
+	switchPlayerLeft: number = "D".charCodeAt(0);
+	switchPlayerRight: number = "F".charCodeAt(0);
 	tacticalPause: number = 32;
 	debugStartCombat: number = "C".charCodeAt(0);
 }
@@ -31,24 +27,15 @@ export interface LoadedCampaignJson {
 
 export interface LoadedSceneJson {
 	id: string;
-	startLocationId: string;
 	mapModelId: string;
 	difficultyLevel: number;
 	startMusicId: string;
 	dialogueFileId: string;
 	encounters: EncounterMap;
-	locations: SceneLocation[];
-	modalIds: string[];
-}
-
-export interface SceneLocation {
-	id: string;
-	exploreViewNodeId: string;
-	combatViewNodeId: string;
-	combatSpawnNodeId: string;
 	interactables: Interactable[];
-	events: GameEvent[];
 	doors: DoorData[];
+	events: GameEvent[];
+	modalIds: string[];
 }
 
 export interface Interactable {
@@ -57,7 +44,6 @@ export interface Interactable {
 	description: string;
 	dialogueNodeId: string;
 	interactableNodeId: string;
-	viewPositionNodeId: string;
 	guiPositionOffset: number[];
 }
 
@@ -115,12 +101,6 @@ export type StoryVariable = string | number;
 
 export interface ConditionFunction {
 	(): boolean;
-}
-
-export interface NewLocationSceneParams {
-	gameScene: GameScene;
-	sceneGUI: AdvancedDynamicTexture;
-	exploreGUIControls: Control[];
 }
 
 export type RenderQueueEntryType =

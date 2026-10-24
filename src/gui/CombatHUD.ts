@@ -27,7 +27,6 @@ export default class CombatHUD implements IHUD {
 	private combatLogStack: Nullable<StackPanel> = null;
 	private combatLogScrollbar: Nullable<ScrollBar> = null;
 
-	private weaponSlot: Nullable<ActionSlot> = null;
 	private accessorySlot: Nullable<ActionSlot> = null;
 	private powerSlots: ActionSlot[] = [];
 	private itemSlots: ActionSlot[] = [];
@@ -50,7 +49,7 @@ export default class CombatHUD implements IHUD {
 
 		const backgroundUI = new Rectangle("ui_combatBgUI");
 		backgroundUI.width = 1;
-		backgroundUI.heightInPixels = 50;
+		backgroundUI.heightInPixels = 52;
 		backgroundUI.background = Themes.primary3;
 		backgroundUI.thickness = 0;
 		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
@@ -76,21 +75,6 @@ export default class CombatHUD implements IHUD {
 
 		if (!actorState) {
 			return;
-		}
-
-		const actionWeaponData = actorState.actionData.get(
-			ActionSlotKey.weapon,
-		);
-		if (actionWeaponData && this.weaponSlot) {
-			const weaponData = actionWeaponData[0];
-			this.assignActionSlot(
-				this.weaponSlot,
-				ActionSlotKey.weapon,
-				0,
-				(weaponData.iconURL as string) || "",
-				actorState.entityId,
-				controlState,
-			);
 		}
 
 		const actionPowerData = actorState.actionData.get(ActionSlotKey.power);
@@ -133,7 +117,7 @@ export default class CombatHUD implements IHUD {
 			actionIndex,
 			controlState,
 		);
-		if (!actionKeyLabel) {
+		if (actionKeyLabel === null) {
 			return;
 		}
 
@@ -196,14 +180,14 @@ export default class CombatHUD implements IHUD {
 		const actionBarUI = new Rectangle("ui_actionBar");
 		actionBarUI.color = Themes.primary1;
 		actionBarUI.background = Themes.primary3;
-		actionBarUI.thickness = 2;
-		actionBarUI.widthInPixels = 470;
-		actionBarUI.heightInPixels = 54;
+		actionBarUI.thickness = 1;
+		actionBarUI.widthInPixels = 472;
+		actionBarUI.heightInPixels = 56;
 		actionBarUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
 		const actionGrid = new Grid("ui_actionStack");
-		actionGrid.addColumnDefinition(270);
-		actionGrid.addColumnDefinition(145);
+		actionGrid.addColumnDefinition(272);
+		actionGrid.addColumnDefinition(148);
 		actionGrid.addRowDefinition(16);
 		actionGrid.addRowDefinition(40);
 		actionGrid.width = 1;
@@ -216,7 +200,7 @@ export default class CombatHUD implements IHUD {
 		abilitiesLabel.style = Themes.typography.header4;
 		abilitiesLabel.widthInPixels = 120;
 		abilitiesLabel.heightInPixels = 20;
-		abilitiesLabel.topInPixels = 1;
+		abilitiesLabel.topInPixels = 4;
 		abilitiesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		abilitiesLabel.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
@@ -227,7 +211,7 @@ export default class CombatHUD implements IHUD {
 		devicesLabel.style = Themes.typography.header4;
 		devicesLabel.widthInPixels = 120;
 		devicesLabel.heightInPixels = 20;
-		devicesLabel.topInPixels = 1;
+		devicesLabel.topInPixels = 4;
 		devicesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		devicesLabel.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
@@ -251,12 +235,7 @@ export default class CombatHUD implements IHUD {
 			allAbilityActionSlots.push(actionSlot);
 		}
 
-		this.weaponSlot = allAbilityActionSlots[0];
-		this.powerSlots = [
-			allAbilityActionSlots[1],
-			allAbilityActionSlots[2],
-			allAbilityActionSlots[3],
-		];
+		this.powerSlots = allAbilityActionSlots;
 
 		const actionItemStack = new StackPanel(this.actionDeviceStackName);
 		actionItemStack.isVertical = false;
@@ -290,7 +269,7 @@ export default class CombatHUD implements IHUD {
 		const messageDisplayUI = new Rectangle("ui_messageDisplay");
 		messageDisplayUI.color = Themes.primary1;
 		messageDisplayUI.background = Themes.primary3;
-		messageDisplayUI.thickness = 2;
+		messageDisplayUI.thickness = 1;
 		messageDisplayUI.widthInPixels = 280;
 		messageDisplayUI.heightInPixels = 48;
 		messageDisplayUI.top = 5;
@@ -325,7 +304,7 @@ export default class CombatHUD implements IHUD {
 		const combatLogHeader = new Rectangle("ui_combatLogHeader");
 		combatLogHeader.color = Themes.primary1;
 		combatLogHeader.background = Themes.primary3;
-		combatLogHeader.thickness = 2;
+		combatLogHeader.thickness = 1;
 		combatLogHeader.widthInPixels = 160;
 		combatLogHeader.heightInPixels = 20;
 		combatLogHeader.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
@@ -423,21 +402,10 @@ function getActionSlotKeyLabel(
 	actionIndex: number,
 	controlState: ControlState,
 ): string | null {
-	if (actionSlotKey === ActionSlotKey.weapon) {
-		return "LMB";
-	}
 	if (actionSlotKey === ActionSlotKey.power) {
-		if (actionIndex === 0) {
-			return "RMB";
-		}
-		const powerKey = controlState.controlSettings.powerKeys[
-			actionIndex - 1
-		];
+		const powerKey = controlState.controlSettings.powerKeys[actionIndex];
 		if (powerKey === undefined) {
 			return null;
-		}
-		if (powerKey === 16) {
-			return "SHIFT";
 		}
 		return String.fromCharCode(powerKey).toUpperCase();
 	}

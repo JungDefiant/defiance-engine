@@ -6,15 +6,15 @@ import {
 	StackPanel,
 	TextBlock,
 	Container,
-	Style,
 } from "@babylonjs/gui";
 import { EntityId } from "bitecs";
 import { Themes } from "../gui/Themes";
-import { ActorGUI } from "../types/UserInterfaceTypes";
 import { Component } from "./Component";
 import { setSelectedCharacter } from "src/modules/CharacterModule";
 
-export default class PlayerGUIComponent implements ActorGUI, Component {
+const STATUS_ICON_SLOTS: number = 4;
+
+export default class PlayerGUIComponent implements Component {
 	private rootContainer: Container;
 	private targetingUI: Image;
 	private backgroundUI: Rectangle;
@@ -22,12 +22,9 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 	private charNameUI: TextBlock;
 	private actBarBgUI: Rectangle;
 	private actBarFillUI: Rectangle;
-	private lifeBarBgUI: Rectangle;
-	private lifeBarFillUI: Rectangle;
-	private lifeBarValueUI: TextBlock;
-	private willBarBgUI: Rectangle;
-	private willBarFillUI: Rectangle;
-	private willBarValueUI: TextBlock;
+	private lifeValueUI: TextBlock;
+	private willValueUI: TextBlock;
+	private itemValueUI: TextBlock;
 	private queueActionBgUI: Rectangle;
 	private queueActionUI: Image;
 	private statusIconsUI: Grid;
@@ -39,8 +36,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 
 	public constructor(eid: EntityId, charName: string, spriteSrc: string) {
 		this.rootContainer = new Container();
-		this.rootContainer.widthInPixels = 150;
-		this.rootContainer.heightInPixels = 150;
+		this.rootContainer.widthInPixels = 152;
+		this.rootContainer.heightInPixels = 152;
 		this.rootContainer.top = -4;
 		this.rootContainer.verticalAlignment =
 			Control.VERTICAL_ALIGNMENT_BOTTOM;
@@ -51,8 +48,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		);
 		this.targetingUI.widthInPixels = 72;
 		this.targetingUI.heightInPixels = 72;
-		this.targetingUI.shadowOffsetX = 1;
-		this.targetingUI.shadowOffsetY = 1;
+		this.targetingUI.shadowOffsetX = 4;
+		this.targetingUI.shadowOffsetY = 4;
 		this.targetingUI.onPointerEnterObservable.add(() => {
 			this.targetingUI.shadowColor = "red";
 		});
@@ -65,7 +62,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 
 		this.backgroundUI = new Rectangle("ui_playerBgUI_" + eid);
 		this.backgroundUI.width = 1;
-		this.backgroundUI.heightInPixels = 96;
+		this.backgroundUI.height = 1;
+		this.backgroundUI.thickness = 1;
 		this.backgroundUI.background = Themes.primary3;
 		this.backgroundUI.color = Themes.primary1;
 		this.backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
@@ -89,8 +87,8 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 
 		const rootStackPanel = new StackPanel("ui_rootStackPanel_" + eid);
 		rootStackPanel.width = 1;
-		rootStackPanel.heightInPixels = 98;
-		rootStackPanel.spacing = 6;
+		rootStackPanel.heightInPixels = 52;
+		rootStackPanel.spacing = 0;
 		rootStackPanel.isVertical = true;
 		rootStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		rootStackPanel.onPointerClickObservable.add(() => {
@@ -98,187 +96,103 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		});
 		this.rootContainer.addControl(rootStackPanel);
 
-		const iconStackPanel = new StackPanel("ui_barStackPanel_" + eid);
-		iconStackPanel.heightInPixels = 38;
-		iconStackPanel.isVertical = false;
-		iconStackPanel.spacing = 75;
-		iconStackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		iconStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		rootStackPanel.addControl(iconStackPanel);
-
-		const barStackPanel = new StackPanel("ui_barStackPanel_" + eid);
-		barStackPanel.width = 1;
-		barStackPanel.isVertical = true;
-		barStackPanel.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		barStackPanel.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		barStackPanel.paddingTopInPixels = -3;
-		rootStackPanel.addControl(barStackPanel);
-
 		this.statusIconsUI = new Grid(`ui_playerStatusIcons_${eid}`);
-		this.statusIconsUI.widthInPixels = 45;
-		this.statusIconsUI.heightInPixels = 45;
+		this.statusIconsUI.widthInPixels = STATUS_ICON_SLOTS * 16;
+		this.statusIconsUI.heightInPixels = 32;
 		this.statusIconsUI.horizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_LEFT;
-		for (let i = 0; i < 4; i++) {
-			this.statusIconsUI.addColumnDefinition(9, true);
-			this.statusIconsUI.addRowDefinition(9, true);
+		this.statusIconsUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.statusIconsUI.leftInPixels = 8;
+		this.statusIconsUI.topInPixels = 56;
+		for (let column = 0; column < STATUS_ICON_SLOTS; column++) {
+			this.statusIconsUI.addColumnDefinition(16, true);
 		}
-		iconStackPanel.addControl(this.statusIconsUI);
+		this.statusIconsUI.addRowDefinition(16, true);
+		this.statusIconsUI.addRowDefinition(16, true);
+		this.rootContainer.addControl(this.statusIconsUI);
+
+		for (let column = 0; column < STATUS_ICON_SLOTS; column++) {
+			this.statusIconsUI.addControl(
+				this.createStatusSlotUI(eid, column),
+				0,
+				column,
+			);
+		}
 
 		this.queueActionBgUI = new Rectangle(`ui_playerQueueActionBg_${eid}`);
-		this.queueActionBgUI.widthInPixels = 24;
-		this.queueActionBgUI.heightInPixels = 24;
-		this.queueActionBgUI.thickness = 1.2;
+		this.queueActionBgUI.widthInPixels = 36;
+		this.queueActionBgUI.heightInPixels = 36;
+		this.queueActionBgUI.thickness = 1;
 		this.queueActionBgUI.color = Themes.primary1;
 		this.queueActionBgUI.background = Themes.primary3;
 		this.queueActionBgUI.horizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_RIGHT;
-		this.queueActionBgUI.verticalAlignment =
-			Control.VERTICAL_ALIGNMENT_BOTTOM;
-		iconStackPanel.addControl(this.queueActionBgUI);
+		this.queueActionBgUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+		this.queueActionBgUI.leftInPixels = -8;
+		this.queueActionBgUI.topInPixels = 56;
+		this.rootContainer.addControl(this.queueActionBgUI);
 
 		this.queueActionUI = new Image(`ui_playerQueueAction_${eid}`);
 		this.queueActionUI.width = 1;
 		this.queueActionUI.height = 1;
 		this.queueActionBgUI.addControl(this.queueActionUI);
 
-		this.charNameBgUI = new Rectangle(`ui_${name}StatBarBgUI_${eid}`);
-		this.charNameBgUI.width = 1;
-		this.charNameBgUI.heightInPixels = 15;
-		this.charNameBgUI.thickness = 1;
-		this.charNameBgUI.color = Themes.primary1;
-		this.charNameBgUI.background = Themes.primary3;
-		barStackPanel.addControl(this.charNameBgUI);
-
-		this.charNameUI = new TextBlock(
-			`ui_playerQueueAction_${eid}`,
-			charName.toUpperCase(),
-		);
-		this.charNameUI.width = 1;
-		this.charNameUI.height = 1;
-		this.charNameUI.style = Themes.typography.header4;
-		this.charNameUI.color = Themes.neutral2;
-		this.charNameUI.topInPixels = 0;
-		this.charNameUI.textVerticalAlignment =
-			Control.VERTICAL_ALIGNMENT_CENTER;
-		this.charNameBgUI.addControl(this.charNameUI);
-
-		// ACT BAR
-		const actBgUI = this.createStatBgUI(
-			eid,
-			"act",
-			Themes.primary1,
-			Themes.primary3,
-		);
-		barStackPanel.addControl(actBgUI);
-
-		const actStackUI = this.createStatPanelUI(eid);
-		actBgUI.addControl(actStackUI);
-
-		const actLabelUI = this.createLabelUI(
-			eid,
-			"act",
-			Themes.neutral2,
-			Themes.typography.bodyText,
-		);
-		actStackUI.addControl(actLabelUI);
-
-		this.actBarBgUI = this.createBarBgUI(
-			eid,
-			"act",
-			Themes.primary1,
-			Themes.primary3,
-		);
-		actStackUI.addControl(this.actBarBgUI);
+		this.actBarBgUI = new Rectangle(`ui_actBarBgUI_${eid}`);
+		this.actBarBgUI.width = 1;
+		this.actBarBgUI.heightInPixels = 12;
+		this.actBarBgUI.thickness = 0;
+		this.actBarBgUI.background = Themes.primary3;
+		rootStackPanel.addControl(this.actBarBgUI);
 
 		this.actBarFillUI = this.createBarFillUI(eid, "act", Themes.secondary2);
 		this.actBarBgUI.addControl(this.actBarFillUI);
 
-		// LIFE BAR
-		const lifeBgUI = this.createStatBgUI(
-			eid,
-			"life",
-			Themes.primary1,
-			Themes.primary3,
+		const statRowUI = new Grid(`ui_playerStatRow_${eid}`);
+		statRowUI.width = 1;
+		statRowUI.heightInPixels = 24;
+		for (let i = 0; i < 3; i++) {
+			statRowUI.addColumnDefinition(1 / 3, false);
+		}
+		statRowUI.addRowDefinition(24, true);
+		rootStackPanel.addControl(statRowUI);
+
+		const lifeCellUI = this.createStatCellUI(eid, "life");
+		statRowUI.addControl(lifeCellUI, 0, 0);
+		this.lifeValueUI = this.createStatValueUI(eid, "life", Themes.neutral2);
+		lifeCellUI.addControl(this.lifeValueUI);
+
+		const willCellUI = this.createStatCellUI(eid, "will");
+		statRowUI.addControl(willCellUI, 0, 1);
+		this.willValueUI = this.createStatValueUI(eid, "will", Themes.neutral2);
+		willCellUI.addControl(this.willValueUI);
+
+		const itemCellUI = this.createStatCellUI(eid, "item");
+		statRowUI.addControl(itemCellUI, 0, 2);
+		this.itemValueUI = this.createStatValueUI(eid, "item", Themes.neutral2);
+		itemCellUI.addControl(this.itemValueUI);
+
+		this.charNameBgUI = new Rectangle(`ui_playerCharNameBgUI_${eid}`);
+		this.charNameBgUI.width = 1;
+		this.charNameBgUI.heightInPixels = 16;
+		this.charNameBgUI.thickness = 1;
+		this.charNameBgUI.color = Themes.primary1;
+		this.charNameBgUI.background = Themes.primary3;
+		rootStackPanel.addControl(this.charNameBgUI);
+
+		this.charNameUI = new TextBlock(
+			`ui_playerCharNameUI_${eid}`,
+			charName.toUpperCase(),
 		);
-		barStackPanel.addControl(lifeBgUI);
-
-		const lifeStackUI = this.createStatPanelUI(eid);
-		lifeBgUI.addControl(lifeStackUI);
-
-		const lifeLabelUI = this.createLabelUI(
-			eid,
-			"life",
-			Themes.neutral2,
-			Themes.typography.bodyText,
-		);
-		lifeStackUI.addControl(lifeLabelUI);
-
-		this.lifeBarBgUI = this.createBarBgUI(
-			eid,
-			"life",
-			Themes.primary1,
-			Themes.primary3,
-		);
-		lifeStackUI.addControl(this.lifeBarBgUI);
-
-		this.lifeBarFillUI = this.createBarFillUI(
-			eid,
-			"life",
-			Themes.secondary3,
-		);
-		this.lifeBarBgUI.addControl(this.lifeBarFillUI);
-
-		this.lifeBarValueUI = this.createBarValueUI(
-			eid,
-			"lifeLabel",
-			Themes.neutral2,
-			Themes.typography.bodyText,
-		);
-		lifeStackUI.addControl(this.lifeBarValueUI);
-
-		// WILL BAR
-		const willBgUI = this.createStatBgUI(
-			eid,
-			"will",
-			Themes.primary1,
-			Themes.primary3,
-		);
-		barStackPanel.addControl(willBgUI);
-
-		const willStackUI = this.createStatPanelUI(eid);
-		willBgUI.addControl(willStackUI);
-
-		const willLabelUI = this.createLabelUI(
-			eid,
-			"will",
-			Themes.neutral2,
-			Themes.typography.bodyText,
-		);
-		willStackUI.addControl(willLabelUI);
-
-		this.willBarBgUI = this.createBarBgUI(
-			eid,
-			"will",
-			Themes.primary1,
-			Themes.primary3,
-		);
-		willStackUI.addControl(this.willBarBgUI);
-
-		this.willBarFillUI = this.createBarFillUI(
-			eid,
-			"will",
-			Themes.secondary1,
-		);
-		this.willBarBgUI.addControl(this.willBarFillUI);
-
-		this.willBarValueUI = this.createBarValueUI(
-			eid,
-			"willLabel",
-			Themes.neutral2,
-			Themes.typography.bodyText,
-		);
-		willStackUI.addControl(this.willBarValueUI);
+		this.charNameUI.width = 1;
+		this.charNameUI.height = 1;
+		this.charNameUI.style = Themes.typography.bodyText;
+		this.charNameUI.color = Themes.neutral2;
+		this.charNameUI.topInPixels = 0;
+		this.charNameUI.textHorizontalAlignment =
+			Control.HORIZONTAL_ALIGNMENT_CENTER;
+		this.charNameUI.textVerticalAlignment =
+			Control.VERTICAL_ALIGNMENT_CENTER;
+		this.charNameBgUI.addControl(this.charNameUI);
 	}
 
 	public getValue(): PlayerGUIComponent {
@@ -302,20 +216,16 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		);
 	}
 
-	public setLifeBarFill(currValue: number, maxValue: number): void {
-		this.lifeBarFillUI.width = Math.max(
-			0,
-			Math.min(1, currValue / maxValue || 0),
-		);
-		this.lifeBarValueUI.text = `${currValue}`;
+	public setLifePoints(value: number): void {
+		this.lifeValueUI.text = `${Math.round(value)}`;
 	}
 
-	public setWillBarFill(currValue: number, maxValue: number): void {
-		this.willBarFillUI.width = Math.max(
-			0,
-			Math.min(1, currValue / maxValue || 0),
-		);
-		this.willBarValueUI.text = `${currValue}`;
+	public setWillPoints(value: number): void {
+		this.willValueUI.text = `${Math.round(value)}`;
+	}
+
+	public setItemPoints(value: number): void {
+		this.itemValueUI.text = `${Math.round(value)}`;
 	}
 
 	public setQueuedAction(iconSrc: string): void {
@@ -324,19 +234,15 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 
 	public addStatusIcon(id: string, iconSrc: string): void {
 		if (this.statusIcons.has(id)) {
-			this.statusIconsUI.removeControl(
-				this.statusIcons.get(id) as Rectangle,
-			);
-			this.statusIcons.delete(id);
+			this.removeStatusIcon(id);
 		}
 
 		const statusIcon = new Rectangle(`ui_statusIcon_${id}`);
-		statusIcon.widthInPixels = 9;
-		statusIcon.heightInPixels = 9;
+		statusIcon.widthInPixels = 16;
+		statusIcon.heightInPixels = 16;
 		statusIcon.thickness = 1;
 		statusIcon.color = Themes.primary1;
 		statusIcon.background = Themes.primary3;
-		this.statusIconsUI.addControl(statusIcon);
 
 		const statusIconImg = new Image(`ui_statusIconImg_${id}`);
 		statusIconImg.width = 1;
@@ -345,78 +251,65 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		statusIcon.addControl(statusIconImg);
 
 		this.statusIcons.set(id, statusIcon);
-		this.statusIconsUI.addControl(statusIcon);
+		this.layoutStatusIcons();
 	}
 
 	public removeStatusIcon(id: string): void {
-		if (this.statusIcons.has(id)) {
-			this.statusIconsUI.removeControl(
-				this.statusIcons.get(id) as Rectangle,
+		const statusIcon = this.statusIcons.get(id);
+		if (!statusIcon) {
+			return;
+		}
+
+		this.statusIconsUI.removeControl(statusIcon);
+		this.statusIcons.delete(id);
+		this.layoutStatusIcons();
+	}
+
+	private layoutStatusIcons(): void {
+		let iconIndex = 0;
+		for (const statusIcon of this.statusIcons.values()) {
+			this.statusIconsUI.removeControl(statusIcon);
+			this.statusIconsUI.addControl(
+				statusIcon,
+				Math.floor(iconIndex / STATUS_ICON_SLOTS),
+				iconIndex % STATUS_ICON_SLOTS,
 			);
-			this.statusIcons.delete(id);
+			iconIndex++;
 		}
 	}
 
-	private createStatBgUI(
+	private createStatusSlotUI(eid: EntityId, index: number): Rectangle {
+		const slotUI = new Rectangle(`ui_statusSlot_${index}_${eid}`);
+		slotUI.thickness = 1;
+		slotUI.color = Themes.primary1;
+		slotUI.background = Themes.primary3;
+		return slotUI;
+	}
+
+	private createStatCellUI(eid: EntityId, name: string): Rectangle {
+		const cellUI = new Rectangle(`ui_${name}StatCellUI_${eid}`);
+		cellUI.thickness = 1;
+		cellUI.color = Themes.primary1;
+		cellUI.background = Themes.primary3;
+		return cellUI;
+	}
+
+	private createStatValueUI(
 		eid: EntityId,
 		name: string,
 		color: string,
-		background: string,
-	): Rectangle {
-		const statBgUi = new Rectangle(`ui_${name}StatBarBgUI_${eid}`);
-		statBgUi.widthInPixels = 150;
-		statBgUi.heightInPixels = 14;
-		statBgUi.thickness = 1;
-		statBgUi.color = color;
-		statBgUi.background = background;
-		return statBgUi;
-	}
-
-	private createStatPanelUI(eid: EntityId): StackPanel {
-		const stackPanel = new StackPanel(`ui_${name}StatBarStackBgUI_${eid}`);
-		stackPanel.width = 1;
-		stackPanel.height = 1;
-		stackPanel.spacing = 5;
-		stackPanel.leftInPixels = 3;
-		stackPanel.isVertical = false;
-
-		return stackPanel;
-	}
-
-	private createLabelUI(
-		eid: EntityId,
-		name: string,
-		color: string,
-		style: Style,
 	): TextBlock {
-		const statLabelUi = new TextBlock(
-			`ui_${name}StatLabelBgUI_${eid}`,
-			name.toUpperCase(),
-		);
-		statLabelUi.widthInPixels = 33;
-		statLabelUi.heightInPixels = 15;
-		statLabelUi.style = style;
-		statLabelUi.color = color;
-		statLabelUi.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		statLabelUi.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-		statLabelUi.paddingTopInPixels = 3;
-		statLabelUi.paddingLeftInPixels = 4;
-		return statLabelUi;
-	}
-
-	private createBarBgUI(
-		eid: EntityId,
-		name: string,
-		color: string,
-		background: string,
-	): Rectangle {
-		const bgUi = new Rectangle(`ui_${name}BarBgUI_${eid}`);
-		bgUi.widthInPixels = 82;
-		bgUi.heightInPixels = 9;
-		bgUi.thickness = 1.2;
-		bgUi.color = color;
-		bgUi.background = background;
-		return bgUi;
+		const valueUI = new TextBlock(`ui_${name}StatValueUI_${eid}`);
+		valueUI.widthInPixels = 24;
+		valueUI.heightInPixels = 16;
+		valueUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+		valueUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+		valueUI.leftInPixels = -4;
+		valueUI.style = Themes.typography.header4;
+		valueUI.color = color;
+		valueUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+		valueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+		return valueUI;
 	}
 
 	private createBarFillUI(eid: EntityId, name: string, color: string) {
@@ -427,24 +320,6 @@ export default class PlayerGUIComponent implements ActorGUI, Component {
 		barFillUI.color = color;
 		barFillUI.background = color;
 		return barFillUI;
-	}
-
-	private createBarValueUI(
-		eid: EntityId,
-		name: string,
-		color: string,
-		style: Style,
-	) {
-		const barValueUI = new TextBlock(`ui_${name}BarUIValue_${eid}`);
-		barValueUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		barValueUI.textHorizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		barValueUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-		barValueUI.widthInPixels = 18;
-		barValueUI.heightInPixels = 9;
-		barValueUI.color = color;
-		barValueUI.style = style;
-		return barValueUI;
 	}
 
 	public setTargetingCallback(newCallback: Function): void {

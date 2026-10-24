@@ -19,7 +19,7 @@ export class TacticalPauseScreen {
 		);
 		tacticalPauseLabel.color = Themes.neutral2;
 		tacticalPauseLabel.style = Themes.typography.header1;
-		tacticalPauseLabel.outlineWidth = 2;
+		tacticalPauseLabel.outlineWidth = 4;
 		tacticalPauseLabel.outlineColor = Themes.primary3;
 		tacticalPauseLabel.heightInPixels = 64;
 		tacticalPauseLabel.verticalAlignment =

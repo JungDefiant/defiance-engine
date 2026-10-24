@@ -1,7 +1,6 @@
 {
 	"id": "test",
 	"difficultyLevel": 0,
-	"startLocationId": "loc0",
 	"mapModelId": "defiance_level.glb",
 	"dialogueFileId": "dlg_test",
 	"startMusicId": "darkstar_azureglitch.mp3",
@@ -15,56 +14,37 @@
 			"enem_test"
 		]
 	},
-	"locations": [
+	"interactables": [
 		{
-			"id": "loc0",
-			"exploreViewNodeId": "loc0_view_explore",
-			"combatViewNodeId": "loc0_view_combat",
-			"combatSpawnNodeId": "loc0_spawn_enemy",
-			"interactables": [
-				{
-					"id": "itr_test1",
-					"name": "Terminal",
-					"description": "A terminal with access to the MetroNet.",
-					"dialogueNodeId": "ch0_start",
-					"interactableNodeId": "itr_computer_target",
-					"viewPositionNodeId": "itr_computer_view",
-					"guiPositionOffset": [
-						0,
-						0,
-						0
-					]
-				}
-			],
-			"doors": [
-				{
-					"id": "door_t0_t1",
-					"destination": "loc1"
-				}
-			],
-			"events": []
+			"id": "itr_test1",
+			"name": "Terminal",
+			"description": "A terminal with access to the MetroNet.",
+			"dialogueNodeId": "ch0_start",
+			"interactableNodeId": "itr_computer_target",
+			"guiPositionOffset": [
+				0,
+				0,
+				0
+			]
+		}
+	],
+	"doors": [
+		{
+			"id": "door_t0_t1",
+			"destination": "loc1"
 		},
 		{
-			"id": "loc1",
-			"exploreViewNodeId": "loc1_view_explore",
-			"combatViewNodeId": "loc1_view_combat",
-			"combatSpawnNodeId": "loc1_spawn_enemy",
-			"interactables": [],
-			"doors": [
-				{
-					"id": "door_t1_t0",
-					"destination": "loc0"
-				}
-			],
-			"events": [
-				{
-					"id": "evt_test1",
-					"condition": "",
-					"type": "Modal",
-					"trigger": "OnLocationEnter",
-					"assetId": "mdl_test"
-				}
-			]
+			"id": "door_t1_t0",
+			"destination": "loc0"
+		}
+	],
+	"events": [
+		{
+			"id": "evt_test1",
+			"condition": "",
+			"type": "Modal",
+			"trigger": "OnSceneEnter",
+			"assetId": "mdl_test"
 		}
 	]
 }

@@ -1,0 +1,49 @@
+import { Mesh, Vector3 } from "@babylonjs/core";
+import { EntityId } from "bitecs";
+import { AbilityData } from "src/types/AbilityTypes";
+import { Component } from "./Component";
+
+export interface ProjectileComponentConstructorProperties {
+	mesh: Mesh;
+	direction: Vector3;
+	speed: number;
+	distanceTraveled: number;
+	maxRange: number;
+	radius: number;
+	sourceEid: EntityId;
+	actionData: AbilityData;
+	targetEids: EntityId[];
+}
+
+export default class ProjectileComponent implements Component {
+	public readonly mesh: Mesh;
+	public readonly maxRange: number;
+	public readonly radius: number;
+	public readonly sourceEid: EntityId;
+	public readonly actionData: AbilityData;
+	public readonly targetEids: EntityId[];
+	public direction: Vector3;
+	public speed: number;
+	public distanceTraveled: number;
+
+	constructor(props: ProjectileComponentConstructorProperties) {
+		this.mesh = props.mesh;
+		this.maxRange = props.maxRange;
+		this.radius = props.radius;
+		this.sourceEid = props.sourceEid;
+		this.actionData = props.actionData;
+		this.targetEids = props.targetEids;
+		this.direction = props.direction;
+		this.speed = props.speed;
+		this.distanceTraveled = props.distanceTraveled;
+	}
+
+	public getValue(): ProjectileComponent {
+		return this;
+	}
+
+	public dispose(): void {
+		this.mesh.material?.dispose();
+		this.mesh.dispose();
+	}
+}

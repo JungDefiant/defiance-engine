@@ -20,15 +20,15 @@ export default class PartyInfoHUD implements IHUD {
 			Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.rootContainer.width = 1;
 		this.rootContainer.heightInPixels = 300;
-		this.rootContainer.topInPixels = -50;
+		this.rootContainer.topInPixels = -48;
 
 		const background = new Rectangle("ui_partyInfoHudBg");
 		background.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 		background.background = Themes.primary3;
 		background.color = Themes.primary1;
-		background.thickness = 2;
+		background.thickness = 1;
 		background.width = 1;
-		background.heightInPixels = 110;
+		background.heightInPixels = 112;
 		background.isPointerBlocker = true;
 
 		this.rootContainer.addControl(background);

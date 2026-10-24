@@ -177,7 +177,6 @@ export class ModalScreen {
 	}
 
 	public renderPageByIndex(index: number) {
-		// Check for out of bounds and early exit
 		if (index < 0) {
 			index = this.modalPages.length - 1;
 		} else if (index > this.modalPages.length - 1) {
@@ -192,8 +191,8 @@ export class ModalScreen {
 		if (currentPage.imageSrc) {
 			this.modalImage.source = currentPage.imageSrc;
 			this.modalImage.isVisible = true;
-			this.modalImage.widthInPixels = 150;
-			this.modalImage.heightInPixels = 150;
+			this.modalImage.widthInPixels = 152;
+			this.modalImage.heightInPixels = 152;
 			this.modalText.widthInPixels = 400;
 		} else {
 			this.modalImage.isVisible = false;

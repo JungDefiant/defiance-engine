@@ -4,6 +4,7 @@ import {
 	Color3,
 	CreateAudioEngineAsync,
 	Engine,
+	EventState,
 	HemisphericLight,
 	MeshBuilder,
 	PointerEventTypes,
@@ -12,6 +13,7 @@ import {
 	Vector3,
 	Viewport,
 } from "@babylonjs/core";
+import { Button, Control, Vector2WithInfo } from "@babylonjs/gui";
 import {
 	resetCombatModeActionManager,
 	resetCombatModeControls,
@@ -19,10 +21,6 @@ import {
 	resetExploreModeActionManager,
 	resetExploreModeControls,
 } from "./ControlModule";
-import {
-	resetCombatViewPosition,
-	resetExploreViewPosition,
-} from "./CameraModule";
 import {
 	getCampaignState,
 	getControlState,
@@ -33,17 +31,13 @@ import {
 	getUserInterfaceState,
 } from "./GameStateModule";
 import { getPublicRoot } from "./Utils";
-import {
-	LoadedSceneJson,
-	NewLocationSceneParams,
-} from "src/types/GameTypes";
+import { DoorData, Interactable, LoadedSceneJson } from "src/types/GameTypes";
 import { GameScene, GameSceneProps } from "src/scenes/GameScene";
 import { Themes } from "src/gui/Themes";
 import {
 	DEFAULT_CAM_TARGET,
 	ISO_CAM_OFFSET,
 } from "src/constants/GeneralConstants";
-import { addComponent, addEntity, EntityId } from "bitecs";
 import {
 	createUserInterfaceState,
 	loadModalMap,
@@ -52,8 +46,11 @@ import {
 import { loadStartingPlayerParty } from "./CharacterModule";
 import { playMusic } from "./AudioModule";
 import GameplayState from "src/states/GameplayState";
-import { loadLocation } from "./LocationModule";
-import { initSemantics, loadDialogueMap } from "./DialogueModule";
+import {
+	initSemantics,
+	loadDialogueMap,
+	startDialogue,
+} from "./DialogueModule";
 import AudioState from "src/states/AudioState";
 import { UserInterfaceScene } from "src/scenes/UserInterfaceScene";
 import {
@@ -69,21 +66,14 @@ import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
-import { AssetsManager, Scene } from "babylonjs";
-import { initNavigation } from "./ActorNavigationModule";
+import { initNavigation, navigateToPosition } from "./ActorNavigationModule";
 import { createEnvironment } from "./EnvironmentModule";
-import { startQueueActionPlayer } from "./CombatModule";
-import { ActionSlotKey } from "src/types/AbilityTypes";
+import { checkEventByTrigger, filterSceneEvents } from "./EventModule";
 
 export async function initGameScene(sceneId: string) {
 	const engine = container.resolve(Engine);
 	const newGameScene = await createGameScene(sceneId, engine);
-	newGameScene.lastExploreViewTarget = DEFAULT_CAM_TARGET;
 	createUserInterfaceScene(engine);
-
-	createSkybox(newGameScene);
-	createSceneLight(newGameScene);
-	createEnvironment(newGameScene);
 
 	const newSystemRegistry = new SystemRegistry();
 	container.register(SystemRegistry, { useValue: newSystemRegistry });
@@ -98,7 +88,7 @@ export async function initGameScene(sceneId: string) {
 
 	registerFactories(newFactoryRegistry);
 	registerSystems(newSystemRegistry, newGameScene);
-	await registerStates(newGameStateRegistry, newGameScene);
+	await registerStates(newGameStateRegistry);
 	registerComponentArrays(newComponentRegistry);
 	registerProcessors(newProcessorRegistry);
 	await startFactories(newFactoryRegistry);
@@ -110,31 +100,133 @@ export async function initGameScene(sceneId: string) {
 	await initSemantics();
 	await loadDialogueMap(newGameScene.dialogueFileId);
 
-	newGameScene.cameraEntityId = createSceneCamera(newGameScene);
-	await createStartingLocation(newGameScene);
+	createSceneCamera(newGameScene);
+	await createSceneInteractiveElements(newGameScene);
 	await playMusic(newGameScene.startMusicId);
-	initNavigation(newGameScene);
+
+	// The environment must exist before the navmesh is generated, since its
+	// meshes (floor, walls, pillars, crates) are the navmesh geometry source.
+	createSkybox(newGameScene);
+	createSceneLight(newGameScene);
+	createEnvironment(newGameScene);
+
+	await initNavigation(newGameScene);
+
 	setExploreGameMode();
+	checkEventByTrigger("OnSceneEnter");
 }
 
-async function createStartingLocation(gameScene: GameScene) {
+async function createSceneInteractiveElements(gameScene: GameScene) {
+	filterSceneEvents(gameScene.events);
+
+	for (const interactable of gameScene.interactables) {
+		await createSceneInteractable(interactable);
+	}
+
+	for (const door of gameScene.doors) {
+		await createSceneDoor(door);
+	}
+}
+
+export async function createSceneInteractable(interactable: Interactable) {
+	const interactableNode = await getSceneNode(
+		interactable.interactableNodeId,
+	);
+
+	if (!interactableNode) {
+		return;
+	}
+
 	const userInterfaceState = getUserInterfaceState();
 	const controlState = getControlState();
-	const newLocationSceneParams = {
-		gameScene,
-		sceneGUI: userInterfaceState.sceneGUI,
-		exploreGUIControls: controlState.exploreGUIControls,
-	} as NewLocationSceneParams;
-	const location = await loadLocation(
-		gameScene.startLocationId,
-		newLocationSceneParams,
+
+	const button = Button.CreateImageOnlyButton(
+		interactable.id,
+		`${getPublicRoot()}/sprites/gui/icons/icon_interact.png`,
 	);
-	gameScene.currentLocation = location;
+	button.width = 0.075;
+	button.height = 0.1125;
+	button.thickness = 0;
+	button.onPointerEnterObservable.add(
+		enableHighlightInfoUIFunction(interactable),
+	);
+	button.onPointerOutObservable.add(disableHighlightInfoUIFunction());
+	button.onPointerClickObservable.add(
+		startDialogueFromInteractableFunction(interactable),
+	);
+	userInterfaceState.sceneGUI.addControl(button);
+	controlState.exploreGUIControls.push(button);
+	button.linkWithMesh(interactableNode);
 }
 
-export function initGameplayState(cameraEntityId: EntityId) {
+function startDialogueFromInteractableFunction(
+	interactable: Interactable,
+): (eventData: Vector2WithInfo, eventState: EventState) => void {
+	return async () => {
+		startDialogue(interactable.dialogueNodeId);
+	};
+}
+
+function enableHighlightInfoUIFunction(
+	interactable: Interactable,
+): (eventData: Control, eventState: EventState) => void {
+	return () => {
+		const userInterfaceState = getUserInterfaceState();
+		userInterfaceState.exploreHud.updateHighlightInfoUI(
+			interactable.name,
+			interactable.description,
+		);
+	};
+}
+
+function disableHighlightInfoUIFunction(): (
+	eventData: Control,
+	eventState: EventState,
+) => void {
+	return () => {
+		const userInterfaceState = getUserInterfaceState();
+		userInterfaceState.exploreHud.hideHighlightInfoUI();
+	};
+}
+
+export async function createSceneDoor(doorData: DoorData) {
+	const sceneNode = await getSceneNode(doorData.id);
+
+	if (!sceneNode) {
+		return;
+	}
+
+	const userInterfaceState = getUserInterfaceState();
+	const controlState = getControlState();
+
+	const button = Button.CreateImageOnlyButton(
+		doorData.id,
+		`${getPublicRoot()}/sprites/gui/icons/icon_door.png`,
+	);
+	button.width = 0.1;
+	button.height = 0.1;
+	button.thickness = 0;
+	button.onPointerEnterObservable.add(() => {
+		userInterfaceState.exploreHud.updateHighlightInfoUI(
+			`Head To ${doorData.destination}`,
+			doorData.destination,
+		);
+	});
+	button.onPointerOutObservable.add(() => {
+		userInterfaceState.exploreHud.hideHighlightInfoUI();
+	});
+	button.onPointerClickObservable.add(() => {
+		console.warn(
+			`Door "${doorData.id}" is inert; location transitions are no longer supported.`,
+		);
+	});
+	userInterfaceState.sceneGUI.addControl(button);
+	controlState.exploreGUIControls.push(button);
+	button.linkWithMesh(sceneNode);
+}
+
+export function initGameplayState() {
 	const newGameplayState = new GameplayState();
-	newGameplayState.cameraEntityId = cameraEntityId;
 	getGameStateRegistry().registerNewGameState(
 		GameplayState.name,
 		newGameplayState,
@@ -155,13 +247,14 @@ async function createGameScene(
 	const sceneJson = await loadSceneJson(sceneId);
 	const gameSceneProps = {
 		engine,
-		startLocationId: sceneJson.startLocationId,
 		mapModelId: sceneJson.mapModelId,
 		difficultyLevel: sceneJson.difficultyLevel,
 		startMusicId: sceneJson.startMusicId,
 		dialogueFileId: sceneJson.dialogueFileId,
 		encounters: sceneJson.encounters,
-		locations: sceneJson.locations,
+		interactables: sceneJson.interactables,
+		doors: sceneJson.doors,
+		events: sceneJson.events,
 		modalIds: sceneJson.modalIds,
 	} as GameSceneProps;
 	const newGameScene = new GameScene(engine, gameSceneProps);
@@ -198,14 +291,12 @@ export async function getSceneNode(sceneNodeId: string) {
 
 export function setExploreGameMode() {
 	setUserInterfaceGameMode("Explore");
-	Promise.resolve(resetExploreViewPosition());
 	resetExploreModeControls();
 	resetExploreModeActionManager();
 }
 
 export function setCombatGameMode() {
 	setUserInterfaceGameMode("Combat");
-	Promise.resolve(resetCombatViewPosition());
 	resetCombatModeControls();
 	resetCombatModeActionManager();
 }
@@ -239,32 +330,27 @@ function createSkybox(scene: GameScene) {
 	skybox.infiniteDistance = true;
 }
 
-export function createSceneCamera(scene: GameScene): EntityId {
+export function createSceneCamera(scene: GameScene): void {
 	const gameCanvas = getGameCanvas();
 
-	if (gameCanvas) {
-		const initialFocus = DEFAULT_CAM_TARGET;
-		const camera = new UniversalCamera(
-			"cam_iso",
-			initialFocus.add(ISO_CAM_OFFSET),
-			scene,
-		);
-		camera.minZ = 0;
-		camera.viewport = new Viewport(0, 0.1, 1, 1);
-		camera.inputs.clear();
-		camera.setTarget(initialFocus);
-		camera.attachControl();
-		scene.activeCamera = camera;
-
-		registerScenePointerBindings(scene, gameCanvas);
-
-		const newCameraEntityId = addEntity(scene.world);
-		addComponent(scene.world, newCameraEntityId, camera);
-
-		return newCameraEntityId;
+	if (!gameCanvas) {
+		throw Error("No game canvas found!");
 	}
 
-	throw Error("No game canvas found!");
+	const initialFocus = DEFAULT_CAM_TARGET;
+	const camera = new UniversalCamera(
+		"cam_iso",
+		initialFocus.add(ISO_CAM_OFFSET),
+		scene,
+	);
+	camera.minZ = 0;
+	camera.viewport = new Viewport(0, 0.1, 1, 1);
+	camera.inputs.clear();
+	camera.setTarget(initialFocus);
+	camera.attachControl();
+	scene.activeCamera = camera;
+
+	registerScenePointerBindings(scene, gameCanvas);
 }
 
 function registerScenePointerBindings(
@@ -277,18 +363,52 @@ function registerScenePointerBindings(
 
 	gameCanvas.addEventListener("pointerdown", () => {
 		if (!document.fullscreenElement) {
-			document.documentElement.requestFullscreen().catch(() => {
-			});
+			document.documentElement.requestFullscreen().catch(() => {});
 		}
 	});
 
 	scene.onPointerObservable.add((pointerInfo) => {
+		const controlState = getControlState();
+		const gameplayState = getGameplayState();
+		const pointerButton = (pointerInfo.event as PointerEvent).button;
+
+		if (pointerInfo.type === PointerEventTypes.POINTERUP) {
+			if (
+				pointerButton === controlState.controlSettings.moveMouseButton
+			) {
+				controlState.isMoveInputHeld = false;
+			}
+			return;
+		}
+
+		if (pointerInfo.type === PointerEventTypes.POINTERMOVE) {
+			if (!controlState.isMoveInputHeld) {
+				return;
+			}
+			if (
+				controlState.controlPauseSet.size > 0 ||
+				controlState.actionPauseSet.size > 0
+			) {
+				return;
+			}
+			const groundPick = scene.pick(
+				scene.pointerX,
+				scene.pointerY,
+				(mesh) => mesh.name === "env_floor",
+			);
+			if (groundPick?.hit && groundPick.pickedPoint) {
+				navigateToPosition(
+					gameplayState.selectedPlayerEID,
+					groundPick.pickedPoint,
+				);
+			}
+			return;
+		}
+
 		if (pointerInfo.type !== PointerEventTypes.POINTERDOWN) {
 			return;
 		}
 
-		const controlState = getControlState();
-		const gameplayState = getGameplayState();
 		if (
 			controlState.controlPauseSet.size > 0 ||
 			controlState.actionPauseSet.size > 0
@@ -296,9 +416,7 @@ function registerScenePointerBindings(
 			return;
 		}
 
-		const pointerButton = (pointerInfo.event as PointerEvent).button;
-
-		if (pointerButton === controlState.controlSettings.weaponMouseButton) {
+		if (pointerButton === controlState.controlSettings.targetMouseButton) {
 			const enemyPick = scene.pick(
 				scene.pointerX,
 				scene.pointerY,
@@ -314,19 +432,21 @@ function registerScenePointerBindings(
 					gameplayState.selectedTargetEID = pickedEntityId;
 				}
 			}
-			startQueueActionPlayer(
-				gameplayState.selectedPlayerEID,
-				ActionSlotKey.weapon,
-				0,
-			);
 		} else if (
-			pointerButton === controlState.controlSettings.powerMouseButton
+			pointerButton === controlState.controlSettings.moveMouseButton
 		) {
-			startQueueActionPlayer(
-				gameplayState.selectedPlayerEID,
-				ActionSlotKey.power,
-				0,
+			controlState.isMoveInputHeld = true;
+			const groundPick = scene.pick(
+				scene.pointerX,
+				scene.pointerY,
+				(mesh) => mesh.name === "env_floor",
 			);
+			if (groundPick?.hit && groundPick.pickedPoint) {
+				navigateToPosition(
+					gameplayState.selectedPlayerEID,
+					groundPick.pickedPoint,
+				);
+			}
 		}
 	});
 }

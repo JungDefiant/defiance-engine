@@ -1,5 +1,4 @@
 import { AbilityDescriptor, ActionSlotKey } from "./AbilityTypes";
-import type { TacticsData } from "src/components/ActorStateComponent";
 
 export enum DefaultBehavior {
 	Passive = "Passive",
@@ -34,19 +33,4 @@ export function createDefaultActorTactics(): ActorTactic[] {
 			actionIndex: 0,
 		},
 	];
-}
-
-export function convertTacticsDataToActorTactics(
-	tacticsData?: TacticsData[],
-): ActorTactic[] {
-	if (!tacticsData || tacticsData.length === 0) {
-		return createDefaultActorTactics();
-	}
-
-	return tacticsData.map((entry) => ({
-		condition: entry.condition as unknown as BehaviorCondition,
-		actionType: entry.actionType,
-		actionSlotKey: entry.actionSlotKey,
-		actionIndex: entry.actionIndex,
-	}));
 }

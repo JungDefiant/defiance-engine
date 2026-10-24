@@ -2,13 +2,11 @@ import { inject } from "tsyringe";
 import GameSystem from "src/systems/GameSystem";
 import { query } from "bitecs";
 import ActorStateComponent from "src/components/ActorStateComponent";
-import {
-	PAUSE_GAMEOVER,
-	PAUSE_VICTORYSCREEN,
-} from "src/constants/GeneralConstants";
+import { PAUSE_GAMEOVER } from "src/constants/GeneralConstants";
 import {
 	createNewAbilityContext,
 	decideNPCAction,
+	endCombat,
 	startActionRecovery,
 } from "src/modules/CombatModule";
 import { spendAbilityCost, triggerFeatEffects } from "src/modules/EffectModule";
@@ -17,15 +15,16 @@ import {
 	renderMessageDisplay,
 	startRenderQueue,
 } from "src/modules/RenderModule";
-import { spawnActionDeliveryProjectile } from "src/modules/Collision3DModule";
 import { GameScene } from "src/scenes/GameScene";
 import {
 	getControlState,
 	getGameplayState,
+	getRenderState,
 	getUserInterfaceState,
 } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
 import { AbilityTrigger } from "src/types/AbilityTypes";
+import { getProjectileFactory } from "src/modules/FactoryModule";
 
 export default class CombatManagerSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -43,8 +42,10 @@ export default class CombatManagerSystem implements GameSystem {
 		}
 
 		if (gameplayState.combatState === CombatState.Victory) {
-			controlState.actionPauseSet.add(PAUSE_VICTORYSCREEN);
-			userInterfaceState.victoryScreen.showHide(true);
+			const renderState = getRenderState();
+			if (renderState.renderQueueStates.length === 0) {
+				endCombat();
+			}
 			return;
 		}
 
@@ -106,6 +107,10 @@ export default class CombatManagerSystem implements GameSystem {
 			) {
 				Promise.resolve(
 					this.performQueuedAction(actorData).then(() => {
+						// With behavior being handled in its own system and module, need to look into whether this is needed or not
+						if (gameplayState.playerEntityIds.includes(eid)) {
+							actorData.queuedAction = null;
+						}
 						if (gameplayState.enemyEntityIds.includes(eid)) {
 							Promise.resolve(decideNPCAction(actorData));
 						}
@@ -147,7 +152,8 @@ export default class CombatManagerSystem implements GameSystem {
 			AbilityTrigger.onActionPerform,
 		);
 
-		spawnActionDeliveryProjectile(
+		// Rework this to get targets based on the shape type
+		getProjectileFactory().createEntityFromProperties(
 			sourceActorState.entityId,
 			actionToPerform,
 			actionTargetIds,

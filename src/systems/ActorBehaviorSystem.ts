@@ -21,6 +21,8 @@ export default class ActorBehaviorSystem implements GameSystem {
 		}
 
 		const gameplayState = getGameplayState();
+
+		// Move out from main behavior system loop into a more 'modular' handling of the system
 		if (gameplayState.combatState === CombatState.Inactive) {
 			if (controlState.controlPauseSet.size > 0) {
 				return;
@@ -30,6 +32,7 @@ export default class ActorBehaviorSystem implements GameSystem {
 		}
 
 		updateSelectedPlayerAutoAttack();
+		//
 
 		const behaviorComponentArray = getActorBehaviorComponentArray();
 		for (const eid of query(this.gameScene.world, [

@@ -23,10 +23,7 @@ import {
 	getPlayerGuiComponentArray,
 } from "src/modules/ComponentModule";
 import { createNavigationAgent } from "src/modules/ActorNavigationModule";
-import {
-	convertTacticsDataToActorTactics,
-	DefaultBehavior,
-} from "src/types/BehaviorTypes";
+import { DefaultBehavior } from "src/types/BehaviorTypes";
 import {
 	ACTOR_GROUND_Y,
 	ACTOR_SPRITE_VERTICAL_OFFSET,
@@ -126,7 +123,7 @@ export class PlayerFactory implements EntityFactory {
 				new ActorBehaviorComponent(
 					newEntity,
 					DefaultBehavior.Aggressive,
-					convertTacticsDataToActorTactics(newActorComp.tactics),
+					newActorComp.tactics,
 				),
 			),
 		);

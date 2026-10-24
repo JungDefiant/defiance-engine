@@ -1,10 +1,15 @@
 import { Vector3 } from "@babylonjs/core";
 import { EntityId } from "bitecs";
 
-export type TargetingShapeType = "projectile" | "sphere" | "beam" | "cone";
+export type TargetingRangeType =
+	| "direct"
+	| "projectile"
+	| "self"
+	| "sphere"
+	| "cone";
 
 export interface TargetingShapeData {
-	type: TargetingShapeType;
+	type: TargetingRangeType;
 	range?: number;
 	radius?: number;
 	angle?: number;

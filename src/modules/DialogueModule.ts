@@ -9,11 +9,10 @@ import {
 	getCampaignState,
 	getControlState,
 	getDialogueState,
-	getGameScene,
 	getUserInterfaceState,
 } from "./GameStateModule";
 import DialogueHUD from "src/gui/DialogueHUD";
-import { TransformNode, UniversalCamera, Vector3 } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
 import grammar from "src/parser/DialogueParser.ohm-bundle";
 import { getPublicRoot } from "./Utils";
 import { PAUSE_DIALOGUE } from "src/constants/GeneralConstants";
@@ -49,21 +48,13 @@ export async function loadDialogueMap(dialogueId: string): Promise<void> {
 	}
 }
 
-export async function startDialogue(
-	dialogueNodeId: string,
-	startDialogueProps?: {
-		interactablePositionNode: TransformNode;
-		viewPositionNode: TransformNode;
-	},
-): Promise<void> {
-	const gameScene = getGameScene();
+export async function startDialogue(dialogueNodeId: string): Promise<void> {
 	const userInterfaceState = getUserInterfaceState();
 	const dialogueState = getDialogueState();
 	const controlState = getControlState();
 	const dialogueHud = userInterfaceState.dialogueHud;
-	const camera = gameScene.activeCamera as UniversalCamera;
 
-	if (!dialogueHud || !camera) {
+	if (!dialogueHud) {
 		return;
 	}
 
@@ -72,14 +63,6 @@ export async function startDialogue(
 	}
 
 	controlState.actionPauseSet.add(PAUSE_DIALOGUE);
-
-	if (startDialogueProps) {
-		camera.position =
-			startDialogueProps.viewPositionNode.getPositionExpressedInLocalSpace();
-		camera.setTarget(
-			startDialogueProps.interactablePositionNode.getAbsolutePosition(),
-		);
-	}
 
 	setDialogueGameMode();
 	dialogueHud.clearEntryStacks();
@@ -103,7 +86,6 @@ export function runLine(id: number) {
 	const dialogueState = getDialogueState();
 	const userInterfaceState = getUserInterfaceState();
 
-	// Get dialogue HUD
 	if (!dialogueState.activeDialogue) {
 		endDialogue(true);
 		return;
@@ -174,7 +156,6 @@ export function displayTextLine(
 	}
 
 	if (line.text) {
-		// Display text entry for dialogue
 		dialogueHud.addTextDialogueEntry(line);
 	}
 
@@ -196,11 +177,9 @@ export function displayOptionsLine(line: DialogueLine, dlgHud: DialogueHUD) {
 
 	const options = line.options;
 	if (!options || options.length < 1) {
-		// Set end dialogue button
 		console.warn("No options found, exiting dialogue");
 		dlgHud.addExitEntry();
 	} else {
-		// Set choices GUI
 		dlgHud.addChoiceEntries(options);
 	}
 }
@@ -224,12 +203,6 @@ export function runCommand(id: number, line: DialogueLine) {
 			setStringVariableDialogueCommand(
 				line.vars[0] as string,
 				line.vars[1] as string,
-			);
-			break;
-		case "movecam":
-			moveCameraDialogueCommand(
-				line.vars[0] as Vector3,
-				line.vars[1] as Vector3,
 			);
 			break;
 		case "startcombat":
@@ -258,8 +231,6 @@ function setNumberVariableDialogueCommand(name: string, value: number) {
 	const campaignState = getCampaignState();
 	campaignState.storyVariableMap.set(name, value);
 }
-
-function moveCameraDialogueCommand(position: Vector3, target: Vector3) {}
 
 function setSpeakerDialogueCommand(charId: string) {}
 

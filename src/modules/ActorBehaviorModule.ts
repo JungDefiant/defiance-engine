@@ -34,10 +34,7 @@ const WEAPON_RANGE_STOP_FACTOR = 0.9;
 const LOS_RAY_HEIGHT = 0.4;
 const LOS_BLOCKING_TOLERANCE = 0.1;
 
-function rotateFormationOffsetAroundY(
-	offset: Vector3,
-	yaw: number,
-): Vector3 {
+function rotateFormationOffsetAroundY(offset: Vector3, yaw: number): Vector3 {
 	const cosYaw = Math.cos(yaw);
 	const sinYaw = Math.sin(yaw);
 	return new Vector3(
@@ -126,6 +123,10 @@ export function updateSelectedPlayerAutoAttack() {
 		return;
 	}
 
+	if (selectedActorState.queuedAction) {
+		return;
+	}
+
 	const selectedTargetEid = gameplayState.selectedTargetEID;
 	if (
 		selectedTargetEid < 0 ||
@@ -138,17 +139,11 @@ export function updateSelectedPlayerAutoAttack() {
 		return;
 	}
 
-	const actionTimerAttribute = selectedActorState.attributes.actionTimer;
-	if (
-		actionTimerAttribute.currentValue !==
-		actionTimerAttribute.maximumValue
-	) {
-		return;
-	}
-
 	startQueueActionPlayer(selectedEid, ActionSlotKey.weapon, 0);
 }
 
+// Break up this method into smaller methods, probably using a processor to gate the code that runs depending on the behavior
+// How are tactics actually processed? The tactics should be processed before the behavior is processed.
 export function decideActionByBehavior(entityId: EntityId) {
 	const gameplayState = getGameplayState();
 	if (gameplayState.combatState !== CombatState.Active) {

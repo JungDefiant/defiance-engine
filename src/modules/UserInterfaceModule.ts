@@ -1,4 +1,11 @@
-import { Texture, UniversalCamera, Vector3 } from "@babylonjs/core";
+import {
+	Color3,
+	MeshBuilder,
+	StandardMaterial,
+	Texture,
+	UniversalCamera,
+	Vector3,
+} from "@babylonjs/core";
 import {
 	AdvancedDynamicTexture,
 	Button,
@@ -13,23 +20,27 @@ import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
-import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import { UserInterfaceScene } from "src/scenes/UserInterfaceScene";
 import UserInterfaceState, {
 	UserInterfaceStateProps,
 } from "src/states/UserInterfaceState";
 import {
 	getCampaignState,
+	getGameplayState,
 	getGameScene,
 	getGameStateRegistry,
 	getUserInterfaceScene,
 	getUserInterfaceState,
 } from "./GameStateModule";
-import { CreateTypography } from "src/gui/Themes";
+import { CreateTypography, Themes } from "src/gui/Themes";
 import { GameScene } from "src/scenes/GameScene";
 import { getPublicRoot } from "./Utils";
 import { GameMode, LoadedModalJson } from "src/types/GameTypes";
 import { playSFX } from "./AudioModule";
+import { getActorStateComponentArray } from "./ComponentModule";
+import { getActorPosition } from "./Collision3DModule";
+import { TARGET_HIGHLIGHT_DIAMETER } from "src/constants/CombatConstants";
+import { ACTOR_GROUND_Y } from "src/constants/GeneralConstants";
 
 export async function loadModalMap(modalIds: string[]): Promise<void> {
 	const campaignState = getCampaignState();
@@ -64,7 +75,7 @@ function createMainUI(uiScene: UserInterfaceScene) {
 		Texture.NEAREST_SAMPLINGMODE,
 	);
 	mainUI.idealWidth = 1000;
-	mainUI.idealHeight = 750;
+	mainUI.idealHeight = 752;
 	return mainUI;
 }
 
@@ -76,7 +87,7 @@ function createSceneUI(scene: GameScene) {
 		Texture.NEAREST_SAMPLINGMODE,
 	);
 	sceneGUI.idealWidth = 1000;
-	sceneGUI.idealHeight = 750;
+	sceneGUI.idealHeight = 752;
 	return sceneGUI;
 }
 
@@ -84,13 +95,6 @@ function createUICamera(uiScene: UserInterfaceScene) {
 	const uiCamera = new UniversalCamera("cam_gui", Vector3.Zero(), uiScene);
 	uiCamera.attachControl(false);
 	return uiCamera;
-}
-
-function createVictoryScreen(mainUI: AdvancedDynamicTexture) {
-	const victoryScreen = new VictoryScreen();
-	mainUI.addControl(victoryScreen.getRoot());
-	victoryScreen.showHide(false);
-	return victoryScreen;
 }
 
 function createGameOverScreen(mainUI: AdvancedDynamicTexture) {
@@ -203,7 +207,6 @@ export function createUserInterfaceState() {
 	const dialogueHud = createDialogueHUD(mainUI);
 	const modalScreen = createModalScreen(mainUI);
 	const gameOverScreen = createGameOverScreen(mainUI);
-	const victoryScreen = createVictoryScreen(mainUI);
 	const newUserInterfaceState = new UserInterfaceState({
 		mainUI,
 		sceneUI,
@@ -214,7 +217,6 @@ export function createUserInterfaceState() {
 		dialogueHud,
 		modalScreen,
 		gameOverScreen,
-		victoryScreen,
 	} as UserInterfaceStateProps);
 	getGameStateRegistry().registerNewGameState(
 		UserInterfaceState.name,
@@ -246,4 +248,56 @@ export function showModal(modalId: string) {
 	}
 	userInterfaceState.modalScreen.setNewPages(modalData.pages);
 	userInterfaceState.modalScreen.showHide(true);
+}
+
+export function updateTargetHighlight(): void {
+	const gameScene = getGameScene();
+	const gameplayState = getGameplayState();
+	const userInterfaceState = getUserInterfaceState();
+	const actorStateComponentArray = getActorStateComponentArray();
+
+	const targetEid = gameplayState.selectedTargetEID;
+	const targetActorState =
+		targetEid >= 0 ? actorStateComponentArray[targetEid] : undefined;
+	const targetPosition = targetEid >= 0 ? getActorPosition(targetEid) : null;
+	let targetHighlightMesh = userInterfaceState.targetHighlightMesh;
+
+	if (!targetActorState || targetActorState.isDefeated || !targetPosition) {
+		if (targetHighlightMesh) {
+			targetHighlightMesh.setEnabled(false);
+		}
+		return;
+	}
+
+	if (!targetHighlightMesh) {
+		targetHighlightMesh = MeshBuilder.CreateTorus(
+			"targetHighlight",
+			{
+				diameter: TARGET_HIGHLIGHT_DIAMETER,
+				thickness: 0.04,
+				tessellation: 24,
+			},
+			gameScene,
+		);
+		targetHighlightMesh.isPickable = false;
+
+		const highlightMaterial = new StandardMaterial(
+			"mat_targetHighlight",
+			gameScene,
+		);
+		highlightMaterial.diffuseColor = Color3.FromHexString(
+			Themes.secondary3,
+		);
+		highlightMaterial.emissiveColor = Color3.FromHexString(
+			Themes.secondary3,
+		);
+		highlightMaterial.disableLighting = true;
+		targetHighlightMesh.material = highlightMaterial;
+
+		userInterfaceState.targetHighlightMesh = targetHighlightMesh;
+	}
+
+	targetHighlightMesh.setEnabled(true);
+	targetHighlightMesh.position.copyFrom(targetPosition);
+	targetHighlightMesh.position.y = ACTOR_GROUND_Y + 0.02;
 }

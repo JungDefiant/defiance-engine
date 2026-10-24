@@ -1,3 +1,4 @@
+import { Mesh, Nullable } from "@babylonjs/core";
 import { AdvancedDynamicTexture } from "@babylonjs/gui";
 import CombatHUD from "src/gui/CombatHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
@@ -6,7 +7,6 @@ import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
-import { VictoryScreen } from "src/gui/screens/VictoryScreen";
 import { LoadedModalJson } from "src/types/GameTypes";
 
 export default class UserInterfaceState {
@@ -19,8 +19,8 @@ export default class UserInterfaceState {
 	public readonly tacticalPauseScreen: TacticalPauseScreen;
 	public readonly modalScreen: ModalScreen;
 	public readonly gameOverScreen: GameOverScreen;
-	public readonly victoryScreen: VictoryScreen;
 	public readonly modalMap: Map<string, LoadedModalJson> = new Map();
+	public targetHighlightMesh: Nullable<Mesh> = null;
 
 	public constructor(newProps: UserInterfaceStateProps) {
 		this.mainUI = newProps.mainUI;
@@ -32,7 +32,6 @@ export default class UserInterfaceState {
 		this.modalScreen = newProps.modalScreen;
 		this.tacticalPauseScreen = newProps.tacticalPauseScreen;
 		this.gameOverScreen = newProps.gameOverScreen;
-		this.victoryScreen = newProps.victoryScreen;
 	}
 }
 
@@ -46,5 +45,4 @@ export interface UserInterfaceStateProps {
 	readonly tacticalPauseScreen: TacticalPauseScreen;
 	readonly modalScreen: ModalScreen;
 	readonly gameOverScreen: GameOverScreen;
-	readonly victoryScreen: VictoryScreen;
 }

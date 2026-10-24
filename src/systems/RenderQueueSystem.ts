@@ -5,6 +5,7 @@ import { getControlState, getRenderState } from "src/modules/GameStateModule";
 import { GameScene } from "src/scenes/GameScene";
 import { inject } from "tsyringe";
 
+// Rework the render queue system to work with new style of the game; may need to replace with another system
 export default class RenderQueueSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
 

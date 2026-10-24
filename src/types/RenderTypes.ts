@@ -128,14 +128,15 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 					targetEntityId: entityId,
 				},
 			);
-			floatingTextUI.widthInPixels = 400;
-			floatingTextUI.heightInPixels = 128;
+			floatingTextUI.widthInPixels = 200;
+			floatingTextUI.heightInPixels = 64;
 			floatingTextUI.color = this.color;
 			floatingTextUI.alpha = 1;
 			floatingTextUI.topInPixels = 0;
 			floatingTextUI.linkOffsetYInPixels = 0;
 			floatingTextUI.style = Themes.typography.header1;
-			floatingTextUI.shadowOffsetY = 2;
+			floatingTextUI.fontSize = 20;
+			floatingTextUI.shadowOffsetY = 4;
 			floatingTextUI.shadowBlur = 4;
 			floatingTextUI.shadowColor = Themes.primary3;
 			floatingTextUI.isVisible = false;
@@ -260,6 +261,9 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 
 					const stickerImage =
 						getStickerImageComponentArray()[stickerImageEntityId];
+
+					stickerImage.widthInPixels *= 0.5;
+					stickerImage.heightInPixels *= 0.5;
 
 					const imageAnimation =
 						getImageAnimationComponentArray()[stickerImageEntityId];

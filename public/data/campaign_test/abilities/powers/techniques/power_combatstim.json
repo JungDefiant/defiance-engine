@@ -1,0 +1,33 @@
+{
+	"id": "power_combatstim",
+	"name": "Combat Stim",
+	"description": "",
+	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
+	"castVfxURL": "",
+	"hitVfxURL": "vfx/vfx_test",
+	"castSfxURL": "",
+	"hitSfxURL": "",
+	"trigger": "onActionPerform",
+	"descriptors": [
+		"power",
+		"technique",
+		"single",
+		"self"
+	],
+	"target": "self",
+	"recoveryTime": 6,
+	"cost": 10,
+	"costAttribute": "willPoints",
+	"targetingShape": {
+		"type": "sphere",
+		"radius": 1
+	},
+	"effectData": [
+		{
+			"id": "healing",
+			"variables": {
+				"baseHealing": 20
+			}
+		}
+	]
+}

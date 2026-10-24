@@ -1,5 +1,4 @@
 import CombatManagerSystem from "../systems/CombatManagerSystem";
-import EntityMovementSystem from "../systems/EntityMovementSystem";
 import ImageAnimationSystem from "../systems/ImageAnimationSystem";
 import RenderQueueSystem from "../systems/RenderQueueSystem";
 import ActorStateSystem from "../systems/ActorStateSystem";
@@ -16,7 +15,6 @@ import GameplayState from "src/states/GameplayState";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
 import EnemyGUIComponent from "src/components/EnemyGUIComponent";
-import EntityMovementComponent from "src/components/EntityMovementComponent";
 import FloatingTextComponent from "src/components/FloatingTextComponent";
 import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 import StickerImageComponent from "src/components/StickerImageComponent";
@@ -29,10 +27,13 @@ import CollisionComponent from "src/components/CollisionComponent";
 import { GameEventProcessor } from "src/processors/GameEventProcessor";
 import { AbilityEffectApplicationProcessor } from "src/processors/AbilityEffectApplicationProcessor";
 import { AbilityEffectCalculationProcessor } from "src/processors/AbilityEffectCalculationProcessor";
+import NavigationState from "src/states/NavigationState";
+import { ProjectileFactory } from "src/factories/ProjectileFactory";
+import ProjectileSystem from "src/systems/ProjectileSystem";
+import ProjectileComponent from "src/components/ProjectileComponent";
 
 // The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
-	EntityMovementSystem,
 	ActorNavigationSystem,
 	CombatManagerSystem,
 	ActorBehaviorSystem,
@@ -40,10 +41,16 @@ export const SYSTEM_TOKENS = [
 	UserInterfaceSystem,
 	ImageAnimationSystem,
 	RenderQueueSystem,
+	ProjectileSystem,
 	Collision3DSystem,
 ];
 
-export const FACTORY_TOKENS = [EnemyFactory, PlayerFactory, StickerFactory];
+export const FACTORY_TOKENS = [
+	EnemyFactory,
+	PlayerFactory,
+	StickerFactory,
+	ProjectileFactory,
+];
 
 export const PROCESSOR_TOKENS = [
 	AbilityEffectApplicationProcessor,
@@ -58,12 +65,12 @@ export const COMPONENT_TOKENS = [
 	CharacterSpriteComponent,
 	CollisionComponent,
 	EnemyGUIComponent,
-	EntityMovementComponent,
 	FloatingTextComponent,
 	ImageAnimationComponent,
 	PlayerGUIComponent,
 	StickerImageComponent,
 	TransformNodeComponent,
+	ProjectileComponent,
 ];
 
 export const STATE_TOKENS = [
@@ -71,4 +78,5 @@ export const STATE_TOKENS = [
 	DialogueState,
 	GameplayState,
 	RenderState,
+	NavigationState,
 ];

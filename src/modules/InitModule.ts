@@ -127,7 +127,6 @@ export function registerSystems(
 
 export async function registerStates(
 	gameStateRegistry: GameStateRegistry,
-	gameScene: GameScene,
 ) {
 	gameStateRegistry.registerNewGameState(
 		AudioState.name,
@@ -141,7 +140,7 @@ export async function registerStates(
 		);
 	}
 
-	initGameplayState(gameScene.cameraEntityId);
+	initGameplayState();
 }
 
 export async function registerComponentArrays(

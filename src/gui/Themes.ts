@@ -22,35 +22,35 @@ export function CreateTypography(adt: AdvancedDynamicTexture) {
 
 	const bodyTextStyle = adt.createStyle();
 	bodyTextStyle.fontFamily = "ComicSans";
-	bodyTextStyle.fontSize = 11;
+	bodyTextStyle.fontSize = 12;
 	Themes.typography.bodyText = bodyTextStyle;
 
 	const header4Style = adt.createStyle();
 	header4Style.fontFamily = "RobotoMono";
 	header4Style.fontWeight = "normal";
-	header4Style.fontSize = 11;
+	header4Style.fontSize = 12;
 	Themes.typography.header4 = header4Style;
 
 	const header3Style = adt.createStyle();
 	header3Style.fontFamily = "RobotoMono";
 	header3Style.fontWeight = "normal";
-	header3Style.fontSize = 13;
+	header3Style.fontSize = 16;
 	Themes.typography.header3 = header3Style;
 
 	const header2Style = adt.createStyle();
 	header2Style.fontFamily = "RobotoMono";
 	header2Style.fontWeight = "normal";
-	header2Style.fontSize = 19;
+	header2Style.fontSize = 20;
 	Themes.typography.header2 = header2Style;
 
 	const header1Style = adt.createStyle();
 	header1Style.fontFamily = "KurlandRegular";
-	header1Style.fontSize = 38;
+	header1Style.fontSize = 40;
 	Themes.typography.header1 = header1Style;
 
 	const titleStyle = adt.createStyle();
 	titleStyle.fontFamily = "KurlandRegular";
-	titleStyle.fontSize = 51;
+	titleStyle.fontSize = 52;
 	Themes.typography.title = titleStyle;
 }
 

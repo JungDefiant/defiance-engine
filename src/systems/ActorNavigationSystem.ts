@@ -1,6 +1,6 @@
 import { inject } from "tsyringe";
 import GameSystem from "./GameSystem";
-import { Axis, Nullable, Vector3 } from "@babylonjs/core";
+import { Nullable, Vector3 } from "@babylonjs/core";
 import { EntityId, query } from "bitecs";
 import ActorNavigationComponent from "src/components/ActorNavigationComponent";
 import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
@@ -26,10 +26,11 @@ import {
 } from "src/constants/GeneralConstants";
 import ControlState from "src/states/ControlState";
 import CollisionComponent from "src/components/CollisionComponent";
-
-const NAV_ARRIVE_DISTANCE = 0.15;
-const ACTOR_SPACING_MARGIN = 0.05;
-const DEFAULT_ACTOR_COLLISION_RADIUS = 0.3;
+import {
+	ACTOR_SPACING_MARGIN,
+	DEFAULT_ACTOR_COLLISION_RADIUS,
+	NAV_ARRIVE_DISTANCE,
+} from "src/constants/NavigationConstants";
 
 export default class ActorNavigationSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -53,10 +54,7 @@ export default class ActorNavigationSystem implements GameSystem {
 				continue;
 			}
 
-			if (
-				navigationCrowd &&
-				navigationComponent.agentIndex >= 0
-			) {
+			if (navigationCrowd && navigationComponent.agentIndex >= 0) {
 				const agentPosition = navigationCrowd.getAgentPosition(
 					navigationComponent.agentIndex,
 				);
@@ -98,8 +96,7 @@ export default class ActorNavigationSystem implements GameSystem {
 			) {
 				navigationComponent.isNavigating = false;
 				navigationComponent.destination = null;
-				const onArrive =
-					navigationComponent.onDestinationReachedEvent;
+				const onArrive = navigationComponent.onDestinationReachedEvent;
 				navigationComponent.onDestinationReachedEvent = null;
 				if (onArrive) {
 					onArrive();
@@ -115,7 +112,6 @@ export default class ActorNavigationSystem implements GameSystem {
 			}
 		}
 
-		this.updateSelectedPlayerDirectedMovement(deltaTime, controlState);
 		this.resolveActorSpacing();
 		this.resolveEnvironmentCollisions();
 		this.updateIsometricCameraFollow(controlState);
@@ -160,8 +156,7 @@ export default class ActorNavigationSystem implements GameSystem {
 				}
 
 				const firstActorState = actorStateComponentArray[firstEid];
-				const secondActorState =
-					actorStateComponentArray[secondEid];
+				const secondActorState = actorStateComponentArray[secondEid];
 				if (
 					(firstActorState && firstActorState.isDefeated) ||
 					(secondActorState && secondActorState.isDefeated)
@@ -202,14 +197,8 @@ export default class ActorNavigationSystem implements GameSystem {
 				}
 				const overlap = minimumDistance - separationDistance;
 
-				const isFirstMoving = this.isActorMoving(
-					firstEid,
-					firstNavigation,
-				);
-				const isSecondMoving = this.isActorMoving(
-					secondEid,
-					secondNavigation,
-				);
+				const isFirstMoving = this.isActorMoving(firstNavigation);
+				const isSecondMoving = this.isActorMoving(secondNavigation);
 				let firstCorrectionShare = 0.5;
 				let secondCorrectionShare = 0.5;
 				if (isFirstMoving && !isSecondMoving) {
@@ -229,9 +218,7 @@ export default class ActorNavigationSystem implements GameSystem {
 				this.applySpacingCorrection(
 					secondEid,
 					secondNavigation,
-					separationDirection.scale(
-						-overlap * secondCorrectionShare,
-					),
+					separationDirection.scale(-overlap * secondCorrectionShare),
 					characterSpriteComponentArray,
 				);
 			}
@@ -263,22 +250,9 @@ export default class ActorNavigationSystem implements GameSystem {
 	}
 
 	private isActorMoving(
-		entityId: EntityId,
 		navigationComponent: ActorNavigationComponent,
 	): boolean {
-		if (navigationComponent.isNavigating) {
-			return true;
-		}
-		if (entityId !== getGameplayState().selectedPlayerEID) {
-			return false;
-		}
-		const movementInput = getControlState().movementInput;
-		return (
-			movementInput.forward ||
-			movementInput.back ||
-			movementInput.left ||
-			movementInput.right
-		);
+		return navigationComponent.isNavigating;
 	}
 
 	private resolveEnvironmentCollisions() {
@@ -335,8 +309,7 @@ export default class ActorNavigationSystem implements GameSystem {
 					pushDirectionX * pushDirectionX +
 						pushDirectionZ * pushDirectionZ,
 				);
-				const minimumDistance =
-					actorRadius + ACTOR_SPACING_MARGIN;
+				const minimumDistance = actorRadius + ACTOR_SPACING_MARGIN;
 
 				if (pushDistance > minimumDistance) {
 					continue;
@@ -350,10 +323,8 @@ export default class ActorNavigationSystem implements GameSystem {
 					localCorrectionX = pushDirectionX * pushScale;
 					localCorrectionZ = pushDirectionZ * pushScale;
 				} else {
-					const overlapX =
-						obstacle.halfExtents.x - Math.abs(localX);
-					const overlapZ =
-						obstacle.halfExtents.z - Math.abs(localZ);
+					const overlapX = obstacle.halfExtents.x - Math.abs(localX);
+					const overlapZ = obstacle.halfExtents.z - Math.abs(localZ);
 					if (overlapX < overlapZ) {
 						localCorrectionX =
 							localX >= 0
@@ -379,10 +350,7 @@ export default class ActorNavigationSystem implements GameSystem {
 				navigationComponent.position.y = ACTOR_GROUND_Y;
 
 				if (navigationComponent.agentIndex >= 0) {
-					teleportNavigationAgent(
-						eid,
-						navigationComponent.position,
-					);
+					teleportNavigationAgent(eid, navigationComponent.position);
 				}
 
 				const characterSprite = characterSpriteComponentArray[eid];
@@ -428,90 +396,6 @@ export default class ActorNavigationSystem implements GameSystem {
 		if (travelDirection.lengthSquared() > 0.0001) {
 			navigationComponent.facingDirection.copyFrom(
 				travelDirection.normalize(),
-			);
-		}
-	}
-
-	private updateSelectedPlayerDirectedMovement(
-		deltaTime: number,
-		controlState: ControlState,
-	) {
-		if (controlState.actionPauseSet.size > 0) {
-			return;
-		}
-		if (controlState.controlPauseSet.size > 0) {
-			return;
-		}
-
-		const gameplayState = getGameplayState();
-		const navigationComponentArray = getActorNavigationComponentArray();
-		const selectedNavigation: Nullable<ActorNavigationComponent> =
-			navigationComponentArray[gameplayState.selectedPlayerEID] ?? null;
-		if (!selectedNavigation) {
-			return;
-		}
-
-		const movementInput = controlState.movementInput;
-		if (
-			!movementInput.forward &&
-			!movementInput.back &&
-			!movementInput.left &&
-			!movementInput.right
-		) {
-			return;
-		}
-
-		const camera = this.gameScene.activeCamera;
-		if (!camera) {
-			return;
-		}
-
-		const cameraForward = camera.getDirection(Axis.Z).clone();
-		cameraForward.y = 0;
-		if (cameraForward.lengthSquared() < 0.0001) {
-			return;
-		}
-		cameraForward.normalize();
-
-		const cameraRight = camera.getDirection(Axis.X).clone();
-		cameraRight.y = 0;
-		if (cameraRight.lengthSquared() < 0.0001) {
-			return;
-		}
-		cameraRight.normalize();
-
-		const moveDirection = Vector3.Zero();
-		if (movementInput.forward) {
-			moveDirection.addInPlace(cameraForward);
-		}
-		if (movementInput.back) {
-			moveDirection.addInPlace(cameraForward.negate());
-		}
-		if (movementInput.left) {
-			moveDirection.addInPlace(cameraRight.negate());
-		}
-		if (movementInput.right) {
-			moveDirection.addInPlace(cameraRight);
-		}
-
-		if (moveDirection.lengthSquared() < 0.0001) {
-			return;
-		}
-		moveDirection.normalize();
-
-		selectedNavigation.facingDirection.copyFrom(moveDirection);
-
-		selectedNavigation.isNavigating = false;
-		selectedNavigation.destination = null;
-		selectedNavigation.position.addInPlace(
-			moveDirection.scale(selectedNavigation.speed * deltaTime),
-		);
-		selectedNavigation.position.y = ACTOR_GROUND_Y;
-
-		if (selectedNavigation.agentIndex >= 0) {
-			teleportNavigationAgent(
-				gameplayState.selectedPlayerEID,
-				selectedNavigation.position,
 			);
 		}
 	}

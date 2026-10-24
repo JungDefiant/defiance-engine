@@ -20,7 +20,7 @@ export default class ExploreHUD implements IHUD {
 
 		const backgroundUI = new Rectangle("ui_exploreBgUI");
 		backgroundUI.width = 1;
-		backgroundUI.heightInPixels = 50;
+		backgroundUI.heightInPixels = 52;
 		backgroundUI.background = Themes.primary3;
 		backgroundUI.thickness = 0;
 		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
@@ -58,20 +58,20 @@ export default class ExploreHUD implements IHUD {
 		const highlightInfoUI = new Rectangle("ui_highlightInfoUI");
 		highlightInfoUI.background = Themes.primary3;
 		highlightInfoUI.color = Themes.primary1;
-		highlightInfoUI.thickness = 2;
+		highlightInfoUI.thickness = 1;
 		highlightInfoUI.widthInPixels = 320;
-		highlightInfoUI.heightInPixels = 50;
+		highlightInfoUI.heightInPixels = 52;
 		highlightInfoUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
 		const highlightHeader = new TextBlock(this.headerUIName, "");
-		highlightHeader.fontSize = 14;
-		highlightHeader.topInPixels = -10;
+		highlightHeader.fontSize = 16;
+		highlightHeader.topInPixels = -8;
 		highlightHeader.color = Themes.neutral2;
 		highlightHeader.style = Themes.typography.header4;
 		highlightInfoUI.addControl(highlightHeader);
 
 		const highlightDescription = new TextBlock(this.descriptionUIName, "");
-		highlightDescription.fontSize = 11;
+		highlightDescription.fontSize = 12;
 		highlightDescription.lineSpacing = -8;
 		highlightDescription.topInPixels = 20;
 		highlightDescription.paddingLeftInPixels =

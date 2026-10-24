@@ -7,20 +7,30 @@ import { getGameEventProcessor } from "./ProcessorModule";
 
 export function checkEventByTrigger(eventTrigger: GameEventTrigger) {
 	const gameScene = getGameScene();
-	if (!gameScene.currentLocation) {
-		return;
-	}
-
-	const eventsArray = gameScene.currentLocation.events.filter(
+	const eventsArray = gameScene.events.filter(
 		(event) => event.trigger === eventTrigger,
 	);
 
 	for (const event of eventsArray) {
 		getGameEventProcessor().getProcessorFunction(event.type)(event);
 		const eventIndex = eventsArray.indexOf(event);
-		gameScene.currentLocation.events.splice(eventIndex);
+		gameScene.events.splice(eventIndex, 1);
 		return;
 	}
+}
+
+export function filterSceneEvents(events: GameEvent[]) {
+	const uniqueEvents = new Set<string>();
+	const filteredEvents: GameEvent[] = [];
+	events.forEach((event) => {
+		const eventKey = `${event.trigger}_${event.type}_${event.condition}`;
+		if (!uniqueEvents.has(eventKey)) {
+			uniqueEvents.add(eventKey);
+			filteredEvents.push(event);
+		}
+	});
+	events.length = 0;
+	events.push(...filteredEvents);
 }
 
 export function triggerDialogueEvent(event: GameEvent) {

@@ -1,6 +1,5 @@
 import {
 	Control,
-	Grid,
 	Rectangle,
 	Image,
 	StackPanel,
@@ -9,21 +8,16 @@ import {
 } from "@babylonjs/gui";
 import { EntityId } from "bitecs";
 import { Themes } from "../gui/Themes";
-import { ActorGUI } from "../types/UserInterfaceTypes";
 import { Component } from "./Component";
 import ActorStateComponent from "./ActorStateComponent";
 import { getComponentRegistry } from "src/modules/ComponentModule";
 import CharacterSpriteComponent from "./CharacterSpriteComponent";
 
-export default class EnemyGUIComponent implements ActorGUI, Component {
+export default class EnemyGUIComponent implements Component {
 	private rootContainer: StackPanel;
 	private targetingUI: Image;
-	private actBarBGUI: Rectangle;
-	private actBarFillUI: Rectangle;
 	private lifeBarBGUI: Rectangle;
 	private lifeBarFillUI: Rectangle;
-	private statusIconsUI: Grid;
-	private statusIcons: Map<string, Rectangle> = new Map<string, Rectangle>();
 
 	public constructor(eid: EntityId, sceneGUI: AdvancedDynamicTexture) {
 		const enemyActorState =
@@ -41,7 +35,7 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 			`ui_enBattlerUI_${enemyActorState.id}_${eid}`,
 		);
 		this.rootContainer.widthInPixels = 24;
-		this.rootContainer.heightInPixels = 48;
+		this.rootContainer.heightInPixels = 24;
 		sceneGUI.addControl(this.rootContainer);
 
 		this.targetingUI = new Image(
@@ -50,8 +44,8 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		);
 		this.targetingUI.widthInPixels = 20;
 		this.targetingUI.heightInPixels = 20;
-		this.targetingUI.shadowOffsetX = 1;
-		this.targetingUI.shadowOffsetY = 1;
+		this.targetingUI.shadowOffsetX = 4;
+		this.targetingUI.shadowOffsetY = 4;
 		this.targetingUI.onPointerEnterObservable.add(() => {
 			this.targetingUI.shadowColor = "red";
 		});
@@ -62,35 +56,9 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		this.targetingUI.isVisible = false;
 		this.rootContainer.addControl(this.targetingUI);
 
-		this.statusIconsUI = new Grid(`ui_enBattlerStatusIcons_${eid}`);
-		this.statusIconsUI.widthInPixels = 24;
-		this.statusIconsUI.heightInPixels = 5;
-		for (let i = 0; i < 2; i++) {
-			this.statusIconsUI.addRowDefinition(2.5, true);
-		}
-		for (let i = 0; i < 8; i++) {
-			this.statusIconsUI.addColumnDefinition(3, true);
-		}
-		this.rootContainer.addControl(this.statusIconsUI);
-
-		this.actBarBGUI = this.createBarBgUI(
-			eid,
-			"enBattlerActBarUIBG",
-			Themes.primary1,
-			Themes.primary3,
-		);
-		this.rootContainer.addControl(this.actBarBGUI);
-
-		this.actBarFillUI = this.createBarFillUI(
-			eid,
-			"enBattlerActBarUIFill_",
-			Themes.secondary2,
-		);
-		this.actBarBGUI.addControl(this.actBarFillUI);
-
 		this.lifeBarBGUI = this.createBarBgUI(
 			eid,
-			"enBattlerActBarUIBG",
+			"enBattlerLifeBarUIBG",
 			Themes.primary1,
 			Themes.primary3,
 		);
@@ -98,10 +66,12 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 
 		this.lifeBarFillUI = this.createBarFillUI(
 			eid,
-			"enBattlerActBarUIFill_",
+			"enBattlerLifeBarUIFill_",
 			Themes.secondary3,
 		);
 		this.lifeBarBGUI.addControl(this.lifeBarFillUI);
+
+		this.lifeBarBGUI.isVisible = false;
 
 		this.rootContainer.linkWithMesh(enemySprite);
 		this.rootContainer.linkOffsetY = 8;
@@ -119,13 +89,6 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		return this.rootContainer;
 	}
 
-	public setActBarFill(currValue: number, maxValue: number): void {
-		this.actBarFillUI.width = Math.max(
-			0,
-			Math.min(1, currValue / maxValue || 0),
-		);
-	}
-
 	public setLifeBarFill(currValue: number, maxValue: number): void {
 		this.lifeBarFillUI.width = Math.max(
 			0,
@@ -133,39 +96,8 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 		);
 	}
 
-	public addStatusIcon(id: string, iconSrc: string): void {
-		if (this.statusIcons.has(id)) {
-			this.statusIconsUI.removeControl(
-				this.statusIcons.get(id) as Rectangle,
-			);
-			this.statusIcons.delete(id);
-		}
-
-		const statusIcon = new Rectangle(`ui_statusIcon_${id}`);
-		statusIcon.widthInPixels = 3;
-		statusIcon.heightInPixels = 3;
-		statusIcon.thickness = 1;
-		statusIcon.color = Themes.primary1;
-		statusIcon.background = Themes.primary3;
-		this.statusIconsUI.addControl(statusIcon);
-
-		const statusIconImg = new Image(`ui_statusIconImg_${id}`);
-		statusIconImg.width = 1;
-		statusIconImg.height = 1;
-		statusIconImg.source = iconSrc;
-		statusIcon.addControl(statusIconImg);
-
-		this.statusIcons.set(id, statusIcon);
-		this.statusIconsUI.addControl(statusIcon);
-	}
-
-	public removeStatusIcon(id: string): void {
-		if (this.statusIcons.has(id)) {
-			this.statusIconsUI.removeControl(
-				this.statusIcons.get(id) as Rectangle,
-			);
-			this.statusIcons.delete(id);
-		}
+	public setLifeBarVisible(isVisible: boolean): void {
+		this.lifeBarBGUI.isVisible = isVisible;
 	}
 
 	public setTargetingCallback(newCallback: Function): void {
@@ -188,7 +120,7 @@ export default class EnemyGUIComponent implements ActorGUI, Component {
 	): Rectangle {
 		const barBGUI = new Rectangle(`ui_${name}_${eid}`);
 		barBGUI.widthInPixels = 20;
-		barBGUI.heightInPixels = 3;
+		barBGUI.heightInPixels = 4;
 		barBGUI.thickness = 1;
 		barBGUI.color = color;
 		barBGUI.background = background;

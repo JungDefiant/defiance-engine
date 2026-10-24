@@ -36,7 +36,6 @@ export interface ActionContext {
 export interface AttackContext {
 	attackRoll: number;
 	attackRollResult: AttackRollResult;
-	// attackRollChances: Map<AttackRollResult, number>;
 }
 
 export interface DamageContext {

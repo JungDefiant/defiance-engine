@@ -4,10 +4,7 @@ import {
 	PAUSE_RENDERQUEUE,
 	PAUSE_TACTICALPAUSE,
 } from "src/constants/GeneralConstants";
-import ActorStateComponent, {
-	TacticsCondition,
-	TacticsData,
-} from "src/components/ActorStateComponent";
+import ActorStateComponent from "src/components/ActorStateComponent";
 import { CombatState } from "src/systems/CombatManagerSystem";
 import { container } from "tsyringe";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
@@ -49,8 +46,7 @@ import {
 } from "./ComponentModule";
 import {
 	getAbilityTargetsByShape,
-	spawnAbilityProjectile,
-	spawnActionDeliveryProjectile,
+	getSelectedTargetEid,
 } from "./Collision3DModule";
 import { setCombatGameMode, setExploreGameMode } from "./SceneModule";
 import {
@@ -58,6 +54,7 @@ import {
 	resetCombatModeActionManager,
 } from "./ControlModule";
 import { checkEventByTrigger } from "./EventModule";
+import { ActorTactic, BehaviorCondition } from "src/types/BehaviorTypes";
 
 export async function startCombat(encId: string): Promise<void> {
 	const gameScene = getGameScene();
@@ -149,13 +146,12 @@ export function setTacticalPause(isActive: boolean) {
 
 export function getTargetsBasedOnCondition(
 	actionData: AbilityData,
-	tacticEntry: TacticsData,
+	tacticEntry: ActorTactic,
 	sourceEid: EntityId,
 ): EntityId[] {
-	// Check if ability condition is true
-	if (tacticEntry.condition === TacticsCondition.random) {
+	if (tacticEntry.condition === BehaviorCondition.random) {
 		return getRandomTarget(actionData, sourceEid);
-	} else if (tacticEntry.condition === TacticsCondition.lowestLife) {
+	} else if (tacticEntry.condition === BehaviorCondition.lowestLife) {
 		return getLowestLifeTarget(actionData, sourceEid);
 	}
 
@@ -167,6 +163,11 @@ export function startQueueActionPlayer(
 	actionSlotKey: ActionSlotKey,
 	index: number,
 ): void {
+	const gameplayState = getGameplayState();
+	if (gameplayState.combatState !== CombatState.Active) {
+		return;
+	}
+
 	const actorData =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.name,
@@ -185,24 +186,35 @@ export function startQueueActionPlayer(
 		return;
 	}
 
-	const actionTimerAttribute = actorData.attributes.actionTimer;
-	if (
-		actionTimerAttribute.currentValue !== actionTimerAttribute.maximumValue
-	) {
+	const abilityCost = (actionData.cost as number) || 0;
+	const costAttributeName = (actionData.costAttribute as string) || "";
+	if (abilityCost > 0) {
+		const costAttribute = actorData.attributes[costAttributeName];
+		if (!costAttribute || costAttribute.currentValue < abilityCost) {
+			return;
+		}
+	}
+
+	const targetEids = resolvePlayerActionTargets(eid, actionData);
+	if (targetEids.length === 0) {
 		return;
 	}
 
-	if (actionData.targetingShape?.type === "projectile") {
-		spawnAbilityProjectile(eid, actionData);
-	} else {
-		const targetEids = getAbilityTargetsByShape(eid, actionData);
-		if (targetEids.length === 0) {
-			return;
-		}
-		spawnActionDeliveryProjectile(eid, actionData, targetEids);
-	}
+	actorData.queuedAction = actionData;
+	actorData.currentTargetEIDs = targetEids;
+}
 
-	startActionRecovery(actorData, actionData);
+function resolvePlayerActionTargets(
+	eid: EntityId,
+	actionData: AbilityData,
+): EntityId[] {
+	if (actionData.targetingShape?.type === "projectile") {
+		const selectedTargetEid = getSelectedTargetEid();
+		if (selectedTargetEid >= 0) {
+			return [selectedTargetEid];
+		}
+	}
+	return getAbilityTargetsByShape(eid, actionData);
 }
 
 export async function decideNPCAction(actorState: ActorStateComponent) {

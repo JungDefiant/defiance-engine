@@ -11,8 +11,6 @@ import { getControlState } from "src/modules/GameStateModule";
 import {
 	getActorPosition,
 	triggerCollisionBehaviors,
-	updateAbilityProjectiles,
-	updateTargetHighlight,
 } from "src/modules/Collision3DModule";
 
 export default class Collision3DSystem implements GameSystem {
@@ -25,10 +23,6 @@ export default class Collision3DSystem implements GameSystem {
 		if (controlState.actionPauseSet.size > 0) {
 			return;
 		}
-
-		updateAbilityProjectiles(deltaTime);
-
-		updateTargetHighlight();
 
 		const collisionComponentArray = getCollisionComponentArray();
 		const actorStateComponentArray = getActorStateComponentArray();
