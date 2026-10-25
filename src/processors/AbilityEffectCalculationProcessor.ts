@@ -8,7 +8,6 @@ import {
 	calculateStatusEffect,
 	EffectFunctionProps,
 } from "src/modules/EffectModule";
-import { Effect } from "babylonjs";
 
 export type AbilityEffectCalculationFunction = (
 	props: EffectFunctionProps,

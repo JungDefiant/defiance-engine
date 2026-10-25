@@ -6,7 +6,6 @@ import CampaignState from "src/states/CampaignState";
 import { Component } from "./Component";
 import {
 	AbilityData,
-	AbilityDescriptor,
 	AbilityTrigger,
 	ActionSlotKey,
 	EffectData,
@@ -20,8 +19,8 @@ import {
 	applyAbilityEffects,
 	calculateAbilityEffects,
 } from "src/modules/EffectModule";
-import { AbilityContext, AbilityTargetContext } from "src/types/ContextTypes";
-import { ActionSlot } from "src/gui/abstract/ActionSlot";
+import { AbilityContext } from "src/types/ContextTypes";
+import { ActorTactic } from "src/types/BehaviorTypes";
 
 const BASE_LIFE_REGEN_TICKS: number = 4;
 const BASE_WILL_REGEN_TICKS: number = 4;
@@ -52,7 +51,7 @@ export interface LoadedAbilityJson {
 	powerIds: string[];
 	featIds: string[];
 	itemIds?: string[];
-	tactics?: TacticsData[];
+	tactics?: ActorTactic[];
 }
 
 export default class ActorStateComponent implements Component {
@@ -71,7 +70,7 @@ export default class ActorStateComponent implements Component {
 	isDefeated: boolean = false;
 	affinityData?: AffinityData;
 	// equippedItemData?: ItemData[];
-	tactics?: TacticsData[];
+	tactics?: ActorTactic[];
 	queuedAction?: Nullable<AbilityData>;
 
 	public constructor(entityId: number, initialData: LoadedAbilityJson) {
@@ -252,90 +251,125 @@ export default class ActorStateComponent implements Component {
 		fetch(
 			`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/weapons/${initialData.weaponId}.json`,
 		)
-			.then((response) => response.json())
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error(
+						`Failed to load weapon data "${initialData.weaponId}" (HTTP ${response.status})`,
+					);
+				}
+				return response.json();
+			})
 			.then((weaponAbilityData) => {
 				thisActorState.actionData.set(ActionSlotKey.weapon, [
 					weaponAbilityData,
 				]);
-			});
+			})
+			.catch((error) => console.error(error));
 
 		const allPowerPromises = Promise.all(
 			initialData.powerIds.map((powerId) => {
 				return fetch(
 					`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/powers/${powerId}.json`,
-				).then((response) => response.json());
+				).then((response) => {
+					if (!response.ok) {
+						throw new Error(
+							`Failed to load power data "${powerId}" (HTTP ${response.status})`,
+						);
+					}
+					return response.json();
+				});
 			}),
 		);
 
-		allPowerPromises.then((allPowerData) => {
-			allPowerData.forEach((powerData) => {
-				let actionPowerData = thisActorState.actionData.get(
-					ActionSlotKey.power,
-				);
-				if (!actionPowerData) {
-					actionPowerData = [];
-					thisActorState.actionData.set(
+		allPowerPromises
+			.then((allPowerData) => {
+				allPowerData.forEach((powerData) => {
+					let actionPowerData = thisActorState.actionData.get(
 						ActionSlotKey.power,
-						actionPowerData,
 					);
-				}
+					if (!actionPowerData) {
+						actionPowerData = [];
+						thisActorState.actionData.set(
+							ActionSlotKey.power,
+							actionPowerData,
+						);
+					}
 
-				actionPowerData.push(powerData);
-			});
-		});
+					actionPowerData.push(powerData);
+				});
+			})
+			.catch((error) => console.error(error));
 
 		if (initialData.itemIds) {
 			const allItemPromises = Promise.all(
 				initialData.itemIds.map((itemId) => {
 					return fetch(
 						`${getPublicRoot()}/data/${campaignState.campaignId}/items/${itemId}.json`,
-					).then((response) => response.json());
+					).then((response) => {
+						if (!response.ok) {
+							throw new Error(
+								`Failed to load item data "${itemId}" (HTTP ${response.status})`,
+							);
+						}
+						return response.json();
+					});
 				}),
 			);
 
-			allItemPromises.then((allItemData) => {
-				allItemData.forEach((itemData) => {
-					// TO DO: Implement EquippedItemData interface during Inventory system build
-					// thisActorState.equippedItemData.push(itemData);
-				});
-			});
+			allItemPromises
+				.then((allItemData) => {
+					allItemData.forEach((itemData) => {
+						// TO DO: Implement EquippedItemData interface during Inventory system build
+						// thisActorState.equippedItemData.push(itemData);
+					});
+				})
+				.catch((error) => console.error(error));
 		}
 
 		const allFeatPromises = Promise.all(
 			initialData.featIds.map((featId) => {
 				return fetch(
 					`${getPublicRoot()}/data/${campaignState.campaignId}/abilities/feats/${featId}.json`,
-				).then((response) => response.json());
+				).then((response) => {
+					if (!response.ok) {
+						throw new Error(
+							`Failed to load feat data "${featId}" (HTTP ${response.status})`,
+						);
+					}
+					return response.json();
+				});
 			}),
 		);
 
-		allFeatPromises.then((allFeatData) => {
-			allFeatData.forEach((featData) => {
-				thisActorState.featData.push(featData);
-				if (featData.trigger === AbilityTrigger.alwaysActive) {
-					const abilityContext = {
-						target: `${featData.target}`,
-						descriptors: featData.descriptors,
-						effects: featData.effectData,
-					} as AbilityContext;
-					abilityContext.target = `${featData.target}`;
-					abilityContext.descriptors = featData.descriptors;
-					abilityContext.effects = featData.effectData;
-					calculateAbilityEffects({
-						source: this,
-						target: this,
-						abilityContext,
-						abilityTargetIndex: 0,
-					});
-					applyAbilityEffects({
-						source: this,
-						target: this,
-						abilityContext,
-						abilityTargetIndex: 0,
-					});
-				}
-			});
-		});
+		allFeatPromises
+			.then((allFeatData) => {
+				allFeatData.forEach((featData) => {
+					thisActorState.featData.push(featData);
+					if (featData.trigger === AbilityTrigger.alwaysActive) {
+						const abilityContext = {
+							target: `${featData.target}`,
+							descriptors: featData.descriptors,
+							effects: featData.effectData,
+						} as AbilityContext;
+						abilityContext.target = `${featData.target}`;
+						abilityContext.descriptors = featData.descriptors;
+						abilityContext.effects = featData.effectData;
+						calculateAbilityEffects({
+							source: this,
+							target: this,
+							abilityContext,
+							abilityTargetIndex: 0,
+						});
+						applyAbilityEffects({
+							source: this,
+							target: this,
+							abilityContext,
+							abilityTargetIndex: 0,
+						});
+					}
+				});
+			})
+			.catch((error) => console.error(error));
 
 		this.tactics = initialData.tactics;
 	}
@@ -345,16 +379,4 @@ export default class ActorStateComponent implements Component {
 	}
 
 	public dispose(): void {}
-}
-
-export interface TacticsData {
-	condition: TacticsCondition;
-	actionType: AbilityDescriptor;
-	actionSlotKey: ActionSlotKey;
-	actionIndex: number;
-}
-
-export enum TacticsCondition {
-	random = "random",
-	lowestLife = "lowestLife",
 }

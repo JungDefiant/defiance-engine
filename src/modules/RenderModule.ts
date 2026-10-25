@@ -1,4 +1,3 @@
-import { EntityId } from "bitecs";
 import {
 	RenderQueueEntry,
 	RenderQueueEntryFloatingText,

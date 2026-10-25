@@ -11,9 +11,8 @@
 		"guile": 4,
 		"heart": 4
 	},
-	"powerIds": [
-		"power_brawl"
-	],
+	"weaponId": "weapon_brawl",
+	"powerIds": [],
 	"featIds": [],
 	"tactics": [
 		{

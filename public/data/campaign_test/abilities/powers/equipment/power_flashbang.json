@@ -1,0 +1,35 @@
+{
+	"id": "power_flashbang",
+	"name": "Flashbang",
+	"description": "",
+	"iconURL": "sprites/gui/icons/abilities/powers/equipment/icon_fraggrenade.png",
+	"castVfxURL": "",
+	"hitVfxURL": "vfx/vfx_test",
+	"castSfxURL": "",
+	"hitSfxURL": "",
+	"trigger": "onActionPerform",
+	"descriptors": [
+		"power",
+		"equipment",
+		"group",
+		"ranged",
+		"grenade",
+		"attack"
+	],
+	"target": "group_enemy",
+	"recoveryTime": 4,
+	"cost": 5,
+	"costAttribute": "willPoints",
+	"targetingShape": {
+		"type": "sphere",
+		"radius": 3
+	},
+	"effectData": [
+		{
+			"id": "damage",
+			"variables": {
+				"baseDamage": 6
+			}
+		}
+	]
+}

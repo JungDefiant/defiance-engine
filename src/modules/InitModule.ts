@@ -58,6 +58,9 @@ export function createNewEngine(): Engine {
 	window.addEventListener("resize", () => {
 		newEngine.resize();
 	});
+	document.addEventListener("fullscreenchange", () => {
+		newEngine.resize();
+	});
 	return newEngine;
 }
 
@@ -124,7 +127,6 @@ export function registerSystems(
 
 export async function registerStates(
 	gameStateRegistry: GameStateRegistry,
-	gameScene: GameScene,
 ) {
 	gameStateRegistry.registerNewGameState(
 		AudioState.name,
@@ -138,7 +140,7 @@ export async function registerStates(
 		);
 	}
 
-	initGameplayState(gameScene.cameraEntityId);
+	initGameplayState();
 }
 
 export async function registerComponentArrays(

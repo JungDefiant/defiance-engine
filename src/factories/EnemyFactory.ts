@@ -1,19 +1,13 @@
-import { container, singleton } from "tsyringe";
 import { EntityFactory } from "src/factories/EntityFactory";
-import { addComponent, addEntity, EntityId, query, set } from "bitecs";
+import { addComponent, addEntity, EntityId, set } from "bitecs";
 import {
-	Mesh,
 	MeshBuilder,
 	Nullable,
 	PBRMaterial,
-	Space,
 	Texture,
-	TransformNode,
 	Vector3,
 } from "@babylonjs/core";
 import { getPublicRoot } from "src/modules/Utils";
-import UserInterfaceState from "src/states/UserInterfaceState";
-import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import EnemyGUIComponent from "src/components/EnemyGUIComponent";
@@ -21,13 +15,22 @@ import {
 	getGameScene,
 	getUserInterfaceState,
 } from "src/modules/GameStateModule";
-import { getAllSceneNodes } from "src/modules/SceneModule";
 import {
+	getActorBehaviorComponentArray,
 	getActorStateComponentArray,
 	getCharacterSpriteComponentArray,
-	getComponentRegistry,
+	getCollisionComponentArray,
 	getEnemyGuiComponentArray,
 } from "src/modules/ComponentModule";
+import { createNavigationAgent } from "src/modules/ActorNavigationModule";
+import { DefaultBehavior } from "src/types/BehaviorTypes";
+import {
+	ACTOR_SPRITE_VERTICAL_OFFSET,
+	BASE_MOVEMENT_SPEED,
+} from "src/constants/GeneralConstants";
+import { BASE_SPAWN_POSITION } from "src/constants/CombatConstants";
+import ActorBehaviorComponent from "src/components/ActorBehaviorComponent";
+import CollisionComponent from "src/components/CollisionComponent";
 
 const PRELOAD_ENEMIES = ["enem_test"];
 
@@ -59,18 +62,13 @@ export class EnemyFactory implements EntityFactory {
 		fileName: string,
 		position: Vector3,
 	): Promise<EntityId> {
-		const newEntityId = await this.createEntityFromFile(fileName);
-		const componentRegistry = container.resolve(ComponentRegistry);
-		const characterSprite =
-			componentRegistry.getComponentByEntityId<CharacterSpriteComponent>(
-				CharacterSpriteComponent.name,
-				newEntityId,
-			);
-		characterSprite.locallyTranslate(position);
-		return newEntityId;
+		return this.createEntityFromFile(fileName, position);
 	}
 
-	public async createEntityFromFile(fileName: string): Promise<EntityId> {
+	public async createEntityFromFile(
+		fileName: string,
+		spawnPosition?: Vector3,
+	): Promise<EntityId> {
 		if (this.loadPromises) {
 			await this.loadPromises;
 		}
@@ -82,31 +80,29 @@ export class EnemyFactory implements EntityFactory {
 		const enemyData = this.cache.get(fileName);
 		const gameScene = getGameScene();
 		const userInterfaceState = getUserInterfaceState();
-		const sceneNodes = await getAllSceneNodes(gameScene.mapModelId);
-		const currentLocation = gameScene.currentLocation;
 
-		if (!currentLocation) {
-			throw new Error("No location found!");
-		}
-
-		const spawnNode = sceneNodes.find(
-			(node) => node.id === currentLocation.combatSpawnNodeId,
-		);
-
-		if (!spawnNode) {
-			return -1;
+		let enemySpawnPosition = spawnPosition;
+		if (!enemySpawnPosition) {
+			enemySpawnPosition = BASE_SPAWN_POSITION.clone();
 		}
 
 		const newEntity = addEntity(gameScene.world);
 
-		const newActorComp = new ActorStateComponent(newEntity, enemyData);
+		const newActorStateComponent = new ActorStateComponent(
+			newEntity,
+			enemyData,
+		);
 		addComponent(
 			gameScene.world,
 			newEntity,
-			set(getActorStateComponentArray(), newActorComp),
+			set(getActorStateComponentArray(), newActorStateComponent),
 		);
 
-		const newEnemySprite = this.createEnemySprite(newEntity, spawnNode);
+		const newEnemySprite = this.createEnemySprite(
+			newEntity,
+			newActorStateComponent,
+			enemySpawnPosition,
+		);
 		addComponent(
 			gameScene.world,
 			newEntity,
@@ -123,21 +119,42 @@ export class EnemyFactory implements EntityFactory {
 			set(getEnemyGuiComponentArray(), newEnemyGUI),
 		);
 
+		createNavigationAgent(
+			newEntity,
+			enemySpawnPosition,
+			BASE_MOVEMENT_SPEED,
+		);
+		addComponent(
+			gameScene.world,
+			newEntity,
+			set(
+				getActorBehaviorComponentArray(),
+				new ActorBehaviorComponent(
+					newEntity,
+					DefaultBehavior.Aggressive,
+					newActorStateComponent.tactics,
+				),
+			),
+		);
+		addComponent(
+			gameScene.world,
+			newEntity,
+			set(
+				getCollisionComponentArray(),
+				new CollisionComponent(newEntity, 0.3),
+			),
+		);
+
 		return newEntity;
 	}
 
 	private createEnemySprite(
 		entityId: EntityId,
-		parentNode: TransformNode,
+		actorState: ActorStateComponent,
+		spawnPosition: Vector3,
 	): CharacterSpriteComponent {
 		const gameScene = getGameScene();
-		const actorState =
-			getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
-				ActorStateComponent.name,
-				entityId,
-			);
 
-		// Need to create this sprite as a CharacterSpriteComponent
 		const enemyActorSprite = MeshBuilder.CreatePlane(
 			`enBattlerSprite_${actorState.id}_${entityId}`,
 			{
@@ -151,10 +168,11 @@ export class EnemyFactory implements EntityFactory {
 			`mat_enBattlerSprite_${actorState.id}_${entityId}`,
 			gameScene,
 		);
-		enemyActorSprite.parent = parentNode;
 		enemyActorSprite.billboardMode = 7;
-		enemyActorSprite.rotate(Vector3.Forward(), Math.PI, Space.WORLD);
-		enemyActorSprite.setAbsolutePosition(parentNode.absolutePosition);
+		enemyActorSprite.position.copyFrom(spawnPosition);
+		enemyActorSprite.position.y =
+			spawnPosition.y + ACTOR_SPRITE_VERTICAL_OFFSET;
+		enemyActorSprite.metadata = { entityId };
 
 		enemyActorSpriteMaterial.albedoTexture = new Texture(
 			`${getPublicRoot()}/sprites/characters/${actorState.spriteUrl}`,

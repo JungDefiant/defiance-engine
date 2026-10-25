@@ -11,32 +11,24 @@
 	"descriptors": [
 		"power",
 		"technique",
-		"onHit"
+		"group",
+		"melee",
+		"attack"
 	],
-	"target": "self",
-	"recoveryTime": 2,
+	"target": "group_enemy",
+	"recoveryTime": 3,
 	"cost": 10,
 	"costAttribute": "willPoints",
+	"targetingShape": {
+		"type": "cone",
+		"range": 3,
+		"angle": 70
+	},
 	"effectData": [
 		{
-			"id": "onHit",
+			"id": "damage",
 			"variables": {
-				"onHitEffects": [
-					{
-						"id": "damage",
-						"variables": {
-							"baseDamage": 16
-						}
-					},
-					{
-						"id": "status",
-						"variables": {
-							"id": "surge",
-							"duration": 4,
-							"isTargetingSource": true
-						}
-					}
-				]
+				"baseDamage": 12
 			}
 		}
 	]

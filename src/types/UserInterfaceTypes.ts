@@ -3,12 +3,6 @@ import { EffectFeedbackContext } from "./ContextTypes";
 
 export type EffectFeedbackType = "attackRoll" | "damage" | "healing" | "surge";
 
-export interface ActorGUI {
-	setActBarFill(currValue: number, maxValue: number): void;
-	addStatusIcon(id: string, iconSrc: string): void;
-	removeStatusIcon(id: string): void;
-}
-
 export interface EffectFeedbackStyle {
 	floatingTextColor: string;
 	floatingText: (context: EffectFeedbackContext) => string;

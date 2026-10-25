@@ -1,4 +1,4 @@
-import { ICanvasRenderingContext, Nullable } from "@babylonjs/core";
+import { ICanvasRenderingContext } from "@babylonjs/core";
 import { StackPanel } from "@babylonjs/gui";
 
 export default class StackPanelImage extends StackPanel {

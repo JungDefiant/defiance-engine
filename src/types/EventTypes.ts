@@ -8,7 +8,7 @@ export interface GameEvent {
 }
 
 export type GameEventTrigger =
-	| "OnLocationEnter"
+	| "OnSceneEnter"
 	| "OnCombatStart"
 	| "OnCombatEnd"
 	| "OnDialogueEnd";

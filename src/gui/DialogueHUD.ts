@@ -5,7 +5,6 @@ import {
 	TextBlock,
 	StackPanel,
 	ScrollBar,
-	Button,
 } from "@babylonjs/gui";
 import type IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
@@ -13,7 +12,6 @@ import { type Nullable } from "@babylonjs/core";
 import StackPanelImage from "./abstract/StackPanelImage";
 import { getPublicRoot } from "src/modules/Utils";
 import { DialogueLine, DialogueOptionLine } from "src/types/GameTypes";
-import { playSFX } from "src/modules/AudioModule";
 import {
 	endDialogue,
 	runLine,
@@ -43,7 +41,7 @@ export default class DialogueHUD implements IHUD {
 
 		const backgroundUI = new Rectangle("ui_exploreBgUI");
 		backgroundUI.width = 1;
-		backgroundUI.heightInPixels = 50;
+		backgroundUI.heightInPixels = 52;
 		backgroundUI.background = Themes.primary3;
 		backgroundUI.thickness = 0;
 		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
@@ -107,7 +105,7 @@ export default class DialogueHUD implements IHUD {
 		} else {
 			rootContainer.background = Themes.warning;
 			rootContainer.color = Themes.primary3;
-			rootContainer.thickness = 2;
+			rootContainer.thickness = 1;
 		}
 
 		const lineUI = new TextBlock("ui_line", dlgData.text);
@@ -150,7 +148,7 @@ export default class DialogueHUD implements IHUD {
 		buttonUI.heightInPixels = 40;
 		buttonUI.color = Themes.primary1;
 		buttonUI.background = Themes.primary3;
-		buttonUI.thickness = 2;
+		buttonUI.thickness = 1;
 
 		const buttonUIText = buttonUI.getChildByName(buttonUIName) as TextBlock;
 		if (buttonUIText) {
@@ -194,7 +192,7 @@ export default class DialogueHUD implements IHUD {
 		buttonUI.heightInPixels = 40;
 		buttonUI.color = Themes.primary1;
 		buttonUI.background = Themes.primary3;
-		buttonUI.thickness = 2;
+		buttonUI.thickness = 1;
 
 		const buttonUIText = buttonUI.getChildByName(buttonUIName) as TextBlock;
 		if (buttonUIText) {
@@ -249,7 +247,7 @@ export default class DialogueHUD implements IHUD {
 			buttonUI.heightInPixels = 40;
 			buttonUI.color = Themes.primary1;
 			buttonUI.background = Themes.primary3;
-			buttonUI.thickness = 2;
+			buttonUI.thickness = 1;
 
 			const buttonUIText = buttonUI.getChildByName(
 				buttonUIName,
@@ -314,9 +312,9 @@ export default class DialogueHUD implements IHUD {
 		dialogueFeedUI.background =
 			Themes.primary3 + Themes.dialogueBackgroundOpacity;
 		dialogueFeedUI.color = Themes.primary1;
-		dialogueFeedUI.thickness = 2;
+		dialogueFeedUI.thickness = 1;
 		dialogueFeedUI.widthInPixels = 320;
-		dialogueFeedUI.heightInPixels = 550;
+		dialogueFeedUI.heightInPixels = 552;
 
 		const dialogueFeedStack = new StackPanel("ui_dialogueFeedStack");
 		dialogueFeedStack.width = 1;
@@ -327,8 +325,8 @@ export default class DialogueHUD implements IHUD {
 		textEntryArea.isPointerBlocker = true;
 		textEntryArea.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
 		textEntryArea.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		textEntryArea.widthInPixels = 285;
-		textEntryArea.heightInPixels = 325;
+		textEntryArea.widthInPixels = 288;
+		textEntryArea.heightInPixels = 328;
 		textEntryArea.alpha = 1;
 		dialogueFeedStack.addControl(textEntryArea);
 
@@ -342,9 +340,9 @@ export default class DialogueHUD implements IHUD {
 			Control.VERTICAL_ALIGNMENT_BOTTOM;
 		this.textEntryStack.width = 1;
 		this.textEntryStack.spacing = 8;
-		this.textEntryStack.paddingLeft = 6;
-		this.textEntryStack.paddingRight = 6;
-		this.textEntryStack.paddingBottom = 6;
+		this.textEntryStack.paddingLeft = 8;
+		this.textEntryStack.paddingRight = 8;
+		this.textEntryStack.paddingBottom = 8;
 		this.textEntryStack.adaptHeightToChildren = true;
 		this.textEntryStack.onControlAddedObservable.add(() => {
 			if (!this.textEntryStack || !this.textEntryScrollbar) {
@@ -394,7 +392,7 @@ export default class DialogueHUD implements IHUD {
 			Control.HORIZONTAL_ALIGNMENT_CENTER;
 		this.optionsEntryStack.verticalAlignment =
 			Control.VERTICAL_ALIGNMENT_TOP;
-		this.optionsEntryStack.widthInPixels = 285;
+		this.optionsEntryStack.widthInPixels = 288;
 		this.optionsEntryStack.adaptHeightToChildren = true;
 		dialogueFeedStack.addControl(this.optionsEntryStack);
 

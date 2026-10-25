@@ -1,5 +1,6 @@
 import ActorStateComponent from "src/components/ActorStateComponent";
 import { AbilityContext } from "./ContextTypes";
+import { TargetingShapeData } from "./CollisionTypes";
 
 export type AbilityEffectType =
 	| "damage"
@@ -40,6 +41,7 @@ export interface AbilityData {
 	hitVfxURL?: string;
 	castSfxURL?: string;
 	hitSfxURL?: string;
+	targetingShape?: TargetingShapeData;
 }
 
 export interface EffectData {
@@ -70,24 +72,19 @@ export enum AbilityTrigger {
 }
 
 export enum AbilityDescriptor {
-	// Type
 	power = "power",
 	feat = "feat",
 	basic = "basic",
-	// Target
 	single = "single",
 	group = "group",
-	// Range
 	direct = "direct",
 	ranged = "ranged",
 	melee = "melee",
-	// Type
 	impact = "impact",
 	lethal = "lethal",
 	burn = "burn",
 	toxic = "toxic",
 	psychic = "psychic",
-	// Type
 	innate = "innate",
 	weapon = "weapon",
 	device = "device",
@@ -95,7 +92,6 @@ export enum AbilityDescriptor {
 	technique = "technique",
 	invocation = "invocation",
 	cybernetic = "cybernetic",
-	// Form
 	attack = "attack",
 	action = "action",
 	toggle = "toggle",

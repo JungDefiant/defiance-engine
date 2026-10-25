@@ -11,6 +11,7 @@
 		"generateOhm": "npx ohm generateBundles --withTypes --esm 'src/parser/*.ohm'"
 	},
 	"dependencies": {
+		"@babylonjs/addons": "^8.56.2",
 		"@babylonjs/core": "^8.56.2",
 		"@babylonjs/gui": "^8.56.2",
 		"@babylonjs/inspector": "^8.56.2",
@@ -19,6 +20,7 @@
 		"bitecs": "^0.4.0",
 		"heap-js": "^2.7.1",
 		"ohm-js": "^17.0.0",
+		"recast-navigation": "^0.43.1",
 		"reflect-metadata": "^0.2.2",
 		"tsx": "^4.23.0",
 		"tsyringe": "^4.10.0",

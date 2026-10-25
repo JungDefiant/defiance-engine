@@ -1,25 +1,19 @@
 import { Vector3 } from "@babylonjs/core";
-import { AdvancedDynamicTexture, Control } from "@babylonjs/gui";
-import { GameScene } from "src/scenes/GameScene";
 import { GameEvent } from "src/types/EventTypes";
-import { ActionSlotKey } from "./AbilityTypes";
 
 export class ControlSettings {
-	actionMap: Map<ActionSlotKey, number[]> = new Map([
-		[ActionSlotKey.weapon, ["Q".charCodeAt(0)]],
-		[
-			ActionSlotKey.power,
-			["W".charCodeAt(0), "E".charCodeAt(0), "R".charCodeAt(0)],
-		],
-		[ActionSlotKey.accessory, ["1".charCodeAt(0)]],
-		[
-			ActionSlotKey.item,
-			["2".charCodeAt(0), "3".charCodeAt(0), "4".charCodeAt(0)],
-		],
-	]);
+	targetMouseButton: number = 2;
+	moveMouseButton: number = 0;
+	powerKeys: number[] = [
+		"Q".charCodeAt(0),
+		"W".charCodeAt(0),
+		"E".charCodeAt(0),
+		"R".charCodeAt(0),
+	];
+	switchPlayerLeft: number = "D".charCodeAt(0);
+	switchPlayerRight: number = "F".charCodeAt(0);
 	tacticalPause: number = 32;
-	switchPlayerLeft: number = "A".charCodeAt(0);
-	switchPlayerRight: number = "S".charCodeAt(0);
+	debugStartCombat: number = "C".charCodeAt(0);
 }
 
 export interface LoadedCampaignJson {
@@ -33,24 +27,15 @@ export interface LoadedCampaignJson {
 
 export interface LoadedSceneJson {
 	id: string;
-	startLocationId: string;
 	mapModelId: string;
 	difficultyLevel: number;
 	startMusicId: string;
 	dialogueFileId: string;
 	encounters: EncounterMap;
-	locations: SceneLocation[];
-	modalIds: string[];
-}
-
-export interface SceneLocation {
-	id: string;
-	exploreViewNodeId: string;
-	combatViewNodeId: string;
-	combatSpawnNodeId: string;
 	interactables: Interactable[];
-	events: GameEvent[];
 	doors: DoorData[];
+	events: GameEvent[];
+	modalIds: string[];
 }
 
 export interface Interactable {
@@ -59,7 +44,6 @@ export interface Interactable {
 	description: string;
 	dialogueNodeId: string;
 	interactableNodeId: string;
-	viewPositionNodeId: string;
 	guiPositionOffset: number[];
 }
 
@@ -117,12 +101,6 @@ export type StoryVariable = string | number;
 
 export interface ConditionFunction {
 	(): boolean;
-}
-
-export interface NewLocationSceneParams {
-	gameScene: GameScene;
-	sceneGUI: AdvancedDynamicTexture;
-	exploreGUIControls: Control[];
 }
 
 export type RenderQueueEntryType =

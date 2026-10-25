@@ -1,4 +1,3 @@
-import { FactoryRegistry } from "src/registries/FactoryRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameScene } from "src/scenes/GameScene";
@@ -8,6 +7,7 @@ import CampaignState from "src/states/CampaignState";
 import ControlState from "src/states/ControlState";
 import DialogueState from "src/states/DialogueState";
 import GameplayState from "src/states/GameplayState";
+import NavigationState from "src/states/NavigationState";
 import RenderState from "src/states/RenderState";
 import UserInterfaceState from "src/states/UserInterfaceState";
 import { container } from "tsyringe";
@@ -69,5 +69,11 @@ export function getRenderState(): RenderState {
 export function getUserInterfaceState(): UserInterfaceState {
 	return getGameStateRegistry().getGameStateByStateId<UserInterfaceState>(
 		UserInterfaceState.name,
+	);
+}
+
+export function getNavigationState(): NavigationState {
+	return getGameStateRegistry().getGameStateByStateId<NavigationState>(
+		NavigationState.name,
 	);
 }

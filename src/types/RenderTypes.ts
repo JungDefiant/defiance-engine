@@ -1,7 +1,6 @@
-import { TextBlock } from "@babylonjs/gui";
-import { addComponent, addEntity, query, removeEntity, set } from "bitecs";
+import { addComponent, addEntity, removeEntity, set } from "bitecs";
 import FloatingTextComponent from "src/components/FloatingTextComponent";
-import { easeInExpo, easeOutExpo } from "src/constants/Utilities";
+import { easeInExpo } from "src/constants/Utilities";
 import { Themes } from "src/gui/Themes";
 import {
 	getCharacterSpriteComponentArray,
@@ -129,14 +128,15 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
 					targetEntityId: entityId,
 				},
 			);
-			floatingTextUI.widthInPixels = 400;
-			floatingTextUI.heightInPixels = 128;
+			floatingTextUI.widthInPixels = 200;
+			floatingTextUI.heightInPixels = 64;
 			floatingTextUI.color = this.color;
 			floatingTextUI.alpha = 1;
 			floatingTextUI.topInPixels = 0;
 			floatingTextUI.linkOffsetYInPixels = 0;
 			floatingTextUI.style = Themes.typography.header1;
-			floatingTextUI.shadowOffsetY = 2;
+			floatingTextUI.fontSize = 20;
+			floatingTextUI.shadowOffsetY = 4;
 			floatingTextUI.shadowBlur = 4;
 			floatingTextUI.shadowColor = Themes.primary3;
 			floatingTextUI.isVisible = false;
@@ -261,6 +261,9 @@ export class RenderQueueEntrySpecialFX implements RenderQueueEntry {
 
 					const stickerImage =
 						getStickerImageComponentArray()[stickerImageEntityId];
+
+					stickerImage.widthInPixels *= 0.5;
+					stickerImage.heightInPixels *= 0.5;
 
 					const imageAnimation =
 						getImageAnimationComponentArray()[stickerImageEntityId];

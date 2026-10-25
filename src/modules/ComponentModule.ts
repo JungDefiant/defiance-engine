@@ -1,5 +1,3 @@
-import EntityMovementComponent from "src/components/EntityMovementComponent";
-import { getGameScene } from "./GameStateModule";
 import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import EnemyGUIComponent from "src/components/EnemyGUIComponent";
@@ -10,9 +8,31 @@ import { ImageAnimationComponent } from "src/components/ImageAnimationComponent"
 import { container } from "tsyringe";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import TransformNodeComponent from "src/components/TransformNodeComponent";
+import ActorNavigationComponent from "src/components/ActorNavigationComponent";
+import ActorBehaviorComponent from "src/components/ActorBehaviorComponent";
+import CollisionComponent from "src/components/CollisionComponent";
+import ProjectileComponent from "src/components/ProjectileComponent";
 
 export function getComponentRegistry() {
 	return container.resolve(ComponentRegistry);
+}
+
+export function getActorBehaviorComponentArray() {
+	return getComponentRegistry().getComponentArrayByComponentId<ActorBehaviorComponent>(
+		ActorBehaviorComponent.name,
+	);
+}
+
+export function getActorNavigationComponentArray() {
+	return getComponentRegistry().getComponentArrayByComponentId<ActorNavigationComponent>(
+		ActorNavigationComponent.name,
+	);
+}
+
+export function getCollisionComponentArray() {
+	return getComponentRegistry().getComponentArrayByComponentId<CollisionComponent>(
+		CollisionComponent.name,
+	);
 }
 
 export function getActorStateComponentArray() {
@@ -26,12 +46,6 @@ export function getCharacterSpriteComponentArray() {
 		CharacterSpriteComponent.name,
 	);
 }
-export function getEntityMovementComponentArray() {
-	return getComponentRegistry().getComponentArrayByComponentId<EntityMovementComponent>(
-		EntityMovementComponent.name,
-	);
-}
-
 export function getEnemyGuiComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<EnemyGUIComponent>(
 		EnemyGUIComponent.name,
@@ -65,5 +79,11 @@ export function getStickerImageComponentArray() {
 export function getTransformNodeComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<TransformNodeComponent>(
 		TransformNodeComponent.name,
+	);
+}
+
+export function getProjectileComponentArray() {
+	return getComponentRegistry().getComponentArrayByComponentId<ProjectileComponent>(
+		ProjectileComponent.name,
 	);
 }

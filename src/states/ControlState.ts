@@ -6,6 +6,7 @@ export default class ControlState {
 	public actionManager: Nullable<ActionManager> = null;
 	public exploreGUIControls: Control[] = [];
 	public isTargetingAction: boolean = false;
+	public isMoveInputHeld: boolean = false;
 	public readonly controlSettings: ControlSettings = new ControlSettings();
 	public readonly actionPauseSet: Set<string> = new Set();
 	public readonly renderPauseSet: Set<string> = new Set();

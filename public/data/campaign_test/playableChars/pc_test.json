@@ -14,7 +14,10 @@
 	"affinityId": "",
 	"weaponId": "equipment/weapon_pulserifle",
 	"powerIds": [
-		"equipment/power_fraggrenade"
+		"equipment/power_fraggrenade",
+		"techniques/power_furiousstrike",
+		"equipment/power_flashbang",
+		"techniques/power_combatstim"
 	],
 	"featIds": [
 		"feat_improvedaccuracy"

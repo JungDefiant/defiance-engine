@@ -1,5 +1,4 @@
 import {
-	Button,
 	Container,
 	Control,
 	Rectangle,

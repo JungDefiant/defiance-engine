@@ -14,7 +14,6 @@ export async function loadSaveData(id: string): Promise<SaveData> {
 export interface SaveData {
 	campaignId: string;
 	sceneId: string;
-	locationId: string;
 	flagIds: any[];
 	currentPartyActorStates: ActorStateComponent[];
 }

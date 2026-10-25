@@ -30,6 +30,8 @@ export class MainMenuScreen {
 			scene,
 			Texture.NEAREST_SAMPLINGMODE,
 		);
+		this.root.idealWidth = 1280;
+		this.root.idealHeight = 960;
 
 		const thisMainMenu = this;
 

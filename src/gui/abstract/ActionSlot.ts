@@ -11,7 +11,7 @@ export class ActionSlot {
 		this.rootContainer = new Rectangle("ui_actionSlot_" + label);
 		this.rootContainer.color = Themes.primary1;
 		this.rootContainer.background = Themes.primary3;
-		this.rootContainer.thickness = 2;
+		this.rootContainer.thickness = 1;
 		this.rootContainer.widthInPixels = 32;
 		this.rootContainer.heightInPixels = 32;
 		this.rootContainer.onPointerClickObservable.add(() => onClickEvent());
@@ -24,12 +24,12 @@ export class ActionSlot {
 		this.actionLabel = new TextBlock("ui_actionSlotLabel", "");
 		this.actionLabel.color = Themes.neutral1;
 		this.actionLabel.style = Themes.typography.header4;
-		this.actionLabel.outlineWidth = 2;
+		this.actionLabel.outlineWidth = 4;
 		this.actionLabel.outlineColor = Themes.primary3;
 		this.actionLabel.widthInPixels = 24;
 		this.actionLabel.heightInPixels = 24;
 		this.actionLabel.topInPixels = -4;
-		this.actionLabel.leftInPixels = -1;
+		this.actionLabel.leftInPixels = 0;
 		this.actionLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
 		this.actionLabel.textHorizontalAlignment =
 			Control.HORIZONTAL_ALIGNMENT_LEFT;

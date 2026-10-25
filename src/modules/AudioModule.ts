@@ -1,6 +1,5 @@
 import { CreateSoundAsync, CreateStreamingSoundAsync } from "@babylonjs/core";
 import { getAudioState, getCampaignState } from "./GameStateModule";
-import AudioState from "src/states/AudioState";
 
 export async function playSFX(sfxId: string, baseUrl: string) {
 	const audioState = getAudioState();
@@ -34,10 +33,15 @@ export async function playMusic(musicId: string) {
 		audioState.musicMap.set(musicId, music);
 	}
 
-	await audioState.audioEngine.unlockAsync();
 	if (audioState.currentMusic) {
 		audioState.currentMusic.stop();
 	}
 	audioState.currentMusic = music;
-	music.play();
+
+	void audioState.audioEngine
+		.unlockAsync()
+		.then(() => {
+			music.play();
+		})
+		.catch(() => {});
 }
