@@ -7,9 +7,6 @@ export const NAVMESH_GENERATOR_PARAMETERS = {
 	cs: 0.2,
 	ch: 0.2,
 	tileSize: 128,
-	// maxObstacles: 0 opts out of the tile-cache generation path (the addons
-	// plugin defaults it to a non-zero value, which requires tileSize 32-64).
-	// Obstacles are handled by ActorNavigationSystem, not the navmesh plugin.
 	maxObstacles: 0,
 	walkableSlopeAngle: 45,
 	walkableHeight: 1,
