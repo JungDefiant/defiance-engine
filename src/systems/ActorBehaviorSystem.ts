@@ -1,15 +1,10 @@
 import { inject } from "tsyringe";
-import GameSystem from "./GameSystem";
 import { query } from "bitecs";
 import { GameScene } from "src/scenes/GameScene";
 import { getActorBehaviorComponentArray } from "src/modules/ComponentModule";
 import { getControlState, getGameplayState } from "src/modules/GameStateModule";
-import {
-	decideActionByBehavior,
-	updatePartyFollowFormation,
-	updateSelectedPlayerAutoAttack,
-} from "src/modules/ActorBehaviorModule";
-import { CombatState } from "./CombatManagerSystem";
+import { decideActionByBehavior } from "src/modules/ActorBehaviorModule";
+import GameSystem from "./GameSystem";
 
 export default class ActorBehaviorSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -21,24 +16,14 @@ export default class ActorBehaviorSystem implements GameSystem {
 		}
 
 		const gameplayState = getGameplayState();
-
-		// Move out from main behavior system loop into a more 'modular' handling of the system
-		if (gameplayState.combatState === CombatState.Inactive) {
-			if (controlState.controlPauseSet.size > 0) {
-				return;
-			}
-			updatePartyFollowFormation();
-			return;
-		}
-
-		updateSelectedPlayerAutoAttack();
-		//
-
 		const behaviorComponentArray = getActorBehaviorComponentArray();
-		for (const eid of query(this.gameScene.world, [
+
+		for (const entityId of query(this.gameScene.world, [
 			behaviorComponentArray,
 		])) {
-			decideActionByBehavior(eid);
+			if (entityId !== gameplayState.selectedPlayerEID) {
+				decideActionByBehavior(entityId);
+			}
 		}
 	}
 }

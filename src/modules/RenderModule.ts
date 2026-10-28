@@ -48,11 +48,7 @@ export function renderMessageDisplay(
 	addRenderQueueEntry(messageDisplayRenderQueueEntry);
 }
 
-export function renderCastHitVFX(
-	actionData: AbilityData,
-	sourceEntityId: number,
-	targetEntityIds: number[],
-) {
+export function renderCastVFX(actionData: AbilityData, sourceEntityId: number) {
 	if (actionData.castVfxURL && actionData.castSfxURL) {
 		const castAbilitySpecialFxRenderQueueEntry =
 			new RenderQueueEntrySpecialFX(
@@ -65,7 +61,12 @@ export function renderCastHitVFX(
 
 		addRenderQueueEntry(castAbilitySpecialFxRenderQueueEntry);
 	}
+}
 
+export function renderHitVFX(
+	actionData: AbilityData,
+	targetEntityIds: number[],
+) {
 	if (actionData.hitVfxURL) {
 		const hitAbilitySpecialFxRenderQueueEntry =
 			new RenderQueueEntrySpecialFX(

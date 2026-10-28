@@ -64,10 +64,10 @@ export default class ActorStateComponent implements Component {
 	attributes: AttributeSet = {};
 	actionData: Map<ActionSlotKey, AbilityData[]> = new Map();
 	featData: AbilityData[] = [];
-	currentTargetEIDs: number[] = [];
 	currentStatuses: EffectData[] = [];
 	isPlayer: boolean = false;
 	isDefeated: boolean = false;
+	selectedTargetEID: number = -1;
 	affinityData?: AffinityData;
 	// equippedItemData?: ItemData[];
 	tactics?: ActorTactic[];

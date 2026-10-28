@@ -54,7 +54,7 @@ import {
 	resetCombatModeActionManager,
 } from "./ControlModule";
 import { checkEventByTrigger } from "./EventModule";
-import { ActorTactic, BehaviorCondition } from "src/types/BehaviorTypes";
+import { ActorTactic, TacticCondition } from "src/types/BehaviorTypes";
 
 export async function startCombat(encId: string): Promise<void> {
 	const gameScene = getGameScene();
@@ -149,9 +149,9 @@ export function getTargetsBasedOnCondition(
 	tacticEntry: ActorTactic,
 	sourceEid: EntityId,
 ): EntityId[] {
-	if (tacticEntry.condition === BehaviorCondition.random) {
+	if (tacticEntry.condition === TacticCondition.random) {
 		return getRandomTarget(actionData, sourceEid);
-	} else if (tacticEntry.condition === BehaviorCondition.lowestLife) {
+	} else if (tacticEntry.condition === TacticCondition.lowestLife) {
 		return getLowestLifeTarget(actionData, sourceEid);
 	}
 
@@ -168,15 +168,15 @@ export function startQueueActionPlayer(
 		return;
 	}
 
-	const actorData =
+	const actorState =
 		getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
 			ActorStateComponent.name,
 			eid,
 		) as ActorStateComponent;
-	if (!actorData) {
+	if (!actorState) {
 		return;
 	}
-	const actionDataArray = actorData.actionData.get(actionSlotKey);
+	const actionDataArray = actorState.actionData.get(actionSlotKey);
 	if (!actionDataArray) {
 		return;
 	}
@@ -189,19 +189,13 @@ export function startQueueActionPlayer(
 	const abilityCost = (actionData.cost as number) || 0;
 	const costAttributeName = (actionData.costAttribute as string) || "";
 	if (abilityCost > 0) {
-		const costAttribute = actorData.attributes[costAttributeName];
+		const costAttribute = actorState.attributes[costAttributeName];
 		if (!costAttribute || costAttribute.currentValue < abilityCost) {
 			return;
 		}
 	}
 
-	const targetEids = resolvePlayerActionTargets(eid, actionData);
-	if (targetEids.length === 0) {
-		return;
-	}
-
-	actorData.queuedAction = actionData;
-	actorData.currentTargetEIDs = targetEids;
+	actorState.queuedAction = actionData;
 }
 
 function resolvePlayerActionTargets(
@@ -369,8 +363,8 @@ export function defeatActor(actor: ActorStateComponent) {
 
 	actor.isDefeated = true;
 
-	if (gameplayState.selectedTargetEID === actor.entityId) {
-		gameplayState.selectedTargetEID = -1;
+	if (actor.selectedTargetEID === actor.entityId) {
+		actor.selectedTargetEID = -1;
 	}
 
 	if (gameplayState.playerEntityIds.includes(actor.entityId)) {

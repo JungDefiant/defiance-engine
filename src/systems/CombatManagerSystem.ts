@@ -1,6 +1,6 @@
 import { inject } from "tsyringe";
-import GameSystem from "src/systems/GameSystem";
 import { query } from "bitecs";
+import GameSystem from "src/systems/GameSystem";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import { PAUSE_GAMEOVER } from "src/constants/GeneralConstants";
 import {
@@ -11,7 +11,7 @@ import {
 } from "src/modules/CombatModule";
 import { spendAbilityCost, triggerFeatEffects } from "src/modules/EffectModule";
 import {
-	renderCastHitVFX as renderCastAndHitVFX,
+	renderCastVFX,
 	renderMessageDisplay,
 	startRenderQueue,
 } from "src/modules/RenderModule";
@@ -24,7 +24,6 @@ import {
 } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
 import { AbilityTrigger } from "src/types/AbilityTypes";
-import { getProjectileFactory } from "src/modules/FactoryModule";
 
 export default class CombatManagerSystem implements GameSystem {
 	public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -60,39 +59,32 @@ export default class CombatManagerSystem implements GameSystem {
 
 	private queueActorAction() {
 		const gameplayState = getGameplayState();
-		const controlState = getControlState();
 		const actorStateComponents = getActorStateComponentArray();
 
 		for (const eid of query(this.gameScene.world, [actorStateComponents])) {
-			const actorData = actorStateComponents[eid];
-			const actionTimerAttribute = actorData.attributes.actionTimer;
-			const actionQueuedAction = actorData.queuedAction;
+			const actorState = actorStateComponents[eid];
+			const actionTimerAttribute = actorState.attributes.actionTimer;
+			const actionQueuedAction = actorState.queuedAction;
 
 			if (
 				!actionQueuedAction ||
-				!(actorData.currentTargetEIDs.length > 0) ||
+				actorState.selectedTargetEID === -1 ||
 				actionTimerAttribute.currentValue !==
 					actionTimerAttribute.maximumValue
 			) {
 				continue;
 			}
 
-			actorData.currentTargetEIDs = actorData.currentTargetEIDs.filter(
-				(targetEid) => {
-					return !actorStateComponents[targetEid].isDefeated;
-				},
-			);
-
-			if (actorData.currentTargetEIDs.length < 1) {
-				if (actorData.queuedAction) {
-					actorData.queuedAction = null;
+			if (actorState.selectedTargetEID === -1) {
+				if (actorState.queuedAction) {
+					actorState.queuedAction = null;
 				}
 				continue;
 			}
 
 			if (actionQueuedAction.cost && actionQueuedAction.costAttribute) {
 				const isAbilityCostSpent = spendAbilityCost(
-					actorData,
+					actorState,
 					actionQueuedAction,
 				);
 				if (!isAbilityCostSpent) {
@@ -101,18 +93,18 @@ export default class CombatManagerSystem implements GameSystem {
 			}
 
 			if (
-				actorData.queuedAction &&
+				actorState.queuedAction &&
 				actionTimerAttribute.currentValue ===
 					actionTimerAttribute.maximumValue
 			) {
 				Promise.resolve(
-					this.performQueuedAction(actorData).then(() => {
+					this.performQueuedAction(actorState).then(() => {
 						// With behavior being handled in its own system and module, need to look into whether this is needed or not
 						if (gameplayState.playerEntityIds.includes(eid)) {
-							actorData.queuedAction = null;
+							actorState.queuedAction = null;
 						}
 						if (gameplayState.enemyEntityIds.includes(eid)) {
-							Promise.resolve(decideNPCAction(actorData));
+							Promise.resolve(decideNPCAction(actorState));
 						}
 					}),
 				);
@@ -129,17 +121,9 @@ export default class CombatManagerSystem implements GameSystem {
 			return;
 		}
 
-		const actionTargetIds = [
-			...new Set(sourceActorState.currentTargetEIDs),
-		];
-
 		renderMessageDisplay(sourceActorState, actionToPerform);
 
-		renderCastAndHitVFX(
-			actionToPerform,
-			sourceActorState.entityId,
-			actionTargetIds,
-		);
+		renderCastVFX(actionToPerform, sourceActorState.entityId);
 
 		const abilityContext = createNewAbilityContext(actionToPerform);
 		triggerFeatEffects(
@@ -153,11 +137,10 @@ export default class CombatManagerSystem implements GameSystem {
 		);
 
 		// Rework this to get targets based on the shape type
-		getProjectileFactory().createEntityFromProperties(
-			sourceActorState.entityId,
-			actionToPerform,
-			actionTargetIds,
-		);
+		// getProjectileFactory().createEntityFromProperties(
+		// 	sourceActorState.entityId,
+		// 	actionToPerform,
+		// );
 
 		startRenderQueue();
 
