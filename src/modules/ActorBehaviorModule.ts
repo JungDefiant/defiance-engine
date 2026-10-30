@@ -15,10 +15,12 @@ import {
     getActorStateComponentArray,
 } from "./ComponentModule";
 import { getGameplayState, getGameScene } from "./GameStateModule";
-import { decideNPCAction, queueNPCAction } from "./CombatModule";
+import { decideNPCActionByTactic, queueNPCAction } from "./CombatModule";
 import { getActorPosition } from "./Collision3DModule";
 import { navigateToPosition, stopNavigation } from "./ActorNavigationModule";
 import { CombatState } from "src/types/CombatTypes";
+import { getActorBehaviorProcessor } from "./ProcessorModule";
+import { ActorBehaviorFunctionProps } from "src/processors/BehaviorProcessor";
 
 export function getActorBehavior(
     entityId: EntityId,
@@ -46,73 +48,87 @@ export function decideActionByBehavior(entityId: EntityId) {
         return;
     }
 
-    if (behaviorComponent.defaultBehavior === DefaultBehavior.Aggressive) {
-        moveTowardNearestOpposingActor(entityId, actorState);
-    }
+    moveTowardTarget(entityId);
 
     if (actorState.queuedAction) {
         return;
     }
 
-    decideNPCAction(actorState);
+    decideNPCActionByTactic(actorState);
     if (actorState.queuedAction) {
         return;
     }
 
-    if (behaviorComponent.defaultBehavior === DefaultBehavior.Aggressive) {
-        queueDefaultAggressiveAction(entityId, actorState);
-    }
+    const actorBehaviorProcessor = getActorBehaviorProcessor();
+    const behaviorFunction = actorBehaviorProcessor.getProcessorFunction(
+        behaviorComponent.defaultBehavior,
+    );
+    behaviorFunction({ entityId, actorState } as ActorBehaviorFunctionProps);
 }
 
 function getWeaponActionData(
     actorState: ActorStateComponent,
-): AbilityData | undefined {
+): Nullable<AbilityData> {
+    if (!actorState.actionData) {
+        return null;
+    }
+
     const actionDataArray = actorState.actionData.get(ActionSlotKey.weapon);
-    return actionDataArray?.[0] as AbilityData | undefined;
+    if (actionDataArray) {
+        return actionDataArray[0];
+    } else {
+        return null;
+    }
 }
 
-function getWeaponRange(actorState: ActorStateComponent): number {
-    const weaponActionData = getWeaponActionData(actorState);
-    const weaponRange = weaponActionData?.targetingShape?.range;
-    return weaponRange ?? DEFAULT_WEAPON_RANGE;
+function getAbilityRange(ability: AbilityData): number {
+    if (!ability || !ability.targetingShape) {
+        return -1;
+    }
+
+    const actionRange = ability.targetingShape.range;
+    return actionRange ?? DEFAULT_WEAPON_RANGE;
 }
 
-export function queueDefaultPassiveAction(
-    entityId: EntityId,
-    actorState: ActorStateComponent,
-) {
-    const weaponActionData = getWeaponActionData(actorState);
+export function queueDefaultPassiveAction(props: ActorBehaviorFunctionProps) {
+    const weaponActionData = getWeaponActionData(props.actorState);
     if (!weaponActionData) {
         return;
     }
 }
 
 export function queueDefaultAggressiveAction(
-    entityId: EntityId,
-    actorState: ActorStateComponent,
+    props: ActorBehaviorFunctionProps,
 ) {
-    const weaponActionData = getWeaponActionData(actorState);
+    const weaponActionData = getWeaponActionData(props.actorState);
     if (!weaponActionData) {
         return;
     }
 
-    const nearestTargetEids = getNearestOpposingActorEntityIds(entityId);
-    if (nearestTargetEids.length > 0) {
-        queueNPCAction(weaponActionData, entityId);
+    const nearestTargetEid = getNearestOpposingActorEntityId(props.entityId);
+    if (nearestTargetEid === -1) {
+        return;
     }
+
+    const targetingShapeType = weaponActionData.targetingShape?.type;
+    if (targetingShapeType === "direct" || "projectile") {
+        props.actorState.currentTargetEntityId = nearestTargetEid;
+    } else {
+        const targetPosition = getActorPosition(nearestTargetEid);
+        props.actorState.currentTargetPosition = targetPosition as Vector3;
+    }
+
+    queueNPCAction(weaponActionData, props.entityId);
 }
 
-export function queueDefaultDefensiveAction(
-    entityId: EntityId,
-    actorState: ActorStateComponent,
-) {
-    const weaponActionData = getWeaponActionData(actorState);
+export function queueDefaultDefensiveAction(props: ActorBehaviorFunctionProps) {
+    const weaponActionData = getWeaponActionData(props.actorState);
     if (!weaponActionData) {
         return;
     }
 }
 
-function getNearestOpposingActorEntityIds(entityId: EntityId): EntityId[] {
+function getNearestOpposingActorEntityId(entityId: EntityId): EntityId {
     const gameplayState = getGameplayState();
     const actorStateComponentArray = getActorStateComponentArray();
     const isSourcePlayer = gameplayState.playerEntityIds.includes(entityId);
@@ -122,7 +138,7 @@ function getNearestOpposingActorEntityIds(entityId: EntityId): EntityId[] {
 
     const sourcePosition = getActorPosition(entityId);
     if (!sourcePosition) {
-        return [];
+        return -1;
     }
 
     let nearestEid: EntityId = -1;
@@ -140,45 +156,64 @@ function getNearestOpposingActorEntityIds(entityId: EntityId): EntityId[] {
         }
     }
 
-    return nearestEid >= 0 ? [nearestEid] : [];
+    return nearestEid;
 }
 
-function moveTowardNearestOpposingActor(
-    entityId: EntityId,
-    actorState: ActorStateComponent,
-) {
-    const nearestTargetEids = getNearestOpposingActorEntityIds(entityId);
-    if (nearestTargetEids.length === 0) {
-        stopNavigation(entityId);
-        return;
-    }
-
-    const targetEid = nearestTargetEids[0];
-    const targetPosition = getActorPosition(targetEid);
-    const sourcePosition = getActorPosition(entityId);
-    if (!targetPosition || !sourcePosition) {
-        return;
-    }
-
-    const distanceToTarget = Vector3.Distance(sourcePosition, targetPosition);
-    const isWithinWeaponRange =
-        distanceToTarget <=
-        getWeaponRange(actorState) * WEAPON_RANGE_STOP_FACTOR;
-    const hasLineOfSight = hasLineOfSightToActor(entityId, targetEid);
-
-    if (!isWithinWeaponRange || !hasLineOfSight) {
-        navigateToPosition(entityId, targetPosition);
+function moveTowardTarget(entityId: EntityId) {
+    const actorStateComponentArray = getActorStateComponentArray();
+    const actorState = actorStateComponentArray[entityId];
+    if (isTargetableWithQueuedAction(entityId)) {
+        const targetPosition = getTargetPosition(actorState);
+        if (targetPosition && targetPosition !== Vector3.Zero()) {
+            navigateToPosition(entityId, targetPosition);
+        }
     } else {
         stopNavigation(entityId);
     }
 }
 
-function hasLineOfSightToActor(
+function isTargetableWithQueuedAction(sourceEntityId: EntityId) {
+    const actorStateComponentArray = getActorStateComponentArray();
+    const actorState = actorStateComponentArray[sourceEntityId];
+    const queuedAction = actorState.queuedAction;
+    if (!queuedAction) {
+        return false;
+    }
+
+    const actionRange = getAbilityRange(queuedAction);
+    if (!actionRange) {
+        return false;
+    }
+
+    const targetPosition = getTargetPosition(actorState);
+    const sourcePosition = getActorPosition(sourceEntityId);
+    if (!targetPosition || !sourcePosition) {
+        return false;
+    }
+    const distanceToTarget = Vector3.Distance(sourcePosition, targetPosition);
+
+    const isWithinActionRange = distanceToTarget <= actionRange;
+    const hasLineOfSight = hasLineOfSightToPosition(
+        sourceEntityId,
+        targetPosition,
+    );
+    return !isWithinActionRange || !hasLineOfSight;
+}
+
+function getTargetPosition(actorState: ActorStateComponent) {
+    if (actorState.currentTargetPosition) {
+        return actorState.currentTargetPosition;
+    } else if (actorState.currentTargetEntityId) {
+        return getActorPosition(actorState.currentTargetEntityId);
+    }
+    return Vector3.Zero();
+}
+
+function hasLineOfSightToPosition(
     sourceEid: EntityId,
-    targetEid: EntityId,
+    targetPosition: Vector3,
 ): boolean {
     const sourcePosition = getActorPosition(sourceEid);
-    const targetPosition = getActorPosition(targetEid);
     if (!sourcePosition || !targetPosition) {
         return false;
     }

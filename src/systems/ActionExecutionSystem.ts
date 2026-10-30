@@ -5,7 +5,7 @@ import ActorStateComponent from "src/components/ActorStateComponent";
 import { PAUSE_GAMEOVER } from "src/constants/GeneralConstants";
 import {
     createNewAbilityContext,
-    decideNPCAction,
+    decideNPCActionByTactic,
     endCombat,
     startActionRecovery,
 } from "src/modules/CombatModule";
@@ -102,7 +102,9 @@ export default class ActionExecutionSystem implements GameSystem {
                             actorState.queuedAction = null;
                         }
                         if (gameplayState.enemyEntityIds.includes(entityId)) {
-                            Promise.resolve(decideNPCAction(actorState));
+                            Promise.resolve(
+                                decideNPCActionByTactic(actorState),
+                            );
                         }
                     }),
                 );

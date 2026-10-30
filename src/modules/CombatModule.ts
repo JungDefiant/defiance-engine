@@ -51,6 +51,7 @@ import {
 } from "./ControlModule";
 import { checkEventByTrigger } from "./EventModule";
 import { CombatState } from "src/types/CombatTypes";
+import { getActorPosition } from "./Collision3DModule";
 
 export async function startCombat(encId: string): Promise<void> {
     const gameScene = getGameScene();
@@ -83,7 +84,7 @@ export async function startCombat(encId: string): Promise<void> {
         enActorData.name = enActorData.name.concat(
             ` ${String.fromCharCode(65 + i)}`,
         );
-        await decideNPCAction(enActorData);
+        await decideNPCActionByTactic(enActorData);
     }
 
     resetCombatModeActionManager();
@@ -194,7 +195,7 @@ export function queuePlayerAction(
     actorState.queuedAction = actionData;
 }
 
-export async function decideNPCAction(actorState: ActorStateComponent) {
+export async function decideNPCActionByTactic(actorState: ActorStateComponent) {
     const tactics = actorState.tactics;
 
     if (!tactics) {
@@ -227,6 +228,14 @@ export async function decideNPCAction(actorState: ActorStateComponent) {
         );
 
         if (target !== -1) {
+            const targetingShapeType = actionData.targetingShape?.type;
+            if (targetingShapeType === "direct" || "projectile") {
+                actorState.currentTargetEntityId = target;
+            } else {
+                const targetPosition = getActorPosition(target);
+                actorState.currentTargetPosition = targetPosition as Vector3;
+            }
+
             decidedActionData = actionData;
             break;
         }
@@ -247,7 +256,6 @@ export function queueNPCAction(
             sourceEntityId,
         );
     sourceActorState.queuedAction = actionData;
-    // create new targeting context based on targetentityId
 }
 
 export function createNewAbilityContext(
