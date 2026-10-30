@@ -4,8 +4,8 @@ import { EntityId } from "bitecs";
 export type TargetingRangeType =
 	| "direct"
 	| "projectile"
-	| "self"
 	| "sphere"
+	| "sphereProjectile"
 	| "cone";
 
 export interface TargetingShapeData {

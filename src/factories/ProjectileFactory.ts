@@ -3,20 +3,16 @@ import { EntityFactory } from "./EntityFactory";
 import { AbilityData } from "src/types/AbilityTypes";
 import { TargetingShapeData } from "src/types/CollisionTypes";
 import {
-	getAbilityTargetsByShape,
 	getActorCollisionRadius,
 	getActorPosition,
-	getSelectedTargetEid,
 } from "src/modules/Collision3DModule";
 import {
 	Color3,
 	MeshBuilder,
 	Nullable,
 	StandardMaterial,
-	Vector3,
 } from "@babylonjs/core";
 import {
-	getActorStateComponentArray,
 	getProjectileComponentArray,
 } from "src/modules/ComponentModule";
 import {
@@ -35,6 +31,7 @@ import {
 import ProjectileComponent, {
 	ProjectileComponentConstructorProperties,
 } from "src/components/ProjectileComponent";
+import { TargetingShapeFunctionProps } from "src/processors/TargetingShapeProcessor";
 
 export class ProjectileFactory implements EntityFactory {
 	public start(campaignId: string): void {}
@@ -43,16 +40,14 @@ export class ProjectileFactory implements EntityFactory {
 		return -1;
 	}
 
-	public createEntityFromProperties(
-		sourceEid: EntityId,
-		actionData: AbilityData,
-		targetEids: EntityId[],
+	public createEntityFromTargetingShapeProperties(
+		props: TargetingShapeFunctionProps,
 	): EntityId {
-		if (targetEids.length === 0) {
+		if(!props.targetEntityId) {
 			return -1;
 		}
 
-		const sourcePosition = getActorPosition(sourceEid);
+		const sourcePosition = getActorPosition(props.sourceEntityId);
 		if (!sourcePosition) {
 			return -1;
 		}
@@ -60,11 +55,7 @@ export class ProjectileFactory implements EntityFactory {
 		const gameScene = getGameScene();
 		const newProjectileEntity = addEntity(gameScene.world);
 
-		const newProjectileComponent = this.createProjectileComponent(
-			sourceEid,
-			actionData,
-			[...targetEids],
-		);
+		const newProjectileComponent = this.createProjectileComponent(props);
 		addComponent(
 			gameScene.world,
 			newProjectileEntity,
@@ -75,13 +66,11 @@ export class ProjectileFactory implements EntityFactory {
 	}
 
 	private createProjectileComponent(
-		sourceEntityId: EntityId,
-		actionData: AbilityData,
-		targetEntityIds: EntityId[],
+		props: TargetingShapeFunctionProps
 	): Nullable<ProjectileComponent> {
-		const shape: TargetingShapeData | undefined = actionData.targetingShape;
+		const shape: TargetingShapeData | undefined = props.action.targetingShape;
 		const gameScene = getGameScene();
-		const sourcePosition = getActorPosition(sourceEntityId);
+		const sourcePosition = getActorPosition(props.sourceEntityId);
 		const projectileComponentArray = getProjectileComponentArray();
 
 		if (!sourcePosition || !shape) {
@@ -93,7 +82,7 @@ export class ProjectileFactory implements EntityFactory {
 
 		let aimDirection = getAimDirectionFromPointer(sourcePosition);
 		const projectileMesh = MeshBuilder.CreateBox(
-			`abilityProjectile_${sourceEntityId}_${projectileComponentArray.length}`,
+			`abilityProjectile_${props.sourceEntityId}_${projectileComponentArray.length}`,
 			{
 				width: PROJECTILE_WIDTH,
 				height: PROJECTILE_WIDTH,
@@ -104,7 +93,7 @@ export class ProjectileFactory implements EntityFactory {
 		projectileMesh.rotation.y = Math.atan2(aimDirection.x, aimDirection.z);
 
 		const projectileMaterial = new StandardMaterial(
-			`mat_abilityProjectile_${sourceEntityId}_${projectileComponentArray.length}`,
+			`mat_abilityProjectile_${props.sourceEntityId}_${projectileComponentArray.length}`,
 			gameScene,
 		);
 		projectileMaterial.diffuseColor = Color3.FromHexString("#EFC041");
@@ -112,7 +101,7 @@ export class ProjectileFactory implements EntityFactory {
 		projectileMaterial.disableLighting = true;
 		projectileMesh.material = projectileMaterial;
 
-		const spawnOffset = getActorCollisionRadius(sourceEntityId) + 0.3;
+		const spawnOffset = getActorCollisionRadius(props.sourceEntityId) + 0.3;
 		projectileMesh.position.copyFrom(
 			sourcePosition.add(aimDirection.scale(spawnOffset)),
 		);
@@ -126,9 +115,11 @@ export class ProjectileFactory implements EntityFactory {
 			distanceTraveled: 0,
 			maxRange,
 			radius,
-			sourceEid: sourceEntityId,
-			actionData,
-			targetEids: [...targetEntityIds],
+			sourceEid: props.sourceEntityId,
+			actionData: props.action,
+			targetEntityId: props.targetEntityId,
+			targetPosition: props.targetPosition
+
 		} as ProjectileComponentConstructorProperties;
 
 		const newProjectileComponent = new ProjectileComponent(

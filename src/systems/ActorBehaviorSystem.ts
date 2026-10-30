@@ -7,23 +7,23 @@ import { decideActionByBehavior } from "src/modules/ActorBehaviorModule";
 import GameSystem from "./GameSystem";
 
 export default class ActorBehaviorSystem implements GameSystem {
-	public constructor(@inject(GameScene) private gameScene: GameScene) {}
+    public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
-	public update(deltaTime: number): void {
-		const controlState = getControlState();
-		if (controlState.actionPauseSet.size > 0) {
-			return;
-		}
+    public update(deltaTime: number): void {
+        const controlState = getControlState();
+        if (controlState.actionPauseSet.size > 0) {
+            return;
+        }
 
-		const gameplayState = getGameplayState();
-		const behaviorComponentArray = getActorBehaviorComponentArray();
+        const gameplayState = getGameplayState();
+        const behaviorComponentArray = getActorBehaviorComponentArray();
 
-		for (const entityId of query(this.gameScene.world, [
-			behaviorComponentArray,
-		])) {
-			if (entityId !== gameplayState.selectedPlayerEID) {
-				decideActionByBehavior(entityId);
-			}
-		}
-	}
+        for (const entityId of query(this.gameScene.world, [
+            behaviorComponentArray,
+        ])) {
+            if (entityId !== gameplayState.selectedPlayerEID) {
+                decideActionByBehavior(entityId);
+            }
+        }
+    }
 }

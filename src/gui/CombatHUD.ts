@@ -1,413 +1,413 @@
 import { Nullable } from "@babylonjs/core";
 import {
-	Container,
-	Control,
-	Grid,
-	Rectangle,
-	ScrollBar,
-	StackPanel,
-	TextBlock,
+    Container,
+    Control,
+    Grid,
+    Rectangle,
+    ScrollBar,
+    StackPanel,
+    TextBlock,
 } from "@babylonjs/gui";
 import IHUD from "src/gui/IHUD";
 import { Themes } from "src/gui/Themes";
 import { ActionSlot } from "src/gui/abstract/ActionSlot";
 import ActorStateComponent from "src/components/ActorStateComponent";
-import { startQueueActionPlayer } from "src/modules/CombatModule";
+import { queuePlayerAction } from "src/modules/CombatModule";
 import { getControlState } from "src/modules/GameStateModule";
 import ControlState from "src/states/ControlState";
 import { ActionSlotKey } from "src/types/AbilityTypes";
 import { EntityId } from "bitecs";
 
 export default class CombatHUD implements IHUD {
-	public rootContainer: Nullable<Container> = null;
+    public rootContainer: Nullable<Container> = null;
 
-	private actionBarUI: Nullable<Container> = null;
-	private messageDisplayUI: Nullable<Container> = null;
-	private combatLogUI: Nullable<Container> = null;
-	private combatLogStack: Nullable<StackPanel> = null;
-	private combatLogScrollbar: Nullable<ScrollBar> = null;
+    private actionBarUI: Nullable<Container> = null;
+    private messageDisplayUI: Nullable<Container> = null;
+    private combatLogUI: Nullable<Container> = null;
+    private combatLogStack: Nullable<StackPanel> = null;
+    private combatLogScrollbar: Nullable<ScrollBar> = null;
 
-	private accessorySlot: Nullable<ActionSlot> = null;
-	private powerSlots: ActionSlot[] = [];
-	private itemSlots: ActionSlot[] = [];
-	private messageDisplayText: Nullable<TextBlock> = null;
+    private accessorySlot: Nullable<ActionSlot> = null;
+    private powerSlots: ActionSlot[] = [];
+    private itemSlots: ActionSlot[] = [];
+    private messageDisplayText: Nullable<TextBlock> = null;
 
-	private readonly actionAbilityStackName = "ui_actionAbilityStack";
-	private readonly actionDeviceStackName = "ui_actionDeviceStack";
-	private readonly sizePerCombatLogEntry = 32;
+    private readonly actionAbilityStackName = "ui_actionAbilityStack";
+    private readonly actionDeviceStackName = "ui_actionDeviceStack";
+    private readonly sizePerCombatLogEntry = 32;
 
-	public showHideHud(show: boolean): void {
-		if (!this.rootContainer) {
-			return;
-		}
+    public showHideHud(show: boolean): void {
+        if (!this.rootContainer) {
+            return;
+        }
 
-		this.rootContainer.isVisible = show;
-	}
+        this.rootContainer.isVisible = show;
+    }
 
-	public createHudRoot(): Container {
-		this.rootContainer = new Container("ui_combatHUD");
+    public createHudRoot(): Container {
+        this.rootContainer = new Container("ui_combatHUD");
 
-		const backgroundUI = new Rectangle("ui_combatBgUI");
-		backgroundUI.width = 1;
-		backgroundUI.heightInPixels = 52;
-		backgroundUI.background = Themes.primary3;
-		backgroundUI.thickness = 0;
-		backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		this.rootContainer.addControl(backgroundUI);
+        const backgroundUI = new Rectangle("ui_combatBgUI");
+        backgroundUI.width = 1;
+        backgroundUI.heightInPixels = 52;
+        backgroundUI.background = Themes.primary3;
+        backgroundUI.thickness = 0;
+        backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.rootContainer.addControl(backgroundUI);
 
-		this.actionBarUI = this.createActionBar();
-		backgroundUI.addControl(this.actionBarUI);
+        this.actionBarUI = this.createActionBar();
+        backgroundUI.addControl(this.actionBarUI);
 
-		const messageDisplay = this.createMessageDisplay();
-		this.messageDisplayUI = messageDisplay.root;
-		this.messageDisplayText = messageDisplay.text;
-		this.rootContainer.addControl(this.messageDisplayUI);
-		this.messageDisplayUI.isVisible = false;
+        const messageDisplay = this.createMessageDisplay();
+        this.messageDisplayUI = messageDisplay.root;
+        this.messageDisplayText = messageDisplay.text;
+        this.rootContainer.addControl(this.messageDisplayUI);
+        this.messageDisplayUI.isVisible = false;
 
-		this.combatLogUI = this.createCombatLog();
-		this.rootContainer.addControl(this.combatLogUI);
+        this.combatLogUI = this.createCombatLog();
+        this.rootContainer.addControl(this.combatLogUI);
 
-		return this.rootContainer;
-	}
+        return this.rootContainer;
+    }
 
-	public setActionBar(actorState: ActorStateComponent): void {
-		const controlState = getControlState();
+    public setActionBar(actorState: ActorStateComponent): void {
+        const controlState = getControlState();
 
-		if (!actorState) {
-			return;
-		}
+        if (!actorState) {
+            return;
+        }
 
-		const actionPowerData = actorState.actionData.get(ActionSlotKey.power);
-		if (actionPowerData) {
-			for (let i = 0; i < this.powerSlots.length; i++) {
-				const powerSlot = this.powerSlots[i];
-				if (!powerSlot) {
-					continue;
-				}
+        const actionPowerData = actorState.actionData.get(ActionSlotKey.power);
+        if (actionPowerData) {
+            for (let i = 0; i < this.powerSlots.length; i++) {
+                const powerSlot = this.powerSlots[i];
+                if (!powerSlot) {
+                    continue;
+                }
 
-				const powerData = actionPowerData[i];
-				if (powerData) {
-					this.assignActionSlot(
-						powerSlot,
-						ActionSlotKey.power,
-						i,
-						(powerData.iconURL as string) || "",
-						actorState.entityId,
-						controlState,
-					);
-				} else {
-					powerSlot.setActionSlotIcon("");
-					powerSlot.setOnClickEvent(() => {});
-					powerSlot.setActionLabelText("");
-				}
-			}
-		}
-	}
+                const powerData = actionPowerData[i];
+                if (powerData) {
+                    this.assignActionSlot(
+                        powerSlot,
+                        ActionSlotKey.power,
+                        i,
+                        (powerData.iconURL as string) || "",
+                        actorState.entityId,
+                        controlState,
+                    );
+                } else {
+                    powerSlot.setActionSlotIcon("");
+                    powerSlot.setOnClickEvent(() => {});
+                    powerSlot.setActionLabelText("");
+                }
+            }
+        }
+    }
 
-	private assignActionSlot(
-		actionSlot: ActionSlot,
-		actionSlotKey: ActionSlotKey,
-		actionIndex: number,
-		iconUrl: string,
-		actorEntityId: EntityId,
-		controlState: ControlState,
-	) {
-		const actionKeyLabel = getActionSlotKeyLabel(
-			actionSlotKey,
-			actionIndex,
-			controlState,
-		);
-		if (actionKeyLabel === null) {
-			return;
-		}
+    private assignActionSlot(
+        actionSlot: ActionSlot,
+        actionSlotKey: ActionSlotKey,
+        actionIndex: number,
+        iconUrl: string,
+        actorEntityId: EntityId,
+        controlState: ControlState,
+    ) {
+        const actionKeyLabel = getActionSlotKeyLabel(
+            actionSlotKey,
+            actionIndex,
+            controlState,
+        );
+        if (actionKeyLabel === null) {
+            return;
+        }
 
-		actionSlot.setActionSlotIcon(iconUrl);
-		actionSlot.setOnClickEvent(() =>
-			startQueueActionPlayer(actorEntityId, actionSlotKey, actionIndex),
-		);
-		actionSlot.setActionLabelText(actionKeyLabel);
-	}
+        actionSlot.setActionSlotIcon(iconUrl);
+        actionSlot.setOnClickEvent(() =>
+            queuePlayerAction(actorEntityId, actionSlotKey, actionIndex),
+        );
+        actionSlot.setActionLabelText(actionKeyLabel);
+    }
 
-	public setMessageDisplay(show: boolean, message?: string) {
-		if (!this.messageDisplayUI) {
-			return;
-		}
+    public setMessageDisplay(show: boolean, message?: string) {
+        if (!this.messageDisplayUI) {
+            return;
+        }
 
-		this.messageDisplayUI.isVisible = show;
-		if (show && message && this.messageDisplayText) {
-			this.messageDisplayText.text = message;
-		}
-	}
+        this.messageDisplayUI.isVisible = show;
+        if (show && message && this.messageDisplayText) {
+            this.messageDisplayText.text = message;
+        }
+    }
 
-	public addCombatLogEntry(source: string, text: string) {
-		if (!this.combatLogStack || text === "") {
-			return;
-		}
+    public addCombatLogEntry(source: string, text: string) {
+        if (!this.combatLogStack || text === "") {
+            return;
+        }
 
-		const rootContainer = new Rectangle("ui_combatLogNode");
-		rootContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-		rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		rootContainer.width = 1;
-		rootContainer.heightInPixels = this.sizePerCombatLogEntry;
-		rootContainer.thickness = 0;
+        const rootContainer = new Rectangle("ui_combatLogNode");
+        rootContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+        rootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        rootContainer.width = 1;
+        rootContainer.heightInPixels = this.sizePerCombatLogEntry;
+        rootContainer.thickness = 0;
 
-		const entryUI = new TextBlock(
-			"ui_combatLogEntry",
-			`${source}: ${text}`,
-		);
-		entryUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		entryUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-		entryUI.width = 1;
-		entryUI.color = Themes.neutral2;
-		entryUI.style = Themes.typography.caption;
-		entryUI.resizeToFit = true;
-		entryUI.textWrapping = 1;
-		rootContainer.addControl(entryUI);
+        const entryUI = new TextBlock(
+            "ui_combatLogEntry",
+            `${source}: ${text}`,
+        );
+        entryUI.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        entryUI.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        entryUI.width = 1;
+        entryUI.color = Themes.neutral2;
+        entryUI.style = Themes.typography.caption;
+        entryUI.resizeToFit = true;
+        entryUI.textWrapping = 1;
+        rootContainer.addControl(entryUI);
 
-		this.combatLogStack.addControl(rootContainer);
-	}
+        this.combatLogStack.addControl(rootContainer);
+    }
 
-	public clearCombatEntries() {
-		if (!this.combatLogStack) {
-			return;
-		}
+    public clearCombatEntries() {
+        if (!this.combatLogStack) {
+            return;
+        }
 
-		this.combatLogStack.clearControls();
-		this.showHideScrollbar(true);
-	}
+        this.combatLogStack.clearControls();
+        this.showHideScrollbar(true);
+    }
 
-	private createActionBar(): Container {
-		const actionBarUI = new Rectangle("ui_actionBar");
-		actionBarUI.color = Themes.primary1;
-		actionBarUI.background = Themes.primary3;
-		actionBarUI.thickness = 1;
-		actionBarUI.widthInPixels = 472;
-		actionBarUI.heightInPixels = 56;
-		actionBarUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+    private createActionBar(): Container {
+        const actionBarUI = new Rectangle("ui_actionBar");
+        actionBarUI.color = Themes.primary1;
+        actionBarUI.background = Themes.primary3;
+        actionBarUI.thickness = 1;
+        actionBarUI.widthInPixels = 472;
+        actionBarUI.heightInPixels = 56;
+        actionBarUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
-		const actionGrid = new Grid("ui_actionStack");
-		actionGrid.addColumnDefinition(272);
-		actionGrid.addColumnDefinition(148);
-		actionGrid.addRowDefinition(16);
-		actionGrid.addRowDefinition(40);
-		actionGrid.width = 1;
-		actionGrid.height = 1;
+        const actionGrid = new Grid("ui_actionStack");
+        actionGrid.addColumnDefinition(272);
+        actionGrid.addColumnDefinition(148);
+        actionGrid.addRowDefinition(16);
+        actionGrid.addRowDefinition(40);
+        actionGrid.width = 1;
+        actionGrid.height = 1;
 
-		actionBarUI.addControl(actionGrid);
+        actionBarUI.addControl(actionGrid);
 
-		const abilitiesLabel = new TextBlock("ui_abilitiesLabel", "ABILITIES");
-		abilitiesLabel.color = Themes.neutral2;
-		abilitiesLabel.style = Themes.typography.header4;
-		abilitiesLabel.widthInPixels = 120;
-		abilitiesLabel.heightInPixels = 20;
-		abilitiesLabel.topInPixels = 4;
-		abilitiesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		abilitiesLabel.textHorizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		actionGrid.addControl(abilitiesLabel, 0, 0);
+        const abilitiesLabel = new TextBlock("ui_abilitiesLabel", "ABILITIES");
+        abilitiesLabel.color = Themes.neutral2;
+        abilitiesLabel.style = Themes.typography.header4;
+        abilitiesLabel.widthInPixels = 120;
+        abilitiesLabel.heightInPixels = 20;
+        abilitiesLabel.topInPixels = 4;
+        abilitiesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        abilitiesLabel.textHorizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        actionGrid.addControl(abilitiesLabel, 0, 0);
 
-		const devicesLabel = new TextBlock("ui_devicesLabel", "DEVICES");
-		devicesLabel.color = Themes.neutral2;
-		devicesLabel.style = Themes.typography.header4;
-		devicesLabel.widthInPixels = 120;
-		devicesLabel.heightInPixels = 20;
-		devicesLabel.topInPixels = 4;
-		devicesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		devicesLabel.textHorizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		actionGrid.addControl(devicesLabel, 0, 1);
+        const devicesLabel = new TextBlock("ui_devicesLabel", "DEVICES");
+        devicesLabel.color = Themes.neutral2;
+        devicesLabel.style = Themes.typography.header4;
+        devicesLabel.widthInPixels = 120;
+        devicesLabel.heightInPixels = 20;
+        devicesLabel.topInPixels = 4;
+        devicesLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        devicesLabel.textHorizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        actionGrid.addControl(devicesLabel, 0, 1);
 
-		const actionAbilityStack = new StackPanel(this.actionAbilityStackName);
-		actionAbilityStack.isVertical = false;
-		actionAbilityStack.spacing = 4;
-		actionAbilityStack.adaptWidthToChildren = true;
-		actionAbilityStack.adaptHeightToChildren = true;
-		actionGrid.addControl(actionAbilityStack, 1, 0);
+        const actionAbilityStack = new StackPanel(this.actionAbilityStackName);
+        actionAbilityStack.isVertical = false;
+        actionAbilityStack.spacing = 4;
+        actionAbilityStack.adaptWidthToChildren = true;
+        actionAbilityStack.adaptHeightToChildren = true;
+        actionGrid.addControl(actionAbilityStack, 1, 0);
 
-		let allAbilityActionSlots = [];
-		for (let i = 0; i < 4; i++) {
-			const actionSlot = new ActionSlot(
-				`ui_abilityslot_${i}`,
-				"",
-				() => {},
-			);
-			actionAbilityStack.addControl(actionSlot.rootContainer);
-			allAbilityActionSlots.push(actionSlot);
-		}
+        let allAbilityActionSlots = [];
+        for (let i = 0; i < 4; i++) {
+            const actionSlot = new ActionSlot(
+                `ui_abilityslot_${i}`,
+                "",
+                () => {},
+            );
+            actionAbilityStack.addControl(actionSlot.rootContainer);
+            allAbilityActionSlots.push(actionSlot);
+        }
 
-		this.powerSlots = allAbilityActionSlots;
+        this.powerSlots = allAbilityActionSlots;
 
-		const actionItemStack = new StackPanel(this.actionDeviceStackName);
-		actionItemStack.isVertical = false;
-		actionItemStack.spacing = 4;
-		actionItemStack.adaptWidthToChildren = true;
-		actionItemStack.adaptHeightToChildren = true;
-		actionGrid.addControl(actionItemStack, 1, 1);
+        const actionItemStack = new StackPanel(this.actionDeviceStackName);
+        actionItemStack.isVertical = false;
+        actionItemStack.spacing = 4;
+        actionItemStack.adaptWidthToChildren = true;
+        actionItemStack.adaptHeightToChildren = true;
+        actionGrid.addControl(actionItemStack, 1, 1);
 
-		let allItemActionSlots = [];
-		for (let i = 0; i < 4; i++) {
-			const actionSlot = new ActionSlot(
-				`ui_deviceslot_${i}`,
-				"",
-				() => {},
-			);
-			actionItemStack.addControl(actionSlot.rootContainer);
-			allItemActionSlots.push(actionSlot);
-		}
+        let allItemActionSlots = [];
+        for (let i = 0; i < 4; i++) {
+            const actionSlot = new ActionSlot(
+                `ui_deviceslot_${i}`,
+                "",
+                () => {},
+            );
+            actionItemStack.addControl(actionSlot.rootContainer);
+            allItemActionSlots.push(actionSlot);
+        }
 
-		this.accessorySlot = allItemActionSlots[0];
-		this.itemSlots = [
-			allItemActionSlots[1],
-			allItemActionSlots[2],
-			allItemActionSlots[3],
-		];
+        this.accessorySlot = allItemActionSlots[0];
+        this.itemSlots = [
+            allItemActionSlots[1],
+            allItemActionSlots[2],
+            allItemActionSlots[3],
+        ];
 
-		return actionBarUI;
-	}
+        return actionBarUI;
+    }
 
-	private createMessageDisplay(): { root: Container; text: TextBlock } {
-		const messageDisplayUI = new Rectangle("ui_messageDisplay");
-		messageDisplayUI.color = Themes.primary1;
-		messageDisplayUI.background = Themes.primary3;
-		messageDisplayUI.thickness = 1;
-		messageDisplayUI.widthInPixels = 280;
-		messageDisplayUI.heightInPixels = 48;
-		messageDisplayUI.top = 5;
-		messageDisplayUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		messageDisplayUI.horizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
+    private createMessageDisplay(): { root: Container; text: TextBlock } {
+        const messageDisplayUI = new Rectangle("ui_messageDisplay");
+        messageDisplayUI.color = Themes.primary1;
+        messageDisplayUI.background = Themes.primary3;
+        messageDisplayUI.thickness = 1;
+        messageDisplayUI.widthInPixels = 280;
+        messageDisplayUI.heightInPixels = 48;
+        messageDisplayUI.top = 5;
+        messageDisplayUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        messageDisplayUI.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
 
-		const messageDisplayText = new TextBlock("ui_messageDisplayText", "");
-		messageDisplayText.color = Themes.neutral2;
-		messageDisplayText.style = Themes.typography.header4;
-		messageDisplayText.width = 100;
-		messageDisplayText.height = 100;
-		messageDisplayText.textVerticalAlignment =
-			Control.VERTICAL_ALIGNMENT_CENTER;
-		messageDisplayText.textHorizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		messageDisplayUI.addControl(messageDisplayText);
+        const messageDisplayText = new TextBlock("ui_messageDisplayText", "");
+        messageDisplayText.color = Themes.neutral2;
+        messageDisplayText.style = Themes.typography.header4;
+        messageDisplayText.width = 100;
+        messageDisplayText.height = 100;
+        messageDisplayText.textVerticalAlignment =
+            Control.VERTICAL_ALIGNMENT_CENTER;
+        messageDisplayText.textHorizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        messageDisplayUI.addControl(messageDisplayText);
 
-		return { root: messageDisplayUI, text: messageDisplayText };
-	}
+        return { root: messageDisplayUI, text: messageDisplayText };
+    }
 
-	private createCombatLog(): Container {
-		const combatLogUI = new Rectangle("ui_combatLog");
-		combatLogUI.color = Themes.primary1;
-		combatLogUI.background = `${Themes.primary3}${Themes.dialogueBackgroundOpacity}`;
-		combatLogUI.thickness = 1;
-		combatLogUI.widthInPixels = 160;
-		combatLogUI.heightInPixels = 180;
-		combatLogUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		combatLogUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+    private createCombatLog(): Container {
+        const combatLogUI = new Rectangle("ui_combatLog");
+        combatLogUI.color = Themes.primary1;
+        combatLogUI.background = `${Themes.primary3}${Themes.dialogueBackgroundOpacity}`;
+        combatLogUI.thickness = 1;
+        combatLogUI.widthInPixels = 160;
+        combatLogUI.heightInPixels = 180;
+        combatLogUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        combatLogUI.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
 
-		const combatLogHeader = new Rectangle("ui_combatLogHeader");
-		combatLogHeader.color = Themes.primary1;
-		combatLogHeader.background = Themes.primary3;
-		combatLogHeader.thickness = 1;
-		combatLogHeader.widthInPixels = 160;
-		combatLogHeader.heightInPixels = 20;
-		combatLogHeader.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-		combatLogUI.addControl(combatLogHeader);
+        const combatLogHeader = new Rectangle("ui_combatLogHeader");
+        combatLogHeader.color = Themes.primary1;
+        combatLogHeader.background = Themes.primary3;
+        combatLogHeader.thickness = 1;
+        combatLogHeader.widthInPixels = 160;
+        combatLogHeader.heightInPixels = 20;
+        combatLogHeader.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        combatLogUI.addControl(combatLogHeader);
 
-		const combatLogLabel = new TextBlock("ui_combatLogLabel", "COMBAT LOG");
-		combatLogLabel.color = Themes.neutral2;
-		combatLogLabel.style = Themes.typography.header4;
-		combatLogLabel.width = 100;
-		combatLogLabel.height = 100;
-		combatLogLabel.textVerticalAlignment =
-			Control.VERTICAL_ALIGNMENT_CENTER;
-		combatLogLabel.textHorizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		combatLogHeader.addControl(combatLogLabel);
+        const combatLogLabel = new TextBlock("ui_combatLogLabel", "COMBAT LOG");
+        combatLogLabel.color = Themes.neutral2;
+        combatLogLabel.style = Themes.typography.header4;
+        combatLogLabel.width = 100;
+        combatLogLabel.height = 100;
+        combatLogLabel.textVerticalAlignment =
+            Control.VERTICAL_ALIGNMENT_CENTER;
+        combatLogLabel.textHorizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        combatLogHeader.addControl(combatLogLabel);
 
-		const combatLogScroll = new Container("ui_combatLogScroll");
-		combatLogScroll.isPointerBlocker = true;
-		combatLogScroll.horizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		combatLogScroll.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		combatLogScroll.widthInPixels = 160;
-		combatLogScroll.heightInPixels = 160;
-		combatLogScroll.alpha = 1;
-		combatLogUI.addControl(combatLogScroll);
+        const combatLogScroll = new Container("ui_combatLogScroll");
+        combatLogScroll.isPointerBlocker = true;
+        combatLogScroll.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        combatLogScroll.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        combatLogScroll.widthInPixels = 160;
+        combatLogScroll.heightInPixels = 160;
+        combatLogScroll.alpha = 1;
+        combatLogUI.addControl(combatLogScroll);
 
-		this.combatLogStack = new StackPanel("ui_combatLogStack");
-		this.combatLogStack.isPointerBlocker = true;
-		this.combatLogStack.horizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_CENTER;
-		this.combatLogStack.verticalAlignment =
-			Control.VERTICAL_ALIGNMENT_BOTTOM;
-		this.combatLogStack.width = 1;
-		this.combatLogStack.spacing = 4;
-		this.combatLogStack.adaptHeightToChildren = true;
-		this.combatLogStack.onControlAddedObservable.add(() => {
-			if (!this.combatLogStack || !this.combatLogScrollbar) {
-				return;
-			}
-			const textEntryStackSize =
-				(this.combatLogStack.children.length + 2) *
-				this.sizePerCombatLogEntry;
-			if (textEntryStackSize < combatLogScroll.heightInPixels) {
-				this.showHideScrollbar(false);
-			} else {
-				this.showHideScrollbar(true);
-				this.combatLogScrollbar.thumbWidth =
-					100 * (combatLogScroll.heightInPixels / textEntryStackSize);
-			}
-		});
-		combatLogScroll.addControl(this.combatLogStack);
+        this.combatLogStack = new StackPanel("ui_combatLogStack");
+        this.combatLogStack.isPointerBlocker = true;
+        this.combatLogStack.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        this.combatLogStack.verticalAlignment =
+            Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.combatLogStack.width = 1;
+        this.combatLogStack.spacing = 4;
+        this.combatLogStack.adaptHeightToChildren = true;
+        this.combatLogStack.onControlAddedObservable.add(() => {
+            if (!this.combatLogStack || !this.combatLogScrollbar) {
+                return;
+            }
+            const textEntryStackSize =
+                (this.combatLogStack.children.length + 2) *
+                this.sizePerCombatLogEntry;
+            if (textEntryStackSize < combatLogScroll.heightInPixels) {
+                this.showHideScrollbar(false);
+            } else {
+                this.showHideScrollbar(true);
+                this.combatLogScrollbar.thumbWidth =
+                    100 * (combatLogScroll.heightInPixels / textEntryStackSize);
+            }
+        });
+        combatLogScroll.addControl(this.combatLogStack);
 
-		this.combatLogScrollbar = new ScrollBar("ui_textEntryScrollbar");
-		this.combatLogScrollbar.isPointerBlocker = true;
-		this.combatLogScrollbar.horizontalAlignment =
-			Control.HORIZONTAL_ALIGNMENT_RIGHT;
-		this.combatLogScrollbar.verticalAlignment =
-			Control.VERTICAL_ALIGNMENT_TOP;
-		this.combatLogScrollbar.isVertical = true;
-		this.combatLogScrollbar.isThumbClamped = true;
-		this.combatLogScrollbar.widthInPixels = 8;
-		this.combatLogScrollbar.paddingTopInPixels = 8;
-		this.combatLogScrollbar.paddingBottomInPixels = 8;
-		this.combatLogScrollbar.onValueChangedObservable.add((value) => {
-			if (!this.combatLogStack) {
-				return;
-			}
+        this.combatLogScrollbar = new ScrollBar("ui_textEntryScrollbar");
+        this.combatLogScrollbar.isPointerBlocker = true;
+        this.combatLogScrollbar.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        this.combatLogScrollbar.verticalAlignment =
+            Control.VERTICAL_ALIGNMENT_TOP;
+        this.combatLogScrollbar.isVertical = true;
+        this.combatLogScrollbar.isThumbClamped = true;
+        this.combatLogScrollbar.widthInPixels = 8;
+        this.combatLogScrollbar.paddingTopInPixels = 8;
+        this.combatLogScrollbar.paddingBottomInPixels = 8;
+        this.combatLogScrollbar.onValueChangedObservable.add((value) => {
+            if (!this.combatLogStack) {
+                return;
+            }
 
-			const combatEntryStackSize =
-				this.combatLogStack.children.length *
-				this.sizePerCombatLogEntry;
-			this.combatLogStack.topInPixels =
-				(value / 100) * combatEntryStackSize;
-		});
-		this.combatLogScrollbar.value = 0;
-		this.combatLogScrollbar.background = Themes.primary3;
-		this.combatLogScrollbar.color = Themes.neutral1;
-		this.showHideScrollbar(false);
-		combatLogScroll.addControl(this.combatLogScrollbar);
+            const combatEntryStackSize =
+                this.combatLogStack.children.length *
+                this.sizePerCombatLogEntry;
+            this.combatLogStack.topInPixels =
+                (value / 100) * combatEntryStackSize;
+        });
+        this.combatLogScrollbar.value = 0;
+        this.combatLogScrollbar.background = Themes.primary3;
+        this.combatLogScrollbar.color = Themes.neutral1;
+        this.showHideScrollbar(false);
+        combatLogScroll.addControl(this.combatLogScrollbar);
 
-		return combatLogUI;
-	}
+        return combatLogUI;
+    }
 
-	public showHideScrollbar(show: boolean): void {
-		if (!this.combatLogScrollbar) {
-			return;
-		}
-		this.combatLogScrollbar.alpha = show ? 1 : 0;
-		this.combatLogScrollbar.isEnabled = show ? true : false;
-	}
+    public showHideScrollbar(show: boolean): void {
+        if (!this.combatLogScrollbar) {
+            return;
+        }
+        this.combatLogScrollbar.alpha = show ? 1 : 0;
+        this.combatLogScrollbar.isEnabled = show ? true : false;
+    }
 }
 
 function getActionSlotKeyLabel(
-	actionSlotKey: ActionSlotKey,
-	actionIndex: number,
-	controlState: ControlState,
+    actionSlotKey: ActionSlotKey,
+    actionIndex: number,
+    controlState: ControlState,
 ): string | null {
-	if (actionSlotKey === ActionSlotKey.power) {
-		const powerKey = controlState.controlSettings.powerKeys[actionIndex];
-		if (powerKey === undefined) {
-			return null;
-		}
-		return String.fromCharCode(powerKey).toUpperCase();
-	}
-	return null;
+    if (actionSlotKey === ActionSlotKey.power) {
+        const powerKey = controlState.controlSettings.powerKeys[actionIndex];
+        if (powerKey === undefined) {
+            return null;
+        }
+        return String.fromCharCode(powerKey).toUpperCase();
+    }
+    return null;
 }

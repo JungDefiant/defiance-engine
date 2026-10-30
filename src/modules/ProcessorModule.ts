@@ -1,6 +1,8 @@
 import { AbilityEffectApplicationProcessor } from "src/processors/AbilityEffectApplicationProcessor";
 import { AbilityEffectCalculationProcessor } from "src/processors/AbilityEffectCalculationProcessor";
+import { CollisionBehaviorProcessor } from "src/processors/CollisionBehaviorProcessor";
 import { GameEventProcessor } from "src/processors/GameEventProcessor";
+import { TargetingShapeProcessor } from "src/processors/TargetingShapeProcessor";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 import { container } from "tsyringe";
 
@@ -20,6 +22,20 @@ export function getAbilityEffectApplicationProcessor(): AbilityEffectApplication
 	const processorRegistry = container.resolve(ProcessorRegistry);
 	return processorRegistry.getProcessorByProcessorId(
 		AbilityEffectApplicationProcessor.name,
+	);
+}
+
+export function getTargetingShapeProcessor(): TargetingShapeProcessor {
+	const processorRegistry = container.resolve(ProcessorRegistry);
+	return processorRegistry.getProcessorByProcessorId(
+		TargetingShapeProcessor.name,
+	);
+}
+
+export function getCollisionBehaviorProcessor(): CollisionBehaviorProcessor {
+	const processorRegistry = container.resolve(ProcessorRegistry);
+	return processorRegistry.getProcessorByProcessorId(
+		CollisionBehaviorProcessor.name,
 	);
 }
 
