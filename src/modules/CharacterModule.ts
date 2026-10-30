@@ -12,7 +12,6 @@ import {
 	resetCombatModeActionManager,
 	resetCombatModeControls,
 } from "./ControlModule";
-import { setPlayerControlledBehavior } from "./ActorBehaviorModule";
 
 export async function loadStartingPlayerParty() {
 	const campaignState = getCampaignState();
@@ -31,7 +30,6 @@ export async function loadStartingPlayerParty() {
 
 	gameplayState.playerEntityIds = playerEntityIds;
 	gameplayState.selectedPlayerEID = playerEntityIds[0];
-	setPlayerControlledBehavior(gameplayState.selectedPlayerEID);
 	userInterfaceState.partyInfoHud.setPartyInfoEntryStack();
 }
 
@@ -72,7 +70,6 @@ export function setSelectedCharacter(eid: EntityId, isCombatMode?: boolean) {
 	const playerGuiComponentArray = getPlayerGuiComponentArray();
 
 	gameplayState.selectedPlayerEID = eid;
-	setPlayerControlledBehavior(eid);
 	playerGuiComponentArray.forEach((gui, eid) => {
 		if (eid === gameplayState.selectedPlayerEID) {
 			gui.setSelected(true);

@@ -16,7 +16,7 @@
 		"grenade",
 		"attack"
 	],
-	"target": "group_enemy",
+	"target": "enemy",
 	"recoveryTime": 4,
 	"cost": 5,
 	"costAttribute": "willPoints",

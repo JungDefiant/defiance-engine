@@ -2,8 +2,8 @@ import { Vector3 } from "@babylonjs/core";
 import { GameEvent } from "src/types/EventTypes";
 
 export class ControlSettings {
-	targetMouseButton: number = 2;
-	moveMouseButton: number = 0;
+	targetMouseButton: number = 0;
+	moveMouseButton: number = 2;
 	powerKeys: number[] = [
 		"Q".charCodeAt(0),
 		"W".charCodeAt(0),

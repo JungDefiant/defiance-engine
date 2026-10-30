@@ -88,10 +88,10 @@ export enum AbilityDescriptor {
 	innate = "innate",
 	weapon = "weapon",
 	device = "device",
-	mutation = "mutation",
-	technique = "technique",
-	invocation = "invocation",
-	cybernetic = "cybernetic",
+	mutant = "mutant",
+	soldier = "soldier",
+	mystic = "mystic",
+	cyborg = "cyborg",
 	attack = "attack",
 	action = "action",
 	toggle = "toggle",
@@ -99,8 +99,6 @@ export enum AbilityDescriptor {
 
 export enum AbilityTarget {
 	self = "self",
-	singleEnemy = "single_enemy",
-	groupEnemy = "group_enemy",
-	singleAlly = "single_ally",
-	groupAlly = "group_ally",
+	enemy = "enemy",
+	ally = "ally",
 }

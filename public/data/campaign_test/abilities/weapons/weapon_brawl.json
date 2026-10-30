@@ -14,7 +14,7 @@
 		"impact",
 		"attack"
 	],
-	"target": "single_enemy",
+	"target": "enemy",
 	"recoveryTime": 4,
 	"targetingShape": {
 		"type": "cone",

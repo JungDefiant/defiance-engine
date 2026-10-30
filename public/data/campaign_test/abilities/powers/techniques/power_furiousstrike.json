@@ -15,7 +15,7 @@
 		"melee",
 		"attack"
 	],
-	"target": "group_enemy",
+	"target": "enemy",
 	"recoveryTime": 3,
 	"cost": 10,
 	"costAttribute": "willPoints",

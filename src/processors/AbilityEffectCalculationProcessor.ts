@@ -1,12 +1,11 @@
 import { Processor } from "./Processor";
-import { AbilityEffectType, EffectVariable } from "src/types/AbilityTypes";
+import { AbilityEffectType, EffectFunctionProps, EffectVariable } from "src/types/AbilityTypes";
 import {
 	calculateAttributeModifier,
 	calculateContextVariableModifier,
 	calculateDamageEffect,
 	calculateHealEffect,
 	calculateStatusEffect,
-	EffectFunctionProps,
 } from "src/modules/EffectModule";
 
 export type AbilityEffectCalculationFunction = (

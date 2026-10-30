@@ -4,11 +4,9 @@ export enum DefaultBehavior {
 	Passive = "Passive",
 	Aggressive = "Aggressive",
 	Defensive = "Defensive",
-	PlayerControlled = "PlayerControlled",
 }
 
-export enum BehaviorCondition {
-	always = "always",
+export enum TacticCondition {
 	random = "random",
 	lowestLife = "lowestLife",
 	selfLifeBelowHalf = "selfLifeBelowHalf",
@@ -17,7 +15,7 @@ export enum BehaviorCondition {
 }
 
 export interface ActorTactic {
-	condition: BehaviorCondition;
+	condition: TacticCondition;
 	actionType: AbilityDescriptor;
 	actionSlotKey: ActionSlotKey;
 	actionIndex: number;
@@ -27,7 +25,7 @@ export interface ActorTactic {
 export function createDefaultActorTactics(): ActorTactic[] {
 	return [
 		{
-			condition: BehaviorCondition.always,
+			condition: TacticCondition.random,
 			actionType: "weapon" as AbilityDescriptor,
 			actionSlotKey: ActionSlotKey.weapon,
 			actionIndex: 0,
