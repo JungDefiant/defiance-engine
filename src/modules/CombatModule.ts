@@ -30,7 +30,11 @@ import {
     calculateTotalAttributeValue,
     performAttackRoll,
 } from "./EffectModule";
-import { renderAbilityEffects, startRenderQueue } from "./RenderModule";
+import {
+    renderAbilityEffects,
+    renderHitVFX,
+    startRenderQueue,
+} from "./RenderModule";
 import { disposeEnemyEntities, resetPlayerActorState } from "./CharacterModule";
 import { clearCombatHudEntries } from "./UserInterfaceModule";
 import {
@@ -309,6 +313,7 @@ export function applyActionEffects(
     calculateAbilityEffects(effectProps);
     applyAbilityEffects(effectProps);
     renderAbilityEffects(effectProps);
+    renderHitVFX(actionData, [targetEntityId]);
 
     startRenderQueue();
 }
