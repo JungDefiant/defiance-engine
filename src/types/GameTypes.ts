@@ -104,7 +104,6 @@ export interface ConditionFunction {
 }
 
 export type RenderQueueEntryType =
-	| "MessageDisplay"
 	| "FloatingText"
 	| "SpecialFx"
 	| "WaitUntilDone";

@@ -1,4 +1,4 @@
-import { Mesh, Vector3 } from "@babylonjs/core";
+import { Mesh, Nullable, Vector3 } from "@babylonjs/core";
 import { EntityId } from "bitecs";
 import { AbilityData } from "src/types/AbilityTypes";
 import { Component } from "./Component";
@@ -29,6 +29,7 @@ export default class ProjectileComponent implements Component {
     public direction: Vector3;
     public speed: number;
     public distanceTraveled: number;
+    public lastTargetPosition: Nullable<Vector3>;
 
     constructor(props: ProjectileComponentConstructorProperties) {
         this.mesh = props.mesh;
@@ -42,6 +43,9 @@ export default class ProjectileComponent implements Component {
         this.direction = props.direction;
         this.speed = props.speed;
         this.distanceTraveled = props.distanceTraveled;
+        this.lastTargetPosition = props.targetPosition
+            ? props.targetPosition.clone()
+            : null;
     }
 
     public getValue(): ProjectileComponent {

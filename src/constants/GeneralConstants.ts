@@ -11,3 +11,5 @@ export const PAUSE_RENDERQUEUE = "pause_renderQueue";
 export const PAUSE_DIALOGUE = "pause_dialogue";
 export const PAUSE_TACTICALPAUSE = "pause_tacticalPause";
 export const DEFAULT_CAMPAIGN_ID = "campaign_test";
+export const FLOATING_TEXT_FADE_RATE = 0.25;
+export const FLOATING_TEXT_RISE_SPEED = 100;

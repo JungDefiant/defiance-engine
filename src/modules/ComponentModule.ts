@@ -12,6 +12,7 @@ import ActorNavigationComponent from "src/components/ActorNavigationComponent";
 import ActorBehaviorComponent from "src/components/ActorBehaviorComponent";
 import CollisionComponent from "src/components/CollisionComponent";
 import ProjectileComponent from "src/components/ProjectileComponent";
+import RenderQueueComponent from "src/components/RenderQueueComponent";
 
 export function getComponentRegistry() {
 	return container.resolve(ComponentRegistry);
@@ -85,5 +86,11 @@ export function getTransformNodeComponentArray() {
 export function getProjectileComponentArray() {
 	return getComponentRegistry().getComponentArrayByComponentId<ProjectileComponent>(
 		ProjectileComponent.name,
+	);
+}
+
+export function getRenderQueueComponentArray() {
+	return getComponentRegistry().getComponentArrayByComponentId<RenderQueueComponent>(
+		RenderQueueComponent.name,
 	);
 }

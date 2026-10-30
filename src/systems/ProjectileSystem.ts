@@ -34,82 +34,135 @@ export default class ProjectileSystem implements GameSystem {
             const projectile = projectileComponentArray[entityId];
 
             if (projectile.targetEntityId) {
-                const targetEntityId = projectile.targetEntityId;
-                const targetActorState =
-                    getActorStateComponentArray()[targetEntityId];
-                const targetPosition = getActorPosition(targetEntityId);
-                if (
-                    !targetActorState ||
-                    targetActorState.isDefeated ||
-                    !targetPosition
-                ) {
-                    continue;
-                }
-
-                const projectileDirection = this.getDirectionToPosition(
-                    targetPosition,
-                    projectile.mesh.position,
-                );
-                if (!projectileDirection) {
-                    continue;
-                }
-
-                this.moveProjectileInDirection(
+                this.updateTargetedProjectile(
                     deltaTime,
-                    projectileDirection,
+                    entityId,
                     projectile,
                 );
-
-                const hitEntityId = this.findProjectileHitActor(projectile);
-                if (hitEntityId >= 0) {
-                    applyActionEffects(
-                        projectile.actionData,
-                        projectile.sourceEid,
-                        targetEntityId,
-                    );
-                    removeEntity(this.gameScene.world, entityId);
-                    return;
-                }
-
-                if (projectile.distanceTraveled >= projectile.maxRange) {
-                    removeEntity(this.gameScene.world, entityId);
-                }
             } else if (projectile.targetPosition && projectile.sphereRadius) {
-                const targetPosition = projectile.targetPosition;
-                const projectileDirection = this.getDirectionToPosition(
-                    targetPosition,
-                    projectile.mesh.position,
-                );
-                if (!projectileDirection) {
-                    continue;
-                }
-
-                this.moveProjectileInDirection(
-                    deltaTime,
-                    projectileDirection,
-                    projectile,
-                );
-
-                if (
-                    this.findProjectileHitPosition(projectile, targetPosition)
-                ) {
-                    const targetingShapeFunctionProps = {
-                        sourceEntityId: projectile.sourceEid,
-                        action: projectile.actionData,
-                        shape: {
-                            type: "sphereProjectile",
-                            radius: projectile.sphereRadius,
-                        },
-                        candidates: getAbilityTargetsByList(
-                            projectile.sourceEid,
-                            projectile.actionData,
-                        ),
-                        targetPosition,
-                    } as TargetingShapeFunctionProps;
-                    deliverAbilityEffectsBySphere(targetingShapeFunctionProps);
-                }
+                this.updatePositionalProjectile(deltaTime, projectile);
             }
         }
+    }
+
+    private updateTargetedProjectile(
+        deltaTime: number,
+        entityId: EntityId,
+        projectile: ProjectileComponent,
+    ): void {
+        const targetEntityId = projectile.targetEntityId;
+        if (!targetEntityId) {
+            return;
+        }
+
+        const targetActorState = getActorStateComponentArray()[targetEntityId];
+        const targetPosition = getActorPosition(targetEntityId);
+        const isTargetAlive =
+            !!targetActorState &&
+            !targetActorState.isDefeated &&
+            !!targetPosition;
+
+        if (isTargetAlive && targetPosition) {
+            this.updateLastTargetPosition(projectile, targetPosition);
+        }
+
+        const destination = isTargetAlive
+            ? targetPosition
+            : projectile.lastTargetPosition;
+        if (!destination) {
+            removeEntity(this.gameScene.world, entityId);
+            return;
+        }
+
+        const projectileDirection = this.getDirectionToPosition(
+            destination,
+            projectile.mesh.position,
+        );
+        if (projectileDirection) {
+            this.moveProjectileInDirection(
+                deltaTime,
+                projectileDirection,
+                projectile,
+            );
+        }
+
+        if (!isTargetAlive) {
+            if (
+                this.findProjectileHitPosition(projectile, destination) ||
+                projectile.distanceTraveled >= projectile.maxRange
+            ) {
+                removeEntity(this.gameScene.world, entityId);
+            }
+            return;
+        }
+
+        const hitEntityId = this.findProjectileHitActor(projectile);
+        if (hitEntityId >= 0) {
+            applyActionEffects(
+                projectile.actionData,
+                projectile.sourceEid,
+                targetEntityId,
+            );
+            removeEntity(this.gameScene.world, entityId);
+            return;
+        }
+
+        if (projectile.distanceTraveled >= projectile.maxRange) {
+            removeEntity(this.gameScene.world, entityId);
+        }
+    }
+
+    private updatePositionalProjectile(
+        deltaTime: number,
+        projectile: ProjectileComponent,
+    ): void {
+        const targetPosition = projectile.targetPosition;
+        if (!targetPosition) {
+            return;
+        }
+
+        const projectileDirection = this.getDirectionToPosition(
+            targetPosition,
+            projectile.mesh.position,
+        );
+        if (!projectileDirection) {
+            return;
+        }
+
+        this.moveProjectileInDirection(
+            deltaTime,
+            projectileDirection,
+            projectile,
+        );
+
+        if (this.findProjectileHitPosition(projectile, targetPosition)) {
+            const targetingShapeFunctionProps = {
+                sourceEntityId: projectile.sourceEid,
+                action: projectile.actionData,
+                shape: {
+                    type: "sphereProjectile",
+                    radius: projectile.sphereRadius,
+                },
+                candidates: getAbilityTargetsByList(
+                    projectile.sourceEid,
+                    projectile.actionData,
+                ),
+                targetPosition,
+            } as TargetingShapeFunctionProps;
+            deliverAbilityEffectsBySphere(targetingShapeFunctionProps);
+        }
+    }
+
+    private updateLastTargetPosition(
+        projectile: ProjectileComponent,
+        targetPosition: Vector3,
+    ): void {
+        if (!projectile.lastTargetPosition) {
+            projectile.lastTargetPosition = targetPosition.clone();
+            return;
+        }
+
+        projectile.lastTargetPosition.copyFrom(targetPosition);
     }
 
     private getDirectionToPosition(

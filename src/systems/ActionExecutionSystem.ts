@@ -1,5 +1,5 @@
 import { inject } from "tsyringe";
-import { EntityId, query } from "bitecs";
+import { query } from "bitecs";
 import GameSystem from "src/systems/GameSystem";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import { PAUSE_GAMEOVER } from "src/constants/GeneralConstants";
@@ -10,16 +10,11 @@ import {
     startActionRecovery,
 } from "src/modules/CombatModule";
 import { spendAbilityCost, triggerFeatEffects } from "src/modules/EffectModule";
-import {
-    renderCastVFX,
-    renderMessageDisplay,
-    startRenderQueue,
-} from "src/modules/RenderModule";
+import { renderCastVFX, startRenderQueue } from "src/modules/RenderModule";
 import { GameScene } from "src/scenes/GameScene";
 import {
     getControlState,
     getGameplayState,
-    getRenderState,
     getUserInterfaceState,
 } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
@@ -44,10 +39,7 @@ export default class ActionExecutionSystem implements GameSystem {
 
         // Move to another system
         if (gameplayState.combatState === CombatState.Victory) {
-            const renderState = getRenderState();
-            if (renderState.renderQueueStates.length === 0) {
-                endCombat();
-            }
+            endCombat();
             return;
         }
 
@@ -120,8 +112,6 @@ export default class ActionExecutionSystem implements GameSystem {
         if (!actionToPerform) {
             return;
         }
-
-        renderMessageDisplay(sourceActorState, actionToPerform);
 
         renderCastVFX(actionToPerform, sourceActorState.entityId);
 

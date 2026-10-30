@@ -1,100 +1,139 @@
+import { inject } from "tsyringe";
+import { EntityId, query, removeEntity } from "bitecs";
 import GameSystem from "src/systems/GameSystem";
 import { PAUSE_RENDERQUEUE } from "src/constants/GeneralConstants";
 import { RenderQueueState } from "src/types/RenderTypes";
+import RenderQueueComponent from "src/components/RenderQueueComponent";
 import { getControlState, getRenderState } from "src/modules/GameStateModule";
+import { getRenderQueueComponentArray } from "src/modules/ComponentModule";
 import { GameScene } from "src/scenes/GameScene";
-import { inject } from "tsyringe";
 
-// Rework the render queue system to work with new style of the game; may need to replace with another system
+// Processes every entity that has a RenderQueueComponent; more than one render queue can be executed at the same time
 export default class RenderQueueSystem implements GameSystem {
-	public constructor(@inject(GameScene) private gameScene: GameScene) {}
+    public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
-	public update(deltaTime: number): void {
-		const renderState = getRenderState();
-		if (!renderState.isStarted) {
-			return;
-		}
+    public update(deltaTime: number): void {
+        const controlState = getControlState();
+        if (controlState.renderPauseSet.size > 0) {
+            return;
+        }
 
-		const controlState = getControlState();
-		const renderQueueStates = renderState.renderQueueStates;
-		const currentRenderQueue = renderState.currentRenderQueue;
+        const renderQueueComponentArray = getRenderQueueComponentArray();
+        const renderQueueEntityIds = query(this.gameScene.world, [
+            renderQueueComponentArray,
+        ]);
 
-		if (controlState.renderPauseSet.size > 0) {
-			return;
-		}
+        for (const entityId of renderQueueEntityIds) {
+            const renderQueueComponent = renderQueueComponentArray[entityId];
+            if (!renderQueueComponent || !renderQueueComponent.isStarted) {
+                continue;
+            }
 
-		if (
-			(renderState.renderQueueStates.length === 0 ||
-				!renderState.renderQueueStates[
-					renderState.renderQueueStates.length - 1
-				].renderQueueEntry.isBlocking) &&
-			currentRenderQueue.length !== 0
-		) {
-			const nextRenderQueueEntry = currentRenderQueue.dequeue();
-			renderQueueStates.push(new RenderQueueState(nextRenderQueueEntry));
-		}
+            this.processRenderQueueComponent(
+                deltaTime,
+                entityId,
+                renderQueueComponent,
+            );
+        }
+    }
 
-		for (let renderQueueState of renderQueueStates) {
-			this.processRenderQueueState(deltaTime, renderQueueState);
-		}
+    private processRenderQueueComponent(
+        deltaTime: number,
+        entityId: EntityId,
+        renderQueueComponent: RenderQueueComponent,
+    ): void {
+        const currentRenderQueue = renderQueueComponent.queue;
 
-		if (renderQueueStates.length === 0) {
-			if (controlState.actionPauseSet.has(PAUSE_RENDERQUEUE)) {
-				controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
-			}
-			renderState.isStarted = false;
-		}
-	}
+        if (
+            (renderQueueComponent.renderQueueStates.length === 0 ||
+                !renderQueueComponent.renderQueueStates[
+                    renderQueueComponent.renderQueueStates.length - 1
+                ].renderQueueEntry.isBlocking) &&
+            currentRenderQueue.length !== 0
+        ) {
+            renderQueueComponent.renderQueueStates.push(
+                new RenderQueueState(currentRenderQueue.dequeue()),
+            );
+        }
 
-	private processRenderQueueState(
-		deltaTime: number,
-		renderQueueState: RenderQueueState,
-	): void {
-		const renderState = getRenderState();
-		if (renderQueueState.renderQueueEntry.duration) {
-			if (!renderQueueState.init) {
-				Promise.resolve(
-					renderQueueState.renderQueueEntry.initRenderQueueState(
-						renderQueueState,
-					),
-				).then(() => {
-					renderQueueState.init = true;
-				});
-			}
+        for (const renderQueueState of [
+            ...renderQueueComponent.renderQueueStates,
+        ]) {
+            this.processRenderQueueState(
+                deltaTime,
+                renderQueueState,
+                renderQueueComponent,
+            );
+        }
 
-			renderQueueState.timeAccumulated += deltaTime;
-			renderQueueState.renderQueueEntry.tickRenderQueueState(
-				renderQueueState,
-				deltaTime,
-			);
+        if (
+            renderQueueComponent.renderQueueStates.length === 0 &&
+            currentRenderQueue.length === 0
+        ) {
+            this.removeRenderQueueEntity(entityId);
+        } else if (renderQueueComponent.renderQueueStates.length === 0) {
+            renderQueueComponent.isStarted = false;
+        }
+    }
 
-			const renderQueueEntryTotalLifetime =
-				renderQueueState.renderQueueEntry.duration +
-				(renderQueueState.renderQueueEntry.delay || 0);
+    private processRenderQueueState(
+        deltaTime: number,
+        renderQueueState: RenderQueueState,
+        renderQueueComponent: RenderQueueComponent,
+    ): void {
+        if (renderQueueState.renderQueueEntry.duration) {
+            if (!renderQueueState.init) {
+                Promise.resolve(
+                    renderQueueState.renderQueueEntry.initRenderQueueState(
+                        renderQueueState,
+                    ),
+                ).then(() => {
+                    renderQueueState.init = true;
+                });
+            }
 
-			if (
-				renderQueueState.timeAccumulated >=
-				renderQueueEntryTotalLifetime
-			) {
-				renderQueueState.timeAccumulated =
-					renderQueueEntryTotalLifetime;
-				renderQueueState.renderQueueEntry.clearRenderQueueState(
-					renderQueueState,
-				);
-				renderState.renderQueueStates =
-					renderState.renderQueueStates.filter(
-						(x) => x !== renderQueueState,
-					);
-			}
-		} else {
-			if (!renderQueueState.init) {
-				Promise.resolve(
-					renderQueueState.renderQueueEntry.initRenderQueueState(
-						renderQueueState,
-					),
-				);
-				renderQueueState.init = true;
-			}
-		}
-	}
+            renderQueueState.timeAccumulated += deltaTime;
+            renderQueueState.renderQueueEntry.tickRenderQueueState(
+                renderQueueState,
+                deltaTime,
+            );
+
+            const renderQueueEntryTotalLifetime =
+                renderQueueState.renderQueueEntry.duration +
+                (renderQueueState.renderQueueEntry.delay || 0);
+
+            if (
+                renderQueueState.timeAccumulated >=
+                renderQueueEntryTotalLifetime
+            ) {
+                renderQueueState.timeAccumulated =
+                    renderQueueEntryTotalLifetime;
+                renderQueueState.renderQueueEntry.clearRenderQueueState(
+                    renderQueueState,
+                );
+                renderQueueComponent.renderQueueStates =
+                    renderQueueComponent.renderQueueStates.filter(
+                        (x) => x !== renderQueueState,
+                    );
+            }
+        } else {
+            if (!renderQueueState.init) {
+                Promise.resolve(
+                    renderQueueState.renderQueueEntry.initRenderQueueState(
+                        renderQueueState,
+                    ),
+                );
+                renderQueueState.init = true;
+            }
+        }
+    }
+
+    private removeRenderQueueEntity(entityId: EntityId): void {
+        const renderState = getRenderState();
+        if (renderState.currentRenderQueueEntityId === entityId) {
+            renderState.currentRenderQueueEntityId = -1;
+        }
+
+        removeEntity(this.gameScene.world, entityId);
+    }
 }
