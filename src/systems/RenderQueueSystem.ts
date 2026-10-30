@@ -1,14 +1,12 @@
 import { inject } from "tsyringe";
 import { EntityId, query, removeEntity } from "bitecs";
 import GameSystem from "src/systems/GameSystem";
-import { PAUSE_RENDERQUEUE } from "src/constants/GeneralConstants";
 import { RenderQueueState } from "src/types/RenderTypes";
 import RenderQueueComponent from "src/components/RenderQueueComponent";
 import { getControlState, getRenderState } from "src/modules/GameStateModule";
 import { getRenderQueueComponentArray } from "src/modules/ComponentModule";
 import { GameScene } from "src/scenes/GameScene";
 
-// Processes every entity that has a RenderQueueComponent; more than one render queue can be executed at the same time
 export default class RenderQueueSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
