@@ -41,6 +41,7 @@ import { getActorStateComponentArray } from "./ComponentModule";
 import { getActorPosition } from "./Collision3DModule";
 import { TARGET_HIGHLIGHT_DIAMETER } from "src/constants/CombatConstants";
 import { ACTOR_GROUND_Y } from "src/constants/GeneralConstants";
+import { entityExists } from "bitecs";
 
 export async function loadModalMap(modalIds: string[]): Promise<void> {
     const campaignState = getCampaignState();
@@ -74,8 +75,8 @@ function createMainUI(uiScene: UserInterfaceScene) {
         uiScene,
         Texture.NEAREST_SAMPLINGMODE,
     );
-    mainUI.idealWidth = 1000;
-    mainUI.idealHeight = 752;
+    mainUI.idealWidth = 1280;
+    mainUI.idealHeight = 720;
     return mainUI;
 }
 
@@ -86,8 +87,9 @@ function createSceneUI(scene: GameScene) {
         scene,
         Texture.NEAREST_SAMPLINGMODE,
     );
-    sceneGUI.idealWidth = 1000;
-    sceneGUI.idealHeight = 752;
+    sceneGUI.idealWidth = 1280;
+    sceneGUI.idealHeight = 720;
+    sceneGUI.useInvalidateRectOptimization = false;
     return sceneGUI;
 }
 
@@ -259,10 +261,21 @@ export function updateTargetHighlight(): void {
     const targetEid =
         actorStateComponentArray[gameplayState.selectedPlayerEID]
             .currentTargetEntityId;
-    const targetActorState =
-        targetEid >= 0 ? actorStateComponentArray[targetEid] : undefined;
-    const targetPosition = targetEid >= 0 ? getActorPosition(targetEid) : null;
     let targetHighlightMesh = userInterfaceState.targetHighlightMesh;
+
+    if (
+        targetEid === undefined ||
+        targetEid < 0 ||
+        !entityExists(gameScene.world, targetEid)
+    ) {
+        if (targetHighlightMesh) {
+            targetHighlightMesh.setEnabled(false);
+        }
+        return;
+    }
+
+    const targetActorState = actorStateComponentArray[targetEid];
+    const targetPosition = getActorPosition(targetEid);
 
     if (!targetActorState || targetActorState.isDefeated || !targetPosition) {
         if (targetHighlightMesh) {

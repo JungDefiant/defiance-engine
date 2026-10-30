@@ -16,6 +16,6 @@ export default class TransformNodeComponent
 	}
 
 	dispose() {
-		this.dispose();
+		super.dispose();
 	}
 }

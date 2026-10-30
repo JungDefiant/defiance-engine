@@ -4,6 +4,7 @@ import { StickerFactory } from "src/factories/StickerFactory";
 import { container } from "tsyringe";
 import { FactoryRegistry } from "src/registries/FactoryRegistry";
 import { ProjectileFactory } from "src/factories/ProjectileFactory";
+import { RenderQueueFactory } from "src/factories/RenderQueueFactory";
 
 export function getFactoryRegistry() {
 	return container.resolve(FactoryRegistry);
@@ -30,5 +31,11 @@ export function getStickerFactory(): StickerFactory {
 export function getProjectileFactory(): ProjectileFactory {
 	return getFactoryRegistry().getEntityFactoryByFactoryId<ProjectileFactory>(
 		ProjectileFactory.name,
+	);
+}
+
+export function getRenderQueueFactory(): RenderQueueFactory {
+	return getFactoryRegistry().getEntityFactoryByFactoryId<RenderQueueFactory>(
+		RenderQueueFactory.name,
 	);
 }

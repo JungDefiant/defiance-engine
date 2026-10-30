@@ -37,6 +37,8 @@ export default class UserInterfaceSystem implements GameSystem {
 			const enemyGUI = enemyGuiComponentArray[eid];
 			this.updateEnemyGUI(actorData, enemyGUI, eid);
 		}
+
+		updateTargetHighlight();
 	}
 
 	private updatePlayerGUI(
@@ -79,8 +81,6 @@ export default class UserInterfaceSystem implements GameSystem {
 
 		const hoveredEnemyEid = this.getHoveredEnemyEid();
 		enemyGui.setLifeBarVisible(entityId === hoveredEnemyEid);
-
-		updateTargetHighlight();
 	}
 
 	private getHoveredEnemyEid(): number {

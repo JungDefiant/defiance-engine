@@ -166,11 +166,9 @@ export function getAbilityTargetsByList(
 
     switch (actionData.target) {
         case AbilityTarget.enemy:
-        case AbilityTarget.enemy:
             return isSourcePlayer
                 ? gameplayState.enemyEntityIds
                 : gameplayState.playerEntityIds;
-        case AbilityTarget.ally:
         case AbilityTarget.ally:
             return (
                 isSourcePlayer

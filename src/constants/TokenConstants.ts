@@ -6,6 +6,7 @@ import { GameEventProcessor } from "src/processors/GameEventProcessor";
 import { AbilityEffectApplicationProcessor } from "src/processors/AbilityEffectApplicationProcessor";
 import { AbilityEffectCalculationProcessor } from "src/processors/AbilityEffectCalculationProcessor";
 import { ProjectileFactory } from "src/factories/ProjectileFactory";
+import { RenderQueueFactory } from "src/factories/RenderQueueFactory";
 import ControlState from "src/states/ControlState";
 import DialogueState from "src/states/DialogueState";
 import GameplayState from "src/states/GameplayState";
@@ -24,6 +25,7 @@ import CollisionComponent from "src/components/CollisionComponent";
 import NavigationState from "src/states/NavigationState";
 import ProjectileSystem from "src/systems/ProjectileSystem";
 import ProjectileComponent from "src/components/ProjectileComponent";
+import RenderQueueComponent from "src/components/RenderQueueComponent";
 import PartyFollowSystem from "src/systems/PartyFollowSystem";
 import SelectedPlayerControlSystem from "src/systems/SelectedPlayerControlSystem";
 import ImageAnimationSystem from "src/systems/ImageAnimationSystem";
@@ -57,6 +59,7 @@ export const FACTORY_TOKENS = [
     PlayerFactory,
     StickerFactory,
     ProjectileFactory,
+    RenderQueueFactory,
 ];
 
 export const PROCESSOR_TOKENS = [
@@ -81,6 +84,7 @@ export const COMPONENT_TOKENS = [
     StickerImageComponent,
     TransformNodeComponent,
     ProjectileComponent,
+    RenderQueueComponent,
 ];
 
 export const STATE_TOKENS = [
