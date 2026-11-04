@@ -19,6 +19,7 @@ import ExploreHUD from "src/gui/ExploreHUD";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
+import { SquadScreen } from "src/gui/screens/SquadScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { UserInterfaceScene } from "src/scenes/UserInterfaceScene";
 import UserInterfaceState, {
@@ -40,7 +41,11 @@ import { playSFX } from "./AudioModule";
 import { getActorStateComponentArray } from "./ComponentModule";
 import { getActorPosition } from "./Collision3DModule";
 import { TARGET_HIGHLIGHT_DIAMETER } from "src/constants/CombatConstants";
-import { ACTOR_GROUND_Y } from "src/constants/GeneralConstants";
+import {
+    ACTOR_GROUND_Y,
+    RESOLUTION_HEIGHT,
+    RESOLUTION_WIDTH,
+} from "src/constants/GeneralConstants";
 import { entityExists } from "bitecs";
 
 export async function loadModalMap(modalIds: string[]): Promise<void> {
@@ -75,8 +80,8 @@ function createMainUI(uiScene: UserInterfaceScene) {
         uiScene,
         Texture.NEAREST_SAMPLINGMODE,
     );
-    mainUI.idealWidth = 1280;
-    mainUI.idealHeight = 720;
+    mainUI.idealWidth = RESOLUTION_WIDTH;
+    mainUI.idealHeight = RESOLUTION_HEIGHT;
     return mainUI;
 }
 
@@ -87,8 +92,8 @@ function createSceneUI(scene: GameScene) {
         scene,
         Texture.NEAREST_SAMPLINGMODE,
     );
-    sceneGUI.idealWidth = 1280;
-    sceneGUI.idealHeight = 720;
+    sceneGUI.idealWidth = RESOLUTION_WIDTH;
+    sceneGUI.idealHeight = RESOLUTION_HEIGHT;
     sceneGUI.useInvalidateRectOptimization = false;
     return sceneGUI;
 }
@@ -144,6 +149,13 @@ function createExploreHUD(mainUI: AdvancedDynamicTexture) {
     mainUI.addControl(exploreHud.createHudRoot());
     exploreHud.showHideHud(false);
     return exploreHud;
+}
+
+function createSquadScreen(mainUI: AdvancedDynamicTexture) {
+    const squadScreen = new SquadScreen();
+    mainUI.addControl(squadScreen.getRoot());
+    squadScreen.showHide(false);
+    return squadScreen;
 }
 
 interface ButtonProps {
@@ -209,6 +221,7 @@ export function createUserInterfaceState() {
     const dialogueHud = createDialogueHUD(mainUI);
     const modalScreen = createModalScreen(mainUI);
     const gameOverScreen = createGameOverScreen(mainUI);
+    const squadScreen = createSquadScreen(mainUI);
     const newUserInterfaceState = new UserInterfaceState({
         mainUI,
         sceneUI,
@@ -219,6 +232,7 @@ export function createUserInterfaceState() {
         dialogueHud,
         modalScreen,
         gameOverScreen,
+        squadScreen,
     } as UserInterfaceStateProps);
     getGameStateRegistry().registerNewGameState(
         UserInterfaceState.name,
@@ -234,12 +248,13 @@ export function clearCombatHudEntries() {
 
 export function setUserInterfaceGameMode(newMode: GameMode) {
     const userInterfaceState = getUserInterfaceState();
-    userInterfaceState.partyInfoHud.showHideHud(
-        newMode === "Combat" || newMode === "Explore",
-    );
-    userInterfaceState.exploreHud.showHideHud(newMode === "Explore");
+    // userInterfaceState.partyInfoHud.showHideHud(
+    //     newMode === "Combat" || newMode === "Explore",
+    // );
+    // userInterfaceState.exploreHud.showHideHud(newMode === "Explore");
     userInterfaceState.dialogueHud.showHideHud(newMode === "Dialogue");
-    userInterfaceState.combatHud.showHideHud(newMode === "Combat");
+    // userInterfaceState.combatHud.showHideHud(newMode === "Combat");
+    userInterfaceState.partyInfoHud.showHideHud(true);
 }
 
 export function showModal(modalId: string) {

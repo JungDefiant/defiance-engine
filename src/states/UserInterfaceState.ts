@@ -6,43 +6,47 @@ import ExploreHUD from "src/gui/ExploreHUD";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
 import { GameOverScreen } from "src/gui/screens/GameOverScreen";
 import { ModalScreen } from "src/gui/screens/ModalScreen";
+import { SquadScreen } from "src/gui/screens/SquadScreen";
 import { TacticalPauseScreen } from "src/gui/screens/TacticalPauseScreen";
 import { LoadedModalJson } from "src/types/GameTypes";
 
 export default class UserInterfaceState {
-	public readonly mainUI: AdvancedDynamicTexture;
-	public readonly sceneGUI: AdvancedDynamicTexture;
-	public readonly partyInfoHud: PartyInfoHUD;
-	public readonly exploreHud: ExploreHUD;
-	public readonly dialogueHud: DialogueHUD;
-	public readonly combatHud: CombatHUD;
-	public readonly tacticalPauseScreen: TacticalPauseScreen;
-	public readonly modalScreen: ModalScreen;
-	public readonly gameOverScreen: GameOverScreen;
-	public readonly modalMap: Map<string, LoadedModalJson> = new Map();
-	public targetHighlightMesh: Nullable<Mesh> = null;
+    public readonly mainUI: AdvancedDynamicTexture;
+    public readonly sceneGUI: AdvancedDynamicTexture;
+    public readonly partyInfoHud: PartyInfoHUD;
+    public readonly exploreHud: ExploreHUD;
+    public readonly dialogueHud: DialogueHUD;
+    public readonly combatHud: CombatHUD;
+    public readonly tacticalPauseScreen: TacticalPauseScreen;
+    public readonly modalScreen: ModalScreen;
+    public readonly gameOverScreen: GameOverScreen;
+    public readonly squadScreen: SquadScreen;
+    public readonly modalMap: Map<string, LoadedModalJson> = new Map();
+    public targetHighlightMesh: Nullable<Mesh> = null;
 
-	public constructor(newProps: UserInterfaceStateProps) {
-		this.mainUI = newProps.mainUI;
-		this.sceneGUI = newProps.sceneUI;
-		this.partyInfoHud = newProps.partyInfoHud;
-		this.exploreHud = newProps.exploreHud;
-		this.dialogueHud = newProps.dialogueHud;
-		this.combatHud = newProps.combatHud;
-		this.modalScreen = newProps.modalScreen;
-		this.tacticalPauseScreen = newProps.tacticalPauseScreen;
-		this.gameOverScreen = newProps.gameOverScreen;
-	}
+    public constructor(newProps: UserInterfaceStateProps) {
+        this.mainUI = newProps.mainUI;
+        this.sceneGUI = newProps.sceneUI;
+        this.partyInfoHud = newProps.partyInfoHud;
+        this.exploreHud = newProps.exploreHud;
+        this.dialogueHud = newProps.dialogueHud;
+        this.combatHud = newProps.combatHud;
+        this.modalScreen = newProps.modalScreen;
+        this.tacticalPauseScreen = newProps.tacticalPauseScreen;
+        this.gameOverScreen = newProps.gameOverScreen;
+        this.squadScreen = newProps.squadScreen;
+    }
 }
 
 export interface UserInterfaceStateProps {
-	readonly mainUI: AdvancedDynamicTexture;
-	readonly sceneUI: AdvancedDynamicTexture;
-	readonly partyInfoHud: PartyInfoHUD;
-	readonly exploreHud: ExploreHUD;
-	readonly dialogueHud: DialogueHUD;
-	readonly combatHud: CombatHUD;
-	readonly tacticalPauseScreen: TacticalPauseScreen;
-	readonly modalScreen: ModalScreen;
-	readonly gameOverScreen: GameOverScreen;
+    readonly mainUI: AdvancedDynamicTexture;
+    readonly sceneUI: AdvancedDynamicTexture;
+    readonly partyInfoHud: PartyInfoHUD;
+    readonly exploreHud: ExploreHUD;
+    readonly dialogueHud: DialogueHUD;
+    readonly combatHud: CombatHUD;
+    readonly tacticalPauseScreen: TacticalPauseScreen;
+    readonly modalScreen: ModalScreen;
+    readonly gameOverScreen: GameOverScreen;
+    readonly squadScreen: SquadScreen;
 }

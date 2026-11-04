@@ -47,7 +47,7 @@ export default class CombatHUD implements IHUD {
     public createHudRoot(): Container {
         this.rootContainer = new Container("ui_combatHUD");
 
-        const backgroundUI = new Rectangle("ui_combatBgUI");
+        const backgroundUI = new Rectangle("ui_combatBackgroundUI");
         backgroundUI.width = 1;
         backgroundUI.heightInPixels = 52;
         backgroundUI.background = Themes.primary3;

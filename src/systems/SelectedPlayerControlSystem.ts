@@ -41,6 +41,7 @@ export default class SelectedPlayerControlSystem implements GameSystem {
         const actorStateComponentArray = getActorStateComponentArray();
         const selectedTargetEntityId = selectedActorState.currentTargetEntityId;
         if (
+            !selectedTargetEntityId ||
             selectedTargetEntityId < 0 ||
             !gameplayState.enemyEntityIds.includes(selectedTargetEntityId)
         ) {
