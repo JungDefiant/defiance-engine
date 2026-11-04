@@ -13,8 +13,6 @@ import { Component } from "./Component";
 import { setSelectedCharacter } from "src/modules/CharacterModule";
 import { clamp } from "src/modules/Utils";
 
-const STATUS_ICON_SLOTS: number = 9;
-
 export default class PlayerGUIComponent implements Component {
     private rootContainer: Container;
     private backgroundUI: Rectangle;
@@ -29,8 +27,8 @@ export default class PlayerGUIComponent implements Component {
 
     private readonly GUI_WIDTH = 80;
     private readonly GUI_HEIGHT = 80;
-    private readonly MAX_BAR_WIDTH = 80;
-    private readonly PIXELS_PER_STATUS_SLOT = 9;
+    private readonly STATUS_ICON_SLOTS: number = 6;
+    private readonly PIXELS_PER_STATUS_SLOT = 12;
     private readonly NUMBER_STATUS_SLOTS = 2;
     private readonly POINT_STACK_WIDTH = 36;
     private readonly POINT_STACK_HEIGHT = 36;
@@ -56,8 +54,8 @@ export default class PlayerGUIComponent implements Component {
         this.backgroundUI.widthInPixels = this.GUI_WIDTH;
         this.backgroundUI.heightInPixels = this.GUI_HEIGHT;
         this.backgroundUI.thickness = 2;
-        this.backgroundUI.background = Themes.primary3;
         this.backgroundUI.color = Themes.primary1;
+        this.backgroundUI.background = Themes.primary3;
         this.backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
         this.backgroundUI.onPointerClickObservable.add(() => {
             setSelectedCharacter(entityId);
@@ -112,9 +110,13 @@ export default class PlayerGUIComponent implements Component {
     }
 
     public setSelected(isSelected: boolean): void {
-        this.backgroundUI.background = isSelected
-            ? Themes.neutral3
-            : Themes.primary3;
+        if (isSelected) {
+            this.backgroundUI.thickness = 4;
+            this.backgroundUI.color = Themes.primary2;
+        } else {
+            this.backgroundUI.thickness = 2;
+            this.backgroundUI.color = Themes.primary1;
+        }
     }
 
     public setActionBarFill(currValue: number, maxValue: number): void {
@@ -175,15 +177,14 @@ export default class PlayerGUIComponent implements Component {
     private createStatusIconsUI(entityId: number) {
         this.statusIconsUI = new Grid(`ui_playerStatusIcons_${entityId}`);
         this.statusIconsUI.widthInPixels =
-            STATUS_ICON_SLOTS * this.PIXELS_PER_STATUS_SLOT;
+            this.STATUS_ICON_SLOTS * this.PIXELS_PER_STATUS_SLOT;
         this.statusIconsUI.heightInPixels =
             this.NUMBER_STATUS_SLOTS * this.PIXELS_PER_STATUS_SLOT;
-        this.statusIconsUI.leftInPixels = 2;
-        this.statusIconsUI.topInPixels = 2;
+        this.statusIconsUI.topInPixels = 4;
         this.statusIconsUI.horizontalAlignment =
-            Control.HORIZONTAL_ALIGNMENT_LEFT;
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
         this.statusIconsUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        for (let column = 0; column < STATUS_ICON_SLOTS; column++) {
+        for (let column = 0; column < this.STATUS_ICON_SLOTS; column++) {
             this.statusIconsUI.addColumnDefinition(
                 this.PIXELS_PER_STATUS_SLOT,
                 true,
@@ -192,7 +193,7 @@ export default class PlayerGUIComponent implements Component {
         this.statusIconsUI.addRowDefinition(this.PIXELS_PER_STATUS_SLOT, true);
         this.statusIconsUI.addRowDefinition(this.PIXELS_PER_STATUS_SLOT, true);
 
-        for (let column = 0; column < STATUS_ICON_SLOTS; column++) {
+        for (let column = 0; column < this.STATUS_ICON_SLOTS; column++) {
             this.statusIconsUI.addControl(
                 this.createStatusSlotUI(entityId, column),
                 0,
@@ -245,6 +246,7 @@ export default class PlayerGUIComponent implements Component {
         const actionBarBgUI = new Rectangle(`ui_actBarBgUI_${entityId}`);
         actionBarBgUI.widthInPixels = 80;
         actionBarBgUI.heightInPixels = 8;
+        // actionBarBgUI.topInPixels = -2;
         actionBarBgUI.thickness = 1;
         actionBarBgUI.color = Themes.primary1;
         actionBarBgUI.background = Themes.primary3;
@@ -340,8 +342,8 @@ export default class PlayerGUIComponent implements Component {
             this.statusIconsUI.removeControl(statusIcon);
             this.statusIconsUI.addControl(
                 statusIcon,
-                Math.floor(iconIndex / STATUS_ICON_SLOTS),
-                iconIndex % STATUS_ICON_SLOTS,
+                Math.floor(iconIndex / this.STATUS_ICON_SLOTS),
+                iconIndex % this.STATUS_ICON_SLOTS,
             );
             iconIndex++;
         }

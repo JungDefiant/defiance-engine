@@ -20,8 +20,9 @@ export default class PartyInfoHUD implements IHUD {
             Control.HORIZONTAL_ALIGNMENT_LEFT;
         this.rootContainer.verticalAlignment =
             Control.VERTICAL_ALIGNMENT_BOTTOM;
-        this.rootContainer.widthInPixels = 400;
+        this.rootContainer.widthInPixels = 360;
         this.rootContainer.heightInPixels = 88;
+        this.rootContainer.topInPixels = -4;
 
         return this.rootContainer;
     }
@@ -33,8 +34,7 @@ export default class PartyInfoHUD implements IHUD {
 
         this.partyInfoEntryStack = new StackPanel("ui_partyInfoEntryStack");
         this.partyInfoEntryStack.isVertical = false;
-        this.partyInfoEntryStack.spacing = 16;
-        this.partyInfoEntryStack.topInPixels = -4;
+        this.partyInfoEntryStack.spacing = 4;
 
         const playerGuiComponentArray = getPlayerGuiComponentArray();
         const gameplayState = getGameplayState();
@@ -48,11 +48,5 @@ export default class PartyInfoHUD implements IHUD {
         }
 
         this.rootContainer.addControl(this.partyInfoEntryStack);
-    }
-
-    public setPartyInfoSwitches() {
-        if (!this.rootContainer) {
-            return;
-        }
     }
 }

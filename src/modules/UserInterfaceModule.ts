@@ -13,7 +13,6 @@ import {
     Image,
     TextBlock,
 } from "@babylonjs/gui";
-import CombatHUD from "src/gui/CombatHUD";
 import DialogueHUD from "src/gui/DialogueHUD";
 import ExploreHUD from "src/gui/ExploreHUD";
 import PartyInfoHUD from "src/gui/PartyInfoHUD";
@@ -47,6 +46,9 @@ import {
     RESOLUTION_WIDTH,
 } from "src/constants/GeneralConstants";
 import { entityExists } from "bitecs";
+import ActionBarHUD from "src/gui/ActionBarHUD";
+import CombatLog from "src/gui/CombatLog";
+import MessageDisplay from "src/gui/MessageDisplay";
 
 export async function loadModalMap(modalIds: string[]): Promise<void> {
     const campaignState = getCampaignState();
@@ -137,11 +139,25 @@ function createTacticalPauseScreen(mainUI: AdvancedDynamicTexture) {
     return tacticalPauseScreen;
 }
 
-function createCombatHUD(mainUI: AdvancedDynamicTexture) {
-    const combatHud = new CombatHUD();
-    mainUI.addControl(combatHud.createHudRoot());
-    combatHud.showHideHud(false);
-    return combatHud;
+function createActionBarHUD(mainUI: AdvancedDynamicTexture) {
+    const actionBarHUD = new ActionBarHUD();
+    mainUI.addControl(actionBarHUD.createHudRoot());
+    actionBarHUD.showHideHud(false);
+    return actionBarHUD;
+}
+
+function createCombatLogUI(mainUI: AdvancedDynamicTexture) {
+    const combatLogUI = new CombatLog();
+    mainUI.addControl(combatLogUI.createHudRoot());
+    combatLogUI.showHideHud(false);
+    return combatLogUI;
+}
+
+function createMessageDisplayUI(mainUI: AdvancedDynamicTexture) {
+    const messageDisplayUI = new MessageDisplay();
+    mainUI.addControl(messageDisplayUI.createHudRoot());
+    messageDisplayUI.showHideHud(false);
+    return messageDisplayUI;
 }
 
 function createExploreHUD(mainUI: AdvancedDynamicTexture) {
@@ -215,7 +231,9 @@ export function createUserInterfaceState() {
         sceneUI.markAsDirty();
     });
     const exploreHud = createExploreHUD(mainUI);
-    const combatHud = createCombatHUD(mainUI);
+    const actionBarHud = createActionBarHUD(mainUI);
+    const combatLogUI = createCombatLogUI(mainUI);
+    const messageDisplayUI = createMessageDisplayUI(mainUI);
     const tacticalPauseScreen = createTacticalPauseScreen(mainUI);
     const partyInfoHud = createPartyInfoHUD(mainUI);
     const dialogueHud = createDialogueHUD(mainUI);
@@ -226,10 +244,12 @@ export function createUserInterfaceState() {
         mainUI,
         sceneUI,
         exploreHud,
-        combatHud,
         tacticalPauseScreen,
         partyInfoHud,
         dialogueHud,
+        actionBarHud,
+        combatLogUI,
+        messageDisplayUI,
         modalScreen,
         gameOverScreen,
         squadScreen,
@@ -243,18 +263,15 @@ export function createUserInterfaceState() {
 
 export function clearCombatHudEntries() {
     const userInterfaceState = getUserInterfaceState();
-    userInterfaceState.combatHud.clearCombatEntries();
+    userInterfaceState.combatLogUI.clearCombatEntries();
 }
 
 export function setUserInterfaceGameMode(newMode: GameMode) {
     const userInterfaceState = getUserInterfaceState();
-    // userInterfaceState.partyInfoHud.showHideHud(
-    //     newMode === "Combat" || newMode === "Explore",
-    // );
-    // userInterfaceState.exploreHud.showHideHud(newMode === "Explore");
     userInterfaceState.dialogueHud.showHideHud(newMode === "Dialogue");
-    // userInterfaceState.combatHud.showHideHud(newMode === "Combat");
-    userInterfaceState.partyInfoHud.showHideHud(true);
+    userInterfaceState.combatLogUI.showHideHud(newMode === "Combat");
+    userInterfaceState.partyInfoHud.showHideHud(newMode !== "Dialogue");
+    userInterfaceState.actionBarHUD.showHideHud(newMode !== "Dialogue");
 }
 
 export function showModal(modalId: string) {

@@ -222,7 +222,7 @@ export function resetCombatModeActionManager() {
     const actorState =
         actorStateComponentArray[gameplayState.selectedPlayerEID];
     if (actorState) {
-        userInterfaceState.combatHud.setActionBar(actorState);
+        userInterfaceState.actionBarHUD.setActionBar(actorState);
     }
 
     if (controlState.actionManager) {

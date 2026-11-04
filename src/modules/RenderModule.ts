@@ -168,7 +168,7 @@ function addEffectFeedbackRenderQueueEntries(
         props.effectFeedbackStyle.floatingText(props.effectFeedbackContext),
         props.effectFeedbackStyle.floatingTextColor,
     );
-    props.userInterfaceState.combatHud.addCombatLogEntry(
+    props.userInterfaceState.combatLogUI.addCombatLogEntry(
         `${props.effectFeedbackContext.sourceName} (${props.effectFeedbackContext.abilityName})`,
         props.effectFeedbackStyle.combatLogText(props.effectFeedbackContext),
     );
