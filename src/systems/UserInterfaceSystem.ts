@@ -51,9 +51,9 @@ export default class UserInterfaceSystem implements GameSystem {
                 : "",
         );
 
-        playerGui.setActionBarFill(
-            playerActorState.attributes.actionTimer.currentValue,
-            playerActorState.attributes.actionTimer.maximumValue,
+        playerGui.setRecoveryBarFill(
+            playerActorState.attributes.recoveryTimer.currentValue,
+            playerActorState.attributes.recoveryTimer.maximumValue,
         );
 
         playerGui.setLifePoints(

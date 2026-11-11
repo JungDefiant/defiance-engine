@@ -16,12 +16,13 @@ export default class PartyInfoHUD implements IHUD {
 
     public createHudRoot(): Container {
         this.rootContainer = new Container("ui_partyInfoHud");
+        this.rootContainer.clipContent = false;
         this.rootContainer.horizontalAlignment =
             Control.HORIZONTAL_ALIGNMENT_LEFT;
         this.rootContainer.verticalAlignment =
             Control.VERTICAL_ALIGNMENT_BOTTOM;
         this.rootContainer.widthInPixels = 360;
-        this.rootContainer.heightInPixels = 88;
+        this.rootContainer.heightInPixels = 80;
         this.rootContainer.topInPixels = -4;
 
         return this.rootContainer;
@@ -34,7 +35,8 @@ export default class PartyInfoHUD implements IHUD {
 
         this.partyInfoEntryStack = new StackPanel("ui_partyInfoEntryStack");
         this.partyInfoEntryStack.isVertical = false;
-        this.partyInfoEntryStack.spacing = 4;
+        this.partyInfoEntryStack.clipContent = false;
+        this.partyInfoEntryStack.spacing = 8;
 
         const playerGuiComponentArray = getPlayerGuiComponentArray();
         const gameplayState = getGameplayState();

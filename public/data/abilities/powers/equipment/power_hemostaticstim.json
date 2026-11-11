@@ -1,6 +1,6 @@
 {
-	"id": "power_furiousstrike",
-	"name": "Furious Strike",
+	"id": "power_hemostaticstim",
+	"name": "Hemostatic Stim",
 	"description": "",
 	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
 	"castVfxURL": "",
@@ -10,25 +10,20 @@
 	"trigger": "onActionPerform",
 	"descriptors": [
 		"power",
-		"technique",
-		"group",
-		"melee",
-		"attack"
+		"equipment",
+		"single",
+		"action"
 	],
-	"target": "enemy",
-	"recoveryTime": 3,
+	"target": "ally",
+	"recovery": 160,
 	"cost": 10,
-	"costAttribute": "willPoints",
-	"targetingShape": {
-		"type": "cone",
-		"range": 3,
-		"angle": 70
-	},
+	"costAttribute": "itemPoints",
+	"targetingShape": {	},
 	"effectData": [
 		{
-			"id": "damage",
+			"id": "healing",
 			"variables": {
-				"baseDamage": 12
+				"baseHealing": 20
 			}
 		}
 	]

@@ -20,88 +20,84 @@ import { queuePlayerAction } from "src/modules/CombatModule";
 export default class ActionBarHUD implements IHUD {
     rootContainer: Nullable<Container> = null;
 
-    private powerSlots: ActionSlot[] = [];
+    private mutationSlot: Nullable<ActionSlot> = null;
+    private techniqueSlots: ActionSlot[] = [];
     private equipmentSlots: ActionSlot[] = [];
 
-    private readonly ACTION_ABILITY_STACK_NAME = "ui_actionAbilityStack";
-    private readonly ACTION_EQUIP_STACK_NAME = "ui_actionEquipStack";
+    private readonly ACTION_TECH_STACK_NAME = "ui_actionTechniqueStack";
+    private readonly ACTION_EQUIP_STACK_NAME = "ui_actionEquipmentStack";
 
     public createHudRoot(): Container {
-        const newRootContainer = new Rectangle("ui_actionBar");
-        newRootContainer.color = Themes.primary1;
-        newRootContainer.background = Themes.primary3;
-        newRootContainer.thickness = 1;
-        newRootContainer.widthInPixels = 340;
-        newRootContainer.heightInPixels = 60;
-        newRootContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-        newRootContainer.horizontalAlignment =
-            Control.HORIZONTAL_ALIGNMENT_RIGHT;
-        newRootContainer.topInPixels = -4;
-        newRootContainer.leftInPixels = -4;
+        const actionBarStack = new StackPanel("ui_actionStack");
+        actionBarStack.isVertical = false;
+        actionBarStack.spacing = 4;
+        actionBarStack.widthInPixels = 220;
+        actionBarStack.heightInPixels = 120;
+        actionBarStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        actionBarStack.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        actionBarStack.topInPixels = -4;
 
-        const actionGrid = this.createActionGrid();
-        newRootContainer.addControl(actionGrid);
+        const actionStack = new StackPanel("ui_actionStack");
+        actionStack.isVertical = true;
+        actionStack.spacing = -1;
+        actionStack.widthInPixels = 160;
+        actionStack.heightInPixels = 80;
+        actionStack.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        actionStack.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        actionBarStack.addControl(actionStack);
 
-        const abilitiesLabel = this.createActionStackLabel(
-            "ui_abilitiesLabel",
-            "ABILITIES",
+        const actionTechRoot = new Rectangle("ui_actionBar");
+        actionTechRoot.color = Themes.primary1;
+        actionTechRoot.background = Themes.primary3;
+        actionTechRoot.thickness = 2;
+        actionTechRoot.widthInPixels = 160;
+        actionTechRoot.heightInPixels = 40;
+        actionTechRoot.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+        actionTechRoot.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        actionStack.addControl(actionTechRoot);
+
+        const actionTechStack = this.createActionSlotStack(
+            this.ACTION_TECH_STACK_NAME,
         );
-        actionGrid.addControl(abilitiesLabel, 0, 0);
-
-        const equipLabel = this.createActionStackLabel(
-            "ui_equipLabel",
-            "EQUIPMENT",
+        this.techniqueSlots = this.createActionSlots(
+            actionTechStack,
+            "ui_techniqueSlot",
         );
-        actionGrid.addControl(equipLabel, 0, 1);
+        actionTechRoot.addControl(actionTechStack);
 
-        const actionAbilityStack = this.createActionSlotStack(
-            this.ACTION_ABILITY_STACK_NAME,
-        );
-        actionGrid.addControl(actionAbilityStack, 1, 0);
+        const actionEquipRoot = new Rectangle("ui_actionBar");
+        actionEquipRoot.color = Themes.primary1;
+        actionEquipRoot.background = Themes.primary3;
+        actionEquipRoot.thickness = 2;
+        actionEquipRoot.widthInPixels = 160;
+        actionEquipRoot.heightInPixels = 40;
+        actionEquipRoot.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+        actionEquipRoot.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        actionStack.addControl(actionEquipRoot);
 
         const actionEquipStack = this.createActionSlotStack(
             this.ACTION_EQUIP_STACK_NAME,
         );
-        actionGrid.addControl(actionEquipStack, 1, 1);
-
-        this.powerSlots = this.createActionSlots(
-            actionAbilityStack,
-            "ui_abilityslot",
-        );
         this.equipmentSlots = this.createActionSlots(
             actionEquipStack,
-            "ui_deviceslot",
+            "ui_equipmentSlot",
         );
+        actionEquipRoot.addControl(actionEquipStack);
 
-        this.rootContainer = newRootContainer;
+        this.mutationSlot = new ActionSlot(`ui_mutationSlot`, "", () => {});
+        this.mutationSlot.rootContainer.widthInPixels = 48;
+        this.mutationSlot.rootContainer.heightInPixels = 48;
+        this.mutationSlot.rootContainer.thickness = 4;
+        this.mutationSlot.rootContainer.verticalAlignment =
+            Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.mutationSlot.rootContainer.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_RIGHT;
+        actionBarStack.addControl(this.mutationSlot.rootContainer);
+
+        this.rootContainer = actionBarStack;
         return this.rootContainer;
-    }
-
-    private createActionGrid(): Grid {
-        const actionGrid = new Grid("ui_actionStack");
-        actionGrid.addColumnDefinition(148);
-        actionGrid.addColumnDefinition(148);
-        actionGrid.addRowDefinition(16);
-        actionGrid.addRowDefinition(36);
-        actionGrid.width = 1;
-        actionGrid.height = 1;
-        return actionGrid;
-    }
-
-    private createActionStackLabel(
-        labelName: string,
-        labelText: string,
-    ): TextBlock {
-        const actionStackLabel = new TextBlock(labelName, labelText);
-        actionStackLabel.color = Themes.neutral2;
-        actionStackLabel.style = Themes.typography.header4;
-        actionStackLabel.widthInPixels = 120;
-        actionStackLabel.heightInPixels = 20;
-        actionStackLabel.topInPixels = 4;
-        actionStackLabel.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-        actionStackLabel.textHorizontalAlignment =
-            Control.HORIZONTAL_ALIGNMENT_CENTER;
-        return actionStackLabel;
     }
 
     private createActionSlotStack(stackName: string): StackPanel {
@@ -118,7 +114,7 @@ export default class ActionBarHUD implements IHUD {
         slotName: string,
     ): ActionSlot[] {
         const actionSlots: ActionSlot[] = [];
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 3; i++) {
             const actionSlot = new ActionSlot(`${slotName}_${i}`, "", () => {});
             stack.addControl(actionSlot.rootContainer);
             actionSlots.push(actionSlot);
@@ -141,19 +137,75 @@ export default class ActionBarHUD implements IHUD {
             return;
         }
 
-        const actionPowerData = actorState.actionData.get(ActionSlotKey.power);
-        if (actionPowerData) {
-            for (let i = 0; i < this.powerSlots.length; i++) {
-                const powerSlot = this.powerSlots[i];
+        const actionTechniqueData = actorState.actionData.get(
+            ActionSlotKey.technique,
+        );
+        if (actionTechniqueData) {
+            for (let i = 0; i < this.techniqueSlots.length; i++) {
+                const powerSlot = this.techniqueSlots[i];
                 if (!powerSlot) {
                     continue;
                 }
 
-                const powerData = actionPowerData[i];
+                const powerData = actionTechniqueData[i];
                 if (powerData) {
                     this.assignActionSlot({
                         actionSlot: powerSlot,
-                        actionSlotKey: ActionSlotKey.power,
+                        actionSlotKey: ActionSlotKey.technique,
+                        actionIndex: i,
+                        iconUrl: (powerData.iconURL as string) || "",
+                        actorEntityId: actorState.entityId,
+                        controlState,
+                    });
+                } else {
+                    powerSlot.setActionSlotIcon("");
+                    powerSlot.setOnClickEvent(() => {});
+                    powerSlot.setActionLabelText("");
+                }
+            }
+        }
+
+        const actionMutationData = actorState.actionData.get(
+            ActionSlotKey.mutation,
+        );
+        if (actionMutationData) {
+            const powerData = actionMutationData[0];
+            const powerSlot = this.mutationSlot;
+            if (!powerSlot) {
+                return;
+            }
+
+            if (powerData) {
+                this.assignActionSlot({
+                    actionSlot: powerSlot,
+                    actionSlotKey: ActionSlotKey.mutation,
+                    actionIndex: 0,
+                    iconUrl: (powerData.iconURL as string) || "",
+                    actorEntityId: actorState.entityId,
+                    controlState,
+                });
+            } else {
+                powerSlot.setActionSlotIcon("");
+                powerSlot.setOnClickEvent(() => {});
+                powerSlot.setActionLabelText("");
+            }
+        }
+
+        const actionEquipmentData = actorState.actionData.get(
+            ActionSlotKey.equipment,
+        );
+        if (actionEquipmentData) {
+            for (let i = 0; i < this.equipmentSlots.length; i++) {
+                const powerSlot = this.equipmentSlots[i];
+                if (!powerSlot) {
+                    continue;
+                }
+
+                const powerData = actionEquipmentData[i];
+                if (powerData) {
+                    this.assignActionSlot({
+                        actionSlot: powerSlot,
+                        actionSlotKey: ActionSlotKey.equipment,
                         actionIndex: i,
                         iconUrl: (powerData.iconURL as string) || "",
                         actorEntityId: actorState.entityId,
@@ -204,13 +256,26 @@ export default class ActionBarHUD implements IHUD {
         actionIndex: number,
         controlState: ControlState,
     ): string | null {
-        if (actionSlotKey === ActionSlotKey.power) {
-            const powerKey =
-                controlState.controlSettings.powerKeys[actionIndex];
-            if (powerKey === undefined) {
+        if (actionSlotKey === ActionSlotKey.technique) {
+            const techniqueKey =
+                controlState.controlSettings.techniqueKeys[actionIndex];
+            if (techniqueKey === undefined) {
                 return null;
             }
-            return String.fromCharCode(powerKey).toUpperCase();
+            return String.fromCharCode(techniqueKey).toUpperCase();
+        } else if (actionSlotKey === ActionSlotKey.mutation) {
+            const mutationKey = controlState.controlSettings.mutationKey;
+            if (mutationKey === undefined) {
+                return null;
+            }
+            return String.fromCharCode(mutationKey).toUpperCase();
+        } else if (actionSlotKey === ActionSlotKey.equipment) {
+            const equipmentKey =
+                controlState.controlSettings.equipmentKeys[actionIndex];
+            if (equipmentKey === undefined) {
+                return null;
+            }
+            return String.fromCharCode(equipmentKey).toUpperCase();
         }
         return null;
     }

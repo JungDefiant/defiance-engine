@@ -16,7 +16,8 @@ import { clamp } from "src/modules/Utils";
 export default class PlayerGUIComponent implements Component {
     private rootContainer: Container;
     private backgroundUI: Rectangle;
-    private actionBarFillUI: Rectangle;
+    private highlightUI: Rectangle;
+    private recoveryBarFillUI: Rectangle;
     private lifePointsTextUI: TextBlock;
     private willPointsTextUI: TextBlock;
     private itemPointsTextUI: TextBlock;
@@ -49,6 +50,20 @@ export default class PlayerGUIComponent implements Component {
         this.rootContainer.heightInPixels = this.GUI_HEIGHT;
         this.rootContainer.verticalAlignment =
             Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.rootContainer.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        this.rootContainer.clipContent = false;
+
+        this.highlightUI = new Rectangle("ui_playerHighlightUI_" + entityId);
+        this.highlightUI.widthInPixels = this.GUI_WIDTH + 8;
+        this.highlightUI.heightInPixels = this.GUI_HEIGHT + 8;
+        this.highlightUI.thickness = 0;
+        this.highlightUI.color = Themes.primary2;
+        this.highlightUI.background = "";
+        this.highlightUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+        this.highlightUI.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
+        this.rootContainer.addControl(this.highlightUI);
 
         this.backgroundUI = new Rectangle("ui_playerBgUI_" + entityId);
         this.backgroundUI.widthInPixels = this.GUI_WIDTH;
@@ -56,7 +71,9 @@ export default class PlayerGUIComponent implements Component {
         this.backgroundUI.thickness = 2;
         this.backgroundUI.color = Themes.primary1;
         this.backgroundUI.background = Themes.primary3;
-        this.backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.backgroundUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+        this.backgroundUI.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_CENTER;
         this.backgroundUI.onPointerClickObservable.add(() => {
             setSelectedCharacter(entityId);
         });
@@ -92,10 +109,10 @@ export default class PlayerGUIComponent implements Component {
         this.itemPointsTextUI = itemPointsTextUI;
         this.rootContainer.addControl(pointStackUI);
 
-        const { actionBarBgUI, actionBarFillUI } =
-            this.createActionBarUI(entityId);
-        this.actionBarFillUI = actionBarFillUI;
-        this.rootContainer.addControl(actionBarBgUI);
+        const { recoveryBarBgUI, recoveryBarFillUI } =
+            this.createRecoveryBarUI(entityId);
+        this.recoveryBarFillUI = recoveryBarFillUI;
+        this.rootContainer.addControl(recoveryBarBgUI);
 
         this.statusIconsUI = this.createStatusIconsUI(entityId);
         this.rootContainer.addControl(this.statusIconsUI);
@@ -111,16 +128,14 @@ export default class PlayerGUIComponent implements Component {
 
     public setSelected(isSelected: boolean): void {
         if (isSelected) {
-            this.backgroundUI.thickness = 4;
-            this.backgroundUI.color = Themes.primary2;
+            this.highlightUI.thickness = 8;
         } else {
-            this.backgroundUI.thickness = 2;
-            this.backgroundUI.color = Themes.primary1;
+            this.highlightUI.thickness = 0;
         }
     }
 
-    public setActionBarFill(currValue: number, maxValue: number): void {
-        this.actionBarFillUI.width = clamp(currValue / maxValue || 0, 0, 1);
+    public setRecoveryBarFill(currValue: number, maxValue: number): void {
+        this.recoveryBarFillUI.width = clamp(currValue / maxValue || 0, 0, 1);
     }
 
     public setLifePoints(value: number): void {
@@ -147,9 +162,8 @@ export default class PlayerGUIComponent implements Component {
         const statusIcon = new Rectangle(`ui_statusIcon_${id}`);
         statusIcon.widthInPixels = 16;
         statusIcon.heightInPixels = 16;
-        statusIcon.thickness = 1;
-        statusIcon.color = Themes.primary1;
-        statusIcon.background = Themes.primary3;
+        statusIcon.thickness = 0;
+        statusIcon.background = "";
 
         const statusIconImg = new Image(`ui_statusIconImg_${id}`);
         statusIconImg.widthInPixels = 16;
@@ -242,24 +256,23 @@ export default class PlayerGUIComponent implements Component {
         return { queueActionUI: queueActionIconUI, queueActionBgUI };
     }
 
-    private createActionBarUI(entityId: number) {
-        const actionBarBgUI = new Rectangle(`ui_actBarBgUI_${entityId}`);
-        actionBarBgUI.widthInPixels = 80;
-        actionBarBgUI.heightInPixels = 8;
-        // actionBarBgUI.topInPixels = -2;
-        actionBarBgUI.thickness = 1;
-        actionBarBgUI.color = Themes.primary1;
-        actionBarBgUI.background = Themes.primary3;
-        actionBarBgUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+    private createRecoveryBarUI(entityId: number) {
+        const recoveryBarBgUI = new Rectangle(`ui_actBarBgUI_${entityId}`);
+        recoveryBarBgUI.widthInPixels = 80;
+        recoveryBarBgUI.heightInPixels = 8;
+        recoveryBarBgUI.thickness = 2;
+        recoveryBarBgUI.color = Themes.primary1;
+        recoveryBarBgUI.background = Themes.primary3;
+        recoveryBarBgUI.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
 
-        const actionBarFillUI = this.createBarFillUI(
+        const recoveryBarFillUI = this.createBarFillUI(
             entityId,
-            "action",
+            "recovery",
             Themes.secondary2,
         );
-        actionBarBgUI.addControl(actionBarFillUI);
+        recoveryBarBgUI.addControl(recoveryBarFillUI);
 
-        return { actionBarFillUI, actionBarBgUI };
+        return { recoveryBarFillUI, recoveryBarBgUI };
     }
 
     private createPointStackUI(entityId: number) {

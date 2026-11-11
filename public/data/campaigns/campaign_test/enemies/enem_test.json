@@ -12,7 +12,8 @@
 		"heart": 4
 	},
 	"weaponId": "weapon_brawl",
-	"powerIds": [],
+	"techniqueIds": [],
+	"equipmentIds": [],
 	"featIds": [],
 	"tactics": [
 		{

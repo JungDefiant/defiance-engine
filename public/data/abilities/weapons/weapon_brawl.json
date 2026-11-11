@@ -1,8 +1,7 @@
 {
-	"id": "weapon_pulserifle",
-	"name": "Pulse Rifle",
+	"id": "weapon_brawl",
+	"name": "Brawl",
 	"description": "",
-	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
@@ -11,23 +10,22 @@
 	"descriptors": [
 		"weapon",
 		"single",
-		"ranged",
-		"lethal",
-		"equipment",
+		"melee",
+		"impact",
 		"attack"
 	],
 	"target": "enemy",
-	"recoveryTime": 4,
+	"recovery": 160,
 	"targetingShape": {
-		"type": "projectile",
-		"range": 20,
-		"radius": 0.15
+		"type": "cone",
+		"range": 1.5,
+		"angle": 90
 	},
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 12
+				"baseDamage": 4
 			}
 		}
 	]

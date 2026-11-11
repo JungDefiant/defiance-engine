@@ -61,13 +61,13 @@ export default class ActionExecutionSystem implements GameSystem {
             actorStateComponents,
         ])) {
             const actorState = actorStateComponents[entityId];
-            const actionTimerAttribute = actorState.attributes.actionTimer;
+            const recoveryTimerAttribute = actorState.attributes.recoveryTimer;
             const actionQueuedAction = actorState.queuedAction;
 
             if (
                 !actionQueuedAction ||
-                actionTimerAttribute.currentValue !==
-                    actionTimerAttribute.maximumValue
+                recoveryTimerAttribute.currentValue !==
+                    recoveryTimerAttribute.maximumValue
             ) {
                 continue;
             }
@@ -84,8 +84,8 @@ export default class ActionExecutionSystem implements GameSystem {
 
             if (
                 actorState.queuedAction &&
-                actionTimerAttribute.currentValue ===
-                    actionTimerAttribute.maximumValue
+                recoveryTimerAttribute.currentValue ===
+                    recoveryTimerAttribute.maximumValue
             ) {
                 Promise.resolve(
                     this.performQueuedAction(actorState).then(() => {

@@ -82,19 +82,48 @@ function registerPowerKeyBindings(
     actionManager: ActionManager,
     controlState: ControlState,
 ) {
-    controlState.controlSettings.powerKeys.forEach((powerKey, powerIndex) => {
-        actionManager.registerAction(
-            new ExecuteCodeAction(
-                {
-                    trigger: ActionManager.OnKeyDownTrigger,
-                    parameter: powerKey,
-                },
-                () => {
-                    startPlayerAction(ActionSlotKey.power, powerIndex);
-                },
-            ),
-        );
-    });
+    controlState.controlSettings.techniqueKeys.forEach(
+        (powerKey, powerIndex) => {
+            actionManager.registerAction(
+                new ExecuteCodeAction(
+                    {
+                        trigger: ActionManager.OnKeyDownTrigger,
+                        parameter: powerKey,
+                    },
+                    () => {
+                        startPlayerAction(ActionSlotKey.technique, powerIndex);
+                    },
+                ),
+            );
+        },
+    );
+
+    controlState.controlSettings.equipmentKeys.forEach(
+        (powerKey, powerIndex) => {
+            actionManager.registerAction(
+                new ExecuteCodeAction(
+                    {
+                        trigger: ActionManager.OnKeyDownTrigger,
+                        parameter: powerKey,
+                    },
+                    () => {
+                        startPlayerAction(ActionSlotKey.equipment, powerIndex);
+                    },
+                ),
+            );
+        },
+    );
+
+    actionManager.registerAction(
+        new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnKeyDownTrigger,
+            },
+            () => {
+                startPlayerAction(ActionSlotKey.mutation, 0);
+            },
+        ),
+    );
 }
 
 function getSwitchPlayerFunction(
@@ -163,6 +192,15 @@ export function resetExploreModeControls() {
 export function resetExploreModeActionManager() {
     const gameScene = getGameScene();
     const controlState = getControlState();
+
+    const userInterfaceState = getUserInterfaceState();
+    const gameplayState = getGameplayState();
+    const actorStateComponentArray = getActorStateComponentArray();
+    const actorState =
+        actorStateComponentArray[gameplayState.selectedPlayerEID];
+    if (actorState) {
+        userInterfaceState.actionBarHUD.setActionBar(actorState);
+    }
 
     if (controlState.actionManager) {
         controlState.actionManager.dispose();

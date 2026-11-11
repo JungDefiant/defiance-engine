@@ -45,9 +45,9 @@ export function resetPlayerActorState() {
     const actorStateComponentArray = getActorStateComponentArray();
     gameplayState.playerEntityIds.forEach((eid) => {
         const playerData = actorStateComponentArray[eid];
-        const actionTimerAttribute = playerData.attributes.actionTimer;
-        actionTimerAttribute.currentValue =
-            actionTimerAttribute.maximumValue = 0;
+        const recoveryTimerAttribute = playerData.attributes.recoveryTimer;
+        recoveryTimerAttribute.currentValue =
+            recoveryTimerAttribute.maximumValue = 0;
         playerData.queuedAction = null;
     });
 }
