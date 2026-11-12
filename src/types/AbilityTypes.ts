@@ -73,6 +73,7 @@ export enum AbilityTrigger {
 }
 
 export enum AbilityDescriptor {
+    weapon = "weapon",
     power = "power",
     feat = "feat",
     basic = "basic",
@@ -85,17 +86,16 @@ export enum AbilityDescriptor {
     lethal = "lethal",
     burn = "burn",
     toxic = "toxic",
-    psychic = "psychic",
+    mental = "mental",
+    digital = "digital",
     innate = "innate",
-    weapon = "weapon",
-    device = "device",
-    mutant = "mutant",
-    soldier = "soldier",
-    mystic = "mystic",
-    cyborg = "cyborg",
+    equipment = "device",
+    mutation = "mutation",
+    cybernetic = "cybernetic",
     attack = "attack",
     action = "action",
     toggle = "toggle",
+    quick = "quick",
 }
 
 export enum AbilityTarget {

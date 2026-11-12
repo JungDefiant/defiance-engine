@@ -68,6 +68,7 @@ export default class ActorStateComponent implements Component {
     currentStatuses: EffectData[] = [];
     isPlayer: boolean = false;
     isDefeated: boolean = false;
+    isCastingAction: boolean = false;
     affinityData?: AffinityData;
     // equippedItemData?: ItemData[];
     tactics?: ActorTactic[];
