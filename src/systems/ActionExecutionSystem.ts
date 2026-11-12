@@ -2,7 +2,10 @@ import { inject } from "tsyringe";
 import { query } from "bitecs";
 import GameSystem from "src/systems/GameSystem";
 import ActorStateComponent from "src/components/ActorStateComponent";
-import { PAUSE_GAMEOVER } from "src/constants/GeneralConstants";
+import {
+    BASE_CASTTIME_MS,
+    PAUSE_GAMEOVER,
+} from "src/constants/GeneralConstants";
 import {
     createNewAbilityContext,
     decideNPCActionByTactic,
@@ -18,9 +21,10 @@ import {
     getUserInterfaceState,
 } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
-import { AbilityTrigger } from "src/types/AbilityTypes";
+import { AbilityDescriptor, AbilityTrigger } from "src/types/AbilityTypes";
 import { CombatState } from "src/types/CombatTypes";
 import { deliverActionEffectsByShape } from "src/modules/TargetingModule";
+import { sleep } from "src/modules/Utils";
 
 export default class ActionExecutionSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -83,6 +87,7 @@ export default class ActionExecutionSystem implements GameSystem {
             }
 
             if (
+                !actorState.isCastingAction &&
                 actorState.queuedAction &&
                 recoveryTimerAttribute.currentValue ===
                     recoveryTimerAttribute.maximumValue
@@ -113,9 +118,14 @@ export default class ActionExecutionSystem implements GameSystem {
             return;
         }
 
+        sourceActorState.isCastingAction = true;
+
         renderCastVFX(actionToPerform, sourceActorState.entityId);
 
-        // Casting time here
+        if (!actionToPerform.descriptors.includes(AbilityDescriptor.quick)) {
+            // play casting animation
+            await sleep(BASE_CASTTIME_MS);
+        }
 
         const abilityContext = createNewAbilityContext(actionToPerform);
         triggerFeatEffects(
@@ -140,6 +150,8 @@ export default class ActionExecutionSystem implements GameSystem {
         );
 
         startRenderQueue();
+
+        sourceActorState.isCastingAction = false;
 
         startActionRecovery(sourceActorState, actionToPerform);
     }
