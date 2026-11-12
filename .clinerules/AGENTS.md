@@ -3,6 +3,7 @@
 ## General
 
 - Be less dramatic in chat outputs
+- Close terminals opened by agent after completing a task
 
 ## Setup commands
 

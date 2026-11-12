@@ -10,6 +10,7 @@ import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import {
     BASE_SPAWN_POSITION,
     COMBAT_ENEMY_SPAWN_Z_OFFSET,
+    MINIMUM_RECOVERY,
     SPAWN_OFFSET,
     START_RECOVERY,
     START_RECOVERY_RANGE,
@@ -95,10 +96,10 @@ export async function startCombat(encId: string): Promise<void> {
 
     for (const entityId of query(gameScene.world, [actorStateComponentArray])) {
         const actorData = actorStateComponentArray[entityId];
-        const actionTimerAttribute = actorData.attributes.actionTimer;
-        const initRange = Math.random() * START_RECOVERY_RANGE;
-        actionTimerAttribute.maximumValue = START_RECOVERY + initRange;
-        actionTimerAttribute.currentValue = 0;
+        const recoveryTimerAttribute = actorData.attributes.recoveryTimer;
+        const initRange = Math.round(Math.random() * START_RECOVERY_RANGE);
+        recoveryTimerAttribute.maximumValue = START_RECOVERY + initRange;
+        recoveryTimerAttribute.currentValue = 0;
     }
 
     controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
@@ -274,7 +275,7 @@ export function createNewAbilityContext(
         actionContext: {
             cost: actionToPerform.cost || 0,
             costAttribute: actionToPerform.costAttribute || "",
-            recoveryTime: actionToPerform.recoveryTime || 0,
+            recovery: actionToPerform.recovery || 0,
         },
     };
 
@@ -322,21 +323,17 @@ export function startActionRecovery(
     sourceActorState: ActorStateComponent,
     actionData: AbilityData,
 ): void {
-    let recoveryTimeMultiplier = 1;
-    const totalSpeedValue = calculateTotalAttributeValue(
-        sourceActorState.attributes.speed,
+    const totalHasteValue = calculateTotalAttributeValue(
+        sourceActorState.attributes.haste,
         actionData.descriptors,
     );
-    if (totalSpeedValue < 0) {
-        recoveryTimeMultiplier = 1 + Math.abs(totalSpeedValue);
-    } else {
-        recoveryTimeMultiplier = 1 / (1 + totalSpeedValue);
-    }
-    const totalRecoveryTime =
-        (actionData.recoveryTime || 0.5) * recoveryTimeMultiplier;
-    const actionTimerAttribute = sourceActorState.attributes.actionTimer;
-    actionTimerAttribute.maximumValue = Math.max(totalRecoveryTime, 0.5);
-    actionTimerAttribute.currentValue = 0;
+    const totalRecovery = Math.max(
+        (actionData.recovery || MINIMUM_RECOVERY) - totalHasteValue,
+        MINIMUM_RECOVERY,
+    );
+    const recoveryTimerAttribute = sourceActorState.attributes.recoveryTimer;
+    recoveryTimerAttribute.maximumValue = totalRecovery;
+    recoveryTimerAttribute.currentValue = 0;
 }
 
 function hasActionAttackRoll(actionDescriptors: AbilityDescriptor[]): boolean {

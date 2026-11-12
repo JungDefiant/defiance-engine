@@ -6,63 +6,49 @@ import { getPlayerGuiComponentArray } from "src/modules/ComponentModule";
 import { getGameplayState } from "src/modules/GameStateModule";
 
 export default class PartyInfoHUD implements IHUD {
-	public rootContainer: Nullable<Container> = null;
+    public rootContainer: Nullable<Container> = null;
 
-	private partyInfoEntryStack: Nullable<StackPanel> = null;
+    private partyInfoEntryStack: Nullable<StackPanel> = null;
 
-	public showHideHud(show: boolean): void {
-		this.rootContainer!.isVisible = show ? true : false;
-	}
+    public showHideHud(show: boolean): void {
+        this.rootContainer!.isVisible = show ? true : false;
+    }
 
-	public createHudRoot(): Container {
-		this.rootContainer = new Container("ui_partyInfoHud");
-		this.rootContainer.verticalAlignment =
-			Control.VERTICAL_ALIGNMENT_BOTTOM;
-		this.rootContainer.width = 1;
-		this.rootContainer.heightInPixels = 300;
-		this.rootContainer.topInPixels = -48;
+    public createHudRoot(): Container {
+        this.rootContainer = new Container("ui_partyInfoHud");
+        this.rootContainer.clipContent = false;
+        this.rootContainer.horizontalAlignment =
+            Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this.rootContainer.verticalAlignment =
+            Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.rootContainer.widthInPixels = 360;
+        this.rootContainer.heightInPixels = 80;
+        this.rootContainer.topInPixels = -4;
 
-		const background = new Rectangle("ui_partyInfoHudBg");
-		background.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-		background.background = Themes.primary3;
-		background.color = Themes.primary1;
-		background.thickness = 1;
-		background.width = 1;
-		background.heightInPixels = 112;
-		background.isPointerBlocker = true;
+        return this.rootContainer;
+    }
 
-		this.rootContainer.addControl(background);
+    public setPartyInfoEntryStack() {
+        if (!this.rootContainer) {
+            return;
+        }
 
-		return this.rootContainer;
-	}
+        this.partyInfoEntryStack = new StackPanel("ui_partyInfoEntryStack");
+        this.partyInfoEntryStack.isVertical = false;
+        this.partyInfoEntryStack.clipContent = false;
+        this.partyInfoEntryStack.spacing = 8;
 
-	public setPartyInfoEntryStack() {
-		if (!this.rootContainer) {
-			return;
-		}
+        const playerGuiComponentArray = getPlayerGuiComponentArray();
+        const gameplayState = getGameplayState();
 
-		this.partyInfoEntryStack = new StackPanel("ui_partyInfoEntryStack");
-		this.partyInfoEntryStack.isVertical = false;
-		this.partyInfoEntryStack.spacing = 16;
-		this.partyInfoEntryStack.topInPixels = -4;
+        for (const [eid, entry] of playerGuiComponentArray.entries()) {
+            if (!entry) {
+                continue;
+            }
+            this.partyInfoEntryStack.addControl(entry.getRoot());
+            entry.setSelected(gameplayState.selectedPlayerEID === eid);
+        }
 
-		const playerGuiComponentArray = getPlayerGuiComponentArray();
-		const gameplayState = getGameplayState();
-
-		for (const [eid, entry] of playerGuiComponentArray.entries()) {
-			if (!entry) {
-				continue;
-			}
-			this.partyInfoEntryStack.addControl(entry.getRoot());
-			entry.setSelected(gameplayState.selectedPlayerEID === eid);
-		}
-
-		this.rootContainer.addControl(this.partyInfoEntryStack);
-	}
-
-	public setPartyInfoSwitches() {
-		if (!this.rootContainer) {
-			return;
-		}
-	}
+        this.rootContainer.addControl(this.partyInfoEntryStack);
+    }
 }

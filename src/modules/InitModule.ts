@@ -2,30 +2,30 @@ import { Engine } from "@babylonjs/core";
 import AudioState from "src/states/AudioState";
 import { container } from "tsyringe";
 import {
-	initAudioState,
-	initGameplayState,
-	initGameScene,
+    initAudioState,
+    initGameplayState,
+    initGameScene,
 } from "./SceneModule";
 import {
-	getCampaignState,
-	getGameScene,
-	getSystemRegistry,
-	getUserInterfaceScene,
+    getCampaignState,
+    getGameScene,
+    getSystemRegistry,
+    getUserInterfaceScene,
 } from "./GameStateModule";
 import {
-	DEFAULT_CAMPAIGN_ID,
-	DELTATIME_MS,
+    DEFAULT_CAMPAIGN_ID,
+    DELTATIME_MS,
 } from "src/constants/GeneralConstants";
 import { getPublicRoot } from "./Utils";
 import { LoadedCampaignJson } from "src/types/GameTypes";
 import CampaignState from "src/states/CampaignState";
 import { GameScene } from "src/scenes/GameScene";
 import {
-	COMPONENT_TOKENS,
-	FACTORY_TOKENS,
-	PROCESSOR_TOKENS,
-	STATE_TOKENS,
-	SYSTEM_TOKENS,
+    COMPONENT_TOKENS,
+    FACTORY_TOKENS,
+    PROCESSOR_TOKENS,
+    STATE_TOKENS,
+    SYSTEM_TOKENS,
 } from "src/constants/TokenConstants";
 import MainMenuScene from "src/scenes/MainMenuScene";
 import { EntityFactory } from "src/factories/EntityFactory";
@@ -37,146 +37,144 @@ import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 
 export async function gotoMainMenu(): Promise<void> {
-	const mainMenuScene = container.resolve(MainMenuScene);
-	const engine = container.resolve(Engine);
-	mainMenuScene.audioState = await initAudioState();
-	engine.runRenderLoop(() => {
-		mainMenuScene.render();
-	});
+    const mainMenuScene = container.resolve(MainMenuScene);
+    const engine = container.resolve(Engine);
+    mainMenuScene.audioState = await initAudioState();
+    engine.runRenderLoop(() => {
+        mainMenuScene.render();
+    });
 }
 
 export function closeMainMenu() {
-	const mainMenuScene = container.resolve(MainMenuScene);
-	mainMenuScene.dispose();
+    const mainMenuScene = container.resolve(MainMenuScene);
+    mainMenuScene.dispose();
 }
 
 export function createNewEngine(): Engine {
-	const canvas = document.getElementById(
-		"gameCanvas",
-	)! as any as HTMLCanvasElement;
-	const newEngine = new Engine(canvas);
-	window.addEventListener("resize", () => {
-		newEngine.resize();
-	});
-	document.addEventListener("fullscreenchange", () => {
-		newEngine.resize();
-	});
-	return newEngine;
+    const canvas = document.getElementById(
+        "gameCanvas",
+    )! as any as HTMLCanvasElement;
+    const newEngine = new Engine(canvas);
+    window.addEventListener("resize", () => {
+        newEngine.resize();
+    });
+    document.addEventListener("fullscreenchange", () => {
+        newEngine.resize();
+    });
+    return newEngine;
 }
 
 export async function startGame() {
-	stopEngineRenderLoop();
-	closeMainMenu();
-	await createCampaignState();
-	await createStartingScene();
-	runScene();
+    stopEngineRenderLoop();
+    closeMainMenu();
+    await createCampaignState();
+    await createStartingScene();
+    runScene();
 }
 
 async function createStartingScene() {
-	const campaignState = getCampaignState();
-	await initGameScene(campaignState.startSceneId);
+    const campaignState = getCampaignState();
+    await initGameScene(campaignState.startSceneId);
 }
 
 async function runScene() {
-	const engine = container.resolve(Engine);
-	const gameScene = getGameScene();
-	const userInterfaceScene = getUserInterfaceScene();
-	const systemRegistry = getSystemRegistry();
-	engine.runRenderLoop(() => {
-		const deltaTime = gameScene.deltaTime / DELTATIME_MS;
-		updateSystems(deltaTime, systemRegistry);
-		gameScene.render();
-		userInterfaceScene.render();
-	});
+    const engine = container.resolve(Engine);
+    const gameScene = getGameScene();
+    const userInterfaceScene = getUserInterfaceScene();
+    const systemRegistry = getSystemRegistry();
+    engine.runRenderLoop(() => {
+        const deltaTime = gameScene.deltaTime / DELTATIME_MS;
+        updateSystems(deltaTime, systemRegistry);
+        gameScene.render();
+        userInterfaceScene.render();
+    });
 }
 
 async function stopEngineRenderLoop() {
-	const engine = container.resolve(Engine);
-	engine.stopRenderLoop();
+    const engine = container.resolve(Engine);
+    engine.stopRenderLoop();
 }
 
 async function createCampaignState() {
-	const response = await fetch(
-		`${getPublicRoot()}/data/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
-	);
-	const campaignLoadedJson = (await response.json()) as LoadedCampaignJson;
-	const newCampaignState = new CampaignState(campaignLoadedJson);
-	container.register(CampaignState, { useValue: newCampaignState });
+    const response = await fetch(
+        `${getPublicRoot()}/data/campaigns/${DEFAULT_CAMPAIGN_ID}/campaign.json`,
+    );
+    const campaignLoadedJson = (await response.json()) as LoadedCampaignJson;
+    const newCampaignState = new CampaignState(campaignLoadedJson);
+    container.register(CampaignState, { useValue: newCampaignState });
 }
 
 export function registerFactories(factoryRegistry: FactoryRegistry) {
-	for (const factoryToken of FACTORY_TOKENS) {
-		factoryRegistry.registerNewEntityFactory(
-			factoryToken.name,
-			new factoryToken(),
-		);
-	}
+    for (const factoryToken of FACTORY_TOKENS) {
+        factoryRegistry.registerNewEntityFactory(
+            factoryToken.name,
+            new factoryToken(),
+        );
+    }
 }
 
 export function registerSystems(
-	systemRegistry: SystemRegistry,
-	gameScene: GameScene,
+    systemRegistry: SystemRegistry,
+    gameScene: GameScene,
 ) {
-	for (const systemToken of SYSTEM_TOKENS) {
-		systemRegistry.registerNewGameSystem(
-			systemToken.name,
-			new systemToken(gameScene),
-		);
-	}
+    for (const systemToken of SYSTEM_TOKENS) {
+        systemRegistry.registerNewGameSystem(
+            systemToken.name,
+            new systemToken(gameScene),
+        );
+    }
 }
 
-export async function registerStates(
-	gameStateRegistry: GameStateRegistry,
-) {
-	gameStateRegistry.registerNewGameState(
-		AudioState.name,
-		await initAudioState(),
-	);
+export async function registerStates(gameStateRegistry: GameStateRegistry) {
+    gameStateRegistry.registerNewGameState(
+        AudioState.name,
+        await initAudioState(),
+    );
 
-	for (const stateToken of STATE_TOKENS) {
-		gameStateRegistry.registerNewGameState(
-			stateToken.name,
-			new stateToken(),
-		);
-	}
+    for (const stateToken of STATE_TOKENS) {
+        gameStateRegistry.registerNewGameState(
+            stateToken.name,
+            new stateToken(),
+        );
+    }
 
-	initGameplayState();
+    initGameplayState();
 }
 
 export async function registerComponentArrays(
-	componentRegistry: ComponentRegistry,
+    componentRegistry: ComponentRegistry,
 ) {
-	for (const componentToken of COMPONENT_TOKENS) {
-		componentRegistry.registerNewComponentArray(componentToken.name);
-	}
+    for (const componentToken of COMPONENT_TOKENS) {
+        componentRegistry.registerNewComponentArray(componentToken.name);
+    }
 }
 
 export async function registerProcessorArrays(
-	processorRegistry: ProcessorRegistry,
+    processorRegistry: ProcessorRegistry,
 ) {
-	for (const processorToken of PROCESSOR_TOKENS) {
-		processorRegistry.registerNewProcessor(
-			processorToken.name,
-			new processorToken(),
-		);
-	}
+    for (const processorToken of PROCESSOR_TOKENS) {
+        processorRegistry.registerNewProcessor(
+            processorToken.name,
+            new processorToken(),
+        );
+    }
 }
 
 export async function startFactories(factoryRegistry: FactoryRegistry) {
-	for (const factoryToken of FACTORY_TOKENS) {
-		const factory =
-			factoryRegistry.getEntityFactoryByFactoryId<EntityFactory>(
-				factoryToken.name,
-			);
-		await factory.start(getCampaignState().campaignId);
-	}
+    for (const factoryToken of FACTORY_TOKENS) {
+        const factory =
+            factoryRegistry.getEntityFactoryByFactoryId<EntityFactory>(
+                factoryToken.name,
+            );
+        await factory.start(getCampaignState().campaignId);
+    }
 }
 
 function updateSystems(deltaTime: number, systemRegistry: SystemRegistry) {
-	for (const systemToken of SYSTEM_TOKENS) {
-		const system = systemRegistry.getGameSystemBySystemId<GameSystem>(
-			systemToken.name,
-		);
-		system.update(deltaTime);
-	}
+    for (const systemToken of SYSTEM_TOKENS) {
+        const system = systemRegistry.getGameSystemBySystemId<GameSystem>(
+            systemToken.name,
+        );
+        system.update(deltaTime);
+    }
 }

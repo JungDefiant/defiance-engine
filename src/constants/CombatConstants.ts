@@ -1,7 +1,9 @@
 import { Vector3 } from "@babylonjs/core";
 
-export const START_RECOVERY = 3;
-export const START_RECOVERY_RANGE = 2;
+export const START_RECOVERY = 100;
+export const START_RECOVERY_RANGE = 100;
+export const MINIMUM_RECOVERY = 40;
+export const BASE_RECOVERY_PER_SECOND = 80;
 export const BASE_SPAWN_POSITION = new Vector3(0, 0.28, 0);
 export const SPAWN_OFFSET = 0.2;
 export const COMBAT_ENEMY_SPAWN_Z_OFFSET = -4;

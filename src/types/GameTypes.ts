@@ -2,108 +2,113 @@ import { Vector3 } from "@babylonjs/core";
 import { GameEvent } from "src/types/EventTypes";
 
 export class ControlSettings {
-	targetMouseButton: number = 0;
-	moveMouseButton: number = 2;
-	powerKeys: number[] = [
-		"Q".charCodeAt(0),
-		"W".charCodeAt(0),
-		"E".charCodeAt(0),
-		"R".charCodeAt(0),
-	];
-	switchPlayerLeft: number = "D".charCodeAt(0);
-	switchPlayerRight: number = "F".charCodeAt(0);
-	tacticalPause: number = 32;
-	debugStartCombat: number = "C".charCodeAt(0);
+    targetMouseButton: number = 0;
+    moveMouseButton: number = 2;
+    techniqueKeys: number[] = [
+        "Q".charCodeAt(0),
+        "W".charCodeAt(0),
+        "E".charCodeAt(0),
+    ];
+    mutationKey: number = "R".charCodeAt(0);
+    equipmentKeys: number[] = [
+        "1".charCodeAt(0),
+        "2".charCodeAt(0),
+        "3".charCodeAt(0),
+    ];
+    switchPlayerLeft: number = "D".charCodeAt(0);
+    switchPlayerRight: number = "F".charCodeAt(0);
+    tacticalPause: number = 32;
+    debugStartCombat: number = "C".charCodeAt(0);
 }
 
 export interface LoadedCampaignJson {
-	id: string;
-	startSceneId: "";
-	startDialogueId: "";
-	flagIds: [];
-	keyItemIds: [];
-	startingPartyIds: string[];
+    id: string;
+    startSceneId: "";
+    startDialogueId: "";
+    flagIds: [];
+    keyItemIds: [];
+    startingPartyIds: string[];
 }
 
 export interface LoadedSceneJson {
-	id: string;
-	mapModelId: string;
-	difficultyLevel: number;
-	startMusicId: string;
-	dialogueFileId: string;
-	encounters: EncounterMap;
-	interactables: Interactable[];
-	doors: DoorData[];
-	events: GameEvent[];
-	modalIds: string[];
+    id: string;
+    mapModelId: string;
+    difficultyLevel: number;
+    startMusicId: string;
+    dialogueFileId: string;
+    encounters: EncounterMap;
+    interactables: Interactable[];
+    doors: DoorData[];
+    events: GameEvent[];
+    modalIds: string[];
 }
 
 export interface Interactable {
-	id: string;
-	name: string;
-	description: string;
-	dialogueNodeId: string;
-	interactableNodeId: string;
-	guiPositionOffset: number[];
+    id: string;
+    name: string;
+    description: string;
+    dialogueNodeId: string;
+    interactableNodeId: string;
+    guiPositionOffset: number[];
 }
 
 export interface DoorData {
-	id: string;
-	destination: string;
+    id: string;
+    destination: string;
 }
 
 export interface EncounterMap {
-	[index: string]: string[];
+    [index: string]: string[];
 }
 
 export type GameMode = "MainMenu" | "Combat" | "Explore" | "Dialogue";
 
 export interface DialogueNode {
-	name: string;
-	lines: DialogueLine[];
+    name: string;
+    lines: DialogueLine[];
 }
 
 export interface DialogueLine {
-	type: DialogueLineType;
-	condition: ConditionFunction;
-	character?: string;
-	text?: string;
-	options?: DialogueOptionLine[];
-	cmd?: string;
-	vars?: (string | number | Vector3)[];
+    type: DialogueLineType;
+    condition: ConditionFunction;
+    character?: string;
+    text?: string;
+    options?: DialogueOptionLine[];
+    cmd?: string;
+    vars?: (string | number | Vector3)[];
 }
 
 export type DialogueLineType =
-	| "Line"
-	| "Options"
-	| "Cmd"
-	| "Line_condition"
-	| "Cmd_condition";
+    | "Line"
+    | "Options"
+    | "Cmd"
+    | "Line_condition"
+    | "Cmd_condition";
 
 export interface DialogueOptionLine {
-	text: string;
-	destinationNode: string;
-	condition: ConditionFunction;
+    text: string;
+    destinationNode: string;
+    condition: ConditionFunction;
 }
 
 export interface LoadedModalJson {
-	id: string;
-	pages: ModalPage[];
+    id: string;
+    pages: ModalPage[];
 }
 
 export interface ModalPage {
-	title: string;
-	textBody: string;
-	imageSrc?: string;
+    title: string;
+    textBody: string;
+    imageSrc?: string;
 }
 
 export type StoryVariable = string | number;
 
 export interface ConditionFunction {
-	(): boolean;
+    (): boolean;
 }
 
 export type RenderQueueEntryType =
-	| "FloatingText"
-	| "SpecialFx"
-	| "WaitUntilDone";
+    | "FloatingText"
+    | "SpecialFx"
+    | "WaitUntilDone";

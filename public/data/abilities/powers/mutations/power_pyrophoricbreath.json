@@ -1,6 +1,6 @@
 {
-	"id": "power_combatstim",
-	"name": "Combat Stim",
+	"id": "power_pyrophoricbreath",
+	"name": "Pyrophoric Breath",
 	"description": "",
 	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
 	"castVfxURL": "",
@@ -10,23 +10,23 @@
 	"trigger": "onActionPerform",
 	"descriptors": [
 		"power",
-		"technique",
-		"single",
-		"self"
+		"mutation",
+		"group",
+		"attack"
 	],
-	"target": "self",
-	"recoveryTime": 6,
-	"cost": 10,
+	"target": "enemy",
+	"recovery": 160,
+	"cost": 20,
 	"costAttribute": "willPoints",
 	"targetingShape": {
-		"type": "sphere",
-		"radius": 1
+		"type": "cone",
+		"range": 1200
 	},
 	"effectData": [
 		{
-			"id": "healing",
+			"id": "damage",
 			"variables": {
-				"baseHealing": 20
+				"baseDamage": 20
 			}
 		}
 	]

@@ -1,6 +1,6 @@
 {
-	"id": "power_fraggrenade",
-	"name": "Frag Grenade",
+	"id": "power_stungrenade",
+	"name": "Stun Grenade",
 	"description": "",
 	"iconURL": "sprites/gui/icons/abilities/powers/equipment/icon_fraggrenade.png",
 	"castVfxURL": "",
@@ -11,25 +11,25 @@
 	"descriptors": [
 		"power",
 		"group",
-		"ranged",
-		"lethal",
+		"burn",
 		"equipment",
 		"grenade",
 		"attack"
 	],
 	"target": "enemy",
-	"recoveryTime": 4,
+	"recovery": 160,
 	"cost": 10,
-	"costAttribute": "willPoints",
+	"costAttribute": "itemPoints",
 	"targetingShape": {
 		"type": "sphere",
-		"radius": 2.5
+		"range": 1200,
+		"radius": 200
 	},
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 16
+				"baseDamage": 6
 			}
 		}
 	]

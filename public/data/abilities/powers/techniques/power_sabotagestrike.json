@@ -1,0 +1,31 @@
+{
+	"id": "power_sabotagestrike",
+	"name": "Sabotage Strike",
+	"description": "",
+	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
+	"castVfxURL": "",
+	"hitVfxURL": "vfx/vfx_test",
+	"castSfxURL": "",
+	"hitSfxURL": "",
+	"trigger": "onActionPerform",
+	"descriptors": [
+		"power",
+		"technique",
+		"self",
+		"action",
+		"quick"
+	],
+	"target": "self",
+	"recovery": 40,
+	"cost": 10,
+	"costAttribute": "willPoints",
+	"targetingShape": {},
+	"effectData": [
+		{
+			"id": "damage",
+			"variables": {
+				"baseDamage": 12
+			}
+		}
+	]
+}

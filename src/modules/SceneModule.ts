@@ -310,7 +310,7 @@ export function setDialogueGameMode() {
 async function loadSceneJson(sceneId: string): Promise<LoadedSceneJson> {
     const campaignState = getCampaignState();
     const response = await fetch(
-        `${getPublicRoot()}/data/${campaignState.campaignId}/scenes/${sceneId}.json`,
+        `${getPublicRoot()}/data/campaigns/${campaignState.campaignId}/scenes/${sceneId}.json`,
     );
     const sceneJson = (await response.json()) as LoadedSceneJson;
     return sceneJson;
@@ -345,7 +345,7 @@ export function createSceneCamera(scene: GameScene): void {
         scene,
     );
     camera.minZ = 0;
-    camera.viewport = new Viewport(0, 0.1, 1, 1);
+    camera.viewport = new Viewport(0, 0, 1, 1);
     camera.inputs.clear();
     camera.setTarget(initialFocus);
     camera.attachControl();
@@ -363,9 +363,9 @@ function registerScenePointerBindings(
     });
 
     gameCanvas.addEventListener("pointerdown", () => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        }
+        // if (!document.fullscreenElement) {
+        //     document.documentElement.requestFullscreen().catch(() => {});
+        // }
     });
 
     scene.onPointerObservable.add((pointerInfo) => {

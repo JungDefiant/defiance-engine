@@ -6,100 +6,100 @@ import ActorStateComponent from "src/components/ActorStateComponent";
 import EnemyGUIComponent from "src/components/EnemyGUIComponent";
 import { GameScene } from "src/scenes/GameScene";
 import {
-	getActorStateComponentArray,
-	getEnemyGuiComponentArray,
-	getPlayerGuiComponentArray,
+    getActorStateComponentArray,
+    getEnemyGuiComponentArray,
+    getPlayerGuiComponentArray,
 } from "src/modules/ComponentModule";
 import { updateTargetHighlight } from "src/modules/UserInterfaceModule";
 
 export default class UserInterfaceSystem implements GameSystem {
-	public constructor(@inject(GameScene) private gameScene: GameScene) {}
+    public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
-	public update(deltaTime: number) {
-		const actorStateComponentArray = getActorStateComponentArray();
-		const playerGuiComponentArray = getPlayerGuiComponentArray();
-		const enemyGuiComponentArray = getEnemyGuiComponentArray();
+    public update(deltaTime: number) {
+        const actorStateComponentArray = getActorStateComponentArray();
+        const playerGuiComponentArray = getPlayerGuiComponentArray();
+        const enemyGuiComponentArray = getEnemyGuiComponentArray();
 
-		for (const eid of query(this.gameScene.world, [
-			actorStateComponentArray,
-			playerGuiComponentArray,
-		])) {
-			const actorData = actorStateComponentArray[eid];
-			const playerGUI = playerGuiComponentArray[eid];
-			this.updatePlayerGUI(actorData, playerGUI);
-		}
+        for (const entityId of query(this.gameScene.world, [
+            actorStateComponentArray,
+            playerGuiComponentArray,
+        ])) {
+            const actorData = actorStateComponentArray[entityId];
+            const playerGUI = playerGuiComponentArray[entityId];
+            this.updatePlayerGUI(actorData, playerGUI);
+        }
 
-		for (const eid of query(this.gameScene.world, [
-			actorStateComponentArray,
-			enemyGuiComponentArray,
-		])) {
-			const actorData = actorStateComponentArray[eid];
-			const enemyGUI = enemyGuiComponentArray[eid];
-			this.updateEnemyGUI(actorData, enemyGUI, eid);
-		}
+        for (const entityId of query(this.gameScene.world, [
+            actorStateComponentArray,
+            enemyGuiComponentArray,
+        ])) {
+            const actorData = actorStateComponentArray[entityId];
+            const enemyGUI = enemyGuiComponentArray[entityId];
+            this.updateEnemyGUI(actorData, enemyGUI, entityId);
+        }
 
-		updateTargetHighlight();
-	}
+        updateTargetHighlight();
+    }
 
-	private updatePlayerGUI(
-		playerActorState: ActorStateComponent,
-		playerGui: PlayerGUIComponent,
-	) {
-		playerGui.setQueuedAction(
-			playerActorState.queuedAction
-				? (playerActorState.queuedAction.iconURL as string)
-				: "",
-		);
+    private updatePlayerGUI(
+        playerActorState: ActorStateComponent,
+        playerGui: PlayerGUIComponent,
+    ) {
+        playerGui.setQueuedAction(
+            playerActorState.queuedAction
+                ? (playerActorState.queuedAction.iconURL as string)
+                : "",
+        );
 
-		playerGui.setActBarFill(
-			playerActorState.attributes.actionTimer.currentValue,
-			playerActorState.attributes.actionTimer.maximumValue,
-		);
+        playerGui.setRecoveryBarFill(
+            playerActorState.attributes.recoveryTimer.currentValue,
+            playerActorState.attributes.recoveryTimer.maximumValue,
+        );
 
-		playerGui.setLifePoints(
-			playerActorState.attributes.lifePoints.currentValue,
-		);
+        playerGui.setLifePoints(
+            playerActorState.attributes.lifePoints.currentValue,
+        );
 
-		playerGui.setWillPoints(
-			playerActorState.attributes.willPoints.currentValue,
-		);
+        playerGui.setWillPoints(
+            playerActorState.attributes.willPoints.currentValue,
+        );
 
-		playerGui.setItemPoints(
-			playerActorState.attributes.itemPoints.currentValue,
-		);
-	}
+        playerGui.setItemPoints(
+            playerActorState.attributes.itemPoints.currentValue,
+        );
+    }
 
-	private updateEnemyGUI(
-		enemyActorState: ActorStateComponent,
-		enemyGui: EnemyGUIComponent,
-		entityId: number,
-	) {
-		enemyGui.setLifeBarFill(
-			enemyActorState.attributes.lifePoints.currentValue,
-			enemyActorState.attributes.lifePoints.maximumValue,
-		);
+    private updateEnemyGUI(
+        enemyActorState: ActorStateComponent,
+        enemyGui: EnemyGUIComponent,
+        entityId: number,
+    ) {
+        enemyGui.setLifeBarFill(
+            enemyActorState.attributes.lifePoints.currentValue,
+            enemyActorState.attributes.lifePoints.maximumValue,
+        );
 
-		const hoveredEnemyEid = this.getHoveredEnemyEid();
-		enemyGui.setLifeBarVisible(entityId === hoveredEnemyEid);
-	}
+        const hoveredEnemyEntityId = this.getHoveredEnemyEntityId();
+        enemyGui.setLifeBarVisible(entityId === hoveredEnemyEntityId);
+    }
 
-	private getHoveredEnemyEid(): number {
-		const hoverPick = this.gameScene.pick(
-			this.gameScene.pointerX,
-			this.gameScene.pointerY,
-			(mesh) => mesh.name.startsWith("enBattlerSprite_"),
-		);
+    private getHoveredEnemyEntityId(): number {
+        const hoverPick = this.gameScene.pick(
+            this.gameScene.pointerX,
+            this.gameScene.pointerY,
+            (mesh) => mesh.name.startsWith("enBattlerSprite_"),
+        );
 
-		if (hoverPick && hoverPick.hit && hoverPick.pickedMesh) {
-			const pickedEntityMeshMetadata = hoverPick.pickedMesh
-				.metadata as Record<string, number>;
-			const pickedEntityId = pickedEntityMeshMetadata.entityId;
+        if (hoverPick && hoverPick.hit && hoverPick.pickedMesh) {
+            const pickedEntityMeshMetadata = hoverPick.pickedMesh
+                .metadata as Record<string, number>;
+            const pickedEntityId = pickedEntityMeshMetadata.entityId;
 
-			if (pickedEntityId && pickedEntityId >= 0) {
-				return pickedEntityId;
-			}
-		}
+            if (pickedEntityId && pickedEntityId >= 0) {
+                return pickedEntityId;
+            }
+        }
 
-		return -1;
-	}
+        return -1;
+    }
 }

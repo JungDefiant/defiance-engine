@@ -1,6 +1,6 @@
 {
-	"id": "power_flashbang",
-	"name": "Flashbang",
+	"id": "power_fraggrenade",
+	"name": "Frag Grenade",
 	"description": "",
 	"iconURL": "sprites/gui/icons/abilities/powers/equipment/icon_fraggrenade.png",
 	"castVfxURL": "",
@@ -10,25 +10,26 @@
 	"trigger": "onActionPerform",
 	"descriptors": [
 		"power",
-		"equipment",
 		"group",
-		"ranged",
+		"lethal",
+		"equipment",
 		"grenade",
 		"attack"
 	],
 	"target": "enemy",
-	"recoveryTime": 4,
-	"cost": 5,
-	"costAttribute": "willPoints",
+	"recovery": 160,
+	"cost": 10,
+	"costAttribute": "itemPoints",
 	"targetingShape": {
 		"type": "sphere",
-		"radius": 3
+		"range": 1200,
+		"radius": 200
 	},
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 6
+				"baseDamage": 16
 			}
 		}
 	]
