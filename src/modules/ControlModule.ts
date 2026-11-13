@@ -27,7 +27,7 @@ import ControlState from "src/states/ControlState";
 import {
     AbilityData,
     AbilityTarget,
-    ActionSlotKey,
+    LoadoutSlotKey,
 } from "src/types/AbilityTypes";
 import { clamp } from "./Utils";
 import { getActorPosition } from "./Collision3DModule";
@@ -71,53 +71,53 @@ export function detachCameraControl(): boolean {
     }
 }
 
-function startPlayerAction(actionSlotKey: ActionSlotKey, actionIndex: number) {
+function startPlayerAction(actionSlotKey: LoadoutSlotKey) {
     const controlState = getControlState();
     const gameplayState = getGameplayState();
     if (controlState.controlPauseSet.size > 0) {
         return;
     }
-    beginActionTargeting(
-        gameplayState.selectedPlayerEID,
-        actionSlotKey,
-        actionIndex,
-    );
+    beginActionTargeting(gameplayState.selectedPlayerEID, actionSlotKey);
 }
 
 function registerPowerKeyBindings(
     actionManager: ActionManager,
     controlState: ControlState,
 ) {
-    controlState.controlSettings.techniqueKeys.forEach(
-        (powerKey, powerIndex) => {
-            actionManager.registerAction(
-                new ExecuteCodeAction(
-                    {
-                        trigger: ActionManager.OnKeyDownTrigger,
-                        parameter: powerKey,
-                    },
-                    () => {
-                        startPlayerAction(ActionSlotKey.technique, powerIndex);
-                    },
-                ),
-            );
-        },
+    actionManager.registerAction(
+        new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnKeyDownTrigger,
+                parameter: controlState.controlSettings.weaponAbilityKey,
+            },
+            () => {
+                startPlayerAction(LoadoutSlotKey.weapon2);
+            },
+        ),
     );
 
-    controlState.controlSettings.equipmentKeys.forEach(
-        (powerKey, powerIndex) => {
-            actionManager.registerAction(
-                new ExecuteCodeAction(
-                    {
-                        trigger: ActionManager.OnKeyDownTrigger,
-                        parameter: powerKey,
-                    },
-                    () => {
-                        startPlayerAction(ActionSlotKey.equipment, powerIndex);
-                    },
-                ),
-            );
-        },
+    actionManager.registerAction(
+        new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnKeyDownTrigger,
+                parameter: controlState.controlSettings.equipment1Key,
+            },
+            () => {
+                startPlayerAction(LoadoutSlotKey.equipment1);
+            },
+        ),
+    );
+
+    actionManager.registerAction(
+        new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnKeyDownTrigger,
+                parameter: controlState.controlSettings.equipment2Key,
+            },
+            () => {
+                startPlayerAction(LoadoutSlotKey.equipment2);
+            },
+        ),
     );
 
     actionManager.registerAction(
@@ -127,7 +127,7 @@ function registerPowerKeyBindings(
                 parameter: controlState.controlSettings.mutationKey,
             },
             () => {
-                startPlayerAction(ActionSlotKey.mutation, 0);
+                startPlayerAction(LoadoutSlotKey.mutation);
             },
         ),
     );

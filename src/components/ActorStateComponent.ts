@@ -7,7 +7,7 @@ import { Component } from "./Component";
 import {
     AbilityData,
     AbilityTrigger,
-    ActionSlotKey,
+    LoadoutSlotKey,
     EffectData,
 } from "src/types/AbilityTypes";
 import {
@@ -34,7 +34,7 @@ const BASE_ATTRIBUTES = {
     speed: 300,
 };
 
-export interface LoadedAbilityJson {
+export interface LoadedActorJson {
     id: string;
     name: string;
     backstory: string;
@@ -47,8 +47,8 @@ export interface LoadedAbilityJson {
         heart: number;
     };
     weaponId: string;
-    techniqueIds: string[];
-    equipmentIds: string[];
+    equipment1Id?: string;
+    equipment2Id?: string;
     mutationId?: string;
     featIds: string[];
     tactics?: ActorTactic[];
@@ -62,7 +62,7 @@ export default class ActorStateComponent implements Component {
     description: string = "";
     spriteUrl: string = "";
     attributes: AttributeSet = {};
-    actionData: Map<ActionSlotKey, AbilityData[]> = new Map();
+    actionData: Map<LoadoutSlotKey, AbilityData> = new Map();
     featData: AbilityData[] = [];
     currentStatuses: EffectData[] = [];
     isPlayer: boolean = false;
@@ -72,11 +72,12 @@ export default class ActorStateComponent implements Component {
     // equippedItemData?: ItemData[];
     tactics?: ActorTactic[];
     queuedAction?: Nullable<AbilityData>;
+    queuedCostAttributeName?: string;
     currentTargetEntityId?: EntityId;
     currentTargetPosition?: Vector3;
     currentAimDirection?: Nullable<Vector3>;
 
-    public constructor(entityId: number, initialData: LoadedAbilityJson) {
+    public constructor(entityId: number, initialData: LoadedActorJson) {
         this.entityId = entityId;
         this.id = initialData.id;
         this.name = initialData.name;
@@ -133,12 +134,6 @@ export default class ActorStateComponent implements Component {
                 baseValue: initialWillValue,
                 maximumValue: initialWillValue,
                 currentValue: initialWillValue,
-                modifiers: [],
-            } as ActorAttribute,
-            ammo: {
-                baseValue: BASE_ATTRIBUTES.ammo,
-                maximumValue: BASE_ATTRIBUTES.ammo,
-                currentValue: BASE_ATTRIBUTES.ammo,
                 modifiers: [],
             } as ActorAttribute,
             haste: {
@@ -213,6 +208,24 @@ export default class ActorStateComponent implements Component {
                 currentValue: 1,
                 modifiers: [],
             } as ActorAttribute,
+            ammoWeapon: {
+                baseValue: 0,
+                maximumValue: 0,
+                currentValue: 0,
+                modifiers: [],
+            } as ActorAttribute,
+            ammoEquip1: {
+                baseValue: 0,
+                maximumValue: 0,
+                currentValue: 0,
+                modifiers: [],
+            } as ActorAttribute,
+            ammoEquip2: {
+                baseValue: 0,
+                maximumValue: 0,
+                currentValue: 0,
+                modifiers: [],
+            } as ActorAttribute,
         };
 
         const campaignState = container.resolve(CampaignState);
@@ -220,14 +233,14 @@ export default class ActorStateComponent implements Component {
 
         this.loadWeapon(initialData, thisActorState);
         this.loadMutation(initialData, thisActorState);
-        this.loadTechniques(initialData, thisActorState);
-        this.loadEquipment(initialData);
+        this.loadEquipment(initialData, thisActorState);
         this.loadFeats(initialData, thisActorState);
 
         this.tactics = initialData.tactics;
     }
 
-    private loadWeapon(initialData: LoadedAbilityJson, thisActorState: this) {
+    private loadWeapon(initialData: LoadedActorJson, thisActorState: this) {
+        Promise.all([]);
         fetch(
             `${getPublicRoot()}/data/abilities/weapons/${initialData.weaponId}.json`,
         )
@@ -239,15 +252,52 @@ export default class ActorStateComponent implements Component {
                 }
                 return response.json();
             })
-            .then((weaponAbilityData) => {
-                thisActorState.actionData.set(ActionSlotKey.weapon, [
-                    weaponAbilityData,
-                ]);
+            .then(async (weaponData) => {
+                const associatedAbilityData =
+                    await this.loadWeaponAssociatedAbility(
+                        weaponData.associatedAbility,
+                    );
+                thisActorState.actionData.set(
+                    LoadoutSlotKey.weapon1,
+                    weaponData,
+                );
+
+                thisActorState.actionData.set(
+                    LoadoutSlotKey.weapon2,
+                    associatedAbilityData,
+                );
+
+                if (weaponData.maxAmmo) {
+                    thisActorState.attributes.ammoWeapon = {
+                        baseValue: weaponData.maxAmmo,
+                        maximumValue: weaponData.maxAmmo,
+                        currentValue: weaponData.maxAmmo,
+                        modifiers: [],
+                    } as ActorAttribute;
+                }
             })
             .catch((error) => console.error(error));
     }
 
-    private loadMutation(initialData: LoadedAbilityJson, thisActorState: this) {
+    private loadWeaponAssociatedAbility(associatedAbilityId: string) {
+        return fetch(
+            `${getPublicRoot()}/data/abilities/powers/${associatedAbilityId}.json`,
+        )
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to load power data "${associatedAbilityId}" (HTTP ${response.status})`,
+                    );
+                }
+                return response.json();
+            })
+            .then((weaponAbilityData) => {
+                return weaponAbilityData;
+            })
+            .catch((error) => console.error(error));
+    }
+
+    private loadMutation(initialData: LoadedActorJson, thisActorState: this) {
         if (initialData.mutationId) {
             fetch(
                 `${getPublicRoot()}/data/abilities/powers/${initialData.mutationId}.json`,
@@ -261,82 +311,60 @@ export default class ActorStateComponent implements Component {
                     return response.json();
                 })
                 .then((mutationAbilityData) => {
-                    thisActorState.actionData.set(ActionSlotKey.mutation, [
+                    thisActorState.actionData.set(
+                        LoadoutSlotKey.mutation,
                         mutationAbilityData,
-                    ]);
+                    );
                 })
                 .catch((error) => console.error(error));
         }
     }
 
-    private loadTechniques(
-        initialData: LoadedAbilityJson,
-        thisActorState: this,
-    ) {
-        const allTechniquePromises = Promise.all(
-            initialData.techniqueIds.map((powerId) => {
-                return fetch(
-                    `${getPublicRoot()}/data/abilities/powers/${powerId}.json`,
-                ).then((response) => {
+    private loadEquipment(initialData: LoadedActorJson, thisActorState: this) {
+        if (initialData.equipment1Id) {
+            fetch(
+                `${getPublicRoot()}/data/abilities/powers/${initialData.equipment1Id}.json`,
+            )
+                .then((response) => {
                     if (!response.ok) {
                         throw new Error(
-                            `Failed to load power data "${powerId}" (HTTP ${response.status})`,
+                            `Failed to load power data "${initialData.equipment1Id}" (HTTP ${response.status})`,
                         );
                     }
                     return response.json();
-                });
-            }),
-        );
-
-        allTechniquePromises
-            .then((allPowerData) => {
-                allPowerData.forEach((powerData) => {
-                    let actionTechData = thisActorState.actionData.get(
-                        ActionSlotKey.technique,
+                })
+                .then((equipment1AbilityData) => {
+                    thisActorState.actionData.set(
+                        LoadoutSlotKey.equipment1,
+                        equipment1AbilityData,
                     );
-                    if (!actionTechData) {
-                        actionTechData = [];
-                        thisActorState.actionData.set(
-                            ActionSlotKey.technique,
-                            actionTechData,
+                })
+                .catch((error) => console.error(error));
+        }
+
+        if (initialData.equipment2Id) {
+            fetch(
+                `${getPublicRoot()}/data/abilities/powers/${initialData.equipment2Id}.json`,
+            )
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `Failed to load power data "${initialData.equipment2Id}" (HTTP ${response.status})`,
                         );
                     }
-
-                    actionTechData.push(powerData);
-                });
-            })
-            .catch((error) => console.error(error));
-    }
-
-    private loadEquipment(initialData: LoadedAbilityJson) {
-        if (initialData.equipmentIds) {
-            const allEquipmentPromises = Promise.all(
-                initialData.equipmentIds.map((equipmentId) => {
-                    return fetch(
-                        `${getPublicRoot()}/data/abilities/powers/${equipmentId}.json`,
-                    ).then((response) => {
-                        if (!response.ok) {
-                            throw new Error(
-                                `Failed to load item data "${equipmentId}" (HTTP ${response.status})`,
-                            );
-                        }
-                        return response.json();
-                    });
-                }),
-            );
-
-            allEquipmentPromises
-                .then((allEquipmentData) => {
-                    allEquipmentData.forEach((equipmentData) => {
-                        // TO DO: Implement EquippedItemData interface during Inventory system build
-                        // thisActorState.equippedItemData.push(itemData);
-                    });
+                    return response.json();
+                })
+                .then((equipment2AbilityData) => {
+                    thisActorState.actionData.set(
+                        LoadoutSlotKey.equipment2,
+                        equipment2AbilityData,
+                    );
                 })
                 .catch((error) => console.error(error));
         }
     }
 
-    private loadFeats(initialData: LoadedAbilityJson, thisActorState: this) {
+    private loadFeats(initialData: LoadedActorJson, thisActorState: this) {
         const allFeatPromises = Promise.all(
             initialData.featIds.map((featId) => {
                 return fetch(

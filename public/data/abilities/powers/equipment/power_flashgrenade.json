@@ -1,6 +1,6 @@
 {
-	"id": "power_stungrenade",
-	"name": "Stun Grenade",
+	"id": "power_flashgrenade",
+	"name": "Flash Grenade",
 	"description": "",
 	"iconURL": "sprites/gui/icons/abilities/powers/equipment/icon_fraggrenade.png",
 	"castVfxURL": "",
@@ -13,13 +13,13 @@
 		"group",
 		"burn",
 		"equipment",
-		"grenade",
 		"attack"
 	],
 	"target": "enemy",
 	"recovery": 160,
 	"cost": 10,
-	"costAttribute": "itemPoints",
+	"costAttribute": "ammo",
+	"maxAmmo": 4,
 	"targetingShape": {
 		"type": "sphere",
 		"range": 1200,

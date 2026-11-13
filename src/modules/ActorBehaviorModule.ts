@@ -2,7 +2,7 @@ import { Nullable, Vector3 } from "@babylonjs/core";
 import { EntityId } from "bitecs";
 import ActorBehaviorComponent from "src/components/ActorBehaviorComponent";
 import ActorStateComponent from "src/components/ActorStateComponent";
-import { ActionSlotKey, AbilityData } from "src/types/AbilityTypes";
+import { LoadoutSlotKey, AbilityData } from "src/types/AbilityTypes";
 import {
     getActorBehaviorComponentArray,
     getActorStateComponentArray,
@@ -82,12 +82,7 @@ function getWeaponActionData(
         return null;
     }
 
-    const actionDataArray = actorState.actionData.get(ActionSlotKey.weapon);
-    if (actionDataArray) {
-        return actionDataArray[0];
-    } else {
-        return null;
-    }
+    return actorState.actionData.get(LoadoutSlotKey.weapon1) || null;
 }
 
 export function processDefaultPassiveBehavior(
@@ -175,7 +170,11 @@ function queueActionAgainstClosestTargetInRange(
     }
 
     setActorTargetFromEntity(props.actorState, weaponActionData, targetEid);
-    queueNPCAction(weaponActionData, props.entityId);
+    queueNPCAction(
+        weaponActionData,
+        props.entityId,
+        LoadoutSlotKey.weapon1,
+    );
 }
 
 // Find a way to rework this logic; don't need another function getting the target

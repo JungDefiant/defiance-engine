@@ -3,16 +3,18 @@ import { query } from "bitecs";
 import GameSystem from "src/systems/GameSystem";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import {
-    BASE_CASTTIME_MS,
+    BASE_CAST_TIME_MS,
+    BASE_RELOAD_TIME_MS,
     PAUSE_GAMEOVER,
 } from "src/constants/GeneralConstants";
 import {
     createNewAbilityContext,
     decideNPCActionByTactic,
     endCombat,
+    getCostAttributeName,
     startActionRecovery,
 } from "src/modules/CombatModule";
-import { spendAbilityCost, triggerFeatEffects } from "src/modules/EffectModule";
+import { triggerFeatEffects } from "src/modules/EffectModule";
 import { renderCastVFX, startRenderQueue } from "src/modules/RenderModule";
 import { GameScene } from "src/scenes/GameScene";
 import {
@@ -78,22 +80,24 @@ export default class ActionExecutionSystem implements GameSystem {
                 continue;
             }
 
-            if (actionQueuedAction.cost && actionQueuedAction.costAttribute) {
-                const isAbilityCostSpent = spendAbilityCost(
-                    actorState,
-                    actionQueuedAction,
-                );
-                if (!isAbilityCostSpent) {
-                    continue;
-                }
-            }
-
             if (
                 !actorState.isCastingAction &&
                 actorState.queuedAction &&
                 recoveryTimerAttribute.currentValue ===
                     recoveryTimerAttribute.maximumValue
             ) {
+                if (
+                    actionQueuedAction.cost &&
+                    actionQueuedAction.costAttribute
+                ) {
+                    const isAbilityCostSpent = this.spendAbilityCost(
+                        actorState,
+                        actionQueuedAction,
+                    );
+                    if (!isAbilityCostSpent) {
+                        continue;
+                    }
+                }
                 Promise.resolve(
                     this.performQueuedAction(actorState).then(() => {
                         // With behavior being handled in its own system and module, need to look into whether this is needed or not
@@ -110,6 +114,32 @@ export default class ActionExecutionSystem implements GameSystem {
                 return;
             }
         }
+    }
+
+    private spendAbilityCost(
+        source: ActorStateComponent,
+        actionData: AbilityData,
+    ): boolean {
+        const abilityCost = (actionData.cost as number) || 0;
+        const costAttributeName = source.queuedCostAttributeName || "";
+        const costAttribute = source.attributes[costAttributeName];
+        const isToggle = actionData.descriptors.includes(
+            AbilityDescriptor.toggle,
+        );
+
+        if (!costAttribute || costAttribute.currentValue < abilityCost) {
+            return false;
+        }
+
+        if (isToggle && costAttributeName === "willPoints") {
+            source.attributes.willCostPerSecond.currentValue += abilityCost;
+        } else {
+            costAttribute.currentValue = Math.max(
+                costAttribute.currentValue - abilityCost,
+                0,
+            );
+        }
+        return true;
     }
 
     private async performQueuedAction(
@@ -164,12 +194,41 @@ export default class ActionExecutionSystem implements GameSystem {
 
         if (!actionToPerform.descriptors.includes(AbilityDescriptor.quick)) {
             // play casting animation
-            await sleep(BASE_CASTTIME_MS);
+            await sleep(BASE_CAST_TIME_MS);
         }
+
+        await this.reloadAmmo(sourceActorState, actionToPerform);
 
         if (getGameplayState().combatState !== combatStateAtCastStart) {
             sourceActorState.isCastingAction = false;
             return;
         }
+    }
+
+    private async reloadAmmo(
+        sourceActorState: ActorStateComponent,
+        actionToReload: AbilityData,
+    ) {
+        if (!actionToReload.isReloadable) {
+            return;
+        }
+
+        const ammoAttributeName = sourceActorState.queuedCostAttributeName;
+        if (!ammoAttributeName || !ammoAttributeName.includes("ammo")) {
+            return;
+        }
+
+        const ammoAttribute = sourceActorState.attributes[ammoAttributeName];
+        if (!ammoAttribute) {
+            return;
+        }
+
+        if (ammoAttribute.currentValue > 0) {
+            return;
+        }
+
+        await sleep(BASE_RELOAD_TIME_MS);
+
+        ammoAttribute.currentValue = ammoAttribute.maximumValue;
     }
 }

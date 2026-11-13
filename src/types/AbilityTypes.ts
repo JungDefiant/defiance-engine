@@ -35,6 +35,8 @@ export interface AbilityData {
     recovery?: number;
     cost?: number;
     costAttribute?: string;
+    maxAmmo?: number;
+    isReloadable?: boolean;
     itemId?: string;
     iconURL?: string;
     castVfxURL?: string;
@@ -42,6 +44,7 @@ export interface AbilityData {
     castSfxURL?: string;
     hitSfxURL?: string;
     targetingShape?: TargetingShapeData;
+    associatedAbility?: string;
 }
 
 export interface EffectData {
@@ -51,12 +54,13 @@ export interface EffectData {
     };
 }
 
-export enum ActionSlotKey {
-    weapon = "weapon",
-    technique = "technique",
+export enum LoadoutSlotKey {
+    weapon1 = "weapon1",
+    weapon2 = "weapon2",
     mutation = "mutation",
+    equipment1 = "equipment1",
+    equipment2 = "equipment2",
     accessory = "accessory",
-    equipment = "equipment",
 }
 
 export enum AbilityTrigger {

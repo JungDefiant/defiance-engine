@@ -3,7 +3,7 @@ import { GameScene } from "src/scenes/GameScene";
 import { getControlState, getGameplayState } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
 import { queuePlayerAction } from "src/modules/CombatModule";
-import { ActionSlotKey } from "src/types/AbilityTypes";
+import { LoadoutSlotKey } from "src/types/AbilityTypes";
 import GameSystem from "./GameSystem";
 import { CombatState } from "src/types/CombatTypes";
 import ActorStateComponent from "src/components/ActorStateComponent";
@@ -55,6 +55,6 @@ export default class SelectedPlayerControlSystem implements GameSystem {
         }
 
         selectedActorState.currentAimDirection = null;
-        queuePlayerAction(selectedActorState.entityId, ActionSlotKey.weapon, 0);
+        queuePlayerAction(selectedActorState.entityId, LoadoutSlotKey.weapon1);
     }
 }

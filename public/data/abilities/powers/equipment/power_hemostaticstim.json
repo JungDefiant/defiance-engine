@@ -2,7 +2,7 @@
 	"id": "power_hemostaticstim",
 	"name": "Hemostatic Stim",
 	"description": "",
-	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
+	"iconURL": "sprites/gui/icons/abilities/weapons/icon_fraggrenade.png",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
@@ -10,20 +10,21 @@
 	"trigger": "onActionPerform",
 	"descriptors": [
 		"power",
-		"equipment",
 		"single",
+		"equipment",
 		"action"
 	],
 	"target": "ally",
 	"recovery": 160,
 	"cost": 10,
-	"costAttribute": "itemPoints",
+	"costAttribute": "ammo",
+	"maxAmmo": 2,
 	"targetingShape": {	},
 	"effectData": [
 		{
 			"id": "healing",
 			"variables": {
-				"baseHealing": 20
+				"baseHealing": 60
 			}
 		}
 	]

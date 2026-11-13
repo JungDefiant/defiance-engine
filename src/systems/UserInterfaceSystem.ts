@@ -71,10 +71,6 @@ export default class UserInterfaceSystem implements GameSystem {
         playerGui.setWillPoints(
             playerActorState.attributes.willPoints.currentValue,
         );
-
-        playerGui.setItemPoints(
-            playerActorState.attributes.itemPoints.currentValue,
-        );
     }
 
     private updateEnemyGUI(

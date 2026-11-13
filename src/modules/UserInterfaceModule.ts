@@ -156,7 +156,7 @@ function createPartyInfoHUD(mainUI: AdvancedDynamicTexture) {
 function createActionBarHUD(mainUI: AdvancedDynamicTexture) {
     const actionBarHUD = new ActionBarHUD();
     mainUI.addControl(actionBarHUD.createHudRoot());
-    actionBarHUD.showHideHud(false);
+    actionBarHUD.showHideHud(true);
     return actionBarHUD;
 }
 

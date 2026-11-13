@@ -1,0 +1,34 @@
+{
+	"id": "power_sprayandpray",
+	"name": "Spray And Pray",
+	"description": "",
+	"iconURL": "sprites/gui/icons/abilities/powers/weapons/icon_sprayandpray.png",
+	"castVfxURL": "",
+	"hitVfxURL": "vfx/vfx_test",
+	"castSfxURL": "",
+	"hitSfxURL": "",
+	"trigger": "onActionPerform",
+	"descriptors": [
+		"weapon",
+		"group",
+		"ranged",
+		"lethal",
+		"attack"
+	],
+	"target": "enemy",
+	"recovery": 40,
+	"cost": 2,
+	"costAttribute": "ammo",
+	"targetingShape": {
+		"type": "cone",
+		"range": 800
+	},
+	"effectData": [
+		{
+			"id": "damage",
+			"variables": {
+				"baseDamage": 12
+			}
+		}
+	]
+}

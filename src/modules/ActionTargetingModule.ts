@@ -4,7 +4,7 @@ import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
 import {
     AbilityData,
     AbilityTarget,
-    ActionSlotKey,
+    LoadoutSlotKey,
 } from "src/types/AbilityTypes";
 import { TargetingInputType } from "src/types/CollisionTypes";
 import { getActorStateComponentArray } from "./ComponentModule";
@@ -48,8 +48,7 @@ export function getTargetingInputType(
 
 export function beginActionTargeting(
     eid: EntityId,
-    actionSlotKey: ActionSlotKey,
-    actionIndex: number,
+    loadoutSlotKey: LoadoutSlotKey,
 ): void {
     const controlState = getControlState();
     if (controlState.controlPauseSet.size > 0) {
@@ -62,11 +61,7 @@ export function beginActionTargeting(
         }
     }
 
-    const actionData = getValidatedPlayerAction(
-        eid,
-        actionSlotKey,
-        actionIndex,
-    );
+    const actionData = getValidatedPlayerAction(eid, loadoutSlotKey);
     if (!actionData) {
         return;
     }
@@ -75,10 +70,16 @@ export function beginActionTargeting(
         controlState,
         actionData,
         eid,
-        actionSlotKey,
-        actionIndex,
+        actionSlotKey: loadoutSlotKey,
     });
     setTacticalPause(true);
+}
+
+interface TargetingControlStateProps {
+    controlState: ControlState;
+    actionData: AbilityData;
+    eid: number;
+    actionSlotKey: LoadoutSlotKey;
 }
 
 function setTargetingInControlState({
@@ -86,14 +87,7 @@ function setTargetingInControlState({
     actionData,
     eid,
     actionSlotKey,
-    actionIndex,
-}: {
-    controlState: ControlState;
-    actionData: AbilityData;
-    eid: number;
-    actionSlotKey: ActionSlotKey;
-    actionIndex: number;
-}) {
+}: TargetingControlStateProps) {
     if (!controlState.isTargetingAction) {
         controlState.wasTacticalPauseActive =
             controlState.actionPauseSet.has(PAUSE_TACTICALPAUSE);
@@ -102,7 +96,6 @@ function setTargetingInControlState({
     controlState.targetingAction = actionData;
     controlState.targetingSourceEid = eid;
     controlState.targetingActionSlotKey = actionSlotKey;
-    controlState.targetingActionIndex = actionIndex;
 }
 
 export function cancelActionTargeting(): void {
@@ -122,7 +115,6 @@ export function resetTargetingInControlState(): void {
     controlState.targetingAction = null;
     controlState.targetingSourceEid = -1;
     controlState.targetingActionSlotKey = null;
-    controlState.targetingActionIndex = -1;
     controlState.wasTacticalPauseActive = false;
 }
 
@@ -249,14 +241,13 @@ export function getValidTargetEntityIds(
 function finalizeActionTargeting(sourceEntityId: EntityId): void {
     const controlState = getControlState();
     const actionSlotKey = controlState.targetingActionSlotKey;
-    const actionIndex = controlState.targetingActionIndex;
     if (!actionSlotKey) {
         return;
     }
 
     const restoreTacticalPause = controlState.wasTacticalPauseActive;
     resetTargetingInControlState();
-    queuePlayerAction(sourceEntityId, actionSlotKey, actionIndex);
+    queuePlayerAction(sourceEntityId, actionSlotKey);
     setTacticalPause(restoreTacticalPause);
 }
 

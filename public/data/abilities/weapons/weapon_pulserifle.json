@@ -13,14 +13,17 @@
 		"single",
 		"ranged",
 		"lethal",
-		"equipment",
 		"attack"
 	],
 	"target": "enemy",
 	"recovery": 160,
+	"cost": 1,
+	"costAttribute": "ammo",
+	"maxAmmo": 8,
+	"isReloadable": true,
 	"targetingShape": {
 		"type": "projectile",
-		"range": 2000,
+		"range": 1600,
 		"radius": 15
 	},
 	"effectData": [
@@ -30,5 +33,6 @@
 				"baseDamage": 12
 			}
 		}
-	]
+	],
+	"associatedAbility": "weapons/power_sprayandpray"
 }

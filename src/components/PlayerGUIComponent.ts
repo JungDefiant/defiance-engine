@@ -21,7 +21,6 @@ export default class PlayerGUIComponent implements Component {
     private recoveryBarFillUI: Rectangle;
     private lifePointsTextUI: TextBlock;
     private willPointsTextUI: TextBlock;
-    private itemPointsTextUI: TextBlock;
     private queueActionBgUI: Rectangle;
     private queueActionIconUI: Image;
     private portraitUI: Image;
@@ -101,15 +100,10 @@ export default class PlayerGUIComponent implements Component {
         this.queueActionIconUI = queueActionUI;
         this.rootContainer.addControl(queueActionBgUI);
 
-        const {
-            pointStackUI,
-            lifePointsTextUI,
-            willPointsTextUI,
-            itemPointsTextUI,
-        } = this.createPointStackUI(entityId);
+        const { pointStackUI, lifePointsTextUI, willPointsTextUI } =
+            this.createPointStackUI(entityId);
         this.lifePointsTextUI = lifePointsTextUI;
         this.willPointsTextUI = willPointsTextUI;
-        this.itemPointsTextUI = itemPointsTextUI;
         this.rootContainer.addControl(pointStackUI);
 
         const { recoveryBarBgUI, recoveryBarFillUI } =
@@ -152,10 +146,6 @@ export default class PlayerGUIComponent implements Component {
 
     public setWillPoints(value: number): void {
         this.willPointsTextUI.text = `${Math.round(value)}`;
-    }
-
-    public setItemPoints(value: number): void {
-        this.itemPointsTextUI.text = `${Math.round(value)}`;
     }
 
     public setQueuedAction(iconSrc: string): void {
@@ -336,28 +326,10 @@ export default class PlayerGUIComponent implements Component {
         );
         willPointsCellUI.addControl(willPointsTextUI);
 
-        const itemPointsCellUI = this.createPointCellUI(entityId, "item");
-        pointStackUI.addControl(itemPointsCellUI, 2, 0);
-
-        const itemPointsIconUI = this.createIconUI(
-            entityId,
-            "itemPoints",
-            "/sprites/gui/icons/stats/icon_itempoints.png",
-        );
-        itemPointsCellUI.addControl(itemPointsIconUI);
-
-        const itemPointsTextUI = this.createPointTextUI(
-            entityId,
-            "item",
-            Themes.neutral2,
-        );
-        itemPointsCellUI.addControl(itemPointsTextUI);
-
         return {
             pointStackUI,
             lifePointsTextUI,
             willPointsTextUI,
-            itemPointsTextUI,
         };
     }
 

@@ -1,7 +1,8 @@
 import { Vector3 } from "@babylonjs/core";
 
 export const DELTATIME_MS = 1000;
-export const BASE_CASTTIME_MS = 0.25 * 1000;
+export const BASE_CAST_TIME_MS = 0.25 * 1000;
+export const BASE_RELOAD_TIME_MS = 0.25 * 1000;
 export const DEFAULT_CAM_TARGET = new Vector3(0, 0.4, -40);
 export const BASE_MOVEMENT_SPEED = 300;
 export const ISO_CAM_OFFSET = new Vector3(0, 8, 8);

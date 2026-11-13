@@ -8,8 +8,7 @@
 	"hitSfxURL": "",
 	"trigger": "alwaysActive",
 	"descriptors": [
-		"feat",
-		"technique"
+		"feat"
 	],
 	"target": "self",
 	"effectData": [
