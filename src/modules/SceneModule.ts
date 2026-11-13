@@ -70,6 +70,7 @@ import { initNavigation, navigateToPosition } from "./ActorNavigationModule";
 import { createEnvironment } from "./EnvironmentModule";
 import { checkEventByTrigger, filterSceneEvents } from "./EventModule";
 import { getActorStateComponentArray } from "./ComponentModule";
+import { handleTargetingPointerDown } from "./ActionTargetingModule";
 
 export async function initGameScene(sceneId: string) {
     const engine = container.resolve(Engine);
@@ -372,6 +373,19 @@ function registerScenePointerBindings(
         const controlState = getControlState();
         const gameplayState = getGameplayState();
         const pointerButton = (pointerInfo.event as PointerEvent).button;
+
+        if (controlState.isTargetingAction) {
+            if (pointerInfo.type !== PointerEventTypes.POINTERDOWN) {
+                return;
+            }
+            handleTargetingPointerDown(pointerButton);
+            if (
+                controlState.isTargetingAction ||
+                pointerButton !== controlState.controlSettings.moveMouseButton
+            ) {
+                return;
+            }
+        }
 
         if (pointerInfo.type === PointerEventTypes.POINTERUP) {
             if (

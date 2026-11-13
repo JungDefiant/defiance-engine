@@ -54,6 +54,7 @@ export default class SelectedPlayerControlSystem implements GameSystem {
             return;
         }
 
+        selectedActorState.currentAimDirection = null;
         queuePlayerAction(selectedActorState.entityId, ActionSlotKey.weapon, 0);
     }
 }

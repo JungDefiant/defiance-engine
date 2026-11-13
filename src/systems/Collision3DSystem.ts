@@ -12,6 +12,7 @@ import {
 	getActorPosition,
 	triggerCollisionBehaviors,
 } from "src/modules/Collision3DModule";
+import { cmToMeters } from "src/modules/Utils";
 
 export default class Collision3DSystem implements GameSystem {
 	private activeCollisionPairs: Set<string> = new Set();
@@ -57,7 +58,8 @@ export default class Collision3DSystem implements GameSystem {
 				}
 
 				const collisionDistance =
-					firstCollision.radius + secondCollision.radius;
+					cmToMeters(firstCollision.radius) +
+					cmToMeters(secondCollision.radius);
 				const pairKey = `${Math.min(firstEid, secondEid)}:${Math.max(
 					firstEid,
 					secondEid,

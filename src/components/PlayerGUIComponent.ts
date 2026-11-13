@@ -17,10 +17,12 @@ export default class PlayerGUIComponent implements Component {
     private rootContainer: Container;
     private backgroundUI: Rectangle;
     private highlightUI: Rectangle;
+    private recoveryBarBgUI: Rectangle;
     private recoveryBarFillUI: Rectangle;
     private lifePointsTextUI: TextBlock;
     private willPointsTextUI: TextBlock;
     private itemPointsTextUI: TextBlock;
+    private queueActionBgUI: Rectangle;
     private queueActionIconUI: Image;
     private portraitUI: Image;
     private statusIconsUI: Grid;
@@ -95,6 +97,7 @@ export default class PlayerGUIComponent implements Component {
 
         const { queueActionUI, queueActionBgUI } =
             this.createQueueActionUI(entityId);
+        this.queueActionBgUI = queueActionBgUI;
         this.queueActionIconUI = queueActionUI;
         this.rootContainer.addControl(queueActionBgUI);
 
@@ -111,6 +114,7 @@ export default class PlayerGUIComponent implements Component {
 
         const { recoveryBarBgUI, recoveryBarFillUI } =
             this.createRecoveryBarUI(entityId);
+        this.recoveryBarBgUI = recoveryBarBgUI;
         this.recoveryBarFillUI = recoveryBarFillUI;
         this.rootContainer.addControl(recoveryBarBgUI);
 
@@ -138,6 +142,10 @@ export default class PlayerGUIComponent implements Component {
         this.recoveryBarFillUI.width = clamp(currValue / maxValue || 0, 0, 1);
     }
 
+    public setRecoveryBarVisible(isVisible: boolean): void {
+        this.recoveryBarBgUI.isVisible = isVisible;
+    }
+
     public setLifePoints(value: number): void {
         this.lifePointsTextUI.text = `${Math.round(value)}`;
     }
@@ -152,6 +160,10 @@ export default class PlayerGUIComponent implements Component {
 
     public setQueuedAction(iconSrc: string): void {
         this.queueActionIconUI.source = iconSrc;
+    }
+
+    public setQueuedActionVisible(isVisible: boolean): void {
+        this.queueActionBgUI.isVisible = isVisible;
     }
 
     public addStatusIcon(id: string, iconSrc: string): void {

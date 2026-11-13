@@ -18,7 +18,7 @@ import {
 	teleportNavigationAgent,
 } from "src/modules/ActorNavigationModule";
 import { updateIsometricCameraFollow } from "src/modules/CameraModule";
-import { clamp } from "src/modules/Utils";
+import { clamp, cmToMeters } from "src/modules/Utils";
 import {
 	ACTOR_GROUND_Y,
 	ACTOR_SPRITE_VERTICAL_OFFSET,
@@ -169,11 +169,11 @@ export default class ActorNavigationSystem implements GameSystem {
 				const secondCollision: CollisionComponent | undefined =
 					collisionComponentArray[secondEid];
 				const firstRadius = firstCollision
-					? firstCollision.radius
-					: DEFAULT_ACTOR_COLLISION_RADIUS;
+					? cmToMeters(firstCollision.radius)
+					: cmToMeters(DEFAULT_ACTOR_COLLISION_RADIUS);
 				const secondRadius = secondCollision
-					? secondCollision.radius
-					: DEFAULT_ACTOR_COLLISION_RADIUS;
+					? cmToMeters(secondCollision.radius)
+					: cmToMeters(DEFAULT_ACTOR_COLLISION_RADIUS);
 				const minimumDistance =
 					firstRadius + secondRadius + ACTOR_SPACING_MARGIN;
 
@@ -276,8 +276,8 @@ export default class ActorNavigationSystem implements GameSystem {
 
 			const actorCollision = collisionComponentArray[eid];
 			const actorRadius = actorCollision
-				? actorCollision.radius
-				: DEFAULT_ACTOR_COLLISION_RADIUS;
+				? cmToMeters(actorCollision.radius)
+				: cmToMeters(DEFAULT_ACTOR_COLLISION_RADIUS);
 
 			let correctionX = 0;
 			let correctionZ = 0;
@@ -378,7 +378,7 @@ export default class ActorNavigationSystem implements GameSystem {
 		}
 
 		const distanceMoved = Math.min(
-			deltaTime * navigationComponent.speed,
+			deltaTime * cmToMeters(navigationComponent.speed),
 			distanceLeft,
 		);
 		const lerpAmount = distanceMoved / distanceLeft;

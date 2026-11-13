@@ -1,10 +1,12 @@
 import { Vector3 } from "@babylonjs/core";
 import { EntityId } from "bitecs";
+import ActorStateComponent from "src/components/ActorStateComponent";
 import {
     DEFAULT_SPHERE_RADIUS,
     DEFAULT_CONE_RANGE,
     DEFAULT_CONE_ANGLE,
 } from "src/constants/CombatConstants";
+import { DEFAULT_WEAPON_RANGE } from "src/constants/BehaviorConstants";
 import { TargetingShapeFunctionProps } from "src/processors/TargetingShapeProcessor";
 import { AbilityData, AbilityTarget } from "src/types/AbilityTypes";
 import { getActorPosition, getActorCollisionRadius } from "./Collision3DModule";
@@ -16,15 +18,17 @@ import {
 import { getProjectileFactory } from "./FactoryModule";
 import { getGameplayState } from "./GameStateModule";
 import { getTargetingShapeProcessor } from "./ProcessorModule";
-import { clamp } from "./Utils";
+import { clamp, cmToMeters } from "./Utils";
 
 export function deliverActionEffectsByShape(
     sourceEntityId: EntityId,
     actionData: AbilityData,
     targetPosition?: Vector3,
     targetEntityId?: EntityId,
+    aimDirection?: Vector3,
 ) {
     if (actionData.target === AbilityTarget.self) {
+        applyActionEffects(actionData, sourceEntityId, sourceEntityId);
         return [sourceEntityId];
     }
 
@@ -53,9 +57,46 @@ export function deliverActionEffectsByShape(
         candidates,
         targetPosition,
         targetEntityId,
+        aimDirection,
     } as TargetingShapeFunctionProps;
 
     return targetingShapeFunction(targetingShapeFunctionProps);
+}
+
+export function setActorTargetFromEntity(
+    actorState: ActorStateComponent,
+    actionData: AbilityData,
+    targetEntityId: EntityId,
+): void {
+    const targetPosition = getActorPosition(targetEntityId);
+    if (!targetPosition) {
+        return;
+    }
+
+    actorState.currentTargetEntityId = targetEntityId;
+    actorState.currentTargetPosition = targetPosition.clone();
+
+    const targetingShapeType = actionData.targetingShape?.type;
+    if (targetingShapeType !== "cone") {
+        actorState.currentAimDirection = null;
+        return;
+    }
+
+    const sourcePosition = getActorPosition(actorState.entityId);
+    if (!sourcePosition) {
+        return;
+    }
+
+    const aimDirection = targetPosition.subtract(sourcePosition);
+    aimDirection.y = 0;
+    if (aimDirection.lengthSquared() > 0.0001) {
+        actorState.currentAimDirection = aimDirection.normalize();
+    }
+}
+
+export function getActionRangeInMeters(actionData: AbilityData): number {
+    const actionRange = actionData.targetingShape?.range;
+    return cmToMeters(actionRange ?? DEFAULT_WEAPON_RANGE);
 }
 
 export function deliverAbilityEffectsDirectly(
@@ -89,8 +130,26 @@ export function deliverAbilityEffectsBySphere(
         return;
     }
 
+    deliverSphereEffectsAtPosition(props, props.targetPosition);
+}
+
+export function deliverAbilityEffectsBySphereAroundCaster(
+    props: TargetingShapeFunctionProps,
+) {
+    const sourcePosition = getActorPosition(props.sourceEntityId);
+    if (!sourcePosition) {
+        return;
+    }
+
+    deliverSphereEffectsAtPosition(props, sourcePosition);
+}
+
+function deliverSphereEffectsAtPosition(
+    props: TargetingShapeFunctionProps,
+    centerPosition: Vector3,
+) {
     const matchedEntityIds = [];
-    const radius = props.shape.radius ?? DEFAULT_SPHERE_RADIUS;
+    const radius = cmToMeters(props.shape.radius ?? DEFAULT_SPHERE_RADIUS);
     for (const entityId of props.candidates) {
         const targetPosition = getActorPosition(entityId);
         if (!targetPosition) {
@@ -100,7 +159,7 @@ export function deliverAbilityEffectsBySphere(
         const radialDistance = radius + getActorCollisionRadius(entityId);
 
         if (
-            Vector3.Distance(props.targetPosition, targetPosition) <=
+            Vector3.Distance(centerPosition, targetPosition) <=
             radialDistance
         ) {
             matchedEntityIds.push(entityId);
@@ -115,7 +174,7 @@ export function deliverAbilityEffectsBySphere(
 export function deliverAbilityEffectsBySphereProjectile(
     props: TargetingShapeFunctionProps,
 ) {
-    if (!props.targetPosition) {
+    if (!props.targetEntityId) {
         return;
     }
 
@@ -125,21 +184,30 @@ export function deliverAbilityEffectsBySphereProjectile(
 export function deliverAbilityEffectsByConeShape(
     props: TargetingShapeFunctionProps,
 ) {
-    if (!props.targetPosition) {
+    const sourcePosition = getActorPosition(props.sourceEntityId);
+    if (!sourcePosition) {
         return;
     }
 
-    const matchedEntityIds = [];
-    const aimDirection = getAimDirectionFromPointer(props.targetPosition);
-    const range = props.shape.range ?? DEFAULT_CONE_RANGE;
+    const aimDirection =
+        props.aimDirection ?? getAimDirectionFromPointer(sourcePosition);
+    const range = cmToMeters(props.shape.range ?? DEFAULT_CONE_RANGE);
     const halfAngle =
         ((props.shape.angle ?? DEFAULT_CONE_ANGLE) * (Math.PI / 180)) / 2;
+    const matchedEntityIds = [];
     for (const entityId of props.candidates) {
-        const targetPosition = getActorPosition(entityId)!;
-        const toTarget = targetPosition.subtract(props.targetPosition);
+        const targetPosition = getActorPosition(entityId);
+        if (!targetPosition) {
+            continue;
+        }
+
+        const toTarget = targetPosition.subtract(sourcePosition);
         toTarget.y = 0;
         const distance = toTarget.length();
-        if (distance === 0 || distance > range) {
+        if (
+            distance === 0 ||
+            distance > range + getActorCollisionRadius(entityId)
+        ) {
             continue;
         }
         const dot = clamp(

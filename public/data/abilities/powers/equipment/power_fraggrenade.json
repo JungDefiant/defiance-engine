@@ -1,6 +1,6 @@
 {
-	"id": "power_fraggrenade",
-	"name": "Frag Grenade",
+	"id": "power_flamegrenade",
+	"name": "Flame Grenade",
 	"description": "",
 	"iconURL": "sprites/gui/icons/abilities/powers/equipment/icon_fraggrenade.png",
 	"castVfxURL": "",
@@ -11,15 +11,15 @@
 	"descriptors": [
 		"power",
 		"group",
-		"lethal",
+		"burn",
 		"equipment",
-		"grenade",
 		"attack"
 	],
 	"target": "enemy",
 	"recovery": 160,
-	"cost": 10,
-	"costAttribute": "itemPoints",
+	"cost": 1,
+	"costAttribute": "ammo",
+	"maxAmmo": 4,
 	"targetingShape": {
 		"type": "sphere",
 		"range": 1200,
@@ -29,7 +29,7 @@
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 16
+				"baseDamage": 20
 			}
 		}
 	]

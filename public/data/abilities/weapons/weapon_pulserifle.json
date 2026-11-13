@@ -20,8 +20,8 @@
 	"recovery": 160,
 	"targetingShape": {
 		"type": "projectile",
-		"range": 20,
-		"radius": 0.15
+		"range": 2000,
+		"radius": 15
 	},
 	"effectData": [
 		{

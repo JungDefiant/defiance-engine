@@ -21,10 +21,15 @@ import {
     getUserInterfaceState,
 } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
-import { AbilityDescriptor, AbilityTrigger } from "src/types/AbilityTypes";
+import {
+    AbilityData,
+    AbilityDescriptor,
+    AbilityTrigger,
+} from "src/types/AbilityTypes";
 import { CombatState } from "src/types/CombatTypes";
 import { deliverActionEffectsByShape } from "src/modules/TargetingModule";
 import { sleep } from "src/modules/Utils";
+import { Vector3 } from "@babylonjs/core";
 
 export default class ActionExecutionSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -34,10 +39,7 @@ export default class ActionExecutionSystem implements GameSystem {
         const controlState = getControlState();
         const userInterfaceState = getUserInterfaceState();
 
-        if (
-            gameplayState.combatState === CombatState.Inactive ||
-            controlState.actionPauseSet.size > 0
-        ) {
+        if (controlState.actionPauseSet.size > 0) {
             return;
         }
 
@@ -118,14 +120,7 @@ export default class ActionExecutionSystem implements GameSystem {
             return;
         }
 
-        sourceActorState.isCastingAction = true;
-
-        renderCastVFX(actionToPerform, sourceActorState.entityId);
-
-        if (!actionToPerform.descriptors.includes(AbilityDescriptor.quick)) {
-            // play casting animation
-            await sleep(BASE_CASTTIME_MS);
-        }
+        await this.castAction(sourceActorState, actionToPerform);
 
         const abilityContext = createNewAbilityContext(actionToPerform);
         triggerFeatEffects(
@@ -138,21 +133,43 @@ export default class ActionExecutionSystem implements GameSystem {
             AbilityTrigger.onActionPerform,
         );
 
-        // Targeting here
+        sourceActorState.isCastingAction = false;
+
         const targetEntityId = sourceActorState.currentTargetEntityId;
         const targetPosition = sourceActorState.currentTargetPosition;
+        const aimDirection = sourceActorState.currentAimDirection;
 
         deliverActionEffectsByShape(
             sourceActorState.entityId,
             actionToPerform,
             targetPosition,
             targetEntityId,
+            aimDirection || Vector3.Zero(),
         );
 
         startRenderQueue();
 
-        sourceActorState.isCastingAction = false;
-
         startActionRecovery(sourceActorState, actionToPerform);
+    }
+
+    private async castAction(
+        sourceActorState: ActorStateComponent,
+        actionToPerform: AbilityData,
+    ) {
+        sourceActorState.isCastingAction = true;
+
+        const combatStateAtCastStart = getGameplayState().combatState;
+
+        renderCastVFX(actionToPerform, sourceActorState.entityId);
+
+        if (!actionToPerform.descriptors.includes(AbilityDescriptor.quick)) {
+            // play casting animation
+            await sleep(BASE_CASTTIME_MS);
+        }
+
+        if (getGameplayState().combatState !== combatStateAtCastStart) {
+            sourceActorState.isCastingAction = false;
+            return;
+        }
     }
 }

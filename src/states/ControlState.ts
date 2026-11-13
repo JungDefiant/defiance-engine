@@ -1,5 +1,10 @@
 import { ActionManager, Nullable } from "@babylonjs/core";
 import { Control } from "@babylonjs/gui";
+import { EntityId } from "bitecs";
+import {
+    AbilityData,
+    ActionSlotKey,
+} from "src/types/AbilityTypes";
 import { ControlSettings } from "src/types/GameTypes";
 
 export default class ControlState {
@@ -7,6 +12,11 @@ export default class ControlState {
 	public exploreGUIControls: Control[] = [];
 	public isTargetingAction: boolean = false;
 	public isMoveInputHeld: boolean = false;
+	public targetingAction: Nullable<AbilityData> = null;
+	public targetingSourceEid: EntityId = -1;
+	public targetingActionSlotKey: Nullable<ActionSlotKey> = null;
+	public targetingActionIndex: number = -1;
+	public wasTacticalPauseActive: boolean = false;
 	public readonly controlSettings: ControlSettings = new ControlSettings();
 	public readonly actionPauseSet: Set<string> = new Set();
 	public readonly renderPauseSet: Set<string> = new Set();

@@ -1,8 +1,8 @@
 import { EntityId } from "bitecs";
 import {
-    queueDefaultAggressiveAction,
-    queueDefaultDefensiveAction,
-    queueDefaultPassiveAction,
+    processDefaultAggressiveBehavior,
+    processDefaultDefensiveBehavior,
+    processDefaultPassiveBehavior,
 } from "src/modules/ActorBehaviorModule";
 import { DefaultBehavior } from "src/types/BehaviorTypes";
 import ActorStateComponent from "src/components/ActorStateComponent";
@@ -20,9 +20,9 @@ export class BehaviorProcessor implements Processor {
 
     public constructor() {
         this.processorFunctions = {
-            Passive: queueDefaultPassiveAction,
-            Aggressive: queueDefaultAggressiveAction,
-            Defensive: queueDefaultDefensiveAction,
+            Passive: processDefaultPassiveBehavior,
+            Aggressive: processDefaultAggressiveBehavior,
+            Defensive: processDefaultDefensiveBehavior,
         };
     }
 

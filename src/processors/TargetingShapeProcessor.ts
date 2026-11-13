@@ -9,6 +9,7 @@ import { EntityId } from "bitecs";
 import {
     deliverAbilityEffectsDirectly,
     deliverAbilityEffectsByProjectile,
+    deliverAbilityEffectsBySphereAroundCaster,
     deliverAbilityEffectsBySphere,
     deliverAbilityEffectsBySphereProjectile,
     deliverAbilityEffectsByConeShape,
@@ -21,6 +22,7 @@ export interface TargetingShapeFunctionProps {
     candidates: number[];
     targetPosition?: Vector3;
     targetEntityId?: EntityId;
+    aimDirection?: Vector3;
 }
 
 export type TargetingShapeFunction = (
@@ -34,7 +36,7 @@ export class TargetingShapeProcessor implements Processor {
         this.processorFunctions = {
             direct: deliverAbilityEffectsDirectly,
             projectile: deliverAbilityEffectsByProjectile,
-            sphere: deliverAbilityEffectsBySphere,
+            sphere: deliverAbilityEffectsBySphereAroundCaster,
             sphereProjectile: deliverAbilityEffectsBySphereProjectile,
             cone: deliverAbilityEffectsByConeShape,
         };

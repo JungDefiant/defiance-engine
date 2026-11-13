@@ -20,7 +20,7 @@
 	"costAttribute": "willPoints",
 	"targetingShape": {
 		"type": "cone",
-		"range": 1200
+		"range": 600
 	},
 	"effectData": [
 		{

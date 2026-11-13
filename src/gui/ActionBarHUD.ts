@@ -15,7 +15,7 @@ import { getControlState } from "src/modules/GameStateModule";
 import { ActionSlotKey } from "src/types/AbilityTypes";
 import { EntityId } from "bitecs";
 import ControlState from "src/states/ControlState";
-import { queuePlayerAction } from "src/modules/CombatModule";
+import { beginActionTargeting } from "src/modules/ActionTargetingModule";
 
 export default class ActionBarHUD implements IHUD {
     rootContainer: Nullable<Container> = null;
@@ -246,7 +246,7 @@ export default class ActionBarHUD implements IHUD {
 
         actionSlot.setActionSlotIcon(iconUrl);
         actionSlot.setOnClickEvent(() =>
-            queuePlayerAction(actorEntityId, actionSlotKey, actionIndex),
+            beginActionTargeting(actorEntityId, actionSlotKey, actionIndex),
         );
         actionSlot.setActionLabelText(actionKeyLabel);
     }

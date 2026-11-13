@@ -28,7 +28,6 @@ const BASE_ATTRIBUTES = {
     lifePoints: 80,
     lifePerPoint: 10,
     willPerPoint: 5,
-    itemPoints: 40,
     hastePerPoint: 5,
     defensePerPoint: 5,
     offensePerPoint: 5,
@@ -75,6 +74,7 @@ export default class ActorStateComponent implements Component {
     queuedAction?: Nullable<AbilityData>;
     currentTargetEntityId?: EntityId;
     currentTargetPosition?: Vector3;
+    currentAimDirection?: Nullable<Vector3>;
 
     public constructor(entityId: number, initialData: LoadedAbilityJson) {
         this.entityId = entityId;
@@ -135,10 +135,10 @@ export default class ActorStateComponent implements Component {
                 currentValue: initialWillValue,
                 modifiers: [],
             } as ActorAttribute,
-            itemPoints: {
-                baseValue: BASE_ATTRIBUTES.itemPoints,
-                maximumValue: BASE_ATTRIBUTES.itemPoints,
-                currentValue: BASE_ATTRIBUTES.itemPoints,
+            ammo: {
+                baseValue: BASE_ATTRIBUTES.ammo,
+                maximumValue: BASE_ATTRIBUTES.ammo,
+                currentValue: BASE_ATTRIBUTES.ammo,
                 modifiers: [],
             } as ActorAttribute,
             haste: {

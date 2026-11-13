@@ -1,4 +1,4 @@
-import { RandomRange, Vector3 } from "@babylonjs/core";
+import { Nullable, RandomRange, Vector3 } from "@babylonjs/core";
 import { container } from "tsyringe";
 import { EntityId, query, removeEntity } from "bitecs";
 import {
@@ -56,7 +56,7 @@ import {
 } from "./ControlModule";
 import { checkEventByTrigger } from "./EventModule";
 import { CombatState } from "src/types/CombatTypes";
-import { getActorPosition } from "./Collision3DModule";
+import { setActorTargetFromEntity } from "./TargetingModule";
 
 export async function startCombat(encId: string): Promise<void> {
     const gameScene = getGameScene();
@@ -160,14 +160,17 @@ export function getTargetBasedOnCondition(
     return -1;
 }
 
-export function queuePlayerAction(
+export function getValidatedPlayerAction(
     eid: EntityId,
     actionSlotKey: ActionSlotKey,
     index: number,
-): void {
+): Nullable<AbilityData> {
     const gameplayState = getGameplayState();
-    if (gameplayState.combatState !== CombatState.Active) {
-        return;
+    if (
+        gameplayState.combatState === CombatState.Victory ||
+        gameplayState.combatState === CombatState.Gameover
+    ) {
+        return null;
     }
 
     const actorState =
@@ -176,16 +179,16 @@ export function queuePlayerAction(
             eid,
         ) as ActorStateComponent;
     if (!actorState) {
-        return;
+        return null;
     }
     const actionDataArray = actorState.actionData.get(actionSlotKey);
     if (!actionDataArray) {
-        return;
+        return null;
     }
 
     const actionData = actionDataArray[index] as AbilityData;
     if (!actionData || actionData.trigger != AbilityTrigger.onActionPerform) {
-        return;
+        return null;
     }
 
     const abilityCost = (actionData.cost as number) || 0;
@@ -193,8 +196,30 @@ export function queuePlayerAction(
     if (abilityCost > 0) {
         const costAttribute = actorState.attributes[costAttributeName];
         if (!costAttribute || costAttribute.currentValue < abilityCost) {
-            return;
+            return null;
         }
+    }
+
+    return actionData;
+}
+
+export function queuePlayerAction(
+    eid: EntityId,
+    actionSlotKey: ActionSlotKey,
+    index: number,
+): void {
+    const actorState =
+        getComponentRegistry().getComponentByEntityId<ActorStateComponent>(
+            ActorStateComponent.name,
+            eid,
+        ) as ActorStateComponent;
+    if (!actorState) {
+        return;
+    }
+
+    const actionData = getValidatedPlayerAction(eid, actionSlotKey, index);
+    if (!actionData) {
+        return;
     }
 
     actorState.queuedAction = actionData;
@@ -233,14 +258,7 @@ export async function decideNPCActionByTactic(actorState: ActorStateComponent) {
         );
 
         if (target !== -1) {
-            const targetingShapeType = actionData.targetingShape?.type;
-            if (targetingShapeType === "direct" || "projectile") {
-                actorState.currentTargetEntityId = target;
-            } else {
-                const targetPosition = getActorPosition(target);
-                actorState.currentTargetPosition = targetPosition as Vector3;
-            }
-
+            setActorTargetFromEntity(actorState, actionData, target);
             decidedActionData = actionData;
             break;
         }
@@ -323,6 +341,10 @@ export function startActionRecovery(
     sourceActorState: ActorStateComponent,
     actionData: AbilityData,
 ): void {
+    if (getGameplayState().combatState !== CombatState.Active) {
+        return;
+    }
+
     const totalHasteValue = calculateTotalAttributeValue(
         sourceActorState.attributes.haste,
         actionData.descriptors,

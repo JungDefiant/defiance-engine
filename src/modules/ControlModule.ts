@@ -8,7 +8,12 @@ import {
 } from "@babylonjs/core";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
 import { getGameCanvas } from "./SceneModule";
-import { setTacticalPause, queuePlayerAction } from "./CombatModule";
+import { setTacticalPause } from "./CombatModule";
+import {
+    beginActionTargeting,
+    cancelActionTargeting,
+    resetTargetingInControlState,
+} from "./ActionTargetingModule";
 import {
     getControlState,
     getGameScene,
@@ -30,6 +35,7 @@ import { EntityId } from "bitecs";
 
 export function clearActionPause() {
     const controlState = getControlState();
+    resetTargetingInControlState();
     if (controlState.actionPauseSet.size > 0) {
         controlState.actionPauseSet.clear();
     }
@@ -71,7 +77,7 @@ function startPlayerAction(actionSlotKey: ActionSlotKey, actionIndex: number) {
     if (controlState.controlPauseSet.size > 0) {
         return;
     }
-    queuePlayerAction(
+    beginActionTargeting(
         gameplayState.selectedPlayerEID,
         actionSlotKey,
         actionIndex,
@@ -118,6 +124,7 @@ function registerPowerKeyBindings(
         new ExecuteCodeAction(
             {
                 trigger: ActionManager.OnKeyDownTrigger,
+                parameter: controlState.controlSettings.mutationKey,
             },
             () => {
                 startPlayerAction(ActionSlotKey.mutation, 0);
@@ -281,6 +288,10 @@ export function resetCombatModeActionManager() {
             },
             () => {
                 if (controlState.controlPauseSet.size > 0) {
+                    return;
+                }
+                if (controlState.isTargetingAction) {
+                    cancelActionTargeting();
                     return;
                 }
                 setTacticalPause(

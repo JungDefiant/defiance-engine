@@ -31,6 +31,7 @@ import {
 import { BASE_SPAWN_POSITION } from "src/constants/CombatConstants";
 import ActorBehaviorComponent from "src/components/ActorBehaviorComponent";
 import CollisionComponent from "src/components/CollisionComponent";
+import { DEFAULT_ACTOR_COLLISION_RADIUS } from "src/constants/NavigationConstants";
 
 const PRELOAD_ENEMIES = ["enem_test"];
 
@@ -141,7 +142,7 @@ export class EnemyFactory implements EntityFactory {
             newEntity,
             set(
                 getCollisionComponentArray(),
-                new CollisionComponent(newEntity, 0.3),
+                new CollisionComponent(newEntity, DEFAULT_ACTOR_COLLISION_RADIUS),
             ),
         );
 

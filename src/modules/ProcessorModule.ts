@@ -4,6 +4,8 @@ import { BehaviorProcessor } from "src/processors/BehaviorProcessor";
 import { CollisionBehaviorProcessor } from "src/processors/CollisionBehaviorProcessor";
 import { GameEventProcessor } from "src/processors/GameEventProcessor";
 import { TargetingShapeProcessor } from "src/processors/TargetingShapeProcessor";
+import { TargetingInputProcessor } from "src/processors/TargetingInputProcessor";
+import { TargetingPreviewProcessor } from "src/processors/TargetingPreviewProcessor";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 import { container } from "tsyringe";
 
@@ -30,6 +32,20 @@ export function getTargetingShapeProcessor(): TargetingShapeProcessor {
     const processorRegistry = container.resolve(ProcessorRegistry);
     return processorRegistry.getProcessorByProcessorId(
         TargetingShapeProcessor.name,
+    );
+}
+
+export function getTargetingInputProcessor(): TargetingInputProcessor {
+    const processorRegistry = container.resolve(ProcessorRegistry);
+    return processorRegistry.getProcessorByProcessorId(
+        TargetingInputProcessor.name,
+    );
+}
+
+export function getTargetingPreviewProcessor(): TargetingPreviewProcessor {
+    const processorRegistry = container.resolve(ProcessorRegistry);
+    return processorRegistry.getProcessorByProcessorId(
+        TargetingPreviewProcessor.name,
     );
 }
 

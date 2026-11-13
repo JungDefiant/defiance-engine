@@ -11,6 +11,8 @@ import {
     getPlayerGuiComponentArray,
 } from "src/modules/ComponentModule";
 import { updateTargetHighlight } from "src/modules/UserInterfaceModule";
+import { getGameplayState } from "src/modules/GameStateModule";
+import { CombatState } from "src/types/CombatTypes";
 
 export default class UserInterfaceSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -45,6 +47,12 @@ export default class UserInterfaceSystem implements GameSystem {
         playerActorState: ActorStateComponent,
         playerGui: PlayerGUIComponent,
     ) {
+        const isCombatActive =
+            getGameplayState().combatState === CombatState.Active;
+
+        playerGui.setRecoveryBarVisible(isCombatActive);
+        playerGui.setQueuedActionVisible(isCombatActive);
+
         playerGui.setQueuedAction(
             playerActorState.queuedAction
                 ? (playerActorState.queuedAction.iconURL as string)

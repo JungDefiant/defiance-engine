@@ -22,6 +22,7 @@ import {
     getAbilityTargetsByList,
     deliverAbilityEffectsBySphere,
 } from "src/modules/TargetingModule";
+import { cmToMeters } from "src/modules/Utils";
 
 export default class ProjectileSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -98,11 +99,18 @@ export default class ProjectileSystem implements GameSystem {
 
         const hitEntityId = this.findProjectileHitActor(projectile);
         if (hitEntityId >= 0) {
-            applyActionEffects(
-                projectile.actionData,
-                projectile.sourceEid,
-                targetEntityId,
-            );
+            if (projectile.sphereRadius) {
+                const impactPosition = getActorPosition(hitEntityId);
+                if (impactPosition) {
+                    this.deliverSphereImpact(projectile, impactPosition);
+                }
+            } else {
+                applyActionEffects(
+                    projectile.actionData,
+                    projectile.sourceEid,
+                    targetEntityId,
+                );
+            }
             removeEntity(this.gameScene.world, entityId);
             return;
         }
@@ -136,21 +144,28 @@ export default class ProjectileSystem implements GameSystem {
         );
 
         if (this.findProjectileHitPosition(projectile, targetPosition)) {
-            const targetingShapeFunctionProps = {
-                sourceEntityId: projectile.sourceEid,
-                action: projectile.actionData,
-                shape: {
-                    type: "sphereProjectile",
-                    radius: projectile.sphereRadius,
-                },
-                candidates: getAbilityTargetsByList(
-                    projectile.sourceEid,
-                    projectile.actionData,
-                ),
-                targetPosition,
-            } as TargetingShapeFunctionProps;
-            deliverAbilityEffectsBySphere(targetingShapeFunctionProps);
+            this.deliverSphereImpact(projectile, targetPosition);
         }
+    }
+
+    private deliverSphereImpact(
+        projectile: ProjectileComponent,
+        impactPosition: Vector3,
+    ): void {
+        const targetingShapeFunctionProps = {
+            sourceEntityId: projectile.sourceEid,
+            action: projectile.actionData,
+            shape: {
+                type: "sphereProjectile",
+                radius: projectile.sphereRadius,
+            },
+            candidates: getAbilityTargetsByList(
+                projectile.sourceEid,
+                projectile.actionData,
+            ),
+            targetPosition: impactPosition.clone(),
+        } as TargetingShapeFunctionProps;
+        deliverAbilityEffectsBySphere(targetingShapeFunctionProps);
     }
 
     private updateLastTargetPosition(
@@ -185,7 +200,7 @@ export default class ProjectileSystem implements GameSystem {
         projectile.direction.copyFrom(direction);
         projectile.mesh.rotation.y = Math.atan2(direction.x, direction.z);
 
-        const distanceStep = projectile.speed * deltaTime;
+        const distanceStep = cmToMeters(projectile.speed) * deltaTime;
         projectile.mesh.position.addInPlace(
             projectile.direction.scale(distanceStep),
         );
