@@ -17,10 +17,11 @@ export default class PlayerGUIComponent implements Component {
     private rootContainer: Container;
     private backgroundUI: Rectangle;
     private highlightUI: Rectangle;
+    private recoveryBarBgUI: Rectangle;
     private recoveryBarFillUI: Rectangle;
     private lifePointsTextUI: TextBlock;
     private willPointsTextUI: TextBlock;
-    private itemPointsTextUI: TextBlock;
+    private queueActionBgUI: Rectangle;
     private queueActionIconUI: Image;
     private portraitUI: Image;
     private statusIconsUI: Grid;
@@ -31,20 +32,16 @@ export default class PlayerGUIComponent implements Component {
     private readonly STATUS_ICON_SLOTS: number = 6;
     private readonly PIXELS_PER_STATUS_SLOT = 12;
     private readonly NUMBER_STATUS_SLOTS = 2;
-    private readonly POINT_STACK_WIDTH = 36;
-    private readonly POINT_STACK_HEIGHT = 36;
+    private readonly POINT_STACK_WIDTH = 40;
+    private readonly POINT_STACK_HEIGHT = 24;
     private readonly POINT_STACK_TOP = -12;
-    private readonly POINT_STACK_NUMBER_ROWS = 3;
+    private readonly POINT_STACK_NUMBER_ROWS = 2;
 
     public getRoot(): Container {
         return this.rootContainer;
     }
 
-    public constructor(
-        entityId: EntityId,
-        charName: string,
-        spriteSrc: string,
-    ) {
+    public constructor(entityId: EntityId, spriteSrc: string) {
         this.rootContainer = new Container();
         this.rootContainer.widthInPixels = this.GUI_WIDTH;
         this.rootContainer.heightInPixels = this.GUI_HEIGHT;
@@ -95,22 +92,19 @@ export default class PlayerGUIComponent implements Component {
 
         const { queueActionUI, queueActionBgUI } =
             this.createQueueActionUI(entityId);
+        this.queueActionBgUI = queueActionBgUI;
         this.queueActionIconUI = queueActionUI;
         this.rootContainer.addControl(queueActionBgUI);
 
-        const {
-            pointStackUI,
-            lifePointsTextUI,
-            willPointsTextUI,
-            itemPointsTextUI,
-        } = this.createPointStackUI(entityId);
+        const { pointStackUI, lifePointsTextUI, willPointsTextUI } =
+            this.createPointStackUI(entityId);
         this.lifePointsTextUI = lifePointsTextUI;
         this.willPointsTextUI = willPointsTextUI;
-        this.itemPointsTextUI = itemPointsTextUI;
         this.rootContainer.addControl(pointStackUI);
 
         const { recoveryBarBgUI, recoveryBarFillUI } =
             this.createRecoveryBarUI(entityId);
+        this.recoveryBarBgUI = recoveryBarBgUI;
         this.recoveryBarFillUI = recoveryBarFillUI;
         this.rootContainer.addControl(recoveryBarBgUI);
 
@@ -138,6 +132,10 @@ export default class PlayerGUIComponent implements Component {
         this.recoveryBarFillUI.width = clamp(currValue / maxValue || 0, 0, 1);
     }
 
+    public setRecoveryBarVisible(isVisible: boolean): void {
+        this.recoveryBarBgUI.isVisible = isVisible;
+    }
+
     public setLifePoints(value: number): void {
         this.lifePointsTextUI.text = `${Math.round(value)}`;
     }
@@ -146,12 +144,12 @@ export default class PlayerGUIComponent implements Component {
         this.willPointsTextUI.text = `${Math.round(value)}`;
     }
 
-    public setItemPoints(value: number): void {
-        this.itemPointsTextUI.text = `${Math.round(value)}`;
-    }
-
     public setQueuedAction(iconSrc: string): void {
         this.queueActionIconUI.source = iconSrc;
+    }
+
+    public setQueuedActionVisible(isVisible: boolean): void {
+        this.queueActionBgUI.isVisible = isVisible;
     }
 
     public addStatusIcon(id: string, iconSrc: string): void {
@@ -324,28 +322,10 @@ export default class PlayerGUIComponent implements Component {
         );
         willPointsCellUI.addControl(willPointsTextUI);
 
-        const itemPointsCellUI = this.createPointCellUI(entityId, "item");
-        pointStackUI.addControl(itemPointsCellUI, 2, 0);
-
-        const itemPointsIconUI = this.createIconUI(
-            entityId,
-            "itemPoints",
-            "/sprites/gui/icons/stats/icon_itempoints.png",
-        );
-        itemPointsCellUI.addControl(itemPointsIconUI);
-
-        const itemPointsTextUI = this.createPointTextUI(
-            entityId,
-            "item",
-            Themes.neutral2,
-        );
-        itemPointsCellUI.addControl(itemPointsTextUI);
-
         return {
             pointStackUI,
             lifePointsTextUI,
             willPointsTextUI,
-            itemPointsTextUI,
         };
     }
 

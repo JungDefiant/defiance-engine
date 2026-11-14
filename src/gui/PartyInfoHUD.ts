@@ -1,7 +1,6 @@
 import { Nullable } from "@babylonjs/core";
-import { Container, Control, Rectangle, StackPanel } from "@babylonjs/gui";
+import { Container, Control, StackPanel } from "@babylonjs/gui";
 import IHUD from "src/gui/IHUD";
-import { Themes } from "src/gui/Themes";
 import { getPlayerGuiComponentArray } from "src/modules/ComponentModule";
 import { getGameplayState } from "src/modules/GameStateModule";
 

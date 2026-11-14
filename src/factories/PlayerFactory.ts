@@ -14,6 +14,7 @@ import PlayerGUIComponent from "src/components/PlayerGUIComponent";
 import CharacterSpriteComponent from "src/components/CharacterSpriteComponent";
 import ActorBehaviorComponent from "src/components/ActorBehaviorComponent";
 import CollisionComponent from "src/components/CollisionComponent";
+import { DEFAULT_ACTOR_COLLISION_RADIUS } from "src/constants/NavigationConstants";
 import { getGameScene, getGameplayState } from "src/modules/GameStateModule";
 import {
     getActorBehaviorComponentArray,
@@ -89,7 +90,6 @@ export class PlayerFactory implements EntityFactory {
 
         const newPlayerGUI = new PlayerGUIComponent(
             newEntity,
-            newActorComp.name,
             `sprites/characters/${newActorComp.spriteUrl}`,
         );
         addComponent(
@@ -117,7 +117,7 @@ export class PlayerFactory implements EntityFactory {
         createNavigationAgent(
             newEntity,
             spawnPosition,
-            newActorComp.attributes.speed.currentValue / 100,
+            newActorComp.attributes.speed.currentValue,
         );
         addComponent(
             gameScene.world,
@@ -126,8 +126,8 @@ export class PlayerFactory implements EntityFactory {
                 getActorBehaviorComponentArray(),
                 new ActorBehaviorComponent(
                     newEntity,
-                    DefaultBehavior.Aggressive,
                     newActorComp.tactics,
+                    DefaultBehavior.Aggressive,
                 ),
             ),
         );
@@ -136,7 +136,10 @@ export class PlayerFactory implements EntityFactory {
             newEntity,
             set(
                 getCollisionComponentArray(),
-                new CollisionComponent(newEntity, 0.3),
+                new CollisionComponent(
+                    newEntity,
+                    DEFAULT_ACTOR_COLLISION_RADIUS,
+                ),
             ),
         );
 

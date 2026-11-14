@@ -8,6 +8,8 @@ export type TargetingRangeType =
 	| "sphereProjectile"
 	| "cone";
 
+export type TargetingInputType = "unit" | "confirm" | "direction";
+
 export interface TargetingShapeData {
 	type: TargetingRangeType;
 	range?: number;

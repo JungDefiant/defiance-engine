@@ -37,7 +37,11 @@ import Collision3DSystem from "src/systems/Collision3DSystem";
 import ActionExecutionSystem from "src/systems/ActionExecutionSystem";
 import { CollisionBehaviorProcessor } from "src/processors/CollisionBehaviorProcessor";
 import { TargetingShapeProcessor } from "src/processors/TargetingShapeProcessor";
-import { BehaviorProcessor } from "src/processors/BehaviorProcessor";
+import { TargetingInputProcessor } from "src/processors/TargetingInputProcessor";
+import { TargetingPreviewProcessor } from "src/processors/TargetingPreviewProcessor";
+import TargetingPreviewSystem from "src/systems/TargetingPreviewSystem";
+import TargetingPreviewState from "src/states/TargetingPreviewState";
+import { ActorBehaviorProcessor } from "src/processors/ActorBehaviorProcessor";
 
 // The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
@@ -48,6 +52,7 @@ export const SYSTEM_TOKENS = [
     ActorBehaviorSystem,
     ActorStateSystem,
     UserInterfaceSystem,
+    TargetingPreviewSystem,
     ImageAnimationSystem,
     RenderQueueSystem,
     ProjectileSystem,
@@ -68,7 +73,9 @@ export const PROCESSOR_TOKENS = [
     GameEventProcessor,
     CollisionBehaviorProcessor,
     TargetingShapeProcessor,
-    BehaviorProcessor,
+    TargetingInputProcessor,
+    TargetingPreviewProcessor,
+    ActorBehaviorProcessor,
 ];
 
 export const COMPONENT_TOKENS = [
@@ -93,4 +100,5 @@ export const STATE_TOKENS = [
     GameplayState,
     RenderState,
     NavigationState,
+    TargetingPreviewState,
 ];

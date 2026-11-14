@@ -8,7 +8,12 @@ import {
 } from "@babylonjs/core";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
 import { getGameCanvas } from "./SceneModule";
-import { setTacticalPause, queuePlayerAction } from "./CombatModule";
+import { setTacticalPause } from "./CombatModule";
+import {
+    beginActionTargeting,
+    cancelActionTargeting,
+    resetTargetingInControlState,
+} from "./ActionTargetingModule";
 import {
     getControlState,
     getGameScene,
@@ -22,7 +27,7 @@ import ControlState from "src/states/ControlState";
 import {
     AbilityData,
     AbilityTarget,
-    ActionSlotKey,
+    LoadoutSlotKey,
 } from "src/types/AbilityTypes";
 import { clamp } from "./Utils";
 import { getActorPosition } from "./Collision3DModule";
@@ -30,6 +35,7 @@ import { EntityId } from "bitecs";
 
 export function clearActionPause() {
     const controlState = getControlState();
+    resetTargetingInControlState();
     if (controlState.actionPauseSet.size > 0) {
         controlState.actionPauseSet.clear();
     }
@@ -65,62 +71,63 @@ export function detachCameraControl(): boolean {
     }
 }
 
-function startPlayerAction(actionSlotKey: ActionSlotKey, actionIndex: number) {
+function startPlayerAction(actionSlotKey: LoadoutSlotKey) {
     const controlState = getControlState();
     const gameplayState = getGameplayState();
     if (controlState.controlPauseSet.size > 0) {
         return;
     }
-    queuePlayerAction(
-        gameplayState.selectedPlayerEID,
-        actionSlotKey,
-        actionIndex,
-    );
+    beginActionTargeting(gameplayState.selectedPlayerEID, actionSlotKey);
 }
 
 function registerPowerKeyBindings(
     actionManager: ActionManager,
     controlState: ControlState,
 ) {
-    controlState.controlSettings.techniqueKeys.forEach(
-        (powerKey, powerIndex) => {
-            actionManager.registerAction(
-                new ExecuteCodeAction(
-                    {
-                        trigger: ActionManager.OnKeyDownTrigger,
-                        parameter: powerKey,
-                    },
-                    () => {
-                        startPlayerAction(ActionSlotKey.technique, powerIndex);
-                    },
-                ),
-            );
-        },
-    );
-
-    controlState.controlSettings.equipmentKeys.forEach(
-        (powerKey, powerIndex) => {
-            actionManager.registerAction(
-                new ExecuteCodeAction(
-                    {
-                        trigger: ActionManager.OnKeyDownTrigger,
-                        parameter: powerKey,
-                    },
-                    () => {
-                        startPlayerAction(ActionSlotKey.equipment, powerIndex);
-                    },
-                ),
-            );
-        },
+    actionManager.registerAction(
+        new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnKeyDownTrigger,
+                parameter: controlState.controlSettings.weaponAbilityKey,
+            },
+            () => {
+                startPlayerAction(LoadoutSlotKey.weapon2);
+            },
+        ),
     );
 
     actionManager.registerAction(
         new ExecuteCodeAction(
             {
                 trigger: ActionManager.OnKeyDownTrigger,
+                parameter: controlState.controlSettings.equipment1Key,
             },
             () => {
-                startPlayerAction(ActionSlotKey.mutation, 0);
+                startPlayerAction(LoadoutSlotKey.equipment1);
+            },
+        ),
+    );
+
+    actionManager.registerAction(
+        new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnKeyDownTrigger,
+                parameter: controlState.controlSettings.equipment2Key,
+            },
+            () => {
+                startPlayerAction(LoadoutSlotKey.equipment2);
+            },
+        ),
+    );
+
+    actionManager.registerAction(
+        new ExecuteCodeAction(
+            {
+                trigger: ActionManager.OnKeyDownTrigger,
+                parameter: controlState.controlSettings.mutationKey,
+            },
+            () => {
+                startPlayerAction(LoadoutSlotKey.mutation);
             },
         ),
     );
@@ -281,6 +288,10 @@ export function resetCombatModeActionManager() {
             },
             () => {
                 if (controlState.controlPauseSet.size > 0) {
+                    return;
+                }
+                if (controlState.isTargetingAction) {
+                    cancelActionTargeting();
                     return;
                 }
                 setTacticalPause(

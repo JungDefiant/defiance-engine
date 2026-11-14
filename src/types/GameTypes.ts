@@ -4,17 +4,10 @@ import { GameEvent } from "src/types/EventTypes";
 export class ControlSettings {
     targetMouseButton: number = 0;
     moveMouseButton: number = 2;
-    techniqueKeys: number[] = [
-        "Q".charCodeAt(0),
-        "W".charCodeAt(0),
-        "E".charCodeAt(0),
-    ];
+    weaponAbilityKey: number = "Q".charCodeAt(0);
+    equipment1Key: number = "W".charCodeAt(0);
+    equipment2Key: number = "E".charCodeAt(0);
     mutationKey: number = "R".charCodeAt(0);
-    equipmentKeys: number[] = [
-        "1".charCodeAt(0),
-        "2".charCodeAt(0),
-        "3".charCodeAt(0),
-    ];
     switchPlayerLeft: number = "D".charCodeAt(0);
     switchPlayerRight: number = "F".charCodeAt(0);
     tacticalPause: number = 32;

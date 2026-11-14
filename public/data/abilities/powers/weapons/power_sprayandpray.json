@@ -1,35 +1,33 @@
 {
-	"id": "power_fraggrenade",
-	"name": "Frag Grenade",
+	"id": "power_sprayandpray",
+	"name": "Spray And Pray",
 	"description": "",
-	"iconURL": "sprites/gui/icons/abilities/powers/equipment/icon_fraggrenade.png",
+	"iconURL": "sprites/gui/icons/abilities/powers/weapons/icon_sprayandpray.png",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
 	"hitSfxURL": "",
 	"trigger": "onActionPerform",
 	"descriptors": [
-		"power",
+		"weapon",
 		"group",
+		"ranged",
 		"lethal",
-		"equipment",
-		"grenade",
 		"attack"
 	],
 	"target": "enemy",
-	"recovery": 160,
-	"cost": 10,
-	"costAttribute": "itemPoints",
+	"recovery": 40,
+	"cost": 2,
+	"costAttribute": "ammo",
 	"targetingShape": {
-		"type": "sphere",
-		"range": 1200,
-		"radius": 200
+		"type": "cone",
+		"range": 800
 	},
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 16
+				"baseDamage": 12
 			}
 		}
 	]

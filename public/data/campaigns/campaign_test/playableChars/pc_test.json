@@ -14,14 +14,8 @@
 	"affinityId": "",
 	"weaponId": "weapon_pulserifle",
 	"mutationId": "mutations/power_pyrophoricbreath",
-	"techniqueIds": [
-		"techniques/power_sabotagestrike"
-	],
-	"equipmentIds": [
-		"equipment/power_fraggrenade",
-		"equipment/power_stungrenade",
-		"equipment/power_hemostaticstim"
-	],
+	"equipment1Id": "equipment/power_flamegrenade",
+	"equipment2Id": "equipment/power_hemostaticstim",
 	"featIds": [
 		"feat_improvedaccuracy"
 	],

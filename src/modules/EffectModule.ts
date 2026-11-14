@@ -28,7 +28,7 @@ import {
     MIN_ATTACKRESULTCHANCE,
 } from "src/constants/CombatConstants";
 import { clamp } from "./Utils";
-import { defeatActor } from "./CombatModule";
+import { defeatActor, getCostAttributeName } from "./CombatModule";
 import { RandomRange } from "babylonjs";
 
 export function calculateTotalAttributeValue(
@@ -139,30 +139,6 @@ export function performAttackRoll(props: EffectFunctionProps) {
         },
         abilityTrigger,
     );
-}
-
-export function spendAbilityCost(
-    source: ActorStateComponent,
-    actionData: AbilityData,
-): boolean {
-    const abilityCost = (actionData.cost as number) || 0;
-    const costAttributeName = (actionData.costAttribute as string) || "";
-    const costAttribute = source.attributes[costAttributeName];
-    const isToggle = actionData.descriptors.includes(AbilityDescriptor.toggle);
-
-    if (!costAttribute || costAttribute.currentValue < abilityCost) {
-        return false;
-    }
-
-    if (isToggle && costAttributeName === "willPoints") {
-        source.attributes.willCostPerSecond.currentValue += abilityCost;
-    } else {
-        costAttribute.currentValue = Math.max(
-            costAttribute.currentValue - abilityCost,
-            0,
-        );
-    }
-    return true;
 }
 
 export function triggerFeatEffects(

@@ -2,7 +2,7 @@
 	"id": "power_pyrophoricbreath",
 	"name": "Pyrophoric Breath",
 	"description": "",
-	"iconURL": "sprites/gui/icons/abilities/weapons/icon_pulserifle.png",
+	"iconURL": "sprites/gui/icons/abilities/powers/mutations/icon_pyrophoricbreath.png",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",
@@ -20,13 +20,13 @@
 	"costAttribute": "willPoints",
 	"targetingShape": {
 		"type": "cone",
-		"range": 1200
+		"range": 600
 	},
 	"effectData": [
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 20
+				"baseDamage": 30
 			}
 		}
 	]

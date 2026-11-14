@@ -1,0 +1,36 @@
+{
+	"id": "power_flamegrenade",
+	"name": "Flame Grenade",
+	"description": "",
+	"iconURL": "sprites/gui/icons/abilities/powers/equipment/icon_fraggrenade.png",
+	"castVfxURL": "",
+	"hitVfxURL": "vfx/vfx_test",
+	"castSfxURL": "",
+	"hitSfxURL": "",
+	"trigger": "onActionPerform",
+	"descriptors": [
+		"power",
+		"group",
+		"burn",
+		"equipment",
+		"attack"
+	],
+	"target": "enemy",
+	"recovery": 160,
+	"cost": 1,
+	"costAttribute": "ammo",
+	"maxAmmo": 4,
+	"targetingShape": {
+		"type": "sphere",
+		"range": 1200,
+		"radius": 200
+	},
+	"effectData": [
+		{
+			"id": "damage",
+			"variables": {
+				"baseDamage": 20
+			}
+		}
+	]
+}

@@ -9,6 +9,7 @@ import DialogueState from "src/states/DialogueState";
 import GameplayState from "src/states/GameplayState";
 import NavigationState from "src/states/NavigationState";
 import RenderState from "src/states/RenderState";
+import TargetingPreviewState from "src/states/TargetingPreviewState";
 import UserInterfaceState from "src/states/UserInterfaceState";
 import { container } from "tsyringe";
 
@@ -75,5 +76,11 @@ export function getUserInterfaceState(): UserInterfaceState {
 export function getNavigationState(): NavigationState {
 	return getGameStateRegistry().getGameStateByStateId<NavigationState>(
 		NavigationState.name,
+	);
+}
+
+export function getTargetingPreviewState(): TargetingPreviewState {
+	return getGameStateRegistry().getGameStateByStateId<TargetingPreviewState>(
+		TargetingPreviewState.name,
 	);
 }

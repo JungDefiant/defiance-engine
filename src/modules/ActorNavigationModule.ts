@@ -22,6 +22,7 @@ import {
     getNavigationState,
 } from "./GameStateModule";
 import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
+import { cmToMeters } from "./Utils";
 import type { EnvironmentObstacleData } from "src/types/CollisionTypes";
 import {
     NAV_AGENT_HEIGHT,
@@ -149,7 +150,7 @@ export function createNavigationAgent(
         const agentParams = {
             radius: NAV_AGENT_RADIUS,
             height: NAV_AGENT_HEIGHT,
-            maxSpeed: speed,
+            maxSpeed: cmToMeters(speed),
             maxAcceleration: 20,
             collisionQueryRange: 1,
             pathOptimizationRange: 2,
