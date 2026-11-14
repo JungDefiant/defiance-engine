@@ -9,9 +9,7 @@ import {
 } from "src/constants/GeneralConstants";
 import {
     createNewAbilityContext,
-    decideNPCActionByTactic,
     endCombat,
-    getCostAttributeName,
     startActionRecovery,
 } from "src/modules/CombatModule";
 import { triggerFeatEffects } from "src/modules/EffectModule";
@@ -32,6 +30,7 @@ import { CombatState } from "src/types/CombatTypes";
 import { deliverActionEffectsByShape } from "src/modules/TargetingModule";
 import { sleep } from "src/modules/Utils";
 import { Vector3 } from "@babylonjs/core";
+import { checkWithinQueuedActionRange } from "src/modules/ActorBehaviorModule";
 
 export default class ActionExecutionSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -84,7 +83,8 @@ export default class ActionExecutionSystem implements GameSystem {
                 !actorState.isCastingAction &&
                 actorState.queuedAction &&
                 recoveryTimerAttribute.currentValue ===
-                    recoveryTimerAttribute.maximumValue
+                    recoveryTimerAttribute.maximumValue &&
+                checkWithinQueuedActionRange(actorState)
             ) {
                 if (
                     actionQueuedAction.cost &&
@@ -103,11 +103,6 @@ export default class ActionExecutionSystem implements GameSystem {
                         // With behavior being handled in its own system and module, need to look into whether this is needed or not
                         if (gameplayState.playerEntityIds.includes(entityId)) {
                             actorState.queuedAction = null;
-                        }
-                        if (gameplayState.enemyEntityIds.includes(entityId)) {
-                            Promise.resolve(
-                                decideNPCActionByTactic(actorState),
-                            );
                         }
                     }),
                 );

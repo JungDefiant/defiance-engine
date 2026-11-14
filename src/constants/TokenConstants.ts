@@ -39,9 +39,9 @@ import { CollisionBehaviorProcessor } from "src/processors/CollisionBehaviorProc
 import { TargetingShapeProcessor } from "src/processors/TargetingShapeProcessor";
 import { TargetingInputProcessor } from "src/processors/TargetingInputProcessor";
 import { TargetingPreviewProcessor } from "src/processors/TargetingPreviewProcessor";
-import { BehaviorProcessor } from "src/processors/BehaviorProcessor";
 import TargetingPreviewSystem from "src/systems/TargetingPreviewSystem";
 import TargetingPreviewState from "src/states/TargetingPreviewState";
+import { ActorBehaviorProcessor } from "src/processors/ActorBehaviorProcessor";
 
 // The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
@@ -75,7 +75,7 @@ export const PROCESSOR_TOKENS = [
     TargetingShapeProcessor,
     TargetingInputProcessor,
     TargetingPreviewProcessor,
-    BehaviorProcessor,
+    ActorBehaviorProcessor,
 ];
 
 export const COMPONENT_TOKENS = [

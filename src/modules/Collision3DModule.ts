@@ -16,6 +16,8 @@ import {
     LOS_BLOCKING_TOLERANCE,
     LOS_RAY_HEIGHT,
 } from "src/constants/BehaviorConstants";
+import { getCollisionBehaviorProcessor } from "./ProcessorModule";
+import { CollisionBehaviorFunctionProps } from "src/processors/CollisionBehaviorProcessor";
 
 export function getActorPosition(entityId: EntityId): Nullable<Vector3> {
     const navigationComponent = getActorNavigation(entityId);
@@ -89,10 +91,10 @@ function isExcludedFromLineOfSight(mesh: AbstractMesh): boolean {
 }
 
 export function triggerCollisionBehaviors(
-    sourceEid: EntityId,
-    targetEid: EntityId,
+    sourceEntityId: EntityId,
+    targetEntityId: EntityId,
 ): void {
-    const collisionComponent = getCollisionComponentArray()[sourceEid];
+    const collisionComponent = getCollisionComponentArray()[sourceEntityId];
     if (
         !collisionComponent ||
         collisionComponent.collisionBehaviors.length === 0
@@ -106,23 +108,17 @@ export function triggerCollisionBehaviors(
     );
 
     // Move to processor
+    const collisionBehaviorProcessor = getCollisionBehaviorProcessor();
+
     for (const behavior of behaviors) {
-        switch (behavior.type) {
-            case "Event":
-                if (behavior.eventTrigger) {
-                    checkEventByTrigger(
-                        behavior.eventTrigger as GameEventTrigger,
-                    );
-                }
-                break;
-            case "Ability":
-                break;
-            case "Custom":
-                if (behavior.customBehavior) {
-                    behavior.customBehavior(sourceEid, targetEid);
-                }
-                break;
-        }
+        const collisionBehaviorFunction =
+            collisionBehaviorProcessor.getProcessorFunction(behavior.type);
+        const collisionBehaviorProps = {
+            sourceEntityId,
+            targetEntityId,
+            behavior,
+        } as CollisionBehaviorFunctionProps;
+        collisionBehaviorFunction(collisionBehaviorProps);
     }
 }
 

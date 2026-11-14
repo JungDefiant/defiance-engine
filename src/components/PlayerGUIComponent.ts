@@ -32,20 +32,16 @@ export default class PlayerGUIComponent implements Component {
     private readonly STATUS_ICON_SLOTS: number = 6;
     private readonly PIXELS_PER_STATUS_SLOT = 12;
     private readonly NUMBER_STATUS_SLOTS = 2;
-    private readonly POINT_STACK_WIDTH = 36;
-    private readonly POINT_STACK_HEIGHT = 36;
+    private readonly POINT_STACK_WIDTH = 40;
+    private readonly POINT_STACK_HEIGHT = 24;
     private readonly POINT_STACK_TOP = -12;
-    private readonly POINT_STACK_NUMBER_ROWS = 3;
+    private readonly POINT_STACK_NUMBER_ROWS = 2;
 
     public getRoot(): Container {
         return this.rootContainer;
     }
 
-    public constructor(
-        entityId: EntityId,
-        charName: string,
-        spriteSrc: string,
-    ) {
+    public constructor(entityId: EntityId, spriteSrc: string) {
         this.rootContainer = new Container();
         this.rootContainer.widthInPixels = this.GUI_WIDTH;
         this.rootContainer.heightInPixels = this.GUI_HEIGHT;

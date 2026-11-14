@@ -9,13 +9,12 @@ import ActorStateComponent from "src/components/ActorStateComponent";
 import { Processor } from "./Processor";
 
 export interface ActorBehaviorFunctionProps {
-    entityId: EntityId;
     actorState: ActorStateComponent;
 }
 
 export type ActorBehaviorFunction = (props: ActorBehaviorFunctionProps) => void;
 
-export class BehaviorProcessor implements Processor {
+export class ActorBehaviorProcessor implements Processor {
     private processorFunctions: Record<DefaultBehavior, ActorBehaviorFunction>;
 
     public constructor() {
@@ -39,7 +38,7 @@ export class BehaviorProcessor implements Processor {
         this.processorFunctions[parsedKey] = () => {};
     }
 
-    public getProcessorFunction(key: string): Function {
+    public getProcessorFunction(key: string): ActorBehaviorFunction {
         const parsedKey = key as DefaultBehavior;
         return this.processorFunctions[parsedKey];
     }

@@ -132,8 +132,8 @@ export class EnemyFactory implements EntityFactory {
                 getActorBehaviorComponentArray(),
                 new ActorBehaviorComponent(
                     newEntity,
-                    DefaultBehavior.Aggressive,
                     newActorStateComponent.tactics,
+                    DefaultBehavior.Aggressive,
                 ),
             ),
         );
@@ -142,7 +142,10 @@ export class EnemyFactory implements EntityFactory {
             newEntity,
             set(
                 getCollisionComponentArray(),
-                new CollisionComponent(newEntity, DEFAULT_ACTOR_COLLISION_RADIUS),
+                new CollisionComponent(
+                    newEntity,
+                    DEFAULT_ACTOR_COLLISION_RADIUS,
+                ),
             ),
         );
 

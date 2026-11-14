@@ -90,7 +90,6 @@ export class PlayerFactory implements EntityFactory {
 
         const newPlayerGUI = new PlayerGUIComponent(
             newEntity,
-            newActorComp.name,
             `sprites/characters/${newActorComp.spriteUrl}`,
         );
         addComponent(
@@ -127,8 +126,8 @@ export class PlayerFactory implements EntityFactory {
                 getActorBehaviorComponentArray(),
                 new ActorBehaviorComponent(
                     newEntity,
-                    DefaultBehavior.Aggressive,
                     newActorComp.tactics,
+                    DefaultBehavior.Aggressive,
                 ),
             ),
         );
@@ -137,7 +136,10 @@ export class PlayerFactory implements EntityFactory {
             newEntity,
             set(
                 getCollisionComponentArray(),
-                new CollisionComponent(newEntity, DEFAULT_ACTOR_COLLISION_RADIUS),
+                new CollisionComponent(
+                    newEntity,
+                    DEFAULT_ACTOR_COLLISION_RADIUS,
+                ),
             ),
         );
 

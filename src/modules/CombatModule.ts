@@ -89,7 +89,6 @@ export async function startCombat(encId: string): Promise<void> {
         enActorData.name = enActorData.name.concat(
             ` ${String.fromCharCode(65 + i)}`,
         );
-        await decideNPCActionByTactic(enActorData);
     }
 
     resetCombatModeActionManager();
@@ -242,53 +241,6 @@ export function queuePlayerAction(
     }
 
     actorState.queuedAction = actionData;
-}
-
-export async function decideNPCActionByTactic(actorState: ActorStateComponent) {
-    const tactics = actorState.tactics;
-
-    if (!tactics) {
-        return;
-    }
-
-    let decidedActionData: AbilityData | null = null;
-    let decidedActionSlotKey: LoadoutSlotKey | null = null;
-
-    for (const entry of tactics) {
-        const actionData = actorState.actionData.get(
-            entry.actionSlotKey,
-        ) as AbilityData;
-        if (!actionData) {
-            continue;
-        }
-
-        const isActionValid = actionData.descriptors.includes(entry.actionType);
-
-        if (!isActionValid) {
-            continue;
-        }
-
-        const target = getTargetBasedOnCondition(
-            actionData,
-            entry,
-            actorState.entityId,
-        );
-
-        if (target !== -1) {
-            setActorTargetFromEntity(actorState, actionData, target);
-            decidedActionData = actionData;
-            decidedActionSlotKey = entry.actionSlotKey;
-            break;
-        }
-    }
-
-    if (decidedActionData && decidedActionSlotKey !== null) {
-        queueNPCAction(
-            decidedActionData,
-            actorState.entityId,
-            decidedActionSlotKey,
-        );
-    }
 }
 
 export function queueNPCAction(
