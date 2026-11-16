@@ -35,8 +35,7 @@ export interface AbilityData {
     recovery?: number;
     cost?: number;
     costAttribute?: string;
-    maxAmmo?: number;
-    isReloadable?: boolean;
+    maxCharges?: number;
     itemId?: string;
     iconURL?: string;
     castVfxURL?: string;

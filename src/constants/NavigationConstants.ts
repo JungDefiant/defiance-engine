@@ -24,3 +24,5 @@ export const NAVMESH_GENERATOR_PARAMETERS = {
 export const NAV_ARRIVE_DISTANCE = 0.15;
 export const ACTOR_SPACING_MARGIN = 0.05;
 export const DEFAULT_ACTOR_COLLISION_RADIUS = 30;
+export const TARGET_SLOT_COUNT = 8;
+export const TARGET_SLOT_RING_RADIUS_M = 2;

@@ -1,5 +1,6 @@
 import {
     AbstractMesh,
+    IAgentParameters,
     ICrowd,
     Mesh,
     Nullable,
@@ -15,7 +16,10 @@ import * as RecastNavigationCore from "recast-navigation";
 import * as RecastNavigationGenerators from "recast-navigation/generators";
 import { EntityId, addComponent, set } from "bitecs";
 import ActorNavigationComponent from "src/components/ActorNavigationComponent";
-import { getActorNavigationComponentArray } from "./ComponentModule";
+import {
+    getActorNavigationComponentArray,
+    getActorStateComponentArray,
+} from "./ComponentModule";
 import {
     getGameScene,
     getGameStateRegistry,
@@ -147,15 +151,7 @@ export function createNavigationAgent(
 
     let navigationCrowd = getNavigationCrowd();
     if (navigationCrowd) {
-        const agentParams = {
-            radius: NAV_AGENT_RADIUS,
-            height: NAV_AGENT_HEIGHT,
-            maxSpeed: cmToMeters(speed),
-            maxAcceleration: 20,
-            collisionQueryRange: 1,
-            pathOptimizationRange: 2,
-            separationWeight: 2,
-        };
+        const agentParams = getDefaultNavigationAgentParams(speed);
         const agentTransform = new TransformNode(
             `navAgent_${entityId}`,
             gameScene,
@@ -168,6 +164,20 @@ export function createNavigationAgent(
     }
 
     return newNavigationComponent;
+}
+
+export function getDefaultNavigationAgentParams(
+    speed: number,
+): IAgentParameters {
+    return {
+        radius: NAV_AGENT_RADIUS,
+        height: NAV_AGENT_HEIGHT,
+        maxSpeed: cmToMeters(speed),
+        maxAcceleration: 20,
+        collisionQueryRange: 1,
+        pathOptimizationRange: 2,
+        separationWeight: 2,
+    };
 }
 
 export function getActorNavigation(
@@ -188,6 +198,11 @@ export function navigateToPosition(
         return;
     }
 
+    const actorState = getActorStateComponentArray()[entityId];
+    if (actorState && actorState.isCastingAction) {
+        return;
+    }
+
     navigationComponent.destination = destination.clone();
     navigationComponent.isNavigating = true;
     navigationComponent.onDestinationReachedEvent =
@@ -200,8 +215,24 @@ export function navigateToPosition(
                 navigationComponent.agentIndex,
                 destination,
             );
+            setSeparationWeight(navigationCrowd, navigationComponent, 0);
         }
     }
+}
+
+export function setSeparationWeight(
+    navigationCrowd: ICrowd,
+    navigationComponent: ActorNavigationComponent,
+    newSeparationWeight: number,
+) {
+    const newAgentParams = getDefaultNavigationAgentParams(
+        navigationComponent.speed,
+    );
+    newAgentParams.separationWeight = newSeparationWeight;
+    navigationCrowd.updateAgentParameters(
+        navigationComponent.agentIndex,
+        newAgentParams,
+    );
 }
 
 export function stopNavigation(entityId: EntityId): void {
@@ -220,6 +251,7 @@ export function stopNavigation(entityId: EntityId): void {
             navigationComponent.agentIndex,
             navigationComponent.position,
         );
+        setSeparationWeight(navigationCrowd, navigationComponent, 2);
     }
 }
 

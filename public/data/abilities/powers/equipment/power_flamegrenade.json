@@ -18,8 +18,8 @@
 	"target": "enemy",
 	"recovery": 160,
 	"cost": 1,
-	"costAttribute": "ammo",
-	"maxAmmo": 4,
+	"costAttribute": "charges",
+	"maxCharges": 4,
 	"targetingShape": {
 		"type": "sphere",
 		"range": 1200,
@@ -29,7 +29,7 @@
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 20
+				"baseDamage": 24
 			}
 		}
 	]

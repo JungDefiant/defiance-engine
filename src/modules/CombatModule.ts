@@ -39,6 +39,10 @@ import {
 import { disposeEnemyEntities, resetPlayerActorState } from "./CharacterModule";
 import { clearCombatHudEntries } from "./UserInterfaceModule";
 import {
+    clearAllTargetSlots,
+    releaseTargetSlots,
+} from "./ActorBehaviorModule";
+import {
     getControlState,
     getGameplayState,
     getGameScene,
@@ -107,6 +111,7 @@ export async function startCombat(encId: string): Promise<void> {
 }
 
 export function endCombat() {
+    clearAllTargetSlots();
     combatActionManager();
     clearCombatHudEntries();
     disposeEnemyEntities();
@@ -206,16 +211,16 @@ export function getCostAttributeName(
     slotKey: LoadoutSlotKey,
 ): string {
     let costAttributeName = (actionData.costAttribute as string) || "";
-    if (costAttributeName === "ammo") {
+    if (costAttributeName === "charges") {
         if (
             slotKey === LoadoutSlotKey.weapon1 ||
             slotKey === LoadoutSlotKey.weapon2
         ) {
-            return "ammoWeapon";
+            return "chargesWeapon";
         } else if (slotKey === LoadoutSlotKey.equipment1) {
-            return "ammoEquip1";
+            return "chargesEquip1";
         } else if (slotKey === LoadoutSlotKey.equipment2) {
-            return "ammoEquip2";
+            return "chargesEquip2";
         }
     }
 
@@ -365,6 +370,7 @@ export function defeatActor(actor: ActorStateComponent) {
     const componentRegistry = container.resolve(ComponentRegistry);
 
     actor.isDefeated = true;
+    releaseTargetSlots(actor);
 
     if (gameplayState.playerEntityIds.includes(actor.entityId)) {
         for (let i = 0; i < gameplayState.playerEntityIds.length; i++) {

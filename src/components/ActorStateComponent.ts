@@ -21,6 +21,7 @@ import {
 } from "src/modules/EffectModule";
 import { AbilityContext } from "src/types/ContextTypes";
 import { ActorTactic } from "src/types/BehaviorTypes";
+import { TARGET_SLOT_COUNT } from "src/constants/NavigationConstants";
 
 const BASE_LIFE_REGEN_TICKS: number = 4;
 const BASE_WILL_REGEN_TICKS: number = 4;
@@ -76,6 +77,11 @@ export default class ActorStateComponent implements Component {
     currentTargetEntityId?: EntityId;
     currentTargetPosition?: Vector3;
     currentAimDirection?: Nullable<Vector3>;
+    currentTargetSlotIndex: Nullable<number> = null;
+    currentTargetSlotTargetEid: Nullable<EntityId> = null;
+    surroundSlotOccupants: EntityId[] = new Array<EntityId>(
+        TARGET_SLOT_COUNT,
+    ).fill(-1);
 
     public constructor(entityId: number, initialData: LoadedActorJson) {
         this.entityId = entityId;
@@ -208,19 +214,19 @@ export default class ActorStateComponent implements Component {
                 currentValue: 1,
                 modifiers: [],
             } as ActorAttribute,
-            ammoWeapon: {
+            chargesWeapon: {
                 baseValue: 0,
                 maximumValue: 0,
                 currentValue: 0,
                 modifiers: [],
             } as ActorAttribute,
-            ammoEquip1: {
+            chargesEquip1: {
                 baseValue: 0,
                 maximumValue: 0,
                 currentValue: 0,
                 modifiers: [],
             } as ActorAttribute,
-            ammoEquip2: {
+            chargesEquip2: {
                 baseValue: 0,
                 maximumValue: 0,
                 currentValue: 0,
@@ -267,11 +273,11 @@ export default class ActorStateComponent implements Component {
                     associatedAbilityData,
                 );
 
-                if (weaponData.maxAmmo) {
-                    thisActorState.attributes.ammoWeapon = {
-                        baseValue: weaponData.maxAmmo,
-                        maximumValue: weaponData.maxAmmo,
-                        currentValue: weaponData.maxAmmo,
+                if (associatedAbilityData && associatedAbilityData.maxCharges) {
+                    thisActorState.attributes.chargesWeapon = {
+                        baseValue: associatedAbilityData.maxCharges,
+                        maximumValue: associatedAbilityData.maxCharges,
+                        currentValue: associatedAbilityData.maxCharges,
                         modifiers: [],
                     } as ActorAttribute;
                 }
@@ -338,6 +344,18 @@ export default class ActorStateComponent implements Component {
                         LoadoutSlotKey.equipment1,
                         equipment1AbilityData,
                     );
+
+                    if (
+                        equipment1AbilityData &&
+                        equipment1AbilityData.maxCharges
+                    ) {
+                        thisActorState.attributes.chargesWeapon = {
+                            baseValue: equipment1AbilityData.maxCharges,
+                            maximumValue: equipment1AbilityData.maxCharges,
+                            currentValue: equipment1AbilityData.maxCharges,
+                            modifiers: [],
+                        } as ActorAttribute;
+                    }
                 })
                 .catch((error) => console.error(error));
         }
@@ -359,6 +377,18 @@ export default class ActorStateComponent implements Component {
                         LoadoutSlotKey.equipment2,
                         equipment2AbilityData,
                     );
+
+                    if (
+                        equipment2AbilityData &&
+                        equipment2AbilityData.maxCharges
+                    ) {
+                        thisActorState.attributes.chargesWeapon = {
+                            baseValue: equipment2AbilityData.maxCharges,
+                            maximumValue: equipment2AbilityData.maxCharges,
+                            currentValue: equipment2AbilityData.maxCharges,
+                            modifiers: [],
+                        } as ActorAttribute;
+                    }
                 })
                 .catch((error) => console.error(error));
         }
