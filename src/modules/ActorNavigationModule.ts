@@ -1,5 +1,6 @@
 import {
     AbstractMesh,
+    IAgentParameters,
     ICrowd,
     Mesh,
     Nullable,
@@ -15,7 +16,10 @@ import * as RecastNavigationCore from "recast-navigation";
 import * as RecastNavigationGenerators from "recast-navigation/generators";
 import { EntityId, addComponent, set } from "bitecs";
 import ActorNavigationComponent from "src/components/ActorNavigationComponent";
-import { getActorNavigationComponentArray } from "./ComponentModule";
+import {
+    getActorNavigationComponentArray,
+    getActorStateComponentArray,
+} from "./ComponentModule";
 import {
     getGameScene,
     getGameStateRegistry,
@@ -26,8 +30,12 @@ import { cmToMeters } from "./Utils";
 import type { EnvironmentObstacleData } from "src/types/CollisionTypes";
 import {
     NAV_AGENT_HEIGHT,
+    NAV_AGENT_MAX_ACCELERATION,
     NAV_AGENT_RADIUS,
+    NAV_COLLISION_QUERY_RANGE_MULTIPLE,
     NAV_CROWD_MAX_AGENTS,
+    NAV_DESTINATION_UPDATE_EPSILON,
+    NAV_PATH_OPTIMIZATION_RANGE_MULTIPLE,
     NAVMESH_GENERATOR_PARAMETERS,
     NAVMESH_LOAD_TIMEOUT_MS,
     NAVMESH_POLL_INTERVAL_MS,
@@ -145,29 +153,71 @@ export function createNavigationAgent(
         set(getActorNavigationComponentArray(), newNavigationComponent),
     );
 
-    let navigationCrowd = getNavigationCrowd();
-    if (navigationCrowd) {
-        const agentParams = {
-            radius: NAV_AGENT_RADIUS,
-            height: NAV_AGENT_HEIGHT,
-            maxSpeed: cmToMeters(speed),
-            maxAcceleration: 20,
-            collisionQueryRange: 1,
-            pathOptimizationRange: 2,
-            separationWeight: 2,
-        };
-        const agentTransform = new TransformNode(
-            `navAgent_${entityId}`,
-            gameScene,
-        );
-        newNavigationComponent.agentIndex = navigationCrowd.addAgent(
-            position,
-            agentParams,
-            agentTransform,
-        );
+    return newNavigationComponent;
+}
+
+export function getDefaultNavigationAgentParams(
+    speed: number,
+): IAgentParameters {
+    return {
+        radius: NAV_AGENT_RADIUS,
+        height: NAV_AGENT_HEIGHT,
+        maxSpeed: cmToMeters(speed),
+        maxAcceleration: NAV_AGENT_MAX_ACCELERATION,
+        collisionQueryRange:
+            NAV_AGENT_RADIUS * NAV_COLLISION_QUERY_RANGE_MULTIPLE,
+        pathOptimizationRange:
+            NAV_AGENT_RADIUS * NAV_PATH_OPTIMIZATION_RANGE_MULTIPLE,
+        separationWeight: 2,
+    };
+}
+
+function addNavigationAgent(
+    navigationComponent: ActorNavigationComponent,
+): void {
+    const navigationCrowd = getNavigationCrowd();
+    if (!navigationCrowd || navigationComponent.agentIndex >= 0) {
+        return;
     }
 
-    return newNavigationComponent;
+    const agentParams = getDefaultNavigationAgentParams(
+        navigationComponent.speed,
+    );
+    const agentTransform = new TransformNode(
+        `navAgent_${navigationComponent.entityId}`,
+        getGameScene(),
+    );
+    navigationComponent.agentTransformNode = agentTransform;
+    navigationComponent.agentIndex = navigationCrowd.addAgent(
+        navigationComponent.position,
+        agentParams,
+        agentTransform,
+    );
+}
+
+export function removeNavigationAgent(entityId: EntityId): void {
+    const navigationComponent = getActorNavigation(entityId);
+    if (!navigationComponent) {
+        return;
+    }
+
+    navigationComponent.isCollisionBlocked = false;
+
+    if (navigationComponent.agentIndex < 0) {
+        return;
+    }
+
+    const navigationCrowd = getNavigationCrowd();
+    if (navigationCrowd) {
+        navigationCrowd.removeAgent(navigationComponent.agentIndex);
+    }
+
+    if (navigationComponent.agentTransformNode) {
+        navigationComponent.agentTransformNode.dispose();
+        navigationComponent.agentTransformNode = null;
+    }
+
+    navigationComponent.agentIndex = -1;
 }
 
 export function getActorNavigation(
@@ -188,20 +238,37 @@ export function navigateToPosition(
         return;
     }
 
-    navigationComponent.destination = destination.clone();
-    navigationComponent.isNavigating = true;
+    const actorState = getActorStateComponentArray()[entityId];
+    if (actorState && actorState.isCastingAction) {
+        return;
+    }
+
     navigationComponent.onDestinationReachedEvent =
         onDestinationReached ?? null;
 
-    let navigationCrowd = getNavigationCrowd();
-    if (navigationCrowd) {
-        if (navigationComponent.agentIndex >= 0 && navigationCrowd) {
-            navigationCrowd.agentGoto(
-                navigationComponent.agentIndex,
-                destination,
-            );
-        }
+    if (
+        navigationComponent.isNavigating &&
+        navigationComponent.destination &&
+        Vector3.Distance(navigationComponent.destination, destination) <=
+            NAV_DESTINATION_UPDATE_EPSILON
+    ) {
+        return;
     }
+
+    navigationComponent.destination = destination.clone();
+    navigationComponent.isNavigating = true;
+
+    const navigationCrowd = getNavigationCrowd();
+    if (!navigationCrowd) {
+        return;
+    }
+
+    addNavigationAgent(navigationComponent);
+    if (navigationComponent.agentIndex < 0) {
+        return;
+    }
+
+    navigationCrowd.agentGoto(navigationComponent.agentIndex, destination);
 }
 
 export function stopNavigation(entityId: EntityId): void {
@@ -210,17 +277,32 @@ export function stopNavigation(entityId: EntityId): void {
         return;
     }
 
+    if (!navigationComponent.isNavigating && !navigationComponent.destination) {
+        return;
+    }
+
     navigationComponent.destination = null;
     navigationComponent.isNavigating = false;
     navigationComponent.onDestinationReachedEvent = null;
 
-    let navigationCrowd = getNavigationCrowd();
-    if (navigationComponent.agentIndex >= 0 && navigationCrowd) {
-        navigationCrowd.agentGoto(
-            navigationComponent.agentIndex,
-            navigationComponent.position,
-        );
+    const navigationCrowd = getNavigationCrowd();
+    if (!navigationCrowd || navigationComponent.agentIndex < 0) {
+        return;
     }
+
+    if (navigationComponent.isCollisionBlocked) {
+        navigationComponent.isCollisionBlocked = false;
+        navigationCrowd.updateAgentParameters(
+            navigationComponent.agentIndex,
+            getDefaultNavigationAgentParams(navigationComponent.speed),
+        );
+        return;
+    }
+
+    navigationCrowd.agentGoto(
+        navigationComponent.agentIndex,
+        navigationComponent.position,
+    );
 }
 
 export function teleportNavigationAgent(

@@ -16,9 +16,9 @@
 	],
 	"target": "ally",
 	"recovery": 160,
-	"cost": 10,
-	"costAttribute": "ammo",
-	"maxAmmo": 2,
+	"cost": 1,
+	"costAttribute": "charges",
+	"maxCharges": 2,
 	"targetingShape": {	},
 	"effectData": [
 		{

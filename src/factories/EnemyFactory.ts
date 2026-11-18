@@ -162,8 +162,8 @@ export class EnemyFactory implements EntityFactory {
         const enemyActorSprite = MeshBuilder.CreatePlane(
             `enBattlerSprite_${actorState.id}_${entityId}`,
             {
-                width: 0.4,
-                height: 0.8,
+                width: 0.8,
+                height: 1.6,
             },
             gameScene,
         );

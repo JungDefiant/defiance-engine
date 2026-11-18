@@ -17,10 +17,6 @@
 	],
 	"target": "enemy",
 	"recovery": 160,
-	"cost": 1,
-	"costAttribute": "ammo",
-	"maxAmmo": 8,
-	"isReloadable": true,
 	"targetingShape": {
 		"type": "projectile",
 		"range": 1600,

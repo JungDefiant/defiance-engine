@@ -28,16 +28,15 @@ import { DefaultBehavior } from "src/types/BehaviorTypes";
 import {
     ACTOR_GROUND_Y,
     ACTOR_SPRITE_VERTICAL_OFFSET,
-    BASE_MOVEMENT_SPEED,
 } from "src/constants/GeneralConstants";
 
 const PRELOAD_CHARACTERS = ["pc_test"];
 
 const PARTY_SPAWN_OFFSETS = [
     new Vector3(0, ACTOR_GROUND_Y, 0),
-    new Vector3(-0.9, ACTOR_GROUND_Y, -0.9),
-    new Vector3(0.9, ACTOR_GROUND_Y, -0.9),
-    new Vector3(0, ACTOR_GROUND_Y, -1.8),
+    new Vector3(-1.35, ACTOR_GROUND_Y, -1.35),
+    new Vector3(1.35, ACTOR_GROUND_Y, -1.35),
+    new Vector3(0, ACTOR_GROUND_Y, -2.7),
 ];
 
 export class PlayerFactory implements EntityFactory {
@@ -156,8 +155,8 @@ export class PlayerFactory implements EntityFactory {
         const playerSprite = MeshBuilder.CreatePlane(
             `pcSprite_${actorState.id}_${entityId}`,
             {
-                width: 0.4,
-                height: 0.8,
+                width: 0.8,
+                height: 1.6,
             },
             gameScene,
         );

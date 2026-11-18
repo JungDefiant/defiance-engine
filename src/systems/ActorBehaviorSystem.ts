@@ -3,14 +3,18 @@ import { EntityId, query } from "bitecs";
 import { GameScene } from "src/scenes/GameScene";
 import {
     getActorBehaviorComponentArray,
+    getActorNavigationComponentArray,
     getActorStateComponentArray,
 } from "src/modules/ComponentModule";
 import { getControlState, getGameplayState } from "src/modules/GameStateModule";
 import {
     checkWithinQueuedActionRange,
     getActorRadius,
+    getEffectiveActionRange,
     getTargetPosition,
     getTargetRadius,
+    getTargetSlotPosition,
+    releaseTargetSlot,
     trackQueuedActionTarget,
 } from "src/modules/ActorBehaviorModule";
 import GameSystem from "./GameSystem";
@@ -21,10 +25,7 @@ import {
     getTargetBasedOnCondition,
     queueNPCAction,
 } from "src/modules/CombatModule";
-import {
-    getActionRangeInMeters,
-    setActorTargetFromEntity,
-} from "src/modules/TargetingModule";
+import { setActorTargetFromEntity } from "src/modules/TargetingModule";
 import {
     navigateToPosition,
     stopNavigation,
@@ -39,6 +40,7 @@ import {
 } from "src/modules/Collision3DModule";
 import { DEFAULT_ACTOR_COLLISION_RADIUS } from "src/constants/NavigationConstants";
 import { cmToMeters } from "src/modules/Utils";
+import ActorNavigationComponent from "src/components/ActorNavigationComponent";
 
 export default class ActorBehaviorSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -51,6 +53,8 @@ export default class ActorBehaviorSystem implements GameSystem {
 
         const behaviorComponentArray = getActorBehaviorComponentArray();
         const actorStateComponentArray = getActorStateComponentArray();
+        const actorNavigationComponentArray =
+            getActorNavigationComponentArray();
 
         for (const entityId of query(this.gameScene.world, [
             behaviorComponentArray,
@@ -58,35 +62,59 @@ export default class ActorBehaviorSystem implements GameSystem {
         ])) {
             const actorState = actorStateComponentArray[entityId];
             const actorBehavior = behaviorComponentArray[entityId];
+            const actorNavigation = actorNavigationComponentArray[entityId];
 
             if (!actorState.queuedAction) {
                 this.decideAction(actorState, actorBehavior);
             }
 
             if (actorState.queuedAction) {
-                this.performAction(actorState, actorBehavior);
+                this.performAction(actorState, actorNavigation);
             }
         }
     }
 
     private performAction(
         actorState: ActorStateComponent,
-        actorBehavior: ActorBehaviorComponent,
+        actorNavigation: ActorNavigationComponent,
     ): void {
-        if (!this.checkValidTarget(actorState, actorBehavior)) {
+        if (!this.checkValidTarget(actorState)) {
+            releaseTargetSlot(actorState);
             actorState.queuedAction = null;
             return;
         }
 
-        if (!checkWithinQueuedActionRange(actorState)) {
+        if (
+            !checkWithinQueuedActionRange(actorState) &&
+            !actorNavigation.destination
+        ) {
             this.moveTowardTarget(actorState);
         }
     }
 
-    private checkValidTarget(
-        actorState: ActorStateComponent,
-        actorBehavior: ActorBehaviorComponent,
-    ): boolean {
+    private checkValidTarget(actorState: ActorStateComponent): boolean {
+        const targetEntityId = actorState.currentTargetEntityId;
+        if (!targetEntityId) {
+            return false;
+        }
+
+        const targetActorState = getActorStateComponentArray()[targetEntityId];
+        if (!targetActorState) {
+            return false;
+        }
+
+        if (targetActorState.isDefeated) {
+            return false;
+        }
+
+        const isInLineOfSight = hasLineOfSightToPosition(
+            actorState.entityId,
+            getTargetPosition(actorState) || Vector3.Zero(),
+        );
+        if (!isInLineOfSight) {
+            return false;
+        }
+
         return true;
     }
 
@@ -167,12 +195,14 @@ export default class ActorBehaviorSystem implements GameSystem {
         const targetPosition = getTargetPosition(actorState);
         if (!sourcePosition || !targetPosition) {
             stopNavigation(actorState.entityId);
+            releaseTargetSlot(actorState);
             actorState.queuedAction = null;
             return;
         }
 
-        const effectiveActionRange =
-            getActionRangeInMeters(actorState.queuedAction) * 0.75;
+        const effectiveActionRange = getEffectiveActionRange(
+            actorState.queuedAction,
+        );
         const isCurrentTargetInRange =
             Vector3.Distance(sourcePosition, targetPosition) <=
             effectiveActionRange + cmToMeters(DEFAULT_ACTOR_COLLISION_RADIUS);
@@ -187,11 +217,25 @@ export default class ActorBehaviorSystem implements GameSystem {
         );
         if (!isInLineOfSight) {
             stopNavigation(actorState.entityId);
+            releaseTargetSlot(actorState);
             actorState.queuedAction = null;
             return;
         }
 
         trackQueuedActionTarget(actorState.entityId, targetPosition);
-        navigateToPosition(actorState.entityId, targetPosition);
+        this.navigateToTargetSlot(actorState, targetPosition);
+    }
+
+    private navigateToTargetSlot(
+        actorState: ActorStateComponent,
+        targetPosition: Vector3,
+    ): void {
+        const slotPosition = getTargetSlotPosition(actorState, targetPosition);
+        if (!slotPosition) {
+            navigateToPosition(actorState.entityId, targetPosition);
+            return;
+        }
+
+        navigateToPosition(actorState.entityId, slotPosition);
     }
 }

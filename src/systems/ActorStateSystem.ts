@@ -3,7 +3,11 @@ import GameSystem from "./GameSystem";
 import { query } from "bitecs";
 import ActorStateComponent from "../components/ActorStateComponent";
 import { GameScene } from "src/scenes/GameScene";
-import { getControlState, getGameplayState, getGameScene } from "src/modules/GameStateModule";
+import {
+    getControlState,
+    getGameplayState,
+    getGameScene,
+} from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
 import { BASE_RECOVERY_PER_SECOND } from "src/constants/CombatConstants";
 import { CombatState } from "src/types/CombatTypes";
@@ -28,7 +32,7 @@ export default class ActorStateSystem implements GameSystem {
         ])) {
             const actorState = actorStateComponentArray[eid];
             if (actorState.isDefeated) {
-                return;
+                continue;
             }
             this.tickRecoveryTimer(deltaTime, actorState);
             this.tickLifeRegen(deltaTime, actorState);

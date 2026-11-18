@@ -4,7 +4,6 @@ import GameSystem from "src/systems/GameSystem";
 import ActorStateComponent from "src/components/ActorStateComponent";
 import {
     BASE_CAST_TIME_MS,
-    BASE_RELOAD_TIME_MS,
     PAUSE_GAMEOVER,
 } from "src/constants/GeneralConstants";
 import {
@@ -31,6 +30,7 @@ import { deliverActionEffectsByShape } from "src/modules/TargetingModule";
 import { sleep } from "src/modules/Utils";
 import { Vector3 } from "@babylonjs/core";
 import { checkWithinQueuedActionRange } from "src/modules/ActorBehaviorModule";
+import { stopNavigation } from "src/modules/ActorNavigationModule";
 
 export default class ActionExecutionSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -99,12 +99,13 @@ export default class ActionExecutionSystem implements GameSystem {
                     }
                 }
                 Promise.resolve(
-                    this.performQueuedAction(actorState).then(() => {
-                        // With behavior being handled in its own system and module, need to look into whether this is needed or not
-                        if (gameplayState.playerEntityIds.includes(entityId)) {
+                    this.performQueuedAction(actorState)
+                        .then(() => {
                             actorState.queuedAction = null;
-                        }
-                    }),
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        }),
                 );
                 return;
             }
@@ -182,6 +183,7 @@ export default class ActionExecutionSystem implements GameSystem {
         actionToPerform: AbilityData,
     ) {
         sourceActorState.isCastingAction = true;
+        stopNavigation(sourceActorState.entityId);
 
         const combatStateAtCastStart = getGameplayState().combatState;
 
@@ -192,38 +194,9 @@ export default class ActionExecutionSystem implements GameSystem {
             await sleep(BASE_CAST_TIME_MS);
         }
 
-        await this.reloadAmmo(sourceActorState, actionToPerform);
-
         if (getGameplayState().combatState !== combatStateAtCastStart) {
             sourceActorState.isCastingAction = false;
             return;
         }
-    }
-
-    private async reloadAmmo(
-        sourceActorState: ActorStateComponent,
-        actionToReload: AbilityData,
-    ) {
-        if (!actionToReload.isReloadable) {
-            return;
-        }
-
-        const ammoAttributeName = sourceActorState.queuedCostAttributeName;
-        if (!ammoAttributeName || !ammoAttributeName.includes("ammo")) {
-            return;
-        }
-
-        const ammoAttribute = sourceActorState.attributes[ammoAttributeName];
-        if (!ammoAttribute) {
-            return;
-        }
-
-        if (ammoAttribute.currentValue > 0) {
-            return;
-        }
-
-        await sleep(BASE_RELOAD_TIME_MS);
-
-        ammoAttribute.currentValue = ammoAttribute.maximumValue;
     }
 }

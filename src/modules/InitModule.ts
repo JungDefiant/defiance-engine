@@ -15,6 +15,7 @@ import {
 import {
     DEFAULT_CAMPAIGN_ID,
     DELTATIME_MS,
+    MAX_DELTA_TIME_SECONDS,
 } from "src/constants/GeneralConstants";
 import { getPublicRoot } from "./Utils";
 import { LoadedCampaignJson } from "src/types/GameTypes";
@@ -83,7 +84,8 @@ async function runScene() {
     const userInterfaceScene = getUserInterfaceScene();
     const systemRegistry = getSystemRegistry();
     engine.runRenderLoop(() => {
-        const deltaTime = gameScene.deltaTime / DELTATIME_MS;
+        const rawDeltaTime = gameScene.deltaTime / DELTATIME_MS;
+        const deltaTime = Math.min(rawDeltaTime, MAX_DELTA_TIME_SECONDS);
         updateSystems(deltaTime, systemRegistry);
         gameScene.render();
         userInterfaceScene.render();

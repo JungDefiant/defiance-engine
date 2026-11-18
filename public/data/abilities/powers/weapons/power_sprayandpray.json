@@ -17,8 +17,9 @@
 	],
 	"target": "enemy",
 	"recovery": 40,
-	"cost": 2,
-	"costAttribute": "ammo",
+	"cost": 1,
+	"costAttribute": "charges",
+	"maxCharges": 2,
 	"targetingShape": {
 		"type": "cone",
 		"range": 800
@@ -27,7 +28,7 @@
 		{
 			"id": "damage",
 			"variables": {
-				"baseDamage": 12
+				"baseDamage": 36
 			}
 		}
 	]
