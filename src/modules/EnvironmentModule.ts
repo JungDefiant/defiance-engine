@@ -10,11 +10,11 @@ import { Themes } from "src/gui/Themes";
 import { ACTOR_GROUND_Y } from "src/constants/GeneralConstants";
 import { registerNavigationObstacle } from "./ActorNavigationModule";
 
-const ENV_SIZE = 44;
-const WALL_HEIGHT = 3;
-const WALL_THICKNESS = 1;
-const PILLAR_DIAMETER = 1;
-const CRATE_SIZE = 1.2;
+const ENV_SIZE = 88;
+const WALL_HEIGHT = 6;
+const WALL_THICKNESS = 2;
+const PILLAR_DIAMETER = 2;
+const CRATE_SIZE = 2.4;
 
 export function createEnvironment(gameScene: GameScene): void {
 	createFloor(gameScene);
@@ -110,10 +110,10 @@ function createPillars(gameScene: GameScene): void {
 	const pillarY = ACTOR_GROUND_Y + WALL_HEIGHT / 2;
 
 	const pillarPositions = [
-		new Vector3(-6, pillarY, -6),
-		new Vector3(6, pillarY, -6),
-		new Vector3(-6, pillarY, 6),
-		new Vector3(6, pillarY, 6),
+		new Vector3(-12, pillarY, -12),
+		new Vector3(12, pillarY, -12),
+		new Vector3(-12, pillarY, 12),
+		new Vector3(12, pillarY, 12),
 	];
 
 	for (const pillarPosition of pillarPositions) {
@@ -148,10 +148,10 @@ function createCrates(gameScene: GameScene): void {
 	const crateY = ACTOR_GROUND_Y + CRATE_SIZE / 2;
 
 	const cratePositions = [
-		new Vector3(3, crateY, 2),
-		new Vector3(-3, crateY, -2),
-		new Vector3(2, crateY, -4),
-		new Vector3(-4, crateY, 3),
+		new Vector3(6, crateY, 4),
+		new Vector3(-6, crateY, -4),
+		new Vector3(4, crateY, -8),
+		new Vector3(-8, crateY, 6),
 	];
 
 	for (const cratePosition of cratePositions) {
@@ -179,16 +179,16 @@ function createCoverWalls(gameScene: GameScene): void {
 		"mat_env_cover",
 		Color3.FromHexString(Themes.neutral1),
 	);
-	const coverY = ACTOR_GROUND_Y + 0.5;
+	const coverY = ACTOR_GROUND_Y + 1;
 
 	const coverSpecs = [
 		{
 			name: "env_cover_west",
-			position: new Vector3(-8, coverY, -1),
+			position: new Vector3(-16, coverY, -2),
 		},
 		{
 			name: "env_cover_east",
-			position: new Vector3(8, coverY, 1),
+			position: new Vector3(16, coverY, 2),
 		},
 	];
 
@@ -196,9 +196,9 @@ function createCoverWalls(gameScene: GameScene): void {
 		const coverWall = MeshBuilder.CreateBox(
 			coverSpec.name,
 			{
-				width: 4,
-				height: 1,
-				depth: 0.5,
+				width: 8,
+				height: 2,
+				depth: 1,
 			},
 			gameScene,
 		);
@@ -207,7 +207,7 @@ function createCoverWalls(gameScene: GameScene): void {
 		coverWall.material = coverMaterial;
 		registerSolidObstacle(
 			coverWall,
-			new Vector3(2, 0.5, 0.25),
+			new Vector3(4, 1, 0.5),
 			Math.PI / 4,
 		);
 	}

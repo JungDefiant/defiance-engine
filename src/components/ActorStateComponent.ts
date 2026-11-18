@@ -22,6 +22,7 @@ import {
 import { AbilityContext } from "src/types/ContextTypes";
 import { ActorTactic } from "src/types/BehaviorTypes";
 import { TARGET_SLOT_COUNT } from "src/constants/NavigationConstants";
+import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
 
 const BASE_LIFE_REGEN_TICKS: number = 4;
 const BASE_WILL_REGEN_TICKS: number = 4;
@@ -32,7 +33,7 @@ const BASE_ATTRIBUTES = {
     hastePerPoint: 5,
     defensePerPoint: 5,
     offensePerPoint: 5,
-    speed: 300,
+    speed: BASE_MOVEMENT_SPEED,
 };
 
 export interface LoadedActorJson {

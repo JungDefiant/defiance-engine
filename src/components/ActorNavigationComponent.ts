@@ -1,4 +1,4 @@
-import { Nullable, Vector3 } from "@babylonjs/core";
+import { Nullable, TransformNode, Vector3 } from "@babylonjs/core";
 import { EntityId } from "bitecs";
 import { Component } from "./Component";
 
@@ -10,7 +10,8 @@ export default class ActorNavigationComponent implements Component {
     speed: number;
     agentIndex: number = -1;
     isNavigating: boolean = false;
-    resetSeparationWeight: boolean = false;
+    isCollisionBlocked: boolean = false;
+    agentTransformNode: Nullable<TransformNode> = null;
     onDestinationReachedEvent: Nullable<() => void> = null;
 
     constructor(entityId: EntityId, position: Vector3, speed: number) {

@@ -45,9 +45,9 @@ import { ActorBehaviorProcessor } from "src/processors/ActorBehaviorProcessor";
 
 // The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
+    PartyFollowSystem,
     ActorNavigationSystem,
     ActionExecutionSystem,
-    PartyFollowSystem,
     SelectedPlayerControlSystem,
     ActorBehaviorSystem,
     ActorStateSystem,
