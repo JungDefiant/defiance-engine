@@ -2,7 +2,7 @@
 	"id": "power_hemostaticstim",
 	"name": "Hemostatic Stim",
 	"description": "",
-	"iconURL": "sprites/gui/icons/abilities/weapons/icon_fraggrenade.png",
+	"iconURL": "sprites/gui/icons/abilities/powers/equipment/icon_fraggrenade.png",
 	"castVfxURL": "",
 	"hitVfxURL": "vfx/vfx_test",
 	"castSfxURL": "",

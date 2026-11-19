@@ -33,6 +33,7 @@ import RenderQueueSystem from "src/systems/RenderQueueSystem";
 import ActorStateSystem from "src/systems/ActorStateSystem";
 import ActorNavigationSystem from "src/systems/ActorNavigationSystem";
 import ActorBehaviorSystem from "src/systems/ActorBehaviorSystem";
+import CameraSystem from "src/systems/CameraSystem";
 import Collision3DSystem from "src/systems/Collision3DSystem";
 import ActionExecutionSystem from "src/systems/ActionExecutionSystem";
 import { CollisionBehaviorProcessor } from "src/processors/CollisionBehaviorProcessor";
@@ -45,18 +46,19 @@ import { ActorBehaviorProcessor } from "src/processors/ActorBehaviorProcessor";
 
 // The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
+    ActorBehaviorSystem,
+    SelectedPlayerControlSystem,
     PartyFollowSystem,
     ActorNavigationSystem,
+    ProjectileSystem,
+    Collision3DSystem,
+    CameraSystem,
     ActionExecutionSystem,
-    SelectedPlayerControlSystem,
-    ActorBehaviorSystem,
     ActorStateSystem,
     UserInterfaceSystem,
     TargetingPreviewSystem,
     ImageAnimationSystem,
     RenderQueueSystem,
-    ProjectileSystem,
-    Collision3DSystem,
 ];
 
 export const FACTORY_TOKENS = [

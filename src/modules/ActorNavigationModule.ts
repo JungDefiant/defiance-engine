@@ -19,13 +19,17 @@ import ActorNavigationComponent from "src/components/ActorNavigationComponent";
 import {
     getActorNavigationComponentArray,
     getActorStateComponentArray,
+    getCharacterSpriteComponentArray,
 } from "./ComponentModule";
 import {
     getGameScene,
     getGameStateRegistry,
     getNavigationState,
 } from "./GameStateModule";
-import { BASE_MOVEMENT_SPEED } from "src/constants/GeneralConstants";
+import {
+    ACTOR_SPRITE_VERTICAL_OFFSET,
+    BASE_MOVEMENT_SPEED,
+} from "src/constants/GeneralConstants";
 import { cmToMeters } from "./Utils";
 import type { EnvironmentObstacleData } from "src/types/CollisionTypes";
 import {
@@ -62,6 +66,20 @@ export function getNavigationPlugin(): Nullable<RecastNavigationJSPluginV2> {
 
 export function getNavigationCrowd(): Nullable<ICrowd> {
     return getNavigationState().navigationCrowd;
+}
+
+export function syncActorWorldSprite(
+    entityId: EntityId,
+    navigationPosition: Vector3,
+): void {
+    const characterSprite = getCharacterSpriteComponentArray()[entityId];
+    if (!characterSprite) {
+        return;
+    }
+
+    characterSprite.getValue().position.copyFrom(navigationPosition);
+    characterSprite.getValue().position.y =
+        navigationPosition.y + ACTOR_SPRITE_VERTICAL_OFFSET;
 }
 
 function isExcludedFromNavMesh(mesh: AbstractMesh): boolean {
