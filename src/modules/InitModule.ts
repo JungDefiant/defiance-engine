@@ -29,6 +29,7 @@ import {
     SYSTEM_TOKENS,
 } from "src/constants/TokenConstants";
 import MainMenuScene from "src/scenes/MainMenuScene";
+import { buildAssetManifest, preloadAssets } from "./AssetModule";
 import { EntityFactory } from "src/factories/EntityFactory";
 import GameSystem from "src/systems/GameSystem";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
@@ -66,11 +67,32 @@ export function createNewEngine(): Engine {
 }
 
 export async function startGame() {
+    const mainMenuScene = container.resolve(MainMenuScene);
+    mainMenuScene.loadingScreen.show();
+
+    await createCampaignState();
+    await preloadCampaignAssets(mainMenuScene);
+
     stopEngineRenderLoop();
     closeMainMenu();
-    await createCampaignState();
+
     await createStartingScene();
     runScene();
+}
+
+async function preloadCampaignAssets(mainMenuScene: MainMenuScene) {
+    const campaignState = getCampaignState();
+    const manifest = await buildAssetManifest(campaignState.campaignId);
+    await preloadAssets(
+        mainMenuScene,
+        manifest,
+        (loadedCount, totalCount) => {
+            mainMenuScene.loadingScreen.setProgress(
+                loadedCount,
+                totalCount,
+            );
+        },
+    );
 }
 
 async function createStartingScene() {

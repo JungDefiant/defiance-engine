@@ -3,6 +3,10 @@ import { container } from "tsyringe";
 import { gotoMainMenu, createNewEngine } from "./modules/InitModule";
 import MainMenuScene from "./scenes/MainMenuScene";
 import { Engine } from "@babylonjs/core";
+import {
+	preloadFonts,
+	preloadMainMenuAssets,
+} from "./modules/AssetModule";
 
 // Source - https://stackoverflow.com/a/77970818
 // Posted by Helto, modified by community. See post 'Timeline' for change history
@@ -11,10 +15,17 @@ window.addEventListener("vite:preloadError", () => {
 	window.location.reload();
 });
 
-const engine = createNewEngine();
-container.register(Engine, { useValue: engine });
+async function boot(): Promise<void> {
+	await preloadFonts();
+	await preloadMainMenuAssets();
 
-const mainMenuScene = new MainMenuScene(engine);
-container.register(MainMenuScene, { useValue: mainMenuScene });
+	const engine = createNewEngine();
+	container.register(Engine, { useValue: engine });
 
-Promise.resolve(gotoMainMenu());
+	const mainMenuScene = new MainMenuScene(engine);
+	container.register(MainMenuScene, { useValue: mainMenuScene });
+
+	await gotoMainMenu();
+}
+
+void boot();

@@ -1,5 +1,6 @@
 import { Engine, Scene, UniversalCamera, Vector3 } from "@babylonjs/core";
 import { MainMenuScreen } from "src/gui/screens/MainMenuScreen";
+import { LoadingScreen } from "src/gui/screens/LoadingScreen";
 import { singleton } from "tsyringe";
 import type { Nullable, SceneOptions } from "@babylonjs/core";
 import AudioState from "src/states/AudioState";
@@ -9,6 +10,7 @@ export default class MainMenuScene extends Scene {
 	private _audioState: Nullable<AudioState> = null;
 
 	private readonly mainMenuScreen: MainMenuScreen;
+	private readonly _loadingScreen: LoadingScreen;
 
 	public constructor(engine: Engine, options?: SceneOptions) {
 		super(engine, options);
@@ -16,6 +18,7 @@ export default class MainMenuScene extends Scene {
 
 		new UniversalCamera("cam_gui_mainmenu", Vector3.Zero(), this);
 		this.mainMenuScreen = new MainMenuScreen(this);
+		this._loadingScreen = new LoadingScreen(this);
 	}
 
 	public get audioState(): Nullable<AudioState> {
@@ -24,4 +27,9 @@ export default class MainMenuScene extends Scene {
 	public set audioState(value: Nullable<AudioState>) {
 		this._audioState = value;
 	}
+
+	public get loadingScreen(): LoadingScreen {
+		return this._loadingScreen;
+	}
 }
+

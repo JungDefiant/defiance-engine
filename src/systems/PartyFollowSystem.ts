@@ -25,6 +25,14 @@ export default class PartyFollowSystem implements GameSystem {
     public update(deltaTime: number): void {
         const controlState = getControlState();
         const gameplayState = getGameplayState();
+
+        if (
+            gameplayState.combatState === CombatState.Active ||
+            controlState.controlPauseSet.size > 0
+        ) {
+            return;
+        }
+
         const leaderEntityId = gameplayState.selectedPlayerEID;
         const leaderNavigation = getActorNavigation(leaderEntityId);
 
@@ -33,13 +41,6 @@ export default class PartyFollowSystem implements GameSystem {
         }
 
         const leaderPosition = leaderNavigation.position;
-
-        if (
-            gameplayState.combatState === CombatState.Active ||
-            controlState.controlPauseSet.size > 0
-        ) {
-            return;
-        }
 
         const leaderFacing = leaderNavigation.facingDirection;
         const leaderYaw = Math.atan2(leaderFacing.x, leaderFacing.z);
@@ -73,18 +74,25 @@ export default class PartyFollowSystem implements GameSystem {
                 followDestination,
             );
             const isFollowing = this.followingMemberIds.has(entityId);
-            if (isFollowing) {
-                if (slotDistance <= FOLLOW_STOP_DISTANCE) {
-                    this.followingMemberIds.delete(entityId);
-                    stopNavigation(entityId);
-                } else {
-                    navigateToPosition(entityId, followDestination);
-                }
-            } else if (slotDistance > FOLLOW_START_DISTANCE) {
-                this.followingMemberIds.add(entityId);
+            // if (isFollowing) {
+            //     if (slotDistance <= FOLLOW_STOP_DISTANCE) {
+            //         this.followingMemberIds.delete(entityId);
+            //         stopNavigation(entityId);
+            //     } else {
+            //         navigateToPosition(entityId, followDestination);
+            //     }
+            // } else if (slotDistance > FOLLOW_START_DISTANCE) {
+
+            // }
+
+            // this.followingMemberIds.add(entityId);
+            // navigateToPosition(entityId, followDestination);
+            if (slotDistance <= FOLLOW_STOP_DISTANCE) {
+                this.followingMemberIds.delete(entityId);
+                stopNavigation(entityId);
+            } else {
                 navigateToPosition(entityId, followDestination);
             }
-
             formationSlot++;
         }
     }
