@@ -1,65 +1,64 @@
-# BabylonJs + vite Boilerplate
+# Defiance Engine
 
 ## Description
 
-This is a BabylonJS + vite minimal boilerplate for development and production to work with **typescript**.
-It starts faster than webpack and allow debugging from vscode.
+Defiance Engine is a TypeScript BabylonJS + Vite engine for isometric CRPG's inspired by early 2000's Bioware games.
 
-## instructions
+Built from BabylonJS + Vite boilerplate: https://github.com/paganaye/babylonjs-vite-boilerplate
+
+## Packages
+
+- _BabylonJS:_ Game engine
+- _Vite:_ Frontend build tool
+- _OhmJS:_ Custom text parser
+
+## Instructions
 
 - clone or download the repo
 - npm install
 - For development: `npm run dev`
 - For production: `npm run build` then to preview what was built `npm run preview`
 
-## Development mode and debugging
-
-First `npm run dev`
-Then in vscode press F5, otherwise just open a browser at http://localhost:3000/
-
-## Live Demo
-
-You can see this repository live here:
-https://babylonjs-vite-boilerplate.vercel.app/
-
-## Production build
-
-First `npm run build`
-A `dist` folder is created and contains the distribution.
-You can `npm run preview` it on your development machine.
-Production preview runs at http://localhost:5000/ . The terminal will display external URLs if you want to test from a phone or tablet.
-
 ## File Structure
 
-### /index.html
+### src/components
 
-This file is used as a template by vite to create the actual **index.html** that will be served to the client.
+This folder contains definitions for data-only classes processed by systems and attached to entities.
 
-### /public
+### src/factories
 
-This folder contains your html asset. The files in this folder are served by the test webserver as root files.
+This folder contains factory classes for creating prefab entities.
 
-### /src
+### src/gui
 
-This is where you should place all your application code.
+This folder contains objects for rendering GUI, using [BabylonGUI](https://doc.babylonjs.com/features/featuresDeepDive/gui/gui).
 
-### /src/main.ts
+### src/processors
 
-This is the entry point of the app.
+This folder contains processor classes for running functions tied to specific enum types.
 
-### /src/AppOne.ts
+### src/modules
 
-A sample app that copy the code from the babylon.js playground.
+This folder contains standalone functions used in multiple areas of code.
 
-## Thank you!
+### src/registries
 
-Thank you for using it, feel free to contribute in any way you can/want, just keep in mind that this should stay as a very mimimalistic boilerplate.
-If you'd like to add complexity just fork it and let me know when you're done, so that I might reference it here in case someone comes looking for a more opinionated environment.
+This folder contains registries for singleton objects, including factories, processors, and systems.
 
-Enjoy!
+### src/scenes
 
-## Notes
+This folder contains classes defining scenes loaded into the game.
 
-- GUI: https://doc.babylonjs.com/toolsAndResources/guiEditor/
-- Scene Management: https://lawrencewhiteside.com/courses/babylon-js-ecs/dynamically-loading-systems-in-your-babylonjs-game/
-- Babylon ECS: https://lawrencewhiteside.com/courses/babylon-js-ecs/
+### src/states
+
+This folder contains objects for holding global state.
+
+### src/systems
+
+This folder contains system classes for processing components attached to entities per-frame.
+
+### src/types
+
+This folder contains files for defining interfaces, schemas, custom types, and enums.
+
+
