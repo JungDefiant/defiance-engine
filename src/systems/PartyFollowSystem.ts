@@ -23,6 +23,10 @@ export default class PartyFollowSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
     public update(deltaTime: number): void {
+        if (getControlState().actionPauseSet.size > 0) {
+            return;
+        }
+
         const controlState = getControlState();
         const gameplayState = getGameplayState();
 

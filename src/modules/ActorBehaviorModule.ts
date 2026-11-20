@@ -10,6 +10,7 @@ import {
 import { getGameplayState } from "./GameStateModule";
 import { queueNPCAction } from "./CombatModule";
 import {
+    getActorCollisionRadius,
     getActorPosition,
     hasLineOfSightToPosition,
 } from "./Collision3DModule";
@@ -18,11 +19,13 @@ import {
     setActorTargetFromEntity,
 } from "./TargetingModule";
 import { getTargetableActors } from "./ControlModule";
+import { stopNavigation } from "./ActorNavigationModule";
 import { ActorBehaviorFunctionProps } from "src/processors/ActorBehaviorProcessor";
 import {
     TARGET_SLOT_COUNT,
     TARGET_SLOT_RING_RADIUS_M,
 } from "src/constants/NavigationConstants";
+import { WEAPON_RANGE_STOP_FACTOR } from "src/constants/BehaviorConstants";
 
 interface TargetSlotSelection {
     targetEid: EntityId;
@@ -79,10 +82,25 @@ export function processDefaultDefensiveBehavior(
     }
 }
 
-export function checkWithinQueuedActionRange(actorState: ActorStateComponent) {
+export function checkWithinQueuedActionRange(
+    actorState: ActorStateComponent,
+): boolean {
+    return checkQueuedActionRange(actorState, 1);
+}
+
+export function checkWithinQueuedActionStopRange(
+    actorState: ActorStateComponent,
+): boolean {
+    return checkQueuedActionRange(actorState, WEAPON_RANGE_STOP_FACTOR);
+}
+
+function checkQueuedActionRange(
+    actorState: ActorStateComponent,
+    rangeFactor: number,
+): boolean {
     const queuedAction = actorState.queuedAction;
     if (!queuedAction) {
-        return;
+        return false;
     }
 
     const sourcePosition = getActorPosition(actorState.entityId);
@@ -92,7 +110,11 @@ export function checkWithinQueuedActionRange(actorState: ActorStateComponent) {
         return false;
     }
 
-    const actionRange = getActionRangeInMeters(queuedAction);
+    const actionRange = getActionReachInMeters(
+        actorState.entityId,
+        queuedAction,
+        rangeFactor,
+    );
     const isCurrentTargetInRange =
         Vector3.Distance(sourcePosition, currentTargetPosition) <= actionRange;
     const isInLineOfSight = hasLineOfSightToPosition(
@@ -102,8 +124,27 @@ export function checkWithinQueuedActionRange(actorState: ActorStateComponent) {
     return isCurrentTargetInRange && isInLineOfSight;
 }
 
-export function getEffectiveActionRange(actionData: AbilityData): number {
-    return getActionRangeInMeters(actionData) * 0.75;
+function getActionReachInMeters(
+    sourceEntityId: EntityId,
+    actionData: AbilityData,
+    rangeFactor: number = 1,
+): number {
+    return (
+        getActionRangeInMeters(actionData) * rangeFactor +
+        getActorCollisionRadius(sourceEntityId)
+    );
+}
+
+export function cancelQueuedActionNavigation(entityId: EntityId): void {
+    const actorState = getActorStateComponentArray()[entityId];
+    if (!actorState) {
+        return;
+    }
+
+    actorState.queuedAction = null;
+    actorState.queuedCostAttributeName = undefined;
+    releaseTargetSlot(actorState);
+    stopNavigation(entityId);
 }
 
 function queueActionAgainstClosestTargetInRange(
@@ -151,7 +192,10 @@ function getClosestTargetInRangeEntityId(
 
     let closestTarget: Nullable<TargetSlotSelection> = null;
     let closestDistance = Infinity;
-    const isTargetSlotRequired = isTargetSlotClaimRequired(actionData);
+    const isTargetSlotRequired = isTargetSlotClaimRequired(
+        sourceEntityId,
+        actionData,
+    );
     for (const eid of getTargetableActors(sourceEntityId, actionData)) {
         const targetPosition = getActorPosition(eid);
         if (!targetPosition) {
@@ -194,14 +238,27 @@ function getClosestTargetInRangeEntityId(
     return closestTarget;
 }
 
-function isTargetSlotClaimRequired(actionData: AbilityData): boolean {
-    return getActionRangeInMeters(actionData) <= TARGET_SLOT_RING_RADIUS_M;
+function isTargetSlotClaimRequired(
+    sourceEntityId: EntityId,
+    actionData: AbilityData,
+): boolean {
+    return (
+        getActionReachInMeters(sourceEntityId, actionData) <=
+        TARGET_SLOT_RING_RADIUS_M
+    );
 }
 
-function getSlotRingRadius(actionData: AbilityData): number {
-    const effectiveActionRange = getEffectiveActionRange(actionData);
-    if (effectiveActionRange < TARGET_SLOT_RING_RADIUS_M) {
-        return effectiveActionRange;
+function getSlotRingRadius(
+    sourceEntityId: EntityId,
+    actionData: AbilityData,
+): number {
+    const stopRange = getActionReachInMeters(
+        sourceEntityId,
+        actionData,
+        WEAPON_RANGE_STOP_FACTOR,
+    );
+    if (stopRange < TARGET_SLOT_RING_RADIUS_M) {
+        return stopRange;
     }
     return TARGET_SLOT_RING_RADIUS_M;
 }
@@ -232,7 +289,7 @@ export function getTargetSlotPosition(
     return getSlotPosition(
         fallbackTargetPosition,
         slotIndex,
-        getSlotRingRadius(queuedAction),
+        getSlotRingRadius(actorState.entityId, queuedAction),
     );
 }
 
@@ -267,7 +324,7 @@ function getFreeTargetSlotIndex(
         return -1;
     }
 
-    const ringRadius = getSlotRingRadius(actionData);
+    const ringRadius = getSlotRingRadius(sourceEntityId, actionData);
     let closestSlotIndex = -1;
     let closestSlotDistance = Infinity;
 
@@ -391,15 +448,4 @@ export function getTargetPosition(
     return actorState.currentTargetPosition ?? null;
 }
 
-export function getActorRadius(entityId: EntityId): number {
-    const actorState = getActorStateComponentArray()[entityId];
-    return actorState.attributes.size.currentValue ?? 0;
-}
 
-export function getTargetRadius(actorState: ActorStateComponent): number {
-    const targetEntityId = actorState.currentTargetEntityId;
-    if (targetEntityId !== undefined && targetEntityId >= 0) {
-        return getActorRadius(targetEntityId);
-    }
-    return 0;
-}

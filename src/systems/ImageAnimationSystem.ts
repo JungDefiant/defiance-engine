@@ -4,48 +4,53 @@ import { query } from "bitecs";
 import { ImageAnimationComponent } from "src/components/ImageAnimationComponent";
 import { GameScene } from "src/scenes/GameScene";
 import { getImageAnimationComponentArray } from "src/modules/ComponentModule";
+import { getControlState } from "src/modules/GameStateModule";
 
 export default class ImageAnimationSystem implements GameSystem {
-	public constructor(@inject(GameScene) private gameScene: GameScene) {}
+    public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
-	public update(deltaTime: number): void {
-		const imageAnimationComponentArray = getImageAnimationComponentArray();
+    public update(deltaTime: number): void {
+        if (getControlState().renderPauseSet.size > 0) {
+            return;
+        }
 
-		for (const eid of query(this.gameScene.world, [
-			imageAnimationComponentArray,
-		])) {
-			const imageAnimationComponent = imageAnimationComponentArray[eid];
+        const imageAnimationComponentArray = getImageAnimationComponentArray();
 
-			if (!imageAnimationComponent.isActive) {
-				return;
-			}
+        for (const eid of query(this.gameScene.world, [
+            imageAnimationComponentArray,
+        ])) {
+            const imageAnimationComponent = imageAnimationComponentArray[eid];
 
-			this.checkAnimationCellProperties(imageAnimationComponent);
-			this.incrementAnimationCell(deltaTime, imageAnimationComponent);
-		}
-	}
+            if (!imageAnimationComponent.isActive) {
+                continue;
+            }
 
-	private checkAnimationCellProperties(
-		imageAnimation: ImageAnimationComponent,
-	) {
-		if (!imageAnimation.maximumCells || !imageAnimation.timePerCell) {
-			imageAnimation.resetCellProperties();
-		}
-	}
+            this.checkAnimationCellProperties(imageAnimationComponent);
+            this.incrementAnimationCell(deltaTime, imageAnimationComponent);
+        }
+    }
 
-	private incrementAnimationCell(
-		deltaTime: number,
-		imageAnimation: ImageAnimationComponent,
-	) {
-		const spriteSheet = imageAnimation.spriteSheet;
-		imageAnimation.accumulatedTime += deltaTime;
-		if (imageAnimation.accumulatedTime >= imageAnimation.timePerCell) {
-			imageAnimation.accumulatedTime = 0;
-			spriteSheet.cellId += 1;
-		}
+    private checkAnimationCellProperties(
+        imageAnimation: ImageAnimationComponent,
+    ) {
+        if (!imageAnimation.maximumCells || !imageAnimation.timePerCell) {
+            imageAnimation.resetCellProperties();
+        }
+    }
 
-		if (spriteSheet.cellId > imageAnimation.maximumCells) {
-			spriteSheet.cellId = 1;
-		}
-	}
+    private incrementAnimationCell(
+        deltaTime: number,
+        imageAnimation: ImageAnimationComponent,
+    ) {
+        const spriteSheet = imageAnimation.spriteSheet;
+        imageAnimation.accumulatedTime += deltaTime;
+        if (imageAnimation.accumulatedTime >= imageAnimation.timePerCell) {
+            imageAnimation.accumulatedTime = 0;
+            spriteSheet.cellId += 1;
+        }
+
+        if (spriteSheet.cellId > imageAnimation.maximumCells) {
+            spriteSheet.cellId = 1;
+        }
+    }
 }

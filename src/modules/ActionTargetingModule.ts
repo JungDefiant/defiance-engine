@@ -9,7 +9,6 @@ import {
 import { TargetingInputType } from "src/types/CollisionTypes";
 import { getActorStateComponentArray } from "./ComponentModule";
 import {
-    getActorCollisionRadius,
     getActorPosition,
     hasLineOfSightToPosition,
 } from "./Collision3DModule";
@@ -24,7 +23,7 @@ import {
 } from "./ControlModule";
 import { getControlState, getGameScene } from "./GameStateModule";
 import { getTargetingInputProcessor } from "./ProcessorModule";
-import { getActionRangeInMeters } from "./TargetingModule";
+import { clearManualMovementDestination } from "./ActorNavigationModule";
 import { TargetingInputFunctionProps } from "src/processors/TargetingInputProcessor";
 import ControlState from "src/states/ControlState";
 
@@ -211,22 +210,10 @@ export function getValidTargetEntityIds(
     actionData: AbilityData,
 ): EntityId[] {
     const candidates = getTargetableActors(sourceEntityId, actionData);
-    const sourcePosition = getActorPosition(sourceEntityId);
-    if (!sourcePosition) {
-        return [];
-    }
-
-    const range = getActionRangeInMeters(actionData);
     const validEntityIds: EntityId[] = [];
     for (const entityId of candidates) {
         const targetPosition = getActorPosition(entityId);
         if (!targetPosition) {
-            continue;
-        }
-        if (
-            Vector3.Distance(sourcePosition, targetPosition) >
-            range + getActorCollisionRadius(entityId)
-        ) {
             continue;
         }
         if (!hasLineOfSightToPosition(sourceEntityId, targetPosition)) {
@@ -246,6 +233,7 @@ function finalizeActionTargeting(sourceEntityId: EntityId): void {
     }
 
     const restoreTacticalPause = controlState.wasTacticalPauseActive;
+    clearManualMovementDestination(sourceEntityId);
     resetTargetingInControlState();
     queuePlayerAction(sourceEntityId, actionSlotKey);
     setTacticalPause(restoreTacticalPause);

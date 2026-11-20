@@ -11,6 +11,8 @@ import {
 import {
     getNavigationCrowd,
     getNavigationObstacles,
+    getNavigationPlugin,
+    setNavigationCrowdPaused,
     syncActorWorldSprite,
 } from "src/modules/ActorNavigationModule";
 import { clamp, cmToMeters } from "src/modules/Utils";
@@ -21,11 +23,16 @@ import {
     NAV_FACING_MIN_SPEED,
 } from "src/constants/NavigationConstants";
 import CollisionComponent from "src/components/CollisionComponent";
+import { getControlState } from "src/modules/GameStateModule";
 
 export default class ActorNavigationSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
     public update(deltaTime: number): void {
+        if (getControlState().actionPauseSet.size > 0) {
+            return;
+        }
+
         const navigationCrowd = getNavigationCrowd();
         if (navigationCrowd) {
             navigationCrowd.update(deltaTime);
@@ -75,6 +82,7 @@ export default class ActorNavigationSystem implements GameSystem {
         ) {
             navigationComponent.isNavigating = false;
             navigationComponent.destination = null;
+            navigationComponent.isManualMovementDestination = false;
             const onArrive = navigationComponent.onDestinationReachedEvent;
             navigationComponent.onDestinationReachedEvent = null;
             if (onArrive) {

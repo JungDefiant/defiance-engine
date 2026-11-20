@@ -110,14 +110,9 @@ export class RenderQueueEntryFloatingText implements RenderQueueEntry {
             floatingTextUI.isVisible = false;
             floatingTextUI.isPointerBlocker = false;
 
-            if (gameplayState.playerEntityIds.includes(entityId)) {
-                const playerGUI = playerGuiComponentArray[entityId];
-                playerGUI.getRoot().addControl(floatingTextUI);
-            } else {
-                const targetSprite = characterSpriteComponentArray[entityId];
-                userInterfaceState.sceneGUI.addControl(floatingTextUI);
-                floatingTextUI.linkWithMesh(targetSprite.getValue());
-            }
+            const targetSprite = characterSpriteComponentArray[entityId];
+            userInterfaceState.sceneGUI.addControl(floatingTextUI);
+            floatingTextUI.linkWithMesh(targetSprite.getValue());
 
             addComponent(
                 gameScene.world,

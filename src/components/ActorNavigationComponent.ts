@@ -11,6 +11,7 @@ export default class ActorNavigationComponent implements Component {
     agentIndex: number = -1;
     isNavigating: boolean = false;
     isCollisionBlocked: boolean = false;
+    isManualMovementDestination: boolean = false;
     agentTransformNode: Nullable<TransformNode> = null;
     onDestinationReachedEvent: Nullable<() => void> = null;
 
