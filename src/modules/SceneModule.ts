@@ -66,11 +66,17 @@ import { SystemRegistry } from "src/registries/SystemRegistry";
 import { GameStateRegistry } from "src/registries/GameStateRegistry";
 import { ComponentRegistry } from "src/registries/ComponentRegistry";
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
-import { initNavigation, navigateToPosition } from "./ActorNavigationModule";
+import {
+    getActorNavigation,
+    getNavigationPlugin,
+    initNavigation,
+    navigateToManualPosition,
+} from "./ActorNavigationModule";
 import { createEnvironment } from "./EnvironmentModule";
 import { checkEventByTrigger, filterSceneEvents } from "./EventModule";
 import { getActorStateComponentArray } from "./ComponentModule";
 import { handleTargetingPointerDown } from "./ActionTargetingModule";
+import { cancelQueuedActionNavigation } from "./ActorBehaviorModule";
 
 export async function initGameScene(sceneId: string) {
     const engine = container.resolve(Engine);
@@ -94,6 +100,11 @@ export async function initGameScene(sceneId: string) {
     registerComponentArrays(newComponentRegistry);
     registerProcessors(newProcessorRegistry);
     await startFactories(newFactoryRegistry);
+
+    const navigationPlugin = getNavigationPlugin();
+    if (navigationPlugin) {
+        navigationPlugin.timeFactor = 0;
+    }
 
     createUserInterfaceState();
     await loadStartingPlayerParty();
@@ -355,6 +366,20 @@ export function createSceneCamera(scene: GameScene): void {
     registerScenePointerBindings(scene, gameCanvas);
 }
 
+function navigateSelectedPlayerToPosition(destination: Vector3): void {
+    const selectedPlayerEID = getGameplayState().selectedPlayerEID;
+    const selectedNavigation = getActorNavigation(selectedPlayerEID);
+    if (!selectedNavigation) {
+        return;
+    }
+
+    if (!selectedNavigation.isManualMovementDestination) {
+        cancelQueuedActionNavigation(selectedPlayerEID);
+    }
+
+    navigateToManualPosition(selectedPlayerEID, destination);
+}
+
 function registerScenePointerBindings(
     scene: GameScene,
     gameCanvas: HTMLCanvasElement,
@@ -412,10 +437,7 @@ function registerScenePointerBindings(
                 (mesh) => mesh.name === "env_floor",
             );
             if (groundPick?.hit && groundPick.pickedPoint) {
-                navigateToPosition(
-                    gameplayState.selectedPlayerEID,
-                    groundPick.pickedPoint,
-                );
+                navigateSelectedPlayerToPosition(groundPick.pickedPoint);
             }
             return;
         }
@@ -461,10 +483,7 @@ function registerScenePointerBindings(
                 (mesh) => mesh.name === "env_floor",
             );
             if (groundPick?.hit && groundPick.pickedPoint) {
-                navigateToPosition(
-                    gameplayState.selectedPlayerEID,
-                    groundPick.pickedPoint,
-                );
+                navigateSelectedPlayerToPosition(groundPick.pickedPoint);
             }
         }
     });

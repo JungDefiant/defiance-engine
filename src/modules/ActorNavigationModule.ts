@@ -246,6 +246,33 @@ export function getActorNavigation(
     return navigationComponent ?? null;
 }
 
+export function navigateToManualPosition(
+    entityId: EntityId,
+    destination: Vector3,
+): void {
+    const navigationComponent = getActorNavigation(entityId);
+    if (!navigationComponent) {
+        return;
+    }
+
+    const actorState = getActorStateComponentArray()[entityId];
+    if (actorState && actorState.isCastingAction) {
+        return;
+    }
+
+    navigationComponent.isManualMovementDestination = true;
+    navigateToPosition(entityId, destination);
+}
+
+export function clearManualMovementDestination(entityId: EntityId): void {
+    const navigationComponent = getActorNavigation(entityId);
+    if (!navigationComponent) {
+        return;
+    }
+
+    navigationComponent.isManualMovementDestination = false;
+}
+
 export function navigateToPosition(
     entityId: EntityId,
     destination: Vector3,
@@ -295,6 +322,8 @@ export function stopNavigation(entityId: EntityId): void {
         return;
     }
 
+    navigationComponent.isManualMovementDestination = false;
+
     if (!navigationComponent.isNavigating && !navigationComponent.destination) {
         return;
     }
@@ -333,9 +362,22 @@ export function teleportNavigationAgent(
     }
 
     navigationComponent.position.copyFrom(position);
+    navigationComponent.isManualMovementDestination = false;
 
     let navigationCrowd = getNavigationCrowd();
     if (navigationComponent.agentIndex >= 0 && navigationCrowd) {
         navigationCrowd.agentTeleport(navigationComponent.agentIndex, position);
     }
+}
+
+export function setNavigationCrowdPaused(isPaused: boolean): void {
+    const navigationPlugin = getNavigationPlugin();
+    if (!navigationPlugin) {
+        return;
+    }
+    if (isPaused) {
+        navigationPlugin.timeFactor = 0;
+        return;
+    }
+    navigationPlugin.timeFactor = 1;
 }

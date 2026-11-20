@@ -23,11 +23,16 @@ import {
     deliverAbilityEffectsBySphere,
 } from "src/modules/TargetingModule";
 import { cmToMeters } from "src/modules/Utils";
+import { getControlState } from "src/modules/GameStateModule";
 
 export default class ProjectileSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
     public update(deltaTime: number): void {
+        if (getControlState().actionPauseSet.size > 0) {
+            return;
+        }
+
         const projectileComponentArray = getProjectileComponentArray();
         for (const entityId of query(this.gameScene.world, [
             projectileComponentArray,
@@ -35,11 +40,7 @@ export default class ProjectileSystem implements GameSystem {
             const projectile = projectileComponentArray[entityId];
 
             if (projectile.targetEntityId) {
-                this.updateTargetedProjectile(
-                    deltaTime,
-                    entityId,
-                    projectile,
-                );
+                this.updateTargetedProjectile(deltaTime, entityId, projectile);
             } else if (projectile.targetPosition && projectile.sphereRadius) {
                 this.updatePositionalProjectile(deltaTime, projectile);
             }

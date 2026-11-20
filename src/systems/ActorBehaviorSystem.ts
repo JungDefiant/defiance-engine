@@ -9,10 +9,8 @@ import {
 import { getControlState, getGameplayState } from "src/modules/GameStateModule";
 import {
     checkWithinQueuedActionRange,
-    getActorRadius,
-    getEffectiveActionRange,
+    checkWithinQueuedActionStopRange,
     getTargetPosition,
-    getTargetRadius,
     getTargetSlotPosition,
     releaseTargetSlot,
     trackQueuedActionTarget,
@@ -27,6 +25,7 @@ import {
 } from "src/modules/CombatModule";
 import { setActorTargetFromEntity } from "src/modules/TargetingModule";
 import {
+    clearManualMovementDestination,
     navigateToPosition,
     stopNavigation,
 } from "src/modules/ActorNavigationModule";
@@ -34,13 +33,7 @@ import { ActorBehaviorFunctionProps } from "src/processors/ActorBehaviorProcesso
 import ActorStateComponent from "src/components/ActorStateComponent";
 import ActorBehaviorComponent from "src/components/ActorBehaviorComponent";
 import { Vector3 } from "@babylonjs/core";
-import {
-    getActorPosition,
-    hasLineOfSightToPosition,
-} from "src/modules/Collision3DModule";
-import { DEFAULT_ACTOR_COLLISION_RADIUS } from "src/constants/NavigationConstants";
-import { cmToMeters } from "src/modules/Utils";
-import ActorNavigationComponent from "src/components/ActorNavigationComponent";
+import { hasLineOfSightToPosition } from "src/modules/Collision3DModule";
 
 export default class ActorBehaviorSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
@@ -64,32 +57,35 @@ export default class ActorBehaviorSystem implements GameSystem {
             const actorBehavior = behaviorComponentArray[entityId];
             const actorNavigation = actorNavigationComponentArray[entityId];
 
+            if (actorNavigation?.isManualMovementDestination) {
+                continue;
+            }
+
             if (!actorState.queuedAction) {
                 this.decideAction(actorState, actorBehavior);
             }
 
             if (actorState.queuedAction) {
-                this.performAction(actorState, actorNavigation);
+                this.performAction(actorState);
             }
         }
     }
 
-    private performAction(
-        actorState: ActorStateComponent,
-        actorNavigation: ActorNavigationComponent,
-    ): void {
+    private performAction(actorState: ActorStateComponent): void {
         if (!this.checkValidTarget(actorState)) {
             releaseTargetSlot(actorState);
             actorState.queuedAction = null;
             return;
         }
 
-        if (
-            !checkWithinQueuedActionRange(actorState) &&
-            !actorNavigation.destination
-        ) {
-            this.moveTowardTarget(actorState);
+        if (checkWithinQueuedActionRange(actorState)) {
+            if (checkWithinQueuedActionStopRange(actorState)) {
+                stopNavigation(actorState.entityId);
+            }
+            return;
         }
+
+        this.moveTowardTarget(actorState);
     }
 
     private checkValidTarget(actorState: ActorStateComponent): boolean {
@@ -191,31 +187,8 @@ export default class ActorBehaviorSystem implements GameSystem {
             return;
         }
 
-        const sourcePosition = getActorPosition(actorState.entityId);
         const targetPosition = getTargetPosition(actorState);
-        if (!sourcePosition || !targetPosition) {
-            stopNavigation(actorState.entityId);
-            releaseTargetSlot(actorState);
-            actorState.queuedAction = null;
-            return;
-        }
-
-        const effectiveActionRange = getEffectiveActionRange(
-            actorState.queuedAction,
-        );
-        const isCurrentTargetInRange =
-            Vector3.Distance(sourcePosition, targetPosition) <=
-            effectiveActionRange + cmToMeters(DEFAULT_ACTOR_COLLISION_RADIUS);
-        if (isCurrentTargetInRange) {
-            stopNavigation(actorState.entityId);
-            return;
-        }
-
-        const isInLineOfSight = hasLineOfSightToPosition(
-            actorState.entityId,
-            targetPosition,
-        );
-        if (!isInLineOfSight) {
+        if (!targetPosition) {
             stopNavigation(actorState.entityId);
             releaseTargetSlot(actorState);
             actorState.queuedAction = null;
@@ -230,6 +203,7 @@ export default class ActorBehaviorSystem implements GameSystem {
         actorState: ActorStateComponent,
         targetPosition: Vector3,
     ): void {
+        clearManualMovementDestination(actorState.entityId);
         const slotPosition = getTargetSlotPosition(actorState, targetPosition);
         if (!slotPosition) {
             navigateToPosition(actorState.entityId, targetPosition);

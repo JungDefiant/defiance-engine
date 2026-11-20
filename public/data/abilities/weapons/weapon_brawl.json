@@ -17,9 +17,8 @@
 	"target": "enemy",
 	"recovery": 160,
 	"targetingShape": {
-		"type": "cone",
-		"range": 150,
-		"angle": 90
+		"type": "direct",
+		"range": 150
 	},
 	"effectData": [
 		{

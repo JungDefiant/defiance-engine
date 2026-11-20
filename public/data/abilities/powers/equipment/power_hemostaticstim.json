@@ -19,7 +19,10 @@
 	"cost": 1,
 	"costAttribute": "charges",
 	"maxCharges": 2,
-	"targetingShape": {	},
+	"targetingShape": {
+		"type": "direct",
+		"range": 150
+		},
 	"effectData": [
 		{
 			"id": "healing",

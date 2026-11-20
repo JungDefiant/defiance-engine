@@ -350,7 +350,7 @@ export default class ActorStateComponent implements Component {
                         equipment1AbilityData &&
                         equipment1AbilityData.maxCharges
                     ) {
-                        thisActorState.attributes.chargesWeapon = {
+                        thisActorState.attributes.chargesEquip1 = {
                             baseValue: equipment1AbilityData.maxCharges,
                             maximumValue: equipment1AbilityData.maxCharges,
                             currentValue: equipment1AbilityData.maxCharges,
@@ -383,7 +383,7 @@ export default class ActorStateComponent implements Component {
                         equipment2AbilityData &&
                         equipment2AbilityData.maxCharges
                     ) {
-                        thisActorState.attributes.chargesWeapon = {
+                        thisActorState.attributes.chargesEquip2 = {
                             baseValue: equipment2AbilityData.maxCharges,
                             maximumValue: equipment2AbilityData.maxCharges,
                             currentValue: equipment2AbilityData.maxCharges,
