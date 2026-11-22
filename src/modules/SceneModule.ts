@@ -463,7 +463,7 @@ function registerScenePointerBindings(
                 scene.pointerY,
                 (mesh) => mesh.name.startsWith("enBattlerSprite_"),
             );
-            if (enemyPick?.hit && enemyPick.pickedMesh) {
+            if (enemyPick && enemyPick.hit && enemyPick.pickedMesh) {
                 const pickedEntityId = (
                     enemyPick.pickedMesh.metadata as
                         | Record<string, number>

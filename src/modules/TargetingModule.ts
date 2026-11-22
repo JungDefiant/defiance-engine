@@ -159,8 +159,7 @@ function deliverSphereEffectsAtPosition(
         const radialDistance = radius + getActorCollisionRadius(entityId);
 
         if (
-            Vector3.Distance(centerPosition, targetPosition) <=
-            radialDistance
+            Vector3.Distance(centerPosition, targetPosition) <= radialDistance
         ) {
             matchedEntityIds.push(entityId);
         }
@@ -238,11 +237,9 @@ export function getAbilityTargetsByList(
                 ? gameplayState.enemyEntityIds
                 : gameplayState.playerEntityIds;
         case AbilityTarget.ally:
-            return (
-                isSourcePlayer
-                    ? gameplayState.playerEntityIds
-                    : gameplayState.enemyEntityIds
-            ).filter((eid) => eid !== sourceEid);
+            return isSourcePlayer
+                ? gameplayState.playerEntityIds
+                : gameplayState.enemyEntityIds;
         default:
             return [];
     }

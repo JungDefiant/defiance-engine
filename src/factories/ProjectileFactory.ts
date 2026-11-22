@@ -43,7 +43,7 @@ export class ProjectileFactory implements EntityFactory {
     public createEntityFromTargetingShapeProperties(
         props: TargetingShapeFunctionProps,
     ): EntityId {
-        if (!props.targetEntityId) {
+        if (!props.targetEntityId || props.targetEntityId < 0) {
             return -1;
         }
 
