@@ -381,30 +381,13 @@ export function getTargetableActors(
     }
 
     return candidateEids.filter((entityId) => {
-        if (entityId === sourceEntityId || !getActorPosition(entityId)) {
+        if (
+            (entityId === sourceEntityId && !wantsAllies) ||
+            !getActorPosition(entityId)
+        ) {
             return false;
         }
         const actorState = actorStateComponentArray[entityId];
         return actorState && !actorState.isDefeated;
     });
-}
-
-function distanceToSegment(
-    point: Vector3,
-    segmentStart: Vector3,
-    segmentEnd: Vector3,
-): number {
-    const segment = segmentEnd.subtract(segmentStart);
-    const segmentLengthSquared = segment.lengthSquared();
-    if (segmentLengthSquared === 0) {
-        return Vector3.Distance(point, segmentStart);
-    }
-    const projection = clamp(
-        Vector3.Dot(point.subtract(segmentStart), segment) /
-            segmentLengthSquared,
-        0,
-        1,
-    );
-    const closestPoint = segmentStart.add(segment.scale(projection));
-    return Vector3.Distance(point, closestPoint);
 }

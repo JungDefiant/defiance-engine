@@ -76,7 +76,10 @@ import { createEnvironment } from "./EnvironmentModule";
 import { checkEventByTrigger, filterSceneEvents } from "./EventModule";
 import { getActorStateComponentArray } from "./ComponentModule";
 import { handleTargetingPointerDown } from "./ActionTargetingModule";
-import { cancelQueuedActionNavigation } from "./ActorBehaviorModule";
+import {
+    cancelQueuedActionNavigation,
+    clearActorTargetAndQueuedAction,
+} from "./ActorBehaviorModule";
 
 export async function initGameScene(sceneId: string) {
     const engine = container.resolve(Engine);
@@ -369,12 +372,19 @@ export function createSceneCamera(scene: GameScene): void {
 function navigateSelectedPlayerToPosition(destination: Vector3): void {
     const selectedPlayerEID = getGameplayState().selectedPlayerEID;
     const selectedNavigation = getActorNavigation(selectedPlayerEID);
-    if (!selectedNavigation) {
+    const selectedActorState = getActorStateComponentArray()[selectedPlayerEID];
+    if (!selectedNavigation || !selectedActorState) {
+        return;
+    }
+
+    if (selectedActorState.isCastingAction) {
         return;
     }
 
     if (!selectedNavigation.isManualMovementDestination) {
         cancelQueuedActionNavigation(selectedPlayerEID);
+    } else {
+        clearActorTargetAndQueuedAction(selectedActorState);
     }
 
     navigateToManualPosition(selectedPlayerEID, destination);
@@ -463,7 +473,7 @@ function registerScenePointerBindings(
                 scene.pointerY,
                 (mesh) => mesh.name.startsWith("enBattlerSprite_"),
             );
-            if (enemyPick?.hit && enemyPick.pickedMesh) {
+            if (enemyPick && enemyPick.hit && enemyPick.pickedMesh) {
                 const pickedEntityId = (
                     enemyPick.pickedMesh.metadata as
                         | Record<string, number>

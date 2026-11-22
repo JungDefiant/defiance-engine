@@ -3,7 +3,6 @@ import { GameScene } from "src/scenes/GameScene";
 import { getControlState, getGameplayState } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
 import { queuePlayerAction } from "src/modules/CombatModule";
-import { getActorNavigation } from "src/modules/ActorNavigationModule";
 import { LoadoutSlotKey } from "src/types/AbilityTypes";
 import GameSystem from "./GameSystem";
 import { CombatState } from "src/types/CombatTypes";
@@ -27,11 +26,6 @@ export default class SelectedPlayerControlSystem implements GameSystem {
         const actorStateComponentArray = getActorStateComponentArray();
         const selectedActorState = actorStateComponentArray[selectedEid];
         if (!selectedActorState || selectedActorState.isDefeated) {
-            return;
-        }
-
-        const selectedNavigation = getActorNavigation(selectedEid);
-        if (selectedNavigation?.isManualMovementDestination) {
             return;
         }
 

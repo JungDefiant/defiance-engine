@@ -38,10 +38,7 @@ import {
 } from "./RenderModule";
 import { disposeEnemyEntities, resetPlayerActorState } from "./CharacterModule";
 import { clearCombatHudEntries } from "./UserInterfaceModule";
-import {
-    clearAllTargetSlots,
-    releaseTargetSlots,
-} from "./ActorBehaviorModule";
+import { clearAllTargetSlots, releaseTargetSlots } from "./ActorBehaviorModule";
 import {
     getControlState,
     getGameplayState,
@@ -60,7 +57,6 @@ import {
 } from "./ControlModule";
 import { checkEventByTrigger } from "./EventModule";
 import { CombatState } from "src/types/CombatTypes";
-import { setActorTargetFromEntity } from "./TargetingModule";
 
 export async function startCombat(encId: string): Promise<void> {
     const gameScene = getGameScene();

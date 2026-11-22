@@ -90,7 +90,7 @@ export default class ActorBehaviorSystem implements GameSystem {
 
     private checkValidTarget(actorState: ActorStateComponent): boolean {
         const targetEntityId = actorState.currentTargetEntityId;
-        if (!targetEntityId) {
+        if (!targetEntityId || targetEntityId < 0) {
             return false;
         }
 

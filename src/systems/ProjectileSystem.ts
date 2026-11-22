@@ -39,7 +39,7 @@ export default class ProjectileSystem implements GameSystem {
         ])) {
             const projectile = projectileComponentArray[entityId];
 
-            if (projectile.targetEntityId) {
+            if (projectile.targetEntityId && projectile.targetEntityId >= 0) {
                 this.updateTargetedProjectile(deltaTime, entityId, projectile);
             } else if (projectile.targetPosition && projectile.sphereRadius) {
                 this.updatePositionalProjectile(deltaTime, projectile);
