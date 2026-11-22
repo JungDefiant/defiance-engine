@@ -141,10 +141,19 @@ export function cancelQueuedActionNavigation(entityId: EntityId): void {
         return;
     }
 
+    clearActorTargetAndQueuedAction(actorState);
+    stopNavigation(entityId);
+}
+
+export function clearActorTargetAndQueuedAction(
+    actorState: ActorStateComponent,
+): void {
     actorState.queuedAction = null;
     actorState.queuedCostAttributeName = undefined;
+    actorState.currentTargetEntityId = undefined;
+    actorState.currentTargetPosition = undefined;
+    actorState.currentAimDirection = undefined;
     releaseTargetSlot(actorState);
-    stopNavigation(entityId);
 }
 
 function queueActionAgainstClosestTargetInRange(
@@ -330,11 +339,7 @@ function getFreeTargetSlotIndex(
 
     for (let slotIndex = 0; slotIndex < TARGET_SLOT_COUNT; slotIndex++) {
         if (
-            !isTargetSlotAvailable(
-                sourceEntityId,
-                targetActorState,
-                slotIndex,
-            )
+            !isTargetSlotAvailable(sourceEntityId, targetActorState, slotIndex)
         ) {
             continue;
         }
@@ -447,5 +452,3 @@ export function getTargetPosition(
     }
     return actorState.currentTargetPosition ?? null;
 }
-
-
