@@ -45,7 +45,7 @@ export default class ActorStateSystem implements GameSystem {
         deltaTime: number,
         actorState: ActorStateComponent,
     ) {
-        if (getGameplayState().combatState !== CombatState.Active) {
+        if (getGameplayState().combatState !== "Active") {
             return;
         }
 

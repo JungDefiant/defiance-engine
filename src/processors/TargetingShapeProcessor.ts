@@ -30,7 +30,10 @@ export type TargetingShapeFunction = (
 ) => void;
 
 export class TargetingShapeProcessor implements Processor {
-    private processorFunctions: Record<TargetingRangeType, Function>;
+    private processorFunctions: Record<
+        TargetingRangeType,
+        TargetingShapeFunction
+    >;
 
     public constructor() {
         this.processorFunctions = {
@@ -42,7 +45,7 @@ export class TargetingShapeProcessor implements Processor {
         };
     }
 
-    setProcessorFunction(key: string, value: Function): void {
+    setProcessorFunction(key: string, value: TargetingShapeFunction): void {
         const parsedKey = key as TargetingRangeType;
         this.processorFunctions[parsedKey] = value;
     }
@@ -52,7 +55,7 @@ export class TargetingShapeProcessor implements Processor {
         this.processorFunctions[parsedKey] = () => {};
     }
 
-    getProcessorFunction(key: string): Function {
+    getProcessorFunction(key: string): TargetingShapeFunction {
         const parsedKey = key as TargetingRangeType;
         return this.processorFunctions[parsedKey];
     }

@@ -47,8 +47,7 @@ export default class UserInterfaceSystem implements GameSystem {
         playerActorState: ActorStateComponent,
         playerGui: PlayerGUIComponent,
     ) {
-        const isCombatActive =
-            getGameplayState().combatState === CombatState.Active;
+        const isCombatActive = getGameplayState().combatState === "Active";
 
         playerGui.setRecoveryBarVisible(isCombatActive);
         playerGui.setQueuedActionVisible(isCombatActive);

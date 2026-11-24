@@ -33,7 +33,7 @@ export default class PartyFollowSystem implements GameSystem {
         const navigationState = getNavigationState();
 
         if (
-            gameplayState.combatState === CombatState.Active ||
+            gameplayState.combatState === "Active" ||
             controlState.controlPauseSet.size > 0
         ) {
             return;

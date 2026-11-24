@@ -8,6 +8,7 @@ import { TargetingPreviewProcessor } from "src/processors/TargetingPreviewProces
 import { ProcessorRegistry } from "src/registries/ProcessorRegistry";
 import { container } from "tsyringe";
 import { ActorBehaviorProcessor } from "src/processors/ActorBehaviorProcessor";
+import { CombatStateProcessor } from "src/processors/CombatModeProcessor";
 
 export function getGameEventProcessor(): GameEventProcessor {
     const processorRegistry = container.resolve(ProcessorRegistry);
@@ -60,5 +61,12 @@ export function getActorBehaviorProcessor(): ActorBehaviorProcessor {
     const processorRegistry = container.resolve(ProcessorRegistry);
     return processorRegistry.getProcessorByProcessorId(
         ActorBehaviorProcessor.name,
+    );
+}
+
+export function getCombatStateProcessor(): CombatStateProcessor {
+    const processorRegistry = container.resolve(ProcessorRegistry);
+    return processorRegistry.getProcessorByProcessorId(
+        CombatStateProcessor.name,
     );
 }

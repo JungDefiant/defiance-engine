@@ -1,6 +1,1 @@
-export enum CombatState {
-    Inactive,
-    Active,
-    Victory,
-    Gameover,
-}
+export type CombatState = "Inactive" | "Active" | "Gameover";

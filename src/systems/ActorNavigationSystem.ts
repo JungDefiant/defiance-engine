@@ -12,7 +12,6 @@ import {
     getNavigationCrowd,
     getNavigationObstacles,
     getNavigationPlugin,
-    setNavigationCrowdPaused,
     syncActorWorldSprite,
 } from "src/modules/ActorNavigationModule";
 import { clamp, cmToMeters } from "src/modules/Utils";
@@ -29,8 +28,12 @@ export default class ActorNavigationSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
     public update(deltaTime: number): void {
-        if (getControlState().actionPauseSet.size > 0) {
+        const controlState = getControlState();
+        if (controlState.actionPauseSet.size > 0) {
+            this.setNavigationPauseState(true);
             return;
+        } else {
+            this.setNavigationPauseState(false);
         }
 
         const navigationCrowd = getNavigationCrowd();
@@ -67,6 +70,15 @@ export default class ActorNavigationSystem implements GameSystem {
             this.handleDestinationReached(navigationComponent);
             syncActorWorldSprite(entityId, navigationComponent.position);
         }
+    }
+
+    private setNavigationPauseState(isPaused: boolean): void {
+        const navigationPlugin = getNavigationPlugin();
+        if (!navigationPlugin) {
+            return;
+        }
+
+        navigationPlugin.timeFactor = isPaused ? 0 : 1;
     }
 
     private handleDestinationReached(

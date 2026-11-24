@@ -56,40 +56,14 @@ import {
     resetCombatModeActionManager,
 } from "./ControlModule";
 import { checkEventByTrigger } from "./EventModule";
-import { CombatState } from "src/types/CombatTypes";
 
-export async function startCombat(encId: string): Promise<void> {
+export async function startCombat(): Promise<void> {
     const gameScene = getGameScene();
-    const enemyFactory = getEnemyFactory();
-    const controlState = getControlState();
     const gameplayState = getGameplayState();
     const actorStateComponentArray = getActorStateComponentArray();
     await setCombatGameMode();
 
-    const encounter = gameScene.encounters[encId];
-
-    gameplayState.combatState = CombatState.Active;
-
-    for (let i = 0; i < encounter.length; i++) {
-        const enId = encounter[i];
-        const offsetVector = new Vector3(
-            0,
-            0,
-            COMBAT_ENEMY_SPAWN_Z_OFFSET +
-                (encounter.length - 1) * -SPAWN_OFFSET +
-                i * SPAWN_OFFSET * 2,
-        );
-        const spawnPosition = BASE_SPAWN_POSITION.add(offsetVector);
-        const newEnemy = await enemyFactory.createEntityFromFileAtPosition(
-            enId,
-            spawnPosition,
-        );
-        gameplayState.enemyEntityIds.push(newEnemy);
-        const enActorData = actorStateComponentArray[newEnemy];
-        enActorData.name = enActorData.name.concat(
-            ` ${String.fromCharCode(65 + i)}`,
-        );
-    }
+    gameplayState.combatState = "Active";
 
     resetCombatModeActionManager();
 
@@ -101,9 +75,8 @@ export async function startCombat(encId: string): Promise<void> {
         recoveryTimerAttribute.currentValue = 0;
     }
 
-    controlState.actionPauseSet.delete(PAUSE_RENDERQUEUE);
-
     checkEventByTrigger("OnCombatStart");
+    setTacticalPause(true);
 }
 
 export function endCombat() {
@@ -113,14 +86,9 @@ export function endCombat() {
     disposeEnemyEntities();
     resetPlayerActorState();
     clearActionPause();
-    resetCombatStateToInactive();
+    setTacticalPause(false);
     setExploreGameMode();
     checkEventByTrigger("OnCombatEnd");
-}
-
-function resetCombatStateToInactive() {
-    const gameplayState = getGameplayState();
-    gameplayState.combatState = CombatState.Inactive;
 }
 
 export function combatActionManager() {
@@ -166,8 +134,8 @@ export function getValidatedPlayerAction(
 ): Nullable<AbilityData> {
     const gameplayState = getGameplayState();
     if (
-        gameplayState.combatState === CombatState.Victory ||
-        gameplayState.combatState === CombatState.Gameover
+        gameplayState.combatState === "Inactive" ||
+        gameplayState.combatState === "Gameover"
     ) {
         return null;
     }
@@ -335,7 +303,7 @@ export function startActionRecovery(
     sourceActorState: ActorStateComponent,
     actionData: AbilityData,
 ): void {
-    if (getGameplayState().combatState !== CombatState.Active) {
+    if (getGameplayState().combatState !== "Active") {
         return;
     }
 
@@ -381,7 +349,7 @@ export function defeatActor(actor: ActorStateComponent) {
             }
         }
 
-        gameplayState.combatState = CombatState.Gameover;
+        gameplayState.combatState = "Gameover";
     } else {
         const enemyIndex = gameplayState.enemyEntityIds.indexOf(actor.entityId);
         if (enemyIndex >= 0) {
@@ -401,7 +369,7 @@ export function defeatActor(actor: ActorStateComponent) {
             }
         }
 
-        gameplayState.combatState = CombatState.Victory;
+        gameplayState.combatState = "Inactive";
     }
 }
 

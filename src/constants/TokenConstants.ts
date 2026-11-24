@@ -44,6 +44,8 @@ import TargetingPreviewSystem from "src/systems/TargetingPreviewSystem";
 import TargetingPreviewState from "src/states/TargetingPreviewState";
 import { ActorBehaviorProcessor } from "src/processors/ActorBehaviorProcessor";
 import VisibilitySystem from "src/systems/VisibilitySystem";
+import { CombatStateProcessor } from "src/processors/CombatModeProcessor";
+import CombatManagementSystem from "src/systems/CombatManagementSystem";
 
 // The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
@@ -61,6 +63,7 @@ export const SYSTEM_TOKENS = [
     TargetingPreviewSystem,
     ImageAnimationSystem,
     RenderQueueSystem,
+    CombatManagementSystem,
 ];
 
 export const FACTORY_TOKENS = [
@@ -76,6 +79,7 @@ export const PROCESSOR_TOKENS = [
     AbilityEffectCalculationProcessor,
     GameEventProcessor,
     CollisionBehaviorProcessor,
+    CombatStateProcessor,
     TargetingShapeProcessor,
     TargetingInputProcessor,
     TargetingPreviewProcessor,

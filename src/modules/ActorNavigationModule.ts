@@ -369,15 +369,3 @@ export function teleportNavigationAgent(
         navigationCrowd.agentTeleport(navigationComponent.agentIndex, position);
     }
 }
-
-export function setNavigationCrowdPaused(isPaused: boolean): void {
-    const navigationPlugin = getNavigationPlugin();
-    if (!navigationPlugin) {
-        return;
-    }
-    if (isPaused) {
-        navigationPlugin.timeFactor = 0;
-        return;
-    }
-    navigationPlugin.timeFactor = 1;
-}
