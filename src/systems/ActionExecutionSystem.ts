@@ -2,30 +2,21 @@ import { inject } from "tsyringe";
 import { query } from "bitecs";
 import GameSystem from "src/systems/GameSystem";
 import ActorStateComponent from "src/components/ActorStateComponent";
-import {
-    BASE_CAST_TIME_MS,
-    PAUSE_GAMEOVER,
-} from "src/constants/GeneralConstants";
+import { BASE_CAST_TIME_MS } from "src/constants/GeneralConstants";
 import {
     createNewAbilityContext,
-    endCombat,
     startActionRecovery,
 } from "src/modules/CombatModule";
 import { triggerFeatEffects } from "src/modules/EffectModule";
 import { renderCastVFX, startRenderQueue } from "src/modules/RenderModule";
 import { GameScene } from "src/scenes/GameScene";
-import {
-    getControlState,
-    getGameplayState,
-    getUserInterfaceState,
-} from "src/modules/GameStateModule";
+import { getControlState, getGameplayState } from "src/modules/GameStateModule";
 import { getActorStateComponentArray } from "src/modules/ComponentModule";
 import {
     AbilityData,
     AbilityDescriptor,
     AbilityTrigger,
 } from "src/types/AbilityTypes";
-import { CombatState } from "src/types/CombatTypes";
 import { deliverActionEffectsByShape } from "src/modules/TargetingModule";
 import { sleep } from "src/modules/Utils";
 import { Vector3 } from "@babylonjs/core";
@@ -36,32 +27,16 @@ export default class ActionExecutionSystem implements GameSystem {
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
     public update(deltaTime: number): void {
-        const gameplayState = getGameplayState();
         const controlState = getControlState();
-        const userInterfaceState = getUserInterfaceState();
 
         if (controlState.actionPauseSet.size > 0) {
             return;
         }
 
-        // Move to another system
-        if (gameplayState.combatState === CombatState.Victory) {
-            endCombat();
-            return;
-        }
-
-        if (gameplayState.combatState === CombatState.Gameover) {
-            controlState.actionPauseSet.add(PAUSE_GAMEOVER);
-            userInterfaceState.gameOverScreen.showHide(true);
-            return;
-        }
-        // END
-
         this.queueActorAction();
     }
 
     private queueActorAction() {
-        const gameplayState = getGameplayState();
         const actorStateComponents = getActorStateComponentArray();
 
         for (const entityId of query(this.gameScene.world, [

@@ -14,6 +14,7 @@ import type { GameEventTrigger } from "src/types/EventTypes";
 import { DEFAULT_COLLISION_RADIUS } from "src/constants/CombatConstants";
 import {
     LOS_BLOCKING_TOLERANCE,
+    LOS_RANGE_LIMIT_CM,
     LOS_RAY_HEIGHT,
 } from "src/constants/BehaviorConstants";
 import { getCollisionBehaviorProcessor } from "./ProcessorModule";
@@ -38,9 +39,15 @@ export function getActorCollisionRadius(entityId: EntityId): number {
 export function hasLineOfSightToPosition(
     sourceEid: EntityId,
     targetPosition: Vector3,
+    ignoredMesh?: AbstractMesh,
 ): boolean {
     const sourcePosition = getActorPosition(sourceEid);
     if (!sourcePosition || !targetPosition) {
+        return false;
+    }
+
+    const distance = Vector3.Distance(targetPosition, sourcePosition);
+    if (distance >= cmToMeters(LOS_RANGE_LIMIT_CM)) {
         return false;
     }
 
@@ -64,7 +71,7 @@ export function hasLineOfSightToPosition(
     const ray = new Ray(rayOrigin, rayDirection, rayLength);
     const pickResult = getGameScene().pickWithRay(
         ray,
-        (mesh) => !isExcludedFromLineOfSight(mesh),
+        (mesh) => mesh !== ignoredMesh && !isExcludedFromLineOfSight(mesh),
     );
 
     if (pickResult?.hit && pickResult.pickedPoint) {

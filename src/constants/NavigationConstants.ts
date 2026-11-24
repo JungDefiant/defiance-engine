@@ -2,7 +2,7 @@ export const NAVMESH_LOAD_TIMEOUT_MS = 5000;
 export const NAVMESH_POLL_INTERVAL_MS = 100;
 export const NAV_AGENT_RADIUS = 0.4;
 export const NAV_AGENT_HEIGHT = 1.6;
-export const NAV_FACING_MIN_SPEED = 0.25;
+export const NAV_FACING_MIN_SPEED = 1;
 export const NAV_CROWD_MAX_AGENTS = 48;
 export const NAVMESH_GENERATOR_PARAMETERS = {
     cs: 0.2,
@@ -22,7 +22,7 @@ export const NAVMESH_GENERATOR_PARAMETERS = {
     detailSampleDist: 6,
     detailSampleMaxError: 1,
 };
-export const NAV_ARRIVE_DISTANCE = 0.15;
+export const NAV_ARRIVE_DISTANCE = 0.25;
 export const ACTOR_SPACING_MARGIN = 0.05;
 export const DEFAULT_ACTOR_COLLISION_RADIUS = 40;
 export const TARGET_SLOT_COUNT = 8;

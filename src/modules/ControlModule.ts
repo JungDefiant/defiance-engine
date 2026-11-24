@@ -32,6 +32,12 @@ import {
 import { clamp } from "./Utils";
 import { getActorPosition } from "./Collision3DModule";
 import { EntityId } from "bitecs";
+import {
+    BASE_SPAWN_POSITION,
+    COMBAT_ENEMY_SPAWN_Z_OFFSET,
+    SPAWN_OFFSET,
+} from "src/constants/CombatConstants";
+import { getEnemyFactory } from "./FactoryModule";
 
 export function clearActionPause() {
     const controlState = getControlState();
@@ -225,7 +231,7 @@ export function resetExploreModeActionManager() {
                 trigger: ActionManager.OnKeyDownTrigger,
                 parameter: controlState.controlSettings.debugStartCombat,
             },
-            () => {
+            async () => {
                 if (
                     controlState.controlPauseSet.size > 0 ||
                     controlState.actionPauseSet.size > 0
@@ -234,8 +240,28 @@ export function resetExploreModeActionManager() {
                 }
                 const gameScene = getGameScene();
                 const firstEncounterId = Object.keys(gameScene.encounters)[0];
-                if (firstEncounterId) {
-                    startCombat(firstEncounterId);
+                const encounter = gameScene.encounters[firstEncounterId];
+
+                for (let i = 0; i < encounter.length; i++) {
+                    const enId = encounter[i];
+                    const offsetVector = new Vector3(
+                        0,
+                        0,
+                        COMBAT_ENEMY_SPAWN_Z_OFFSET +
+                            (encounter.length - 1) * -SPAWN_OFFSET +
+                            i * SPAWN_OFFSET * 2,
+                    );
+                    const spawnPosition = BASE_SPAWN_POSITION.add(offsetVector);
+                    const newEnemy =
+                        await getEnemyFactory().createEntityFromFileAtPosition(
+                            enId,
+                            spawnPosition,
+                        );
+                    gameplayState.enemyEntityIds.push(newEnemy);
+                    const enActorData = actorStateComponentArray[newEnemy];
+                    enActorData.name = enActorData.name.concat(
+                        ` ${String.fromCharCode(65 + i)}`,
+                    );
                 }
             },
         ),
@@ -349,6 +375,10 @@ export function getAimDirectionFromPointer(sourcePosition: Vector3): Vector3 {
 }
 
 function isExcludedFromAimPicking(mesh: AbstractMesh): boolean {
+    if (!mesh.isVisible || !mesh.isPickable) {
+        return true;
+    }
+
     return (
         mesh.name === "skybox" ||
         mesh.name === "targetHighlight" ||

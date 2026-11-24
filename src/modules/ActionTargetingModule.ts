@@ -1,4 +1,4 @@
-import { Nullable, Vector3 } from "@babylonjs/core";
+import { AbstractMesh, Nullable, Vector3 } from "@babylonjs/core";
 import { EntityId } from "bitecs";
 import { PAUSE_TACTICALPAUSE } from "src/constants/GeneralConstants";
 import {
@@ -21,11 +21,17 @@ import {
     getAimDirectionFromPointer,
     getTargetableActors,
 } from "./ControlModule";
-import { getControlState, getGameScene } from "./GameStateModule";
+import {
+    getControlState,
+    getGameScene,
+    getGameplayState,
+} from "./GameStateModule";
 import { getTargetingInputProcessor } from "./ProcessorModule";
 import { clearManualMovementDestination } from "./ActorNavigationModule";
 import { TargetingInputFunctionProps } from "src/processors/TargetingInputProcessor";
 import ControlState from "src/states/ControlState";
+import { LOS_RAY_HEIGHT } from "src/constants/BehaviorConstants";
+import { VISIBILITY_OBSTACLE_METADATA_KEY } from "src/constants/RenderConstants";
 
 export function getTargetingInputType(
     actionData: AbilityData,
@@ -260,8 +266,10 @@ function getPickedActorEntityId(): EntityId {
         gameScene.pointerX,
         gameScene.pointerY,
         (mesh) =>
-            mesh.name.startsWith("enBattlerSprite_") ||
-            mesh.name.startsWith("pcSprite_"),
+            mesh.isPickable &&
+            mesh.isVisible &&
+            (mesh.name.startsWith("enBattlerSprite_") ||
+                mesh.name.startsWith("pcSprite_")),
     );
     if (actorPick?.hit && actorPick.pickedMesh) {
         const pickedEntityId = (
@@ -287,4 +295,79 @@ function getPickedGroundPosition(): Nullable<Vector3> {
     }
 
     return null;
+}
+
+export function getLivingPartyEntityIds(): EntityId[] {
+    const livingPartyEntityIds = getGameplayState().playerEntityIds.filter(
+        (entityId) => {
+            const actorState = getActorStateComponentArray()[entityId];
+            const actorPosition = getActorPosition(entityId);
+            return !actorState.isDefeated && actorPosition;
+        },
+    );
+
+    return livingPartyEntityIds;
+}
+
+export function hasPartyLineOfSightToPosition(
+    targetPosition: Vector3,
+    ignoredMesh?: AbstractMesh,
+): boolean {
+    for (let entityId of getLivingPartyEntityIds()) {
+        const hasLOS = ignoredMesh
+            ? hasLineOfSightToPosition(entityId, targetPosition, ignoredMesh)
+            : hasLineOfSightToPosition(entityId, targetPosition);
+        if (hasLOS) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function isActorVisibleToParty(entityId: EntityId): boolean {
+    const actorPosition = getActorPosition(entityId);
+    if (!actorPosition) {
+        return false;
+    }
+
+    return hasPartyLineOfSightToPosition(actorPosition);
+}
+
+export function isObstacleVisibleToParty(mesh: AbstractMesh): boolean {
+    const meshBoundingBox = mesh.getBoundingInfo().boundingBox;
+    const minimumWorld = meshBoundingBox.minimumWorld;
+    const maximumWorld = meshBoundingBox.maximumWorld;
+
+    const centerX = (minimumWorld.x + maximumWorld.x) / 2;
+    const centerZ = (minimumWorld.z + maximumWorld.z) / 2;
+    const sampleY = maximumWorld.y - LOS_RAY_HEIGHT;
+    const cornersToCheck = [
+        new Vector3(centerX, sampleY, centerZ),
+        new Vector3(minimumWorld.x, sampleY, minimumWorld.z),
+        new Vector3(maximumWorld.x, sampleY, maximumWorld.z),
+        new Vector3(minimumWorld.x, sampleY, maximumWorld.z),
+        new Vector3(maximumWorld.x, sampleY, minimumWorld.z),
+    ];
+
+    for (let cornerPosition of cornersToCheck) {
+        const hasLOS = hasPartyLineOfSightToPosition(
+            cornerPosition,
+            mesh,
+        );
+        if (hasLOS) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function isObstacleMesh(mesh: AbstractMesh): boolean {
+    const metadata = mesh.metadata;
+    if (metadata) {
+        return metadata[VISIBILITY_OBSTACLE_METADATA_KEY];
+    } else {
+        return false;
+    }
 }

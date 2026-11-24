@@ -27,10 +27,10 @@ export default class ActorStateSystem implements GameSystem {
 
     private tickAttributeTimersOnAllActors(deltaTime: number) {
         const actorStateComponentArray = getActorStateComponentArray();
-        for (const eid of query(getGameScene().world, [
+        for (const entityId of query(getGameScene().world, [
             actorStateComponentArray,
         ])) {
-            const actorState = actorStateComponentArray[eid];
+            const actorState = actorStateComponentArray[entityId];
             if (actorState.isDefeated) {
                 continue;
             }
@@ -45,7 +45,7 @@ export default class ActorStateSystem implements GameSystem {
         deltaTime: number,
         actorState: ActorStateComponent,
     ) {
-        if (getGameplayState().combatState !== CombatState.Active) {
+        if (getGameplayState().combatState !== "Active") {
             return;
         }
 

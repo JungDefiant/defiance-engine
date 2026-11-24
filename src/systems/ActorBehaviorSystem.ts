@@ -53,6 +53,10 @@ export default class ActorBehaviorSystem implements GameSystem {
             behaviorComponentArray,
             actorStateComponentArray,
         ])) {
+            if (entityId === getGameplayState().selectedPlayerEID) {
+                continue;
+            }
+
             const actorState = actorStateComponentArray[entityId];
             const actorBehavior = behaviorComponentArray[entityId];
             const actorNavigation = actorNavigationComponentArray[entityId];

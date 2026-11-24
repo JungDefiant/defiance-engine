@@ -18,7 +18,7 @@ export default class SelectedPlayerControlSystem implements GameSystem {
         }
 
         const gameplayState = getGameplayState();
-        if (gameplayState.combatState !== CombatState.Active) {
+        if (gameplayState.combatState !== "Active") {
             return;
         }
 

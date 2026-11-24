@@ -47,8 +47,7 @@ export default class UserInterfaceSystem implements GameSystem {
         playerActorState: ActorStateComponent,
         playerGui: PlayerGUIComponent,
     ) {
-        const isCombatActive =
-            getGameplayState().combatState === CombatState.Active;
+        const isCombatActive = getGameplayState().combatState === "Active";
 
         playerGui.setRecoveryBarVisible(isCombatActive);
         playerGui.setQueuedActionVisible(isCombatActive);
@@ -91,7 +90,10 @@ export default class UserInterfaceSystem implements GameSystem {
         const hoverPick = this.gameScene.pick(
             this.gameScene.pointerX,
             this.gameScene.pointerY,
-            (mesh) => mesh.name.startsWith("enBattlerSprite_"),
+            (mesh) =>
+                mesh.isPickable &&
+                mesh.isVisible &&
+                mesh.name.startsWith("enBattlerSprite_"),
         );
 
         if (hoverPick && hoverPick.hit && hoverPick.pickedMesh) {

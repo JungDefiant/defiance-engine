@@ -178,7 +178,8 @@ export class PlayerFactory implements EntityFactory {
         playerSpriteMaterial.metallic = 0;
         playerSpriteMaterial.roughness = 0;
         playerSpriteMaterial.alphaCutOff = 0.4;
-        playerSpriteMaterial.transparencyMode = 1;
+        playerSpriteMaterial.transparencyMode =
+            PBRMaterial.PBRMATERIAL_ALPHABLEND;
         playerSpriteMaterial.useAlphaFromAlbedoTexture = true;
 
         playerSprite.material = playerSpriteMaterial;

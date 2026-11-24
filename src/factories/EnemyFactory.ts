@@ -185,7 +185,8 @@ export class EnemyFactory implements EntityFactory {
         enemyActorSpriteMaterial.metallic = 0;
         enemyActorSpriteMaterial.roughness = 0;
         enemyActorSpriteMaterial.alphaCutOff = 0.4;
-        enemyActorSpriteMaterial.transparencyMode = 1;
+        enemyActorSpriteMaterial.transparencyMode =
+            PBRMaterial.PBRMATERIAL_ALPHABLEND;
         enemyActorSpriteMaterial.useAlphaFromAlbedoTexture = true;
 
         enemyActorSprite.material = enemyActorSpriteMaterial;

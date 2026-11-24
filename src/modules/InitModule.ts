@@ -83,16 +83,9 @@ export async function startGame() {
 async function preloadCampaignAssets(mainMenuScene: MainMenuScene) {
     const campaignState = getCampaignState();
     const manifest = await buildAssetManifest(campaignState.campaignId);
-    await preloadAssets(
-        mainMenuScene,
-        manifest,
-        (loadedCount, totalCount) => {
-            mainMenuScene.loadingScreen.setProgress(
-                loadedCount,
-                totalCount,
-            );
-        },
-    );
+    await preloadAssets(mainMenuScene, manifest, (loadedCount, totalCount) => {
+        mainMenuScene.loadingScreen.setProgress(loadedCount, totalCount);
+    });
 }
 
 async function createStartingScene() {
@@ -108,7 +101,7 @@ async function runScene() {
     engine.runRenderLoop(() => {
         const rawDeltaTime = gameScene.deltaTime / DELTATIME_MS;
         const deltaTime = Math.min(rawDeltaTime, MAX_DELTA_TIME_SECONDS);
-        updateSystems(deltaTime, systemRegistry);
+        updateSystems(deltaTime || 0, systemRegistry);
         gameScene.render();
         userInterfaceScene.render();
     });
