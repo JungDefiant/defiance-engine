@@ -349,6 +349,10 @@ export function getAimDirectionFromPointer(sourcePosition: Vector3): Vector3 {
 }
 
 function isExcludedFromAimPicking(mesh: AbstractMesh): boolean {
+    if (!mesh.isVisible || !mesh.isPickable) {
+        return true;
+    }
+
     return (
         mesh.name === "skybox" ||
         mesh.name === "targetHighlight" ||

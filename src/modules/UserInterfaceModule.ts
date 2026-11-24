@@ -37,7 +37,10 @@ import { GameScene } from "src/scenes/GameScene";
 import { getPublicRoot } from "./Utils";
 import { GameMode, LoadedModalJson } from "src/types/GameTypes";
 import { playSFX } from "./AudioModule";
-import { getActorStateComponentArray } from "./ComponentModule";
+import {
+    getActorStateComponentArray,
+    getCharacterSpriteComponentArray,
+} from "./ComponentModule";
 import { getActorPosition } from "./Collision3DModule";
 import { TARGET_HIGHLIGHT_DIAMETER } from "src/constants/CombatConstants";
 import {
@@ -310,6 +313,19 @@ export function updateTargetHighlight(): void {
     const targetPosition = getActorPosition(targetEid);
 
     if (!targetActorState || targetActorState.isDefeated || !targetPosition) {
+        if (targetHighlightMesh) {
+            targetHighlightMesh.setEnabled(false);
+        }
+        return;
+    }
+
+    const targetSprite = getCharacterSpriteComponentArray()[targetEid];
+    const targetSpriteMesh = targetSprite?.getValue();
+    if (
+        !targetSpriteMesh ||
+        !targetSpriteMesh.isVisible ||
+        !targetSpriteMesh.isPickable
+    ) {
         if (targetHighlightMesh) {
             targetHighlightMesh.setEnabled(false);
         }

@@ -141,8 +141,10 @@ function getHoveredValidEntityId(validEntityIds: EntityId[]): EntityId {
         gameScene.pointerX,
         gameScene.pointerY,
         (mesh) =>
-            mesh.name.startsWith("enBattlerSprite_") ||
-            mesh.name.startsWith("pcSprite_"),
+            mesh.isPickable &&
+            mesh.isVisible &&
+            (mesh.name.startsWith("enBattlerSprite_") ||
+                mesh.name.startsWith("pcSprite_")),
     );
     if (hoverPick?.hit && hoverPick.pickedMesh) {
         const hoveredEntityId = (

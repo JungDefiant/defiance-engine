@@ -2,7 +2,11 @@ import { inject } from "tsyringe";
 import { Vector3 } from "@babylonjs/core";
 import { EntityId } from "bitecs";
 import { GameScene } from "src/scenes/GameScene";
-import { getControlState, getGameplayState } from "src/modules/GameStateModule";
+import {
+    getControlState,
+    getGameplayState,
+    getNavigationState,
+} from "src/modules/GameStateModule";
 import {
     getActorNavigation,
     navigateToPosition,
@@ -10,7 +14,6 @@ import {
 } from "src/modules/ActorNavigationModule";
 import { getActorPosition } from "src/modules/Collision3DModule";
 import {
-    FOLLOW_START_DISTANCE,
     FOLLOW_STOP_DISTANCE,
     PARTY_FORMATION_OFFSETS,
 } from "src/constants/BehaviorConstants";
@@ -18,8 +21,6 @@ import GameSystem from "./GameSystem";
 import { CombatState } from "src/types/CombatTypes";
 
 export default class PartyFollowSystem implements GameSystem {
-    private followingMemberIds: Set<EntityId> = new Set();
-
     public constructor(@inject(GameScene) private gameScene: GameScene) {}
 
     public update(deltaTime: number): void {
@@ -29,6 +30,7 @@ export default class PartyFollowSystem implements GameSystem {
 
         const controlState = getControlState();
         const gameplayState = getGameplayState();
+        const navigationState = getNavigationState();
 
         if (
             gameplayState.combatState === CombatState.Active ||
@@ -49,7 +51,7 @@ export default class PartyFollowSystem implements GameSystem {
         const leaderFacing = leaderNavigation.facingDirection;
         const leaderYaw = Math.atan2(leaderFacing.x, leaderFacing.z);
 
-        let formationSlot = 1;
+        let formationSlot = 0;
         for (const entityId of gameplayState.playerEntityIds) {
             if (entityId === leaderEntityId) {
                 continue;
@@ -77,22 +79,9 @@ export default class PartyFollowSystem implements GameSystem {
                 followerPosition,
                 followDestination,
             );
-            const isFollowing = this.followingMemberIds.has(entityId);
-            // if (isFollowing) {
-            //     if (slotDistance <= FOLLOW_STOP_DISTANCE) {
-            //         this.followingMemberIds.delete(entityId);
-            //         stopNavigation(entityId);
-            //     } else {
-            //         navigateToPosition(entityId, followDestination);
-            //     }
-            // } else if (slotDistance > FOLLOW_START_DISTANCE) {
 
-            // }
-
-            // this.followingMemberIds.add(entityId);
-            // navigateToPosition(entityId, followDestination);
             if (slotDistance <= FOLLOW_STOP_DISTANCE) {
-                this.followingMemberIds.delete(entityId);
+                navigationState.followingPartyMemberIds.delete(entityId);
                 stopNavigation(entityId);
             } else {
                 navigateToPosition(entityId, followDestination);

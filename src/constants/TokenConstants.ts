@@ -43,6 +43,7 @@ import { TargetingPreviewProcessor } from "src/processors/TargetingPreviewProces
 import TargetingPreviewSystem from "src/systems/TargetingPreviewSystem";
 import TargetingPreviewState from "src/states/TargetingPreviewState";
 import { ActorBehaviorProcessor } from "src/processors/ActorBehaviorProcessor";
+import VisibilitySystem from "src/systems/VisibilitySystem";
 
 // The order of system tokens matter; determine order that systems are run
 export const SYSTEM_TOKENS = [
@@ -52,6 +53,7 @@ export const SYSTEM_TOKENS = [
     ActorNavigationSystem,
     ProjectileSystem,
     Collision3DSystem,
+    VisibilitySystem,
     CameraSystem,
     ActionExecutionSystem,
     ActorStateSystem,
