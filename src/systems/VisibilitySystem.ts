@@ -19,6 +19,7 @@ import {
     VISIBILITY_MIN_VISIBLE_ALPHA,
     VISIBILITY_UPDATE_INTERVAL_SECONDS,
 } from "src/constants/RenderConstants";
+import { AbstractMesh, Ray, UniversalCamera, Vector3 } from "@babylonjs/core";
 
 export default class VisibilitySystem implements GameSystem {
     private accumulatedTime: number = 0;
@@ -41,6 +42,7 @@ export default class VisibilitySystem implements GameSystem {
     private updateVisibilityTargets(): void {
         this.updateActorVisibilityTargets();
         this.updateObstacleVisibilityTargets();
+        this.updateObstacleObstructingViewToCameraTarget();
     }
 
     private updateActorVisibilityTargets(): void {
@@ -84,6 +86,41 @@ export default class VisibilitySystem implements GameSystem {
 
             this.obstacleVisibilityTargets.set(mesh.uniqueId, targetVisibility);
             mesh.isPickable = targetVisibility === 1;
+        }
+    }
+
+    private updateObstacleObstructingViewToCameraTarget(): void {
+        const camera = this.gameScene.activeCamera as UniversalCamera;
+        if (!camera) {
+            return;
+        }
+
+        const rayOrigin = new Vector3(
+            camera.position.x,
+            camera.position.y,
+            camera.position.z,
+        );
+        const rayTarget = new Vector3(
+            camera.target.x,
+            camera.target.y,
+            camera.target.z,
+        );
+        const rayDirection = rayTarget.subtract(rayOrigin);
+        const rayLength = rayDirection.length();
+        if (rayLength < 0.001) {
+            return;
+        }
+        rayDirection.normalize();
+
+        const ray = new Ray(rayOrigin, rayDirection, rayLength);
+        const pickResult = this.gameScene.pickWithRay(ray, (mesh) =>
+            isObstacleMesh(mesh),
+        );
+
+        if (pickResult?.hit && pickResult.pickedMesh) {
+            let targetVisibility = 0.25;
+            const mesh = pickResult.pickedMesh;
+            this.obstacleVisibilityTargets.set(mesh.uniqueId, targetVisibility);
         }
     }
 
